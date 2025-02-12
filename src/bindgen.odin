@@ -575,21 +575,51 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	return strings.to_string(b)
 }
 
+// Keywords in Odin that don't exist in C. The `_` is there so we can return it
+// without allocating memory (we compare to the slice [1:])
+VET_NAMES :: [?]string {
+	"_rune",
+	"_import",
+	"_foreign",
+	"_package",
+	"_typeid",
+	"_when",
+	"_where",
+	"_in",
+	"_not_in",
+	"_fallthrough",
+	"_defer",
+	"_proc",
+	"_bit_set",
+	"_bit_field",
+	"_map",
+	"_dynamic",
+	"_auto_cast",
+	"_cast",
+	"_transmute",
+	"_distinct",
+	"_using",
+	"_context",
+	"_or_else",
+	"_or_return",
+	"_or_break",
+	"_or_continue",
+	"_asm",
+	"_inline",
+	"_no_inline",
+	"_matrix",
+	"_string",
+
+	// Because we import these two
+	"_c",
+	"_libc",
+}
+
 vet_name :: proc(s: string) -> string {
-	if s == "matrix" {
-		return "_matrix"
-	}
-
-	if s == "context" {
-		return "_context"
-	}
-
-	if s == "c" {
-		return "_c"
-	}
-
-	if s == "dynamic" {
-		return "_dynamic"
+	for v in VET_NAMES {
+		if s == v[1:] {
+			return v
+		}
 	}
 
 	return s
