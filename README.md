@@ -1,6 +1,6 @@
 # odin-c-bindgen: Generate Odin bindings for C libraries
 
-This program generates Odin bindings for C libraries. It makes it easier to quickly use C libraries when programming in Odin.
+This program generates Odin bindings for C libraries. It makes it possible to quickly get up and running with C libraries when programming in Odin.
 
 ## Requirements
 - Odin
@@ -9,19 +9,19 @@ This program generates Odin bindings for C libraries. It makes it easier to quic
 ## Getting started
 
 1. Build the generator: `odin build src -out:bindgen.exe` (replace `.exe` with `.bin` on mac/Linux)
-2. Put the C headers for the library you want bindings for in a folder.
+2. Make a folder. Inside it, put the C headers (`.h` files) of the library you want to generate bindings for.
 3. Execute `bindgen the_folder`
 4. Bindings can be found inside `the_folder/the_folder`
-5. Use a `bindgen.sjson` file to get more control of how the bindings are generated. See how in the next section, or look in the `examples` folder.
+5. The get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
 
 > [!NOTE]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 > 
-> clang is used for analysing the header and outputting some data (AST in JSON format) that the binding generator then interprets.
+> clang is used for analysing the header and outputting an AST. The binding generator then processses that AST into Odin code.
 
 ## How do I configure the generator?
 
-Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you provide to the bindgen executable. Below is an example. Also, see the `examples` folder.
+Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
 
 <details>
   <summary>`bindgen.sjson` template</summary>
