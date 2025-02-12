@@ -14,6 +14,9 @@ This program generates Odin bindings for C libraries. It makes it easier to quic
 4. Bindings can be found inside `the_folder/the_folder`
 5. If you need more control of how the bindings are generated, see the next section.
 
+> [!NOTE]
+> The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
+
 ## How do I configure the generator?
 
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you provide to the bindgen executable. Below is an example. Also, see the `examples` folder.
