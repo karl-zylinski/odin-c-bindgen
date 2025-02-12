@@ -728,6 +728,37 @@ gen :: proc(input: string, c: Config) {
 	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
 	defer os.close(f)
 
+	// Extract any big comment at top of file (clang doesn't see these)
+	{
+		src := strings.trim_space(s.source)
+		in_block := false
+
+		top_comment_loop: for ll in strings.split_lines_iterator(&src) {
+			l := strings.trim_space(ll)
+
+			if in_block {
+				fpln(f, l)
+				if strings.contains(l, "*/") {
+					in_block = false
+				}
+			} else {
+				if len(l) < 2 {
+					continue
+				}
+
+				switch l[:2] {
+				case "//":
+					fpln(f, l)
+				case "/*":
+					in_block = !strings.contains(l, "*/")
+					fpln(f, l)
+				case:
+					break top_comment_loop
+				}
+			}
+		}
+	}
+
 	fpf(f, "package %v\n\n", s.package_name)
 
 	if s.needs_import_c {
