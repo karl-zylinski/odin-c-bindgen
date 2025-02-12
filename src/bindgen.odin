@@ -382,6 +382,7 @@ is_c_type :: proc(t: string) -> bool{
 	return base_type in c_type_mapping
 }
 
+// Types that would need `import "core:c/libc"`
 is_libc_type :: proc(t: string) -> bool{
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
@@ -394,6 +395,9 @@ is_libc_type :: proc(t: string) -> bool{
 	return false
 }
 
+// This is probably missing some built-in C types (or common types that come
+// from stdint.h etc). Please add and send in a Pull Request if you needed to
+// add anything here!
 c_type_mapping := map[string]string {
 	"ssize_t" = "int",
 	"size_t" = "uint",
@@ -650,8 +654,13 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	for ot in c.opaque_types {
+		// For quick lookup
 		add_to_set(&s.opaque_type_lookup, ot)
 	}
+
+	//
+	// Run clang and produce an AST in json format that describes the headers.
+	//
 
 	process_desc := os2.Process_Desc {
 		command = { "clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c", input },
@@ -687,13 +696,17 @@ gen :: proc(input: string, c: Config) {
 		fmt.panicf("Error parsing json: %v. %v", json_in_err, string(serr))
 	}
 
+	// We use the header source text to extract some comments.
 	source_data, source_data_ok := os.read_entire_file(input)
-
 	fmt.ensuref(source_data_ok, "Failed reading soruce file: %v", input)
-
 	s.source = string(source_data)
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
+
+	//
+	// Turn the JSON into an intermediate format (parse_decls will append stuff
+	// to s.decls)
+	//
 
 	for &in_decl in inner {
 		if s.required_prefix != "" {
@@ -706,6 +719,10 @@ gen :: proc(input: string, c: Config) {
 
 		parse_decl(&s, in_decl)
 	}
+
+	//
+	// Use the stuff in `s` and `s.decl` to write out the bindings.
+	//
 
 	f, f_err := os.open(output_filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
 	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
@@ -731,7 +748,6 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	fp(f, "\n")
-
 
 	if s.imports_file != "" {
 		top_code, top_code_ok := os.read_entire_file(s.imports_file)
@@ -763,6 +779,8 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		if is_multi_single_line {
+			// This is multiple lines of comments starting with //
+
 			ci = c
 			idx = 0
 			for l in strings.split_lines_iterator(&ci) {
@@ -844,6 +862,7 @@ gen :: proc(input: string, c: Config) {
 				strings.write_string(&b, ": ")
 
 				if !field.comment_before {
+					// Padding between name and =
 					for _ in 0..<longest_field_name-len(field_name) {
 						strings.write_rune(&b, ' ')
 					}
@@ -854,6 +873,7 @@ gen :: proc(input: string, c: Config) {
 
 				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
 					if field_type_override == "[^]" {
+						// Change first `^` for `[^]`
 						field_type = fmt.tprintf("[^]%v", strings.trim_prefix(field_type, "^"))
 					} else {
 						field_type = field_type_override
@@ -891,6 +911,7 @@ gen :: proc(input: string, c: Config) {
 				fp(f, ",")
 
 				if has_comment && !comment_before {
+					// Padding in front of comment
 					for _ in 0..<(longest_field - len(field.field)) {
 						fp(f, " ")
 					}
@@ -979,6 +1000,7 @@ gen :: proc(input: string, c: Config) {
 
 				if vv, v_ok := m.value.?; v_ok {
 					for _ in 0..<suffix_pad {
+						// Padding between name and `=`
 						strings.write_rune(&b, ' ')
 					}
 
@@ -987,6 +1009,9 @@ gen :: proc(input: string, c: Config) {
 					if bit_setify {
 						v := u32(vv)
 						assert(v != 0)
+
+						// Note the `log2`... This turns a value such as `64`
+						// into `6`, which is what it should be for a bit_set.
 						val_string = fmt.tprintf(" = %v", bits.log2(v))
 
 					} else {
@@ -1029,6 +1054,7 @@ gen :: proc(input: string, c: Config) {
 
 				if has_comment && !comment_before {
 					for _ in 0..<(longest_member_name - len(m.member)) {
+						// Padding in front of comment
 						fp(f, " ")
 					}
 					
@@ -1046,6 +1072,8 @@ gen :: proc(input: string, c: Config) {
 				// In case there is a typedef for this in the code.
 				add_to_set(&s.created_symbols, bit_set_name)
 
+				// There was a member with value `-1`... That means all bits are
+				// set. Create a bit_set constant with all variants set.
 				if bit_set_all_constant != "" {
 					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_prefix)))
 
@@ -1099,6 +1127,9 @@ gen :: proc(input: string, c: Config) {
 			type := d.type
 
 			if strings.has_prefix(type, "struct ") {
+				// This is a weird case -- I used this for opaque types in the
+				// beginning, but opaque types are now handled by
+				// `s.opaque_type_lookup`, so perhaps this isn't needed anymore?
 				fp(f, "struct {}\n\n")
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
@@ -1113,6 +1144,15 @@ gen :: proc(input: string, c: Config) {
 
 	fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_prefix)
 	fmt.fprintln(f, "foreign lib {")
+
+	//
+	// Turn functions into groups that are separated by comments. If a comment
+	// is before a function then it is used as a "group". If comments are to the
+	// right of a function, then the group continues.
+	//
+	// Everything within a group shares the same padding between the name and
+	// the `::`
+	//
 
 	Function_Group :: struct {
 		header_comment: string,
@@ -1135,10 +1175,6 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			append(&curr_group.functions, f)
-
-			/*if len(f.name) > longest_function_name {
-				longest_function_name = len(f.name)
-			}*/
 		}
 	}
 
