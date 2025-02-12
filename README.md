@@ -99,6 +99,24 @@ debug_dump_json_ast = false
 ```
 </details>
 
+## FAQ
+
+### My bindings don't work
+
+The binding generator does not understand any kind of C macros or inline functions. Those you'll have to port manually.
+
+If your bindings don't work because of a missing C type, then chances are I've forgotten to add support for it. Try adding it to `c_type_mapping` inside `bindgen.odin` and recompile the generator.
+
+If you have some library that is hard to generate bindings for, then submit an issue on this GitHub page and provide the headers in a zip. I'll try to help if I can find some time.
+
+### How do I include a pre-made Odin file?
+
+Add it to the input folder.
+
+### How do I manually type out the library file imports?
+
+Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
+
 ## Acknowledgements
 
 This generator was inspired by floooh's Sokol bindgen: https://github.com/floooh/sokol/tree/master/bindgen
