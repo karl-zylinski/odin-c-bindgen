@@ -17,7 +17,7 @@ This program generates Odin bindings for C libraries. It makes it possible to qu
 > [!NOTE]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 > 
-> clang is used for analysing the header and outputting an AST. The binding generator then processses that AST into Odin code.
+> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
 
 ## How do I configure the generator?
 
