@@ -76,8 +76,7 @@ Declaration :: union {
 }
 
 get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
-	type_obj := json_get_object(v, "type") or_return
-	t := json_get_string(type_obj, "qualType") or_return
+	t := json_get(v, "type.qualType", json.String) or_return
 
 	if is_c_type(t) {
 		s.needs_import_c = true
@@ -91,8 +90,7 @@ get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: b
 }
 
 get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
-	type_obj := json_get_object(v, "type") or_return
-	qual_type := json_get_string(type_obj, "qualType") or_return
+	qual_type := json_get(v, "type.qualType", json.String) or_return
 	end := strings.index(qual_type, "(")
 	t := qual_type
 
@@ -110,16 +108,12 @@ get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
 }
 
 parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
-	if loc, loc_ok := json_get_object(decl, "loc"); loc_ok {
-		if "includedFrom" in loc {
-			return
-		}
+	if json_has(decl, "loc.includedFrom") {
+		return
+	}
 
-		if expansion_loc, expansion_loc_ok := json_get_object(loc, "expansionLoc"); expansion_loc_ok {
-			if "includedFrom" in expansion_loc {
-				return
-			}
-		}
+	if json_has(decl, "loc.expansionLoc.includedFrom") {
+		return
 	}
 
 	if json_check_bool(decl, "isImplicit") {
@@ -145,14 +139,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			return
 		}
 
-		loc, loc_ok := json_get_object(decl, "loc")
-
-		if !loc_ok {
-			return
-		}
-
-		line, line_ok := json_get_integer(loc, "line")
-
+		line, line_ok := json_get_int(decl, "loc.line")
 
 		if !line_ok {
 			return
@@ -188,15 +175,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			}
 		}
 
-		end_offset: int
-
-		if range, range_ok := json_get_object(decl, "range"); range_ok {
-			if end, end_ok := json_get_object(range, "end"); end_ok {
-				ee, _ := json_get_integer(end, "offset")
-
-				end_offset = int(ee)
-			}
-		}
+		end_offset, _ := json_get_int(decl, "range.end.offset")
 
 		comment_start: int
 		semicolon_pos: int
@@ -248,8 +227,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 					field_type := get_parameter_type(s, i) or_continue
 					field_comment: string
 					field_comment_before: bool
-					field_loc := json_get_object(i, "loc") or_continue
-					field_line := json_get_integer(field_loc, "line") or_continue
+					field_line := json_get_int(i, "loc.line") or_continue
 
 					if field_inner, field_inner_ok := json_get_array(i, "inner"); field_inner_ok {
 						for &fi in field_inner {
@@ -304,10 +282,8 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 
 		if typedef_inner, typedef_inner_ok := json_get_array(decl, "inner"); typedef_inner_ok {
 			for &i in typedef_inner {
-				if owned_tag, owned_tag_ok := json_get_object(i, "ownedTagDecl"); owned_tag_ok {
-					if typedeffed_id, typedeffed_id_ok := json_get_string(owned_tag, "id"); typedeffed_id_ok {
-						type = typedeffed_id
-					}
+				if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id"); typedeffed_id_ok {
+					type = typedeffed_id
 				}
 			}
 		}
@@ -331,8 +307,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 					member_value: Maybe(int)
 					member_comment: string
 					member_comment_before: bool
-					member_loc := json_get_object(m, "loc") or_continue
-					member_line := json_get_integer(member_loc, "line") or_continue
+					member_line := json_get_int(m, "loc.line") or_continue
 
 					if values, values_ok := json_get_array(m, "inner"); values_ok {
 						for &vv in values {
@@ -377,23 +352,16 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 }
 
 get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
-	range := json_get_object(v, "range") or_return
-	begin := json_get_object(range, "begin") or_return
-	end := json_get_object(range, "end") or_return
-	begin_offset := json_get_integer(begin, "offset") or_return
-	end_offset := json_get_integer(end, "offset") or_return
-	loc, _ := json_get_object(v, "loc")
-	l, l_ok := json_get_integer(loc, "line")
-	return s.source[begin_offset:end_offset+1], int(l), l_ok, true
+	begin := json_get(v, "range.begin.offset", json.Integer) or_return
+	end := json_get(v, "range.end.offset", json.Integer) or_return
+	l, lok := json_get(v, "loc.line", json.Integer)
+	return s.source[begin:end+1], int(l), lok, true
 }
 
 get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool) {
-	range := json_get_object(v, "range") or_return
-	begin := json_get_object(range, "begin") or_return
-	end := json_get_object(range, "end") or_return
-	begin_offset := json_get_integer(begin, "offset") or_return
-	end_offset := json_get_integer(end, "offset") or_return
-	return s.source[begin_offset:end_offset+1], true
+	begin := json_get(v, "range.begin.offset", json.Integer) or_return
+	end := json_get(v, "range.end.offset", json.Integer) or_return
+	return s.source[begin:end+1], true
 }
 
 trim_prefix :: proc(s: string, p: string) -> string {
