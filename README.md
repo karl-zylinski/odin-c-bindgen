@@ -24,7 +24,7 @@ This program generates Odin bindings for C libraries. It makes it possible to qu
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
 
 <details>
-  <summary>`bindgen.sjson` template</summary>
+  <summary>bindgen.sjson template</summary>
 
 ```
 // Inputs can be folders or files. It will look for header (.h) files inside
