@@ -23,6 +23,7 @@ Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you provid
 
 <details>
   <summary>`bindgen.sjson` template</summary>
+
 ```
 // Inputs can be folders or files. It will look for header (.h) files inside
 // any folder. The bindings will be based on those headers. Also, any .lib,
