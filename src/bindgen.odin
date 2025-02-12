@@ -1,0 +1,1380 @@
+/*
+Generates Odin bindings from C code.
+
+Usage:
+bindgen folder_with_headers_inside
+
+The folder can contain a `bindgen.sjson` file tha can be used to do overrides
+and configure the generation. See the examples folder for how to do that.
+*/
+
+#+feature dynamic-literals
+
+package bindgen
+
+import "core:fmt"
+import "core:os"
+import "core:os/os2"
+import "core:strings"
+import "core:path/filepath"
+import "core:math/bits"
+import "core:encoding/json"
+import "core:strconv"
+
+Struct_Field :: struct {
+	name: string,
+	type: string,
+	comment: string,
+	comment_before: bool,
+}
+
+Struct :: struct {
+	name: string,
+	id: string,
+	fields: []Struct_Field,
+	comment: string,
+}
+
+Function_Parameter :: struct {
+	name: string,
+	type: string,
+}
+
+Function :: struct {
+	name: string,
+	parameters: []Function_Parameter,
+	return_type: string,
+	comment: string,
+	comment_before: bool,
+	post_comment: string,
+}
+
+Enum_Member :: struct {
+	name: string,
+	value: Maybe(int),
+	comment: string,
+	comment_before: bool,
+}
+
+Enum :: struct {
+	name: string,
+	id: string,
+	members: []Enum_Member,
+	comment: string,
+}
+
+Typedef :: struct {
+	name: string,
+	type: string,
+}
+
+Declaration :: union {
+	Struct,
+	Function,
+	Enum,
+	Typedef,
+}
+
+get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
+	type_obj := json_get_object(v, "type") or_return
+	t := json_get_string(type_obj, "qualType") or_return
+
+	if is_c_type(t) {
+		s.needs_import_c = true
+	}
+
+	if is_libc_type(t) {
+		s.needs_import_libc = true
+	}
+
+	return t, true
+}
+
+get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
+	type_obj := json_get_object(v, "type") or_return
+	qual_type := json_get_string(type_obj, "qualType") or_return
+	end := strings.index(qual_type, "(")
+	t := qual_type
+
+	if end != -1 {
+		t = qual_type[:end]
+	}
+
+	t = strings.trim_space(t)
+
+	if t == "void" {
+		return "", false
+	}
+
+	return t, true
+}
+
+parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
+	if loc, loc_ok := json_get_object(decl, "loc"); loc_ok {
+		if "includedFrom" in loc {
+			return
+		}
+
+		if expansion_loc, expansion_loc_ok := json_get_object(loc, "expansionLoc"); expansion_loc_ok {
+			if "includedFrom" in expansion_loc {
+				return
+			}
+		}
+	}
+
+	if json_check_bool(decl, "isImplicit") {
+		return
+	}
+	
+	kind, kind_ok := json_get_string(decl, "kind")
+
+	if !kind_ok {
+		return
+	}
+
+	id, id_ok := json_get_string(decl, "id")
+
+	if !id_ok {
+		return
+	}
+
+	if kind == "FunctionDecl" {
+		name, name_ok := json_get_string(decl, "name")
+
+		if !name_ok {
+			return
+		}
+
+		loc, loc_ok := json_get_object(decl, "loc")
+
+		if !loc_ok {
+			return
+		}
+
+		line, line_ok := json_get_integer(loc, "line")
+
+
+		if !line_ok {
+			return
+		}
+
+		return_type, has_return_type := get_return_type(decl)
+		out_params: [dynamic]Function_Parameter
+		comment: string
+		comment_before: bool
+
+		if params, params_ok := json_get_array(decl, "inner"); params_ok {
+			for &p in params {
+				pkind := json_get_string(p, "kind") or_continue
+
+				if pkind == "ParmVarDecl" {
+					param_name := json_get_string(p, "name") or_continue
+					param_type := get_parameter_type(s, p) or_continue
+					append(&out_params, Function_Parameter {
+						name = param_name,
+						type = param_type,
+					})
+				} else if pkind == "FullComment" {
+					com, com_line, com_line_ok, comment_ok := get_comment_with_line(p, s)
+
+					if comment_ok {
+						comment = com
+
+						if com_line_ok {
+							comment_before = com_line < int(line)
+						}
+					}
+				}
+			}
+		}
+
+		end_offset: int
+
+		if range, range_ok := json_get_object(decl, "range"); range_ok {
+			if end, end_ok := json_get_object(range, "end"); end_ok {
+				ee, _ := json_get_integer(end, "offset")
+
+				end_offset = int(ee)
+			}
+		}
+
+		comment_start: int
+		semicolon_pos: int
+		post_comment: string
+		for i in end_offset..<len(s.source) {
+			if s.source[i] == ';' {
+				semicolon_pos = i
+			}
+
+			if semicolon_pos > 0 && i+2 < len(s.source) {
+				// Comments after proc starting with `//` are not picked up, but
+				// those with `///` are picked up.
+				if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
+					comment_start = i+2
+				}
+			}
+
+			if s.source[i] == '\n' {
+				if comment_start != 0 {
+					post_comment = s.source[comment_start:i]
+				}
+				break
+			}
+		}
+
+		append(&s.decls, Function {
+			name = name,
+			parameters = out_params[:],
+			return_type = has_return_type ? return_type : "",
+			comment = comment,
+			comment_before = comment_before,
+			post_comment = post_comment,
+		})
+	} else if kind == "RecordDecl" {
+		name, name_ok := json_get_string(decl, "name")
+
+		if !name_ok {
+			return
+		}
+
+		out_fields: [dynamic]Struct_Field
+		comment: string
+
+		if inner, fields_ok := json_get_array(decl, "inner"); fields_ok {
+			for &i in inner {
+				i_kind := json_get_string(i, "kind") or_continue
+				if i_kind == "FieldDecl" {
+					field_name := json_get_string(i, "name") or_continue
+					field_type := get_parameter_type(s, i) or_continue
+					field_comment: string
+					field_comment_before: bool
+					field_loc := json_get_object(i, "loc") or_continue
+					field_line := json_get_integer(field_loc, "line") or_continue
+
+					if field_inner, field_inner_ok := json_get_array(i, "inner"); field_inner_ok {
+						for &fi in field_inner {
+							fi_kind := json_get_string(fi, "kind") or_continue
+
+							if fi_kind == "FullComment" {
+								com, com_line, com_line_ok, comment_ok := get_comment_with_line(fi, s)
+
+								if comment_ok {
+									field_comment = com
+
+									if com_line_ok {
+										field_comment_before = com_line < int(field_line)
+									}
+								}
+							}
+						}
+					}
+
+					append(&out_fields, Struct_Field {
+						name = field_name,
+						type = field_type,
+						comment = field_comment,
+						comment_before = field_comment_before,
+					})	
+				} else if i_kind == "FullComment" {
+					comment, _ = get_comment(i, s)
+				}
+			}
+		}
+
+		if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
+			s.decls[forward_idx] = nil
+		}
+
+		s.symbol_indices[name] = len(s.decls)
+
+		append(&s.decls, Struct {
+			name = name,
+			id = id,
+			comment = comment,
+			fields = out_fields[:],
+		})
+	} else if kind == "TypedefDecl" {
+		type, type_ok := get_parameter_type(s, decl)
+
+		if !type_ok {
+			return
+		}
+
+		name, _ := json_get_string(decl, "name")
+
+		if typedef_inner, typedef_inner_ok := json_get_array(decl, "inner"); typedef_inner_ok {
+			for &i in typedef_inner {
+				if owned_tag, owned_tag_ok := json_get_object(i, "ownedTagDecl"); owned_tag_ok {
+					if typedeffed_id, typedeffed_id_ok := json_get_string(owned_tag, "id"); typedeffed_id_ok {
+						type = typedeffed_id
+					}
+				}
+			}
+		}
+
+		s.typedefs[type] = name
+		append(&s.decls, Typedef {
+			name = name,
+			type = type,
+		})
+	} else if kind == "EnumDecl" {
+		name, _ := json_get_string(decl, "name")
+		comment: string
+		out_members: [dynamic]Enum_Member
+
+		if inner, inner_ok := json_get_array(decl, "inner"); inner_ok {
+			for &m in inner {
+				inner_kind := json_get_string(m, "kind") or_continue
+
+				if inner_kind == "EnumConstantDecl" {
+					member_name := json_get_string(m, "name") or_continue
+					member_value: Maybe(int)
+					member_comment: string
+					member_comment_before: bool
+					member_loc := json_get_object(m, "loc") or_continue
+					member_line := json_get_integer(member_loc, "line") or_continue
+
+					if values, values_ok := json_get_array(m, "inner"); values_ok {
+						for &vv in values {
+							value_kind := json_get_string(vv, "kind") or_continue
+
+							if value_kind == "ConstantExpr" {
+								value := json_get_string(vv, "value") or_continue
+								member_value = strconv.atoi(value)
+							} else if value_kind == "FullComment" {
+								com, com_line, com_line_ok, comment_ok := get_comment_with_line(vv, s)
+
+								if comment_ok {
+									member_comment = com
+
+									if com_line_ok {
+										member_comment_before = com_line < int(member_line)
+									}
+								}
+							}
+						}
+					}
+
+					append(&out_members, Enum_Member {
+						name = member_name,
+						value = member_value,
+						comment = member_comment,
+						comment_before = member_comment_before,
+					})
+				} else if inner_kind == "FullComment" {
+					comment, _ = get_comment(m, s)
+				}
+			}
+		}
+
+		append(&s.decls, Enum {
+			name = name,
+			id = id,
+			comment = comment,
+			members = out_members[:],
+		})
+	}
+}
+
+get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
+	range := json_get_object(v, "range") or_return
+	begin := json_get_object(range, "begin") or_return
+	end := json_get_object(range, "end") or_return
+	begin_offset := json_get_integer(begin, "offset") or_return
+	end_offset := json_get_integer(end, "offset") or_return
+	loc, _ := json_get_object(v, "loc")
+	l, l_ok := json_get_integer(loc, "line")
+	return s.source[begin_offset:end_offset+1], int(l), l_ok, true
+}
+
+get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool) {
+	range := json_get_object(v, "range") or_return
+	begin := json_get_object(range, "begin") or_return
+	end := json_get_object(range, "end") or_return
+	begin_offset := json_get_integer(begin, "offset") or_return
+	end_offset := json_get_integer(end, "offset") or_return
+	return s.source[begin_offset:end_offset+1], true
+}
+
+trim_prefix :: proc(s: string, p: string) -> string {
+	return strings.trim_prefix(strings.trim_prefix(s, p), "_")
+}
+
+final_name :: proc(s: string, state: Gen_State) -> string {
+	if replacement, has_replacement := state.rename_types[s]; has_replacement {
+		return replacement
+	}
+
+	return s
+}
+
+is_c_type :: proc(t: string) -> bool{
+	base_type := strings.trim_suffix(t, "*")
+	base_type = strings.trim_space(base_type)
+	return base_type in c_type_mapping
+}
+
+is_libc_type :: proc(t: string) -> bool{
+	base_type := strings.trim_suffix(t, "*")
+	base_type = strings.trim_space(base_type)
+
+	switch t {
+	case "time_t":
+		return true
+	}
+
+	return false
+}
+
+c_type_mapping := map[string]string {
+	"ssize_t" = "int",
+	"size_t" = "uint",
+	"float" = "f32",
+	"double" = "f64",
+	"int" = "i32",
+	"char" = "u8",
+	"unsigned short" = "u16",
+	"unsigned char" = "u8",
+	"unsigned int" = "u32",
+	"Bool" = "bool",
+	"BOOL" = "bool",
+	"long" = "c.long",
+	"uint8_t" = "u8",
+	"int8_t" = "i8",
+	"uint16_t" = "u16",
+	"int16_t" = "i16",
+	"uint32_t" = "u32",
+	"int32_t" = "i32",
+	"uint64_t" = "u64",
+	"int64_t" = "i64",
+}
+
+translate_type :: proc(s: Gen_State, t: string) -> string {
+	t := t
+	t = strings.trim_space(t)
+
+	if strings.contains(t, "(") && strings.contains(t, ")") && !strings.contains(t, ")[") {
+		// function pointer typedef
+
+		delimiter := strings.index(t, "(*)(")
+		remainder_start := delimiter + 4
+
+		if delimiter == -1 {
+			delimiter = strings.index(t, "(")
+			remainder_start = delimiter + 1
+		}
+
+		return_type := translate_type(s, t[:delimiter])
+
+		func_builder := strings.builder_make()
+
+		strings.write_string(&func_builder, `proc "c" (`)
+
+		remainder := t[remainder_start:len(t)-1]
+
+		first := true
+
+		for param_type in strings.split_iterator(&remainder, ",") {
+			if first {
+				first = false
+			} else {
+				strings.write_string(&func_builder, ", ")
+			}
+			strings.write_string(&func_builder, translate_type(s, strings.trim_space(param_type)))
+		}
+
+		if return_type == "void" {
+			strings.write_string(&func_builder, ")")
+		} else {
+			strings.write_string(&func_builder, fmt.tprintf(") -> %v", return_type))
+		}
+
+		return strings.to_string(func_builder)
+	}
+
+	if t == "void *" || t == "const void *" {
+		return "rawptr"
+	}
+
+	if t == "const char *const *" {
+		return "[^]cstring"
+	}
+
+	switch t {
+	case "const char *", "char *":
+		return "cstring"
+	}
+
+	if t == "va_list" {
+		return "^c.va_list"
+	}
+
+	num_ptrs := strings.count(t, "*")
+
+	base_type: string
+
+	if strings.contains(t, "(*)") {
+		base_type = t
+	} else {
+		base_type, _ = strings.remove_all(t, "*")
+	}
+
+	base_type, _ = strings.remove_all(base_type, "const")
+	base_type = strings.trim_space(base_type)
+	base_type = trim_prefix(base_type, s.remove_prefix)
+	base_type = strings.trim_space(base_type)
+
+	transf_type := base_type
+
+	multi_array := strings.index(base_type, "(*)")
+	array_start := strings.index(base_type, "[")
+	array_end := strings.last_index(base_type, "]")
+
+	if multi_array != -1 {
+		transf_type = transf_type[:multi_array]
+	} else if array_start != -1 {
+		transf_type = transf_type[:array_start]
+	}
+
+	transf_type = strings.trim_space(transf_type)
+
+	if is_c_type(transf_type) {
+		transf_type = c_type_mapping[transf_type]
+	}
+
+	if is_libc_type(transf_type) {
+		transf_type = fmt.tprintf("libc.%v", transf_type)
+	}
+
+	if array_start != -1 {
+		transf_type = fmt.tprintf("%s%s%s", multi_array != -1 ? "[^]" : "", base_type[array_start:array_end + 1], transf_type)
+	}
+
+	b := strings.builder_make()
+
+	if num_ptrs > 0 {
+		if transf_type in s.type_is_proc {
+			num_ptrs -= 1
+		}
+
+		if multi_array != -1 {
+			num_ptrs -= 1
+		}
+	}
+
+	for _ in 0..<num_ptrs{
+		strings.write_string(&b, "^")
+	}
+
+	strings.write_string(&b, transf_type)
+
+	return strings.to_string(b)
+}
+
+vet_name :: proc(s: string) -> string {
+	if s == "matrix" {
+		return "_matrix"
+	}
+
+	if s == "context" {
+		return "_context"
+	}
+
+	if s == "c" {
+		return "_c"
+	}
+
+	if s == "dynamic" {
+		return "_dynamic"
+	}
+
+	return s
+}
+
+add_to_set :: proc(s: ^map[$T]struct{}, v: T) {
+	s[v] = {}
+}
+
+fp :: fmt.fprint
+fpln :: fmt.fprintln
+fpf :: fmt.fprintf
+fpfln :: fmt.fprintfln
+
+Config :: struct {
+	inputs: []string,
+	output_folder: string,
+	package_name: string,
+	required_prefix: string,
+	remove_prefix: string,
+	import_lib: string,
+	imports_file: string,
+	debug_dump_json_ast: bool,
+
+	opaque_types: []string,
+	rename_types: map[string]string,
+	type_overrides: map[string]string,
+	struct_field_overrides: map[string]string,
+	procedure_type_overrides: map[string]string,
+	bit_setify: map[string]string,
+	inject_before: map[string]string,
+}
+
+Gen_State :: struct {
+	using config: Config,
+
+	source: string,
+	decls: [dynamic]Declaration,
+	symbol_indices: map[string]int,
+	typedefs: map[string]string,
+	created_symbols: map[string]struct{},
+	type_is_proc: map[string]struct{},
+	opaque_type_lookup: map[string]struct{},
+	needs_import_c: bool,
+	needs_import_libc: bool,
+}
+
+gen :: proc(input: string, c: Config) {
+	// Everything allocated within this call to `gen` is allocated on a single
+	// arena, which is destroyed when this procedure ends.
+
+	// Disabled due to bug in virtual growing allocator: https://github.com/odin-lang/Odin/issues/4834
+	/*gen_arena: vmem.Arena
+	defer vmem.arena_destroy(&gen_arena)
+	context.allocator = vmem.arena_allocator(&gen_arena)
+	context.temp_allocator = vmem.arena_allocator(&gen_arena)*/
+
+	s := Gen_State {
+		config = c, 
+	}
+
+	for ot in c.opaque_types {
+		add_to_set(&s.opaque_type_lookup, ot)
+	}
+
+	process_desc := os2.Process_Desc {
+		command = { "clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c", input },
+	}
+
+	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
+
+	if err != nil {
+		if err == .Not_Exist {
+			panic("Could not find clang. Do you have clang installed and in your path?")
+		}
+
+		fmt.panicf("Error generating ast dump. Error: %v", err)
+	}
+
+	if len(serr) > 0 {
+		panic(string(serr))
+	}
+
+	ensure(state.success, "Failed running clang")
+
+	input_filename := filepath.base(input)
+	output_stem := filepath.stem(input_filename)
+	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
+
+	if s.debug_dump_json_ast {
+		os.write_entire_file(fmt.tprintf("%v-debug_dump.json", output_filename), sout)
+	}
+
+	json_in, json_in_err := json.parse(sout, parse_integers = true)
+
+	if json_in_err != nil {
+		fmt.panicf("Error parsing json: %v. %v", json_in_err, string(serr))
+	}
+
+	source_data, source_data_ok := os.read_entire_file(input)
+
+	fmt.ensuref(source_data_ok, "Failed reading soruce file: %v", input)
+
+	s.source = string(source_data)
+
+	inner := json_in.(json.Object)["inner"].(json.Array)
+
+	for &in_decl in inner {
+		if s.required_prefix != "" {
+			if name, name_ok := json_get_string(in_decl, "name"); name_ok {
+				if !strings.has_prefix(name, s.required_prefix) {
+					continue
+				}
+			}		
+		}
+
+		parse_decl(&s, in_decl)
+	}
+
+	f, f_err := os.open(output_filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
+	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
+	defer os.close(f)
+
+	fpf(f, "package %v\n\n", s.package_name)
+
+	if s.needs_import_c {
+		fpln(f, `import "core:c"`)
+	}
+
+	if s.needs_import_libc {
+		fpln(f, `import "core:c/libc"`)
+	}
+
+	fp(f, "\n")
+
+	if s.needs_import_c {
+		fpln(f, "_ :: c")
+	}
+	if s.needs_import_libc {
+		fpln(f, "_ :: libc")
+	}
+
+	fp(f, "\n")
+
+
+	if s.imports_file != "" {
+		top_code, top_code_ok := os.read_entire_file(s.imports_file)
+		fmt.ensuref(top_code_ok, "Failed to load %v", s.imports_file)
+		fp(f, string(top_code))
+	} else if s.import_lib != "" {
+		fpf(f, `foreign import lib "%v"`, s.import_lib)
+	}
+
+	fp(f, "\n\n")
+
+	output_comment :: proc(f: os.Handle, c: string, indent := "") {
+		if c == "" {
+			return
+		}
+
+		is_multi_single_line := true
+
+		ci := c
+		idx := 0
+		for l in strings.split_lines_iterator(&ci) {
+			if idx != 0 {
+				if !strings.has_prefix(strings.trim_space(l), "//") {
+					is_multi_single_line = false
+					break
+				}
+			}
+			idx += 1
+		}
+
+		if is_multi_single_line {
+			ci = c
+			idx = 0
+			for l in strings.split_lines_iterator(&ci) {
+				if idx == 0 {
+					fp(f, indent)
+					fp(f, "// ")
+				} else {
+					fp(f, indent)	
+				}
+
+				to_write := strings.trim_space(l)
+
+				if strings.has_prefix(to_write, "///") {
+					to_write = to_write[1:]
+				}
+				
+				fpfln(f, "%v", to_write)
+
+				idx += 1
+			}
+		} else {
+			fp(f, "/*")
+			fp(f, c)
+			fpln(f, "*/")
+		}
+	}
+
+	for &du in s.decls {
+		switch d in du {
+		case Struct:
+			output_comment(f, d.comment)
+
+			name := d.name
+
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_prefix))
+			}
+
+			n := trim_prefix(name, s.remove_prefix)
+
+			if inject, has_injection := s.inject_before[n]; has_injection {
+				fpf(f, "%v\n\n", inject)
+			}
+
+			fp(f, n)
+			fp(f, " :: ")
+
+			if override, override_ok := s.type_overrides[n]; override_ok {
+				fp(f, override)
+				fp(f, "\n\n")
+				break
+			}
+
+			fp(f, "struct {\n")
+
+			longest_field_name: int
+
+			for &field in d.fields {
+				if len(field.name) > longest_field_name {
+					longest_field_name = len(field.name)
+				}
+			}
+
+			Formatted_Field :: struct {
+				field: string,
+				comment: string,
+				comment_before: bool,
+			}
+
+			fields: [dynamic]Formatted_Field
+
+			for &field in d.fields {
+				b := strings.builder_make()
+
+				field_name := vet_name(field.name)
+
+				strings.write_string(&b, field_name)
+				strings.write_string(&b, ": ")
+
+				if !field.comment_before {
+					for _ in 0..<longest_field_name-len(field_name) {
+						strings.write_rune(&b, ' ')
+					}
+				}
+				
+				field_type := translate_type(s, field.type)
+				override_key := fmt.tprintf("%s.%s", n, field_name)
+
+				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
+					if field_type_override == "[^]" {
+						field_type = fmt.tprintf("[^]%v", strings.trim_prefix(field_type, "^"))
+					} else {
+						field_type = field_type_override
+					}
+				}
+
+				strings.write_string(&b, field_type)
+
+				append(&fields, Formatted_Field {
+					field = strings.to_string(b),
+					comment = field.comment,
+					comment_before = field.comment_before,
+				})
+			}
+
+			longest_field: int
+
+			for &field in fields {
+				longest_field = max(len(field.field), longest_field)
+			}
+
+			for &field, field_idx in fields {
+				has_comment := field.comment != ""
+				comment_before := field.comment_before
+
+				if has_comment && comment_before {
+					if field_idx != 0 {
+						fp(f, "\n")
+					}
+					output_comment(f, field.comment, "\t")	
+				}
+
+				fp(f, "\t")
+				fp(f, field.field)
+				fp(f, ",")
+
+				if has_comment && !comment_before {
+					for _ in 0..<(longest_field - len(field.field)) {
+						fp(f, " ")
+					}
+					
+					fpf(f, " //%v", field.comment)
+				}
+
+				fp(f, "\n")
+			}
+
+			fp(f, "}\n\n")
+		case Enum:
+			output_comment(f, d.comment)
+
+			name := d.name
+
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_prefix))
+			}
+
+			trimmed_name := final_name(trim_prefix(name, s.remove_prefix), s)
+
+			fp(f, trimmed_name)
+			fp(f, " :: enum c.int {\n")
+
+			bit_set_name, bit_setify := s.bit_setify[trimmed_name]
+			bit_set_all_constant: string
+
+			overlap_length := 0
+			longest_name := 0
+
+			all_has_value := true
+
+			if len(d.members) > 1 {
+				overlap_length_source := d.members[0].name
+				overlap_length = len(overlap_length_source)
+				longest_name = overlap_length
+
+				if d.members[0].value == nil {
+					all_has_value = false
+				}
+
+				for idx in 1..<len(d.members) {
+					mn := d.members[idx].name
+					length := strings.prefix_length(mn, overlap_length_source)
+
+					if length < overlap_length {
+						overlap_length = length
+						overlap_length_source = mn
+					}
+
+					longest_name = max(len(mn), longest_name)
+
+					if d.members[idx].value == nil {
+						all_has_value = false
+					}
+				}
+			}	
+
+			Formatted_Member :: struct {
+				name: string,
+				member: string,
+				comment: string,
+				comment_before: bool,
+			}
+
+			members: [dynamic]Formatted_Member
+
+			for &m in d.members {
+				if m.value == -1 && bit_setify {
+					bit_set_all_constant = m.name
+					continue
+				}
+
+				if m.value == 0 && bit_setify {
+					continue
+				}
+
+				b := strings.builder_make()
+
+				name_without_overlap := m.name[overlap_length:]
+				strings.write_string(&b, m.name[overlap_length:])
+
+				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
+
+				if vv, v_ok := m.value.?; v_ok {
+					for _ in 0..<suffix_pad {
+						strings.write_rune(&b, ' ')
+					}
+
+					val_string: string
+
+					if bit_setify {
+						v := u32(vv)
+						assert(v != 0)
+						val_string = fmt.tprintf(" = %v", bits.log2(v))
+
+					} else {
+						val_string = fmt.tprintf(" = %v", vv)
+					}
+					
+					strings.write_string(&b, val_string)
+				}
+
+				append(&members, Formatted_Member {
+					name = name_without_overlap,
+					member = strings.to_string(b),
+					comment = m.comment,
+					comment_before = m.comment_before,
+				})
+			}
+
+			longest_member_name: int
+
+			for &m in members {
+				if len(m.member) > longest_member_name {
+					longest_member_name = len(m.member)
+				}
+			}
+
+			for &m, m_idx in members {
+				has_comment := m.comment != ""
+				comment_before := m.comment_before
+
+				if has_comment && comment_before {
+					if m_idx != 0 {
+						fp(f, "\n")
+					}
+					output_comment(f, m.comment, "\t")	
+				}
+
+				fp(f, "\t")
+				fp(f, m.member)
+				fp(f, ",")
+
+				if has_comment && !comment_before {
+					for _ in 0..<(longest_member_name - len(m.member)) {
+						fp(f, " ")
+					}
+					
+					fpf(f, " //%v", m.comment)
+				}
+
+				fp(f, '\n')
+			}
+
+			fp(f, "}\n\n")
+
+			if bit_setify {
+				fpf(f, "%v :: distinct bit_set[%v; c.int]\n\n", bit_set_name, trimmed_name)
+
+				// In case there is a typedef for this in the code.
+				add_to_set(&s.created_symbols, bit_set_name)
+
+				if bit_set_all_constant != "" {
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_prefix)))
+
+					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
+
+					for &m, i in members {
+						fpf(f, ".%v", m.name)
+
+						if i != len(members) - 1 {
+							fp(f, ", ")
+						}
+					}
+
+					fp(f, " }\n\n")
+				}
+			}
+
+		case Function:
+			// handled later. This makes all procs end up at bottom, after types.
+
+		case Typedef:
+			name := d.name
+
+			if is_c_type(name) {
+				continue
+			}
+
+			t := translate_type(s, name)
+
+			if t in s.opaque_type_lookup {
+				fpf(f, "%v :: struct {{}}\n\n", t)
+				continue
+			}
+
+			if t in s.created_symbols || strings.has_prefix(d.type, "0x") {
+				continue
+			}
+
+			t = final_name(t, s)
+
+			fp(f, t)
+
+			fp(f, " :: ")
+
+			if override, override_ok := s.type_overrides[t]; override_ok {
+				fp(f, override)
+				fp(f, "\n\n")
+				continue
+			}
+
+			type := d.type
+
+			if strings.has_prefix(type, "struct ") {
+				fp(f, "struct {}\n\n")
+			} else if strings.contains(type, "(") && strings.contains(type, ")") {
+				// function pointer typedef
+
+				delimiter := strings.index(type, "(*)(")
+				remainder_start := delimiter + 4
+
+				if delimiter == -1 {
+					delimiter = strings.index(type, "(")
+					remainder_start = delimiter + 1
+				}
+
+				return_type := translate_type(s, type[:delimiter])
+
+
+				fpf(f, `proc "c" (`)
+
+				remainder := type[remainder_start:len(type)-1]
+
+				first := true
+
+				for param_type in strings.split_iterator(&remainder, ",") {
+					if first {
+						first = false
+					} else {
+						fp(f, ", ")
+					}
+					fp(f, translate_type(s, strings.trim_space(param_type)))
+				}
+
+				if return_type == "void" {
+					fp(f, ")\n\n")
+				} else {
+					fpf(f, ") -> %v\n\n", return_type)
+				}
+
+				add_to_set(&s.type_is_proc, t)
+			} else {
+				fpf(f, "%v\n\n", translate_type(s, type))
+			}
+		}
+	}
+
+	fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_prefix)
+	fmt.fprintln(f, "foreign lib {")
+
+	Function_Group :: struct {
+		header_comment: string,
+		functions: [dynamic]Function,
+	}
+
+	groups: [dynamic]Function_Group
+	curr_group: Function_Group
+
+	for &du in s.decls {
+		if f, f_ok := du.(Function); f_ok {
+			if f.comment != "" {
+				if len(curr_group.functions) > 0 {
+					append(&groups, curr_group)
+				}
+
+				curr_group = {
+					header_comment = f.comment,
+				}
+			}
+
+			append(&curr_group.functions, f)
+
+			/*if len(f.name) > longest_function_name {
+				longest_function_name = len(f.name)
+			}*/
+		}
+	}
+
+	if len(curr_group.functions) > 0 {
+		append(&groups, curr_group)
+	}
+
+	for &g, gidx in groups {
+		if g.header_comment != "" {
+			if gidx != 0 {
+				fp(f, "\n")
+			}
+			output_comment(f, g.header_comment, "\t")	
+		}
+
+		longest_function_name: int
+
+		for &d in g.functions {
+			if len(d.name) > longest_function_name {
+				longest_function_name = len(d.name)
+			}
+		}
+
+		Formatted_Function :: struct {
+			function: string,
+			post_comment: string,
+		}
+
+		formatted_functions: [dynamic]Formatted_Function
+
+		for &d in g.functions {
+			b := strings.builder_make()
+
+			w :: strings.write_string
+
+			proc_name := trim_prefix(d.name, s.remove_prefix)
+			w(&b, proc_name)
+
+			for _ in 0..<longest_function_name-len(d.name) {
+				strings.write_rune(&b, ' ')
+			}
+
+			w(&b, " :: proc(")
+
+			for &p, i in d.parameters {
+				n := vet_name(p.name)
+
+				type := translate_type(s, p.type)
+				type_override_key := fmt.tprintf("%v.%v", proc_name, n)
+
+				if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
+					switch type_override {
+					case "#by_ptr":
+						type = strings.trim_prefix(type, "^")
+						w(&b, "#by_ptr ")
+					case "[^]":
+						type = fmt.tprintf("[^]%v", strings.trim_prefix(type, "^"))
+					case:
+						type = type_override
+					}
+				}
+
+				w(&b, n)
+				w(&b, ": ")
+				w(&b, type)
+
+				if i != len(d.parameters) - 1 {
+					w(&b, ", ")
+				}
+			}
+
+			w(&b, ")")
+
+			if d.return_type != "" {
+				w(&b, " -> ")
+
+				return_type := translate_type(s, d.return_type)
+
+				if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
+					return_type = override
+				}
+
+				w(&b, return_type)
+			}
+
+			w(&b, " ---")
+
+			append(&formatted_functions, Formatted_Function {
+				function = strings.to_string(b),
+				post_comment = d.post_comment,
+			})
+		}
+
+		longest_formatted_function: int
+
+		for &ff in formatted_functions {
+			if len(ff.function) < 90 && len(ff.function) > longest_formatted_function {
+				longest_formatted_function = len(ff.function)
+			}
+		}
+
+		for &ff in formatted_functions {
+			fp(f, "\t")
+			fp(f, ff.function)
+
+			if ff.post_comment != "" {
+				for _ in 0..<(longest_formatted_function-len(ff.function)) {
+					fp(f, ' ')
+				}
+
+				fp(f, " //")
+				fp(f, ff.post_comment)
+			}
+
+			fp(f, "\n")
+		}
+	}
+
+	fmt.fprintln(f, "}")
+}
+
+main :: proc() {
+	// Disabled due to bug in virtual growing allocator: https://github.com/odin-lang/Odin/issues/4834
+
+	/*permanent_arena: vmem.Arena
+	permanent_allocator := vmem.arena_allocator(&permanent_arena)
+	context.allocator = permanent_allocator
+	context.temp_allocator = permanent_allocator*/
+
+	ensure(len(os.args) == 2, "Usage: bindgen directory")
+	input_directory := os.args[1]
+
+	if !os.is_dir(input_directory) {
+		fmt.panicf("%v is not a directory", input_directory)
+	}
+
+	os.set_current_directory(input_directory)
+
+	config: Config
+	config_filename := "bindgen.sjson"
+
+	// Config file is optional
+	if os.is_file(config_filename) {
+		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
+			config_err := json.unmarshal(config_data, &config, .SJSON)
+			fmt.ensuref(config_err == nil, "Failed parsing config %v: %v", config_filename, config_err)
+		} else {
+			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
+		}
+	} else {
+		config.inputs = {
+			".",
+		}
+
+		config.output_folder = "output"
+		config.package_name = "pkg"
+
+		// We need the actual name of the directory for the package name and
+		// output folder. Since args[1] can be `.` we can't just use that. So
+		// we open the directory and stat it to get the name.
+		if input_dir, input_dir_err := os2.open(input_directory); input_dir_err == nil {
+			if stat, stat_err := input_dir.fstat(input_dir, context.allocator); stat_err == nil {
+				config.package_name = stat.name
+				config.output_folder = stat.name
+			}
+		}
+	}
+
+	input_files: [dynamic]string
+
+	for i in config.inputs {
+		if os.is_dir(i) {
+			input_folder, input_folder_err := os2.open(i)
+			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
+			iter, iter_err := os2.read_directory_iterator_create(input_folder)	
+			fmt.ensuref(iter_err == nil, "Failed creating directory iterator for %v", input_folder)
+
+			for f in os2.read_directory_iterator(&iter) {
+				if f.type != .Regular {
+					continue
+				}
+
+				append(&input_files, fmt.tprintf("%v/%v", i, f.name))
+			}
+
+			os2.close(input_folder)
+		} else if os.is_file(i) {
+			append(&input_files, i)
+		} else {
+			fmt.eprintfln("%v is neither directory or .h file", i)
+		}
+	}
+
+	if config.output_folder != "" && !os2.exists(config.output_folder) {
+		make_dir_err := os2.make_directory_all(config.output_folder)
+		fmt.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", config.output_folder, make_dir_err)
+	}
+
+	for i in input_files {
+		ext := filepath.ext(i)
+		switch ext {
+		case ".h":
+			gen(i, config)
+		case ".odin", ".lib", ".a", ".dll", ".dylib":
+			// Bring along odin and library files
+			name := filepath.base(i)
+			os2.copy_file(fmt.tprintf("%v/%v", config.output_folder, name), i)
+		}
+	}
+}

@@ -1,0 +1,55 @@
+// Inputs can be folders or files. It will look for .h files inside folders
+inputs = [
+	"input"
+]
+
+// Output folder. One .odin file per processed header
+output_folder = "box2d"
+
+// Remove this prefix from type names and procedure names
+remove_prefix = "b2"
+
+// Only include things that has this prefix
+required_prefix = "b2"
+
+// Single lib file to import
+import_lib = "box2d.lib"
+
+// Code file that contain libray import code and whatever else extra you need.
+// Overrides lib_file
+// imports_file = "imports.odin"
+
+// For package line at top of output files
+package_name = "box2d"
+
+rename_types = {
+}
+
+bit_setify = {
+}
+
+type_overrides = {
+}
+
+struct_type_overrides = {
+}
+
+struct_field_overrides = {
+	"DynamicTree.nodes" = "[^]TreeNode"
+}
+
+procedure_type_overrides = {
+	"CreateWorld.def" = "#by_ptr"
+	"CreateBody.def" = "#by_ptr"
+	"CreatePolygonShape.def" = "#by_ptr"
+	"CreatePolygonShape.polygon" = "#by_ptr"
+	"CreateCircleShape.def" = "#by_ptr"
+	"CreateCircleShape.circle" = "#by_ptr"
+}
+
+inject_before = {
+	"DynamicTree" = "TreeNode :: struct {}"
+}
+
+// Writes the clang JSON ast dump for debug inspection
+debug_dump_json_ast = false
