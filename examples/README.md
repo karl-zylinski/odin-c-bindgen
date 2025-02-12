@@ -1,0 +1,1 @@
+In here are some examples of how to use the binding generator and how to configure it using `bindgen.sjson`. Note that these bindings are just examples. For example, I haven't added every procedure parameter that should be a multi-pointer or use `#by_ptr`, but I provide examples of how to accomplish that.
