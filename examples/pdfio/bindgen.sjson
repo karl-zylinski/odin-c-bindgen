@@ -1,0 +1,28 @@
+inputs = [
+	"input"
+]
+
+output_folder = "pdfio"
+remove_prefix = "pdfio"
+required_prefix = "pdfio"
+import_lib = "pdfio1.lib"
+package_name = "pdfio"
+debug_dump_json_ast = false
+
+bit_setify = {
+	"permission_e" = "permission_t"
+}
+
+procedure_type_overrides = {
+	"ArrayAppendBinary.value"    = "[^]"
+	"FileCreateTemporary.buffer" = "[^]"
+	"StreamGetToken.buffer"      = "[^]"
+}
+
+opaque_types = [
+	"dict_t"
+	"file_t"
+	"array_t"
+	"stream_t"
+	"obj_t"
+]

@@ -1,0 +1,79 @@
+// Inputs can be folders or files. It will look for .h files inside folders
+inputs = [
+	"input"
+]
+
+// Output folder. One .odin file per processed header
+output_folder = "raylib"
+
+// Remove this prefix from type names and procedure names
+remove_prefix = ""
+
+// Only include things that has this prefix
+required_prefix = ""
+
+// Single lib file to import
+import_lib = "" // For example: "some_lib.lib"
+
+// Code file that contain libray import code and whatever else extra you need.
+// Overrides lib_file. Is pasted near top of the final bindings.
+imports_file = "imports.odin"
+
+// For package line at top of output files
+package_name = "raylib"
+
+rename_types = {
+	"ConfigFlags" = "ConfigFlag"
+}
+
+bit_setify = {
+	"Gesture" = "Gestures"
+	"ConfigFlag" = "ConfigFlags"
+}
+
+type_overrides = {
+	"Vector2" = "[2]f32"
+	"Vector3" = "[3]f32"
+	"Vector4" = "[4]f32"
+	"Matrix"  = "#row_major matrix[4, 4]f32"
+	"Color"   = "distinct [4]u8"
+}
+
+struct_field_overrides = {
+	"Image.format"      = "PixelFormat"
+	"Texture.format"    = "PixelFormat"
+	"NPatchInfo.layout" = "NPatchLayout"
+	"GlyphInfo.value"   = "rune"
+	"Mesh.vertices"     = "[^]"  
+	"Mesh.texcoords"    = "[^]"   
+	"Mesh.texcoords2"   = "[^]"    
+	"Mesh.normals"      = "[^]" 
+	"Mesh.tangents"     = "[^]"  
+	"Mesh.colors"       = "[^]"
+	"Mesh.indices"      = "[^]" 
+	"Mesh.animVertices" = "[^]"      
+	"Mesh.animNormals"  = "[^]"     
+	"Mesh.boneIds"      = "[^]" 
+	"Mesh.boneWeights"  = "[^]"     
+}
+
+procedure_type_overrides = {
+	"SetConfigFlags.flags"         = "ConfigFlags"
+	"IsKeyPressed.key"             = "KeyboardKey"
+	"IsKeyPressedRepeat.key"       = "KeyboardKey"
+	"IsKeyDown.key"                = "KeyboardKey"
+	"IsKeyReleased.key"            = "KeyboardKey"
+	"IsKeyUp.key"                  = "KeyboardKey"
+	"GetKeyPressed"                = "KeyboardKey"
+	"IsMouseButtonPressed.button"  = "MouseButton"
+	"IsMouseButtonDown.button"     = "MouseButton"
+	"IsMouseButtonReleased.button" = "MouseButton"
+	"IsMouseButtonUp.button"       = "MouseButton"
+	"SetShaderValue.uniformType"   = "ShaderUniformDataType"
+	"SetShaderValueV.uniformType"  = "ShaderUniformDataType"
+	"SetExitKey.key"               = "KeyboardKey"
+	"GetKeyName.key"               = "KeyboardKey"
+}
+
+// Writes the clang JSON ast dump for debug inspection
+debug_dump_json_ast = false
