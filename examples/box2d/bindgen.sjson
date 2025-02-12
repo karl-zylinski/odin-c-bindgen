@@ -1,9 +1,11 @@
-// Inputs can be folders or files. It will look for .h files inside folders
+// Inputs can be folders or files. It will look for header (.h) files inside
+// any folder. The bindings will be based on those headers. Also, any .lib,
+// .odin, .dll etc will be copied to the output folder.
 inputs = [
 	"input"
 ]
 
-// Output folder. One .odin file per processed header
+// Output folder: One .odin file per processed header
 output_folder = "box2d"
 
 // Remove this prefix from type names and procedure names
@@ -16,28 +18,38 @@ required_prefix = "b2"
 import_lib = "box2d.lib"
 
 // Code file that contain libray import code and whatever else extra you need.
-// Overrides lib_file
+// Overrides lib_file. Is pasted near top of the final bindings.
 // imports_file = "imports.odin"
 
 // For package line at top of output files
 package_name = "box2d"
 
+// "Old_Name" = "New_Name",
 rename_types = {
 }
 
+// Turns an enum into a bit_set. Converts the values of the enum into
+// appropriate values for a bit_set. Creates a bit_set type that uses the enum.
+// Properly removes enum values with value 0. Translates the enum values using
+// a log2 procedure.
 bit_setify = {
+	// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
 }
 
+// Completely override the definition of a type.
 type_overrides = {
+	// "Vector2" = "[2]f32"
 }
 
-struct_type_overrides = {
-}
-
+// Override the type of a struct field. Note that a plain `[^]`/ can be used to
+// modify the existing type.
 struct_field_overrides = {
-	"DynamicTree.nodes" = "[^]TreeNode"
+	"DynamicTree.nodes" = "[^]"
 }
 
+// Overrides the type of a procedure parameter or return value. For a parameter
+// use the key Proc_Name.parameter_name. For a return value use the key Proc_Name.
+// Note that a plain `[^]` and `#by_ptr` can be used to modify the existing type.
 procedure_type_overrides = {
 	"CreateWorld.def" = "#by_ptr"
 	"CreateBody.def" = "#by_ptr"
@@ -47,9 +59,18 @@ procedure_type_overrides = {
 	"CreateCircleShape.circle" = "#by_ptr"
 }
 
+// Inject a new type before another type. Use `rename_types` to just rename
+// a pre-existing type.
 inject_before = {
+	// "Some_Type" = "New_Type :: distinct int"
 	"DynamicTree" = "TreeNode :: struct {}"
 }
 
-// Writes the clang JSON ast dump for debug inspection
+// For typedefs that don't resolve to anything: Put them in here to create
+// empty structs with that name.
+opaque_types = [
+	// "Some_Type"
+]
+
+// Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
