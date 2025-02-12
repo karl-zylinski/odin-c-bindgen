@@ -1,3 +1,26 @@
+# odin-c-bindgen: Generate Odin bindings for C libraries
+
+This program generates Odin bindings for C libraries. It makes it easier to quickly use C libraries when programming in Odin.
+
+## Requirements
+- Odin
+- clang (download from https://llvm.org/ or using the clang payout in Visual Studio installer)
+
+## Getting started
+
+1. Build the generator: `odin build src -out:bindgen.exe` (replace `.exe` with `.bin` on mac/Linux)
+2. Put the C headers for the library you want bindings for in a folder.
+3. Execute `bindgen the_folder`
+4. Bindings can be found inside `the_folder/the_folder`
+5. If you need more control of how the bindings are generated, see the next section.
+
+## How do I configure the generator?
+
+Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you provide to the bindgen executable. Below is an example. Also, see the `examples` folder.
+
+<details>
+  <summary>`bindgen.sjson` template</summary>
+```
 // Inputs can be folders or files. It will look for header (.h) files inside
 // any folder. The bindings will be based on those headers. Also, any .lib,
 // .odin, .dll etc will be copied to the output folder.
@@ -6,7 +29,7 @@ inputs = [
 ]
 
 // Output folder: One .odin file per processed header
-output_folder = "raylib"
+output_folder = "my_lib"
 
 // Remove this prefix from type names and procedure names
 remove_prefix = ""
@@ -15,18 +38,17 @@ remove_prefix = ""
 required_prefix = ""
 
 // Single lib file to import
-import_lib = "" // For example: "some_lib.lib"
+import_lib = "my_lib.lib" // For example: "some_lib.lib"
 
 // Code file that contain libray import code and whatever else extra you need.
 // Overrides lib_file. Is pasted near top of the final bindings.
-imports_file = "imports.odin"
+imports_file = ""
 
 // For package line at top of output files
-package_name = "raylib"
+package_name = "my_lib"
 
 // "Old_Name" = "New_Name",
 rename_types = {
-	"ConfigFlags" = "ConfigFlag"
 }
 
 // Turns an enum into a bit_set. Converts the values of the enum into
@@ -35,58 +57,25 @@ rename_types = {
 // a log2 procedure.
 bit_setify = {
 	// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
-	"Gesture" = "Gestures"
-	"ConfigFlag" = "ConfigFlags"
 }
 
-// Completely override the definition of a type.
+// Completely override the definition of a type. The type needs to be pre-existing.
 type_overrides = {
-	"Vector2" = "[2]f32"
-	"Vector3" = "[3]f32"
-	"Vector4" = "[4]f32"
-	"Matrix"  = "#row_major matrix[4, 4]f32"
-	"Color"   = "distinct [4]u8"
+	// "Vector2" = "[2]f32"
 }
 
 // Override the type of a struct field. Note that a plain `[^]` can be used to
 // modify the existing type.
 struct_field_overrides = {
-	"Image.format"      = "PixelFormat"
-	"Texture.format"    = "PixelFormat"
-	"NPatchInfo.layout" = "NPatchLayout"
-	"GlyphInfo.value"   = "rune"
-	"Mesh.vertices"     = "[^]"  
-	"Mesh.texcoords"    = "[^]"   
-	"Mesh.texcoords2"   = "[^]"    
-	"Mesh.normals"      = "[^]" 
-	"Mesh.tangents"     = "[^]"  
-	"Mesh.colors"       = "[^]"
-	"Mesh.indices"      = "[^]" 
-	"Mesh.animVertices" = "[^]"      
-	"Mesh.animNormals"  = "[^]"     
-	"Mesh.boneIds"      = "[^]" 
-	"Mesh.boneWeights"  = "[^]"     
+	// "Some_Type.some_field" = "My_Type"
 }
 
 // Overrides the type of a procedure parameter or return value. For a parameter
 // use the key Proc_Name.parameter_name. For a return value use the key Proc_Name.
 // Note that a plain `[^]` and `#by_ptr` can be used to modify the existing type.
 procedure_type_overrides = {
-	"SetConfigFlags.flags"         = "ConfigFlags"
-	"IsKeyPressed.key"             = "KeyboardKey"
-	"IsKeyPressedRepeat.key"       = "KeyboardKey"
-	"IsKeyDown.key"                = "KeyboardKey"
-	"IsKeyReleased.key"            = "KeyboardKey"
-	"IsKeyUp.key"                  = "KeyboardKey"
-	"GetKeyPressed"                = "KeyboardKey"
-	"IsMouseButtonPressed.button"  = "MouseButton"
-	"IsMouseButtonDown.button"     = "MouseButton"
-	"IsMouseButtonReleased.button" = "MouseButton"
-	"IsMouseButtonUp.button"       = "MouseButton"
-	"SetShaderValue.uniformType"   = "ShaderUniformDataType"
-	"SetShaderValueV.uniformType"  = "ShaderUniformDataType"
-	"SetExitKey.key"               = "KeyboardKey"
-	"GetKeyName.key"               = "KeyboardKey"
+	// "SetConfigFlags.flags" = "ConfigFlags"
+	// "GetKeyPressed"        = "KeyboardKey"
 }
 
 // Inject a new type before another type. Use `rename_types` to just rename
@@ -101,5 +90,11 @@ opaque_types = [
 	// "Some_Type"
 ]
 
-// Writes the clang JSON ast dump for debug inspection
+// Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
+```
+</details>
+
+## Acknowledgements
+
+This generator was inspired by floooh's Sokol bindgen: https://github.com/floooh/sokol/tree/master/bindgen
