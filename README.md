@@ -4,7 +4,7 @@ This program generates Odin bindings for C libraries. It makes it easier to quic
 
 ## Requirements
 - Odin
-- clang (download from https://llvm.org/ or using the clang payout in Visual Studio installer)
+- clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
 
 ## Getting started
 
