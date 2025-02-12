@@ -1101,39 +1101,8 @@ gen :: proc(input: string, c: Config) {
 				fp(f, "struct {}\n\n")
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
-
-				delimiter := strings.index(type, "(*)(")
-				remainder_start := delimiter + 4
-
-				if delimiter == -1 {
-					delimiter = strings.index(type, "(")
-					remainder_start = delimiter + 1
-				}
-
-				return_type := translate_type(s, type[:delimiter])
-
-
-				fpf(f, `proc "c" (`)
-
-				remainder := type[remainder_start:len(type)-1]
-
-				first := true
-
-				for param_type in strings.split_iterator(&remainder, ",") {
-					if first {
-						first = false
-					} else {
-						fp(f, ", ")
-					}
-					fp(f, translate_type(s, strings.trim_space(param_type)))
-				}
-
-				if return_type == "void" {
-					fp(f, ")\n\n")
-				} else {
-					fpf(f, ") -> %v\n\n", return_type)
-				}
-
+				fp(f, translate_type(s, type))
+				fp(f, "\n\n")
 				add_to_set(&s.type_is_proc, t)
 			} else {
 				fpf(f, "%v\n\n", translate_type(s, type))
