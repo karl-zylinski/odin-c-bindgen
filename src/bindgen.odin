@@ -449,6 +449,9 @@ c_type_mapping := map[string]string {
 	"int64_t" = "i64",
 }
 
+// TODO: Replace this whole proc with something smarter. Perhaps make a small
+// library that can take a C type and returns an Odin type, and it does the
+// correct tokenization and analysis of it.
 translate_type :: proc(s: Gen_State, t: string) -> string {
 	t := t
 	t = strings.trim_space(t)
