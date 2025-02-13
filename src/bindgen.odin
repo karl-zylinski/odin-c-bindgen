@@ -1295,7 +1295,12 @@ gen :: proc(input: string, c: Config) {
 				return_type := translate_type(s, d.return_type)
 
 				if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
-					return_type = override
+					switch override {
+					case "[^]":
+						return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
+					case:
+						return_type = override
+					}
 				}
 
 				w(&b, return_type)

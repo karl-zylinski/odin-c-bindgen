@@ -33,7 +33,7 @@ linejoin_t :: enum c.int {
 	BEVEL, // Bevel joint
 }
 
-matrix_t :: [3][2]f64
+matrix_t :: matrix[3,2]f64
 
 textrendering_t :: enum c.int {
 	FILL,                 // Fill text
@@ -60,7 +60,7 @@ foreign lib {
 	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: f64, y: f64, w: f64, h: f64) -> bool ---
 	ContentFill                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
 	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: bool) -> bool ---
-	ContentMatrixConcat             :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentMatrixConcat             :: proc(st: ^stream_t, m: #by_ptr matrix_t) -> bool ---
 	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: f64) -> bool ---
 	ContentMatrixScale              :: proc(st: ^stream_t, sx: f64, sy: f64) -> bool ---
 	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---

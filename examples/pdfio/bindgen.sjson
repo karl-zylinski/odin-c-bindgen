@@ -38,7 +38,6 @@ bit_setify = {
 
 // Completely override the definition of a type.
 type_overrides = {
-	// "Vector2" = "[2]f32"
 }
 
 // Override the type of a struct field. Note that a plain `[^]` can be used to
@@ -53,6 +52,7 @@ struct_field_overrides = {
 // Note that a plain `[^]` and `#by_ptr` can be used to modify the existing type.
 procedure_type_overrides = {
 	"ArrayAppendBinary.value"    = "[^]"
+	"ArrayGetBinary"             = "[^]"
 	"FileCreateTemporary.buffer" = "[^]"
 	"StreamGetToken.buffer"      = "[^]"
 }
