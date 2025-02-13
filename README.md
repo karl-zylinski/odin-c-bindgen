@@ -1,8 +1,12 @@
 # odin-c-bindgen: Generate Odin bindings for C libraries
 
-This program generates Odin bindings for C libraries. It makes it possible to quickly get up and running with C libraries when programming in Odin.
+This generator makes it possible to quickly generate C library bindings for the Odin Programming Language.
 
-It attempts to generate bindings that look OK and are pleasing to browse through. Example: [Generated Raylib bindings](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/raylib/raylib.odin). The generator is configurable in a simple way, making it possible to override types, procedure parameter types etc. See the Raylib [`bindgen.sjson`](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson) for an example of such configurability.
+Features:
+- Easy to get started with. Can generate bindings from a folder of headers.
+- Generates nice-looking bindings that retain comments. Example: [Generated Raylib bindings](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/raylib/raylib.odin).
+- Simplicity. The generator is simple enough that you can modify it, should the need arise.
+- Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
 ## Requirements
 - Odin
@@ -22,7 +26,7 @@ It attempts to generate bindings that look OK and are pleasing to browse through
 > [!WARNING]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 
-## How do I configure the generator?
+## Configuration
 
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
 
