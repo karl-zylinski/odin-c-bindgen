@@ -12,19 +12,19 @@ This program generates Odin bindings for C libraries. It makes it possible to qu
 2. Make a folder. Inside it, put the C headers (`.h` files) of the library you want to generate bindings for.
 3. Execute `bindgen the_folder`
 4. Bindings can be found inside `the_folder/the_folder`
-5. The get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
+5. To get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
 
 > [!NOTE]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 > 
-> clang is used for analysing the header and outputting an AST. The binding generator then processses that AST into Odin code.
+> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
 
 ## How do I configure the generator?
 
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
 
 <details>
-  <summary>`bindgen.sjson` template</summary>
+  <summary>bindgen.sjson template</summary>
 
 ```
 // Inputs can be folders or files. It will look for header (.h) files inside
@@ -115,7 +115,7 @@ If you have some library that is hard to generate bindings for, then submit an i
 
 Add it to the input folder.
 
-### How do I manually type out the library file imports?
+### How do I manually specify which libraries to load on different platforms etc?
 
 Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
 
