@@ -727,7 +727,8 @@ gen :: proc(input: string, c: Config) {
 	// Use the stuff in `s` and `s.decl` to write out the bindings.
 	//
 
-	f, f_err := os.open(output_filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC)
+	f, f_err := os.open(output_filename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, 0o644)
+
 	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
 	defer os.close(f)
 
