@@ -110,7 +110,7 @@ foreign lib {
 	ArrayCopy           :: proc(pdf: ^file_t, a: ^array_t) -> ^array_t ---
 	ArrayCreate         :: proc(pdf: ^file_t) -> ^array_t ---
 	ArrayGetArray       :: proc(a: ^array_t, n: uint) -> ^array_t ---
-	ArrayGetBinary      :: proc(a: ^array_t, n: uint, length: ^uint) -> ^u8 ---
+	ArrayGetBinary      :: proc(a: ^array_t, n: uint, length: ^uint) -> [^]u8 ---
 	ArrayGetBoolean     :: proc(a: ^array_t, n: uint) -> bool ---
 	ArrayGetDate        :: proc(a: ^array_t, n: uint) -> libc.time_t ---
 	ArrayGetDict        :: proc(a: ^array_t, n: uint) -> ^dict_t ---
