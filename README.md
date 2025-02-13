@@ -8,6 +8,9 @@ It attempts to generate bindings that look OK and are pleasing to browse through
 - Odin
 - clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
 
+> [!NOTE]
+> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
+
 ## Getting started
 
 1. Build the generator: `odin build src -out:bindgen.exe` (replace `.exe` with `.bin` on mac/Linux)
@@ -16,10 +19,8 @@ It attempts to generate bindings that look OK and are pleasing to browse through
 4. Bindings can be found inside `the_folder/the_folder`
 5. To get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
 
-> [!NOTE]
+> [!WARNING]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
-> 
-> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
 
 ## How do I configure the generator?
 
