@@ -28,7 +28,7 @@ Features:
 
 ## Configuration
 
-Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
+Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the [examples folder](https://github.com/karl-zylinski/odin-c-bindgen/tree/main/examples) for more advanced examples.
 
 <details>
   <summary>bindgen.sjson template</summary>
