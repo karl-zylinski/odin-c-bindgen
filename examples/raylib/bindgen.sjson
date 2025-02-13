@@ -55,17 +55,31 @@ struct_field_overrides = {
 	"Texture.format"    = "PixelFormat"
 	"NPatchInfo.layout" = "NPatchLayout"
 	"GlyphInfo.value"   = "rune"
-	"Mesh.vertices"     = "[^]"  
-	"Mesh.texcoords"    = "[^]"   
-	"Mesh.texcoords2"   = "[^]"    
-	"Mesh.normals"      = "[^]" 
-	"Mesh.tangents"     = "[^]"  
+
+	"Mesh.vertices"     = "[^]"
+	"Mesh.texcoords"    = "[^]"
+	"Mesh.texcoords2"   = "[^]"
+	"Mesh.normals"      = "[^]"
+	"Mesh.tangents"     = "[^]"
 	"Mesh.colors"       = "[^]"
-	"Mesh.indices"      = "[^]" 
-	"Mesh.animVertices" = "[^]"      
-	"Mesh.animNormals"  = "[^]"     
-	"Mesh.boneIds"      = "[^]" 
-	"Mesh.boneWeights"  = "[^]"     
+	"Mesh.indices"      = "[^]"
+	"Mesh.animVertices" = "[^]"
+	"Mesh.animNormals"  = "[^]"
+	"Mesh.boneIds"      = "[^]"
+	"Mesh.boneWeights"  = "[^]"
+	"Mesh.boneMatrices" = "[^]"
+	"Mesh.vboId"        = "[^]"
+	"Shader.locs"       = "[^]"
+	"Material.maps"     = "[^]"
+	"Model.meshes"        = "[^]"
+	"Model.materials"     = "[^]"
+	"Model.meshMaterials" = "[^]"
+	"Model.bones"         = "[^]"
+	"Model.bindPose"      = "[^]"
+	"ModelAnimation.bones"      = "[^]"
+	"ModelAnimation.framePoses" = "[^][^]Transform"
+
+	// This is not a complete override list, it's just an example.
 }
 
 // Overrides the type of a procedure parameter or return value. For a parameter
@@ -87,6 +101,8 @@ procedure_type_overrides = {
 	"SetShaderValueV.uniformType"  = "ShaderUniformDataType"
 	"SetExitKey.key"               = "KeyboardKey"
 	"GetKeyName.key"               = "KeyboardKey"
+	"IsGestureDetected.gesture"    = "Gestures"
+	"SetGesturesEnabled.flags"     = "Gestures"
 }
 
 // Inject a new type before another type. Use `rename_types` to just rename
