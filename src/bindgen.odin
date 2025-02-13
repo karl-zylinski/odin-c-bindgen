@@ -33,6 +33,7 @@ Struct :: struct {
 	id: string,
 	fields: []Struct_Field,
 	comment: string,
+	is_union: bool,
 }
 
 Function_Parameter :: struct {
@@ -270,6 +271,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			id = id,
 			comment = comment,
 			fields = out_fields[:],
+			is_union = (json_get_string(decl, "tagUsed") or_else "") == "union",
 		})
 	} else if kind == "TypedefDecl" {
 		type, type_ok := get_parameter_type(s, decl)
@@ -867,7 +869,13 @@ gen :: proc(input: string, c: Config) {
 				break
 			}
 
-			fp(f, "struct {\n")
+			fp(f, "struct ")
+
+			if d.is_union {
+				fp(f, "#raw_union ")
+			}
+
+			fp(f, "{\n")
 
 			longest_field_name: int
 
