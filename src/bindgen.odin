@@ -239,8 +239,8 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 								if comment_ok {
 									field_comment = com
 
-									if com_line_ok && field_line_ok {
-										field_comment_before = com_line < int(field_line)
+									if com_line_ok {
+										field_comment_before = !field_line_ok || com_line < int(field_line)
 									}
 								}
 							}
@@ -496,6 +496,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 
 	base_type, _ = strings.remove_all(base_type, "const")
 	base_type = trim_prefix(base_type, "struct ")
+	base_type = trim_prefix(base_type, "enum ")
 	base_type = strings.trim_space(base_type)
 	base_type = trim_prefix(base_type, s.remove_prefix)
 	base_type = strings.trim_space(base_type)
