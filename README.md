@@ -1,12 +1,19 @@
 # odin-c-bindgen: Generate Odin bindings for C libraries
 
-This program generates Odin bindings for C libraries. It makes it possible to quickly get up and running with C libraries when programming in Odin.
+This generator makes it possible to quickly generate C library bindings for the Odin Programming Language.
 
-It attempts to generate bindings that look OK and are pleasing to browse through. Example: [Generated Raylib bindings](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/raylib/raylib.odin). The generator is configurable in a simple way, making it possible to override types, procedure parameter types etc. See the Raylib [`bindgen.sjson`](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson) for an example of such configurability.
+Features:
+- Easy to get started with. Can generate bindings from a folder of headers.
+- Generates nice-looking bindings that retain comments. Example: [Generated Raylib bindings](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/raylib/raylib.odin).
+- Simplicity. The generator is simple enough that you can modify it, should the need arise.
+- Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
 ## Requirements
 - Odin
 - clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
+
+> [!NOTE]
+> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
 
 ## Getting started
 
@@ -16,14 +23,12 @@ It attempts to generate bindings that look OK and are pleasing to browse through
 4. Bindings can be found inside `the_folder/the_folder`
 5. To get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
 
-> [!NOTE]
+> [!WARNING]
 > The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
-> 
-> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
 
-## How do I configure the generator?
+## Configuration
 
-Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the `examples` folder for more advanced examples.
+Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the [examples folder](https://github.com/karl-zylinski/odin-c-bindgen/tree/main/examples) for more advanced examples.
 
 <details>
   <summary>bindgen.sjson template</summary>
