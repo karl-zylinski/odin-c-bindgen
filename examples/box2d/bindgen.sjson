@@ -47,6 +47,8 @@ struct_field_overrides = {
 	"DynamicTree.nodes"  = "[^]"
 	"ChainDef.points"    = "[^]"
 	"ChainDef.materials" = "[^]"
+	
+	// This is not a complete override list, it's just an example.
 }
 
 // Overrides the type of a procedure parameter or return value. For a parameter
