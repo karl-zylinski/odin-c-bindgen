@@ -227,7 +227,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 					field_type := get_parameter_type(s, i) or_continue
 					field_comment: string
 					field_comment_before: bool
-					field_line := json_get_int(i, "loc.line") or_continue
+					field_line, field_line_ok := json_get_int(i, "loc.line")
 
 					if field_inner, field_inner_ok := json_get_array(i, "inner"); field_inner_ok {
 						for &fi in field_inner {
@@ -239,7 +239,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 								if comment_ok {
 									field_comment = com
 
-									if com_line_ok {
+									if com_line_ok && field_line_ok {
 										field_comment_before = com_line < int(field_line)
 									}
 								}
