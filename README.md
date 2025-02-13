@@ -105,7 +105,7 @@ debug_dump_json_ast = false
 
 ## FAQ
 
-### My bindings don't work
+### Why didn't my bindings generate correctly?
 
 The binding generator does not understand any kind of C macros or inline functions. Those you'll have to port manually.
 
