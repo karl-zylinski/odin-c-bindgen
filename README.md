@@ -115,7 +115,7 @@ If you have some library that is hard to generate bindings for, then submit an i
 
 Add it to the input folder.
 
-### How do I manually type out the library file imports?
+### How do I manually specify which libraries to load on different platforms etc?
 
 Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
 
