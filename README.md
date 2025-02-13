@@ -2,6 +2,8 @@
 
 This program generates Odin bindings for C libraries. It makes it possible to quickly get up and running with C libraries when programming in Odin.
 
+It attempts to generate bindings that look OK and are pleasing to browse through. Example: [Generated Raylib bindings](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/raylib/raylib.odin). The generator is configurable in a simple way, making it possible to override types, procedure parameter types etc. See the Raylib [`bindgen.sjson`](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson) for an example of such configurability.
+
 ## Requirements
 - Odin
 - clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
