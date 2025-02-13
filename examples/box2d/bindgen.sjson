@@ -44,7 +44,9 @@ type_overrides = {
 // Override the type of a struct field. Note that a plain `[^]`/ can be used to
 // modify the existing type.
 struct_field_overrides = {
-	"DynamicTree.nodes" = "[^]"
+	"DynamicTree.nodes"  = "[^]"
+	"ChainDef.points"    = "[^]"
+	"ChainDef.materials" = "[^]"
 }
 
 // Overrides the type of a procedure parameter or return value. For a parameter
