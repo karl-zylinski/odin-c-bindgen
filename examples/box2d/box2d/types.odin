@@ -360,13 +360,13 @@ ChainDef :: struct {
 	userData: rawptr,
 
 	// An array of at least 4 points. These are cloned and may be temporary.
-	points: ^Vec2,
+	points: [^]Vec2,
 
 	// The point count, must be 4 or more.
 	count: i32,
 
 	// Surface materials for each segment. These are cloned.
-	materials: ^SurfaceMaterial,
+	materials: [^]SurfaceMaterial,
 
 	// The material count. Must be 1 or count. This allows you to provide one
 	// material for all segments or a unique material per segment.
