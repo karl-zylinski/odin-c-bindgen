@@ -605,7 +605,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		base_type, _ = strings.remove_all(t, "*")
 	}
 
-	base_type, _ = strings.remove_all(base_type, "const")
+	base_type, _ = strings.remove_all(base_type, "const ")
 	base_type = strings.trim_space(base_type)
 	base_type = trim_prefix(base_type, "struct ")
 	base_type = trim_prefix(base_type, "enum ")
