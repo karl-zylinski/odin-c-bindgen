@@ -657,7 +657,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		strings.write_string(&b, "^")
 	}
 
-	strings.write_string(&b, transf_type)
+	strings.write_string(&b, vet_name(transf_type))
 
 	return strings.to_string(b)
 }
@@ -941,7 +941,7 @@ gen :: proc(input: string, c: Config) {
 				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			n := trim_prefix(name, s.remove_type_prefix)
+			n := vet_name(trim_prefix(name, s.remove_type_prefix))
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
