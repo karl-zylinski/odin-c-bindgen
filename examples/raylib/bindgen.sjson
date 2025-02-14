@@ -122,4 +122,4 @@ opaque_types = [
 clang_include_path = ""
 
 // Writes the clang JSON ast dump for debug inspection
-debug_dump_json_ast = false
+debug_dump_json_ast = true

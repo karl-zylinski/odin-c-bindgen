@@ -8,10 +8,16 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+/// Prototype for user allocation function
+/// @param size the allocation size in bytes
+/// @param alignment the required alignment, guaranteed to be a power of 2
 AllocFcn :: proc "c" (u32, i32) -> rawptr
 
+/// Prototype for user free function
+/// @param mem the memory previously allocated through `b2AllocFcn`
 FreeFcn :: proc "c" (rawptr)
 
+/// Prototype for the user assert callback. Return 0 to skip the debugger break.
 AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
 
 /// Version numbering scheme.

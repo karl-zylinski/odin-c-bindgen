@@ -135,6 +135,7 @@ Vector3 :: [3]f32
 // Vector4, 4 components
 Vector4 :: [4]f32
 
+// Quaternion, 4 components (Vector4 alias)
 Quaternion :: Vector4
 
 // Matrix, 4x4 components, column major, OpenGL style, right-handed
@@ -169,8 +170,10 @@ Texture :: struct {
 	format:  PixelFormat, // Data format (PixelFormat type)
 }
 
+// Texture2D, same as Texture
 Texture2D :: Texture
 
+// TextureCubemap, same as Texture
 TextureCubemap :: Texture
 
 // RenderTexture, fbo for texture rendering
@@ -180,6 +183,7 @@ RenderTexture :: struct {
 	depth:   Texture, // Depth buffer attachment texture
 }
 
+// RenderTexture2D, same as RenderTexture
 RenderTexture2D :: RenderTexture
 
 // NPatchInfo, n-patch layout info
@@ -220,7 +224,7 @@ Camera3D :: struct {
 	projection: i32,     // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 }
 
-Camera :: Camera3D
+Camera :: Camera3D // Camera type fallback, defaults to Camera3D
 
 // Camera2D, defines position/orientation in 2d space
 Camera2D :: struct {
@@ -815,16 +819,21 @@ NPatchLayout :: enum c.int {
 	THREE_PATCH_HORIZONTAL, // Npatch layout: 3x1 tiles
 }
 
-TraceLogCallback :: proc "c" (i32, cstring, ^c.va_list)
+// Callbacks to hook some internal functions
+// WARNING: These callbacks are intended for advanced users
+TraceLogCallback :: proc "c" (i32, cstring, ^c.va_list) // Logging: Redirect trace log messages
 
-LoadFileDataCallback :: proc "c" (cstring, ^i32) -> ^u8
+LoadFileDataCallback :: proc "c" (cstring, ^i32) -> ^u8 // FileIO: Load binary data
 
-SaveFileDataCallback :: proc "c" (cstring, rawptr, i32) -> bool
+SaveFileDataCallback :: proc "c" (cstring, rawptr, i32) -> bool // FileIO: Save binary data
 
-LoadFileTextCallback :: proc "c" (cstring) -> cstring
+LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
 
-SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool
+SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
 
+//------------------------------------------------------------------------------------
+// Audio Loading and Playing Functions (Module: audio)
+//------------------------------------------------------------------------------------
 AudioCallback :: proc "c" (rawptr, u32)
 
 @(default_calling_convention="c", link_prefix="")

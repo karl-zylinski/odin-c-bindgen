@@ -390,10 +390,22 @@ TreeStats :: struct {
 	leafVisits: i32,
 }
 
+/// This function receives proxies found in the AABB query.
+/// @return true if the query should continue
 TreeQueryCallbackFcn :: proc "c" (i32, i32, rawptr) -> bool
 
+/// This function receives clipped ray cast input for a proxy. The function
+/// returns the new ray fraction.
+/// - return a value of 0 to terminate the ray cast
+/// - return a value less than input->maxFraction to clip the ray
+/// - return a value of input->maxFraction to continue the ray cast without clipping
 TreeRayCastCallbackFcn :: proc "c" (^RayCastInput, i32, i32, rawptr) -> f32
 
+/// This function receives clipped ray cast input for a proxy. The function
+/// returns the new ray fraction.
+/// - return a value of 0 to terminate the ray cast
+/// - return a value less than input->maxFraction to clip the ray
+/// - return a value of input->maxFraction to continue the ray cast without clipping
 TreeShapeCastCallbackFcn :: proc "c" (^ShapeCastInput, i32, i32, rawptr) -> f32
 
 @(default_calling_convention="c", link_prefix="b2")
