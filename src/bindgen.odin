@@ -732,7 +732,7 @@ gen :: proc(input: string, c: Config) {
 	//
 
 	process_desc := os2.Process_Desc {
-		command = { "clang", "-Iinclude", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input },
+		command = { "clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input },
 	}
 
 	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
