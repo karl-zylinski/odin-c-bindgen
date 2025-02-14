@@ -20,6 +20,8 @@ import "core:path/filepath"
 import "core:math/bits"
 import "core:encoding/json"
 import "core:strconv"
+import "core:unicode/utf8"
+import "core:unicode"
 
 Struct_Field :: struct {
 	names: [dynamic]string,
@@ -1147,7 +1149,13 @@ gen :: proc(input: string, c: Config) {
 				b := strings.builder_make()
 
 				name_without_overlap := m.name[overlap_length:]
-				strings.write_string(&b, m.name[overlap_length:])
+
+				// First letter is number... Can't have that!
+				if len(name_without_overlap) > 0 && unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
+					name_without_overlap = fmt.tprintf("_%v", name_without_overlap)
+				}
+
+				strings.write_string(&b, name_without_overlap)
 
 				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
 
