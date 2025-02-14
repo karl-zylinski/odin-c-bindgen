@@ -371,7 +371,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 					member_value: Maybe(int)
 					member_comment: string
 					member_comment_before: bool
-					member_line := json_get_int(m, "loc.line") or_continue
+					member_line, member_line_ok := json_get_int(m, "loc.line")
 
 					if values, values_ok := json_get_array(m, "inner"); values_ok {
 						for &vv in values {
@@ -386,7 +386,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 								if comment_ok {
 									member_comment = com
 
-									if com_line_ok {
+									if com_line_ok && member_line_ok {
 										member_comment_before = com_line < int(member_line)
 									}
 								}
@@ -1074,6 +1074,15 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			trimmed_name := final_name(trim_prefix(name, s.remove_type_prefix), s)
+
+			// It has no name, turn it into a bunch of constants
+			if trimmed_name == "" {
+				for &m in d.members {
+					fpf(f, "%v :: %v\n\n", trim_prefix(m.name, s.remove_type_prefix), m.value)
+				}	
+
+				break
+			}
 
 			fp(f, trimmed_name)
 			fp(f, " :: enum c.int {\n")
