@@ -22,10 +22,11 @@ import "core:encoding/json"
 import "core:strconv"
 
 Struct_Field :: struct {
-	name: string,
+	names: [dynamic]string,
 	type: string,
 	comment: string,
 	comment_before: bool,
+	original_line: int,
 }
 
 Struct :: struct {
@@ -221,6 +222,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		comment: string
 
 		if inner, fields_ok := json_get_array(decl, "inner"); fields_ok {
+			prev_idx := -1
 			for &i in inner {
 				i_kind := json_get_string(i, "kind") or_continue
 				if i_kind == "FieldDecl" {
@@ -248,12 +250,35 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 						}
 					}
 
-					append(&out_fields, Struct_Field {
-						name = field_name,
-						type = field_type,
-						comment = field_comment,
-						comment_before = field_comment_before,
-					})	
+					merge: bool
+					if prev_idx != -1 {
+						prev := &out_fields[prev_idx]
+
+						if field_line_ok {
+							if prev.original_line == field_line && prev.type == field_type {
+								merge = true
+							}
+						} else {
+							fmt.assertf(prev.type == field_type, "%v and %v should be on same line, but the type is different.", prev.names, field_name)
+							merge = true
+						}
+					}
+
+					if merge {
+						assert(prev_idx != -1, "Merge requested by prev_idx == -1")
+						prev := &out_fields[prev_idx]
+						append(&prev.names, field_name)
+					} else {
+						prev_idx = len(out_fields)
+						f := Struct_Field {
+							type = field_type,
+							comment = field_comment,
+							comment_before = field_comment_before,
+							original_line = field_line, 
+						}
+						append(&f.names, field_name)
+						append(&out_fields, f)
+					}
 				} else if i_kind == "FullComment" {
 					comment, _ = get_comment(i, s)
 				}
@@ -707,7 +732,7 @@ gen :: proc(input: string, c: Config) {
 	//
 
 	process_desc := os2.Process_Desc {
-		command = { "clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c", input },
+		command = { "clang", "-Iinclude", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input },
 	}
 
 	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
@@ -881,8 +906,16 @@ gen :: proc(input: string, c: Config) {
 			longest_field_name: int
 
 			for &field in d.fields {
-				if len(field.name) > longest_field_name {
-					longest_field_name = len(field.name)
+				field_len: int
+				for fn, nidx in field.names {
+					if nidx != 0 {
+						field_len += 2 // for comma and space
+					}
+
+					field_len += len(vet_name(fn))
+				}
+				if field_len > longest_field_name {
+					longest_field_name = field_len
 				}
 			}
 
@@ -897,20 +930,27 @@ gen :: proc(input: string, c: Config) {
 			for &field in d.fields {
 				b := strings.builder_make()
 
-				field_name := vet_name(field.name)
+				for fn, nidx in field.names {
+					if nidx != 0 {
+						strings.write_string(&b, ", ")
+					}
 
-				strings.write_string(&b, field_name)
+					strings.write_string(&b, vet_name(fn))
+				}
+
+				names_len := strings.builder_len(b)
+				override_key := fmt.tprintf("%s.%s", n, strings.to_string(b))
+
 				strings.write_string(&b, ": ")
 
 				if !field.comment_before {
 					// Padding between name and =
-					for _ in 0..<longest_field_name-len(field_name) {
+					for _ in 0..<longest_field_name-names_len {
 						strings.write_rune(&b, ' ')
 					}
 				}
 				
 				field_type := translate_type(s, field.type)
-				override_key := fmt.tprintf("%s.%s", n, field_name)
 
 				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
 					if field_type_override == "[^]" {
@@ -1183,9 +1223,6 @@ gen :: proc(input: string, c: Config) {
 		}
 	}
 
-	fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_prefix)
-	fmt.fprintln(f, "foreign lib {")
-
 	//
 	// Turn functions into groups that are separated by comments. If a comment
 	// is before a function then it is used as a "group". If comments are to the
@@ -1223,124 +1260,129 @@ gen :: proc(input: string, c: Config) {
 		append(&groups, curr_group)
 	}
 
-	for &g, gidx in groups {
-		if g.header_comment != "" {
-			if gidx != 0 {
+	if len(groups) > 0 {
+		fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_prefix)
+		fmt.fprintln(f, "foreign lib {")
+
+		for &g, gidx in groups {
+			if g.header_comment != "" {
+				if gidx != 0 {
+					fp(f, "\n")
+				}
+
+				output_comment(f, g.header_comment, "\t")
+			}
+
+			longest_function_name: int
+
+			for &d in g.functions {
+				if len(d.name) > longest_function_name {
+					longest_function_name = len(d.name)
+				}
+			}
+
+			Formatted_Function :: struct {
+				function: string,
+				post_comment: string,
+			}
+
+			formatted_functions: [dynamic]Formatted_Function
+
+			for &d in g.functions {
+				b := strings.builder_make()
+
+				w :: strings.write_string
+
+				proc_name := trim_prefix(d.name, s.remove_prefix)
+				w(&b, proc_name)
+
+				for _ in 0..<longest_function_name-len(d.name) {
+					strings.write_rune(&b, ' ')
+				}
+
+				w(&b, " :: proc(")
+
+				for &p, i in d.parameters {
+					n := vet_name(p.name)
+
+					type := translate_type(s, p.type)
+					type_override_key := fmt.tprintf("%v.%v", proc_name, n)
+
+					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
+						switch type_override {
+						case "#by_ptr":
+							type = strings.trim_prefix(type, "^")
+							w(&b, "#by_ptr ")
+						case "[^]":
+							type = fmt.tprintf("[^]%v", strings.trim_prefix(type, "^"))
+						case:
+							type = type_override
+						}
+					}
+
+					w(&b, n)
+					w(&b, ": ")
+					w(&b, type)
+
+					if i != len(d.parameters) - 1 {
+						w(&b, ", ")
+					}
+				}
+
+				w(&b, ")")
+
+				if d.return_type != "" {
+					w(&b, " -> ")
+
+					return_type := translate_type(s, d.return_type)
+
+					if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
+						switch override {
+						case "[^]":
+							return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
+						case:
+							return_type = override
+						}
+					}
+
+					w(&b, return_type)
+				}
+
+				w(&b, " ---")
+
+				append(&formatted_functions, Formatted_Function {
+					function = strings.to_string(b),
+					post_comment = d.post_comment,
+				})
+			}
+
+			longest_formatted_function: int
+
+			for &ff in formatted_functions {
+				if len(ff.function) < 90 && len(ff.function) > longest_formatted_function {
+					longest_formatted_function = len(ff.function)
+				}
+			}
+
+			for &ff in formatted_functions {
+				fp(f, "\t")
+				fp(f, ff.function)
+
+				if ff.post_comment != "" {
+					for _ in 0..<(longest_formatted_function-len(ff.function)) {
+						fp(f, ' ')
+					}
+
+					fp(f, ' ')
+					fp(f, ff.post_comment)
+				}
+
 				fp(f, "\n")
 			}
-
-			output_comment(f, g.header_comment, "\t")
 		}
 
-		longest_function_name: int
-
-		for &d in g.functions {
-			if len(d.name) > longest_function_name {
-				longest_function_name = len(d.name)
-			}
-		}
-
-		Formatted_Function :: struct {
-			function: string,
-			post_comment: string,
-		}
-
-		formatted_functions: [dynamic]Formatted_Function
-
-		for &d in g.functions {
-			b := strings.builder_make()
-
-			w :: strings.write_string
-
-			proc_name := trim_prefix(d.name, s.remove_prefix)
-			w(&b, proc_name)
-
-			for _ in 0..<longest_function_name-len(d.name) {
-				strings.write_rune(&b, ' ')
-			}
-
-			w(&b, " :: proc(")
-
-			for &p, i in d.parameters {
-				n := vet_name(p.name)
-
-				type := translate_type(s, p.type)
-				type_override_key := fmt.tprintf("%v.%v", proc_name, n)
-
-				if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
-					switch type_override {
-					case "#by_ptr":
-						type = strings.trim_prefix(type, "^")
-						w(&b, "#by_ptr ")
-					case "[^]":
-						type = fmt.tprintf("[^]%v", strings.trim_prefix(type, "^"))
-					case:
-						type = type_override
-					}
-				}
-
-				w(&b, n)
-				w(&b, ": ")
-				w(&b, type)
-
-				if i != len(d.parameters) - 1 {
-					w(&b, ", ")
-				}
-			}
-
-			w(&b, ")")
-
-			if d.return_type != "" {
-				w(&b, " -> ")
-
-				return_type := translate_type(s, d.return_type)
-
-				if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
-					switch override {
-					case "[^]":
-						return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
-					case:
-						return_type = override
-					}
-				}
-
-				w(&b, return_type)
-			}
-
-			w(&b, " ---")
-
-			append(&formatted_functions, Formatted_Function {
-				function = strings.to_string(b),
-				post_comment = d.post_comment,
-			})
-		}
-
-		longest_formatted_function: int
-
-		for &ff in formatted_functions {
-			if len(ff.function) < 90 && len(ff.function) > longest_formatted_function {
-				longest_formatted_function = len(ff.function)
-			}
-		}
-
-		for &ff in formatted_functions {
-			fp(f, "\t")
-			fp(f, ff.function)
-
-			if ff.post_comment != "" {
-				for _ in 0..<(longest_formatted_function-len(ff.function)) {
-					fp(f, ' ')
-				}
-
-				fp(f, ' ')
-				fp(f, ff.post_comment)
-			}
-
-			fp(f, "\n")
-		}
+		fmt.fprintln(f, "}")
 	}
-
-	fmt.fprintln(f, "}")
 }
 
 main :: proc() {
