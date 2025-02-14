@@ -12,10 +12,7 @@ foreign import lib "box2d.lib"
 /// This can be used to represent a point or free vector
 Vec2 :: struct {
 	/// coordinates
-	x: f32,
-
-	/// coordinates
-	y: f32,
+	x, y: f32,
 }
 
 /// Cosine and sine pair
@@ -30,10 +27,7 @@ CosSin :: struct {
 /// This is similar to using a complex number for rotation
 Rot :: struct {
 	/// cosine and sine
-	_c: f32,
-
-	/// cosine and sine
-	s: f32,
+	_c, s: f32,
 }
 
 /// A 2D rigid transform
@@ -45,10 +39,7 @@ Transform :: struct {
 /// A 2-by-2 Matrix
 Mat22 :: struct {
 	/// columns
-	cx: Vec2,
-
-	/// columns
-	cy: Vec2,
+	cx, cy: Vec2,
 }
 
 /// Axis-aligned bounding box

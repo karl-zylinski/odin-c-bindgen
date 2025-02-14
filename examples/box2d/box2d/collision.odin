@@ -235,10 +235,8 @@ SimplexVertex :: struct {
 
 /// Simplex from the GJK algorithm
 Simplex :: struct {
-	v1:    SimplexVertex, ///< vertices
-	v2:    SimplexVertex, ///< vertices
-	v3:    SimplexVertex, ///< vertices
-	count: i32,           ///< number of valid vertices
+	v1, v2, v3: SimplexVertex, ///< vertices
+	count:      i32,           ///< number of valid vertices
 }
 
 /// Input parameters for b2ShapeCast
