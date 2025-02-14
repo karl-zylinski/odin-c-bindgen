@@ -190,7 +190,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 				// Comments after proc starting with `//` are not picked up, but
 				// those with `///` are picked up.
 				if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
-					comment_start = i+2
+					comment_start = i
 				}
 			}
 
@@ -354,15 +354,56 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 }
 
 get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
-	begin := json_get(v, "range.begin.offset", json.Integer) or_return
-	end := json_get(v, "range.end.offset", json.Integer) or_return
-	l, lok := json_get(v, "loc.line", json.Integer)
-	return s.source[begin:end+1], int(l), lok, true
+	comment, ok = get_comment(v, s)
+	if line_i64, line_i64_ok := json_get(v, "loc.line", json.Integer); line_i64_ok {
+		line = int(line_i64)
+		line_ok = true
+	}
+	return
 }
 
 get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool) {
-	begin := json_get(v, "range.begin.offset", json.Integer) or_return
-	end := json_get(v, "range.end.offset", json.Integer) or_return
+	begin := int(json_get(v, "range.begin.offset", json.Integer) or_return)
+	end := int(json_get(v, "range.end.offset", json.Integer) or_return)
+
+	// This makes sure to add in the starting `//` and any ending `*/` that clang
+	// might not have included in the comment.
+
+	for idx := int(begin); idx >= 0; idx -= 1 {
+		if idx + 2 >= len(s.source) {
+			continue
+		}
+
+		cur := s.source[idx:idx+2]
+		if cur == "//" {
+			begin = idx
+		}
+
+		if cur == "/*" {
+			begin = idx
+		}
+
+		if s.source[idx] == '\n' {
+			break
+		}
+	}
+
+	cmt := s.source[begin:end+1]
+
+	num_block_openings := strings.count(cmt, "/*")
+	num_block_closing := strings.count(cmt, "*/")
+
+	if num_block_openings != num_block_closing {
+		for idx in end..<len(s.source) - 2 {
+			cur := s.source[idx:idx+2]
+
+			if cur == "*/" {
+				end = idx+1
+				break
+			}
+		}
+	}
+
 	return s.source[begin:end+1], true
 }
 
@@ -795,51 +836,10 @@ gen :: proc(input: string, c: Config) {
 	fp(f, "\n\n")
 
 	output_comment :: proc(f: os.Handle, c: string, indent := "") {
-		if c == "" {
-			return
-		}
-
-		is_multi_single_line := true
-
 		ci := c
-		idx := 0
 		for l in strings.split_lines_iterator(&ci) {
-			if idx != 0 {
-				if !strings.has_prefix(strings.trim_space(l), "//") {
-					is_multi_single_line = false
-					break
-				}
-			}
-			idx += 1
-		}
-
-		if is_multi_single_line {
-			// This is multiple lines of comments starting with //
-
-			ci = c
-			idx = 0
-			for l in strings.split_lines_iterator(&ci) {
-				if idx == 0 {
-					fp(f, indent)
-					fp(f, "// ")
-				} else {
-					fp(f, indent)	
-				}
-
-				to_write := strings.trim_space(l)
-
-				if strings.has_prefix(to_write, "///") {
-					to_write = to_write[1:]
-				}
-				
-				fpfln(f, "%v", to_write)
-
-				idx += 1
-			}
-		} else {
-			fp(f, "/*")
-			fp(f, c)
-			fpln(f, "*/")
+			fp(f, indent)
+			fpln(f, strings.trim_prefix(l, indent))
 		}
 	}
 
@@ -957,7 +957,7 @@ gen :: proc(input: string, c: Config) {
 						fp(f, " ")
 					}
 					
-					fpf(f, " //%v", field.comment)
+					fpf(f, " %v", field.comment)
 				}
 
 				fp(f, "\n")
@@ -1099,7 +1099,7 @@ gen :: proc(input: string, c: Config) {
 						fp(f, " ")
 					}
 					
-					fpf(f, " //%v", m.comment)
+					fpf(f, " %v", m.comment)
 				}
 
 				fp(f, '\n')
@@ -1228,7 +1228,8 @@ gen :: proc(input: string, c: Config) {
 			if gidx != 0 {
 				fp(f, "\n")
 			}
-			output_comment(f, g.header_comment, "\t")	
+
+			output_comment(f, g.header_comment, "\t")
 		}
 
 		longest_function_name: int
@@ -1331,7 +1332,7 @@ gen :: proc(input: string, c: Config) {
 					fp(f, ' ')
 				}
 
-				fp(f, " //")
+				fp(f, ' ')
 				fp(f, ff.post_comment)
 			}
 

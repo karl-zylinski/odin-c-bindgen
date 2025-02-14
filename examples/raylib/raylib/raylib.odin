@@ -411,7 +411,7 @@ AutomationEventList :: struct {
 	events:   ^AutomationEvent, // Events entries
 }
 
-// ----------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------
 // Enumerators Definition
 //----------------------------------------------------------------------------------
 // System/Window config flags
@@ -1072,7 +1072,7 @@ foreign lib {
 	GetTouchPointId    :: proc(index: i32) -> i32 ---     // Get touch point identifier for given index
 	GetTouchPointCount :: proc() -> i32 ---               // Get number of touch points
 
-	// ------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------
 	// Gestures and Touch Handling Functions (Module: rgestures)
 	//------------------------------------------------------------------------------------
 	SetGesturesEnabled     :: proc(flags: Gestures) ---           // Enable a set of gestures using flags
@@ -1084,13 +1084,13 @@ foreign lib {
 	GetGesturePinchVector  :: proc() -> Vector2 ---               // Get gesture pinch delta
 	GetGesturePinchAngle   :: proc() -> f32 ---                   // Get gesture pinch angle
 
-	// ------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------
 	// Camera System Functions (Module: rcamera)
 	//------------------------------------------------------------------------------------
 	UpdateCamera    :: proc(camera: ^Camera, mode: i32) --- // Update camera position for selected mode
 	UpdateCameraPro :: proc(camera: ^Camera, movement: Vector3, rotation: Vector3, zoom: f32) --- // Update camera movement/rotation
 
-	// ------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------
 	// Basic Shapes Drawing Functions (Module: shapes)
 	//------------------------------------------------------------------------------------
 	// Set texture and rectangle to be used on shapes drawing
