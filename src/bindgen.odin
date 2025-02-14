@@ -68,6 +68,8 @@ Enum :: struct {
 Typedef :: struct {
 	name: string,
 	type: string,
+	pre_comment: string,
+	side_comment: string,
 }
 
 Declaration :: union {
@@ -107,6 +109,33 @@ get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
 	}
 
 	return t, true
+}
+
+find_side_comment :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+	comment_start: int
+	semicolon_pos: int
+	for i in start_offset..<len(s.source) {
+		if s.source[i] == ';' {
+			semicolon_pos = i
+		}
+
+		if semicolon_pos > 0 && i+2 < len(s.source) {
+			// Comments after proc starting with `//` are not picked up, but
+			// those with `///` are picked up.
+			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
+				comment_start = i
+			}
+		}
+
+		if s.source[i] == '\n' {
+			if comment_start != 0 {
+				side_comment = s.source[comment_start:i]
+				ok = true
+			}
+			return
+		}
+	}
+	return
 }
 
 parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
@@ -177,30 +206,10 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			}
 		}
 
-		end_offset, _ := json_get_int(decl, "range.end.offset")
+		side_comment: string
 
-		comment_start: int
-		semicolon_pos: int
-		post_comment: string
-		for i in end_offset..<len(s.source) {
-			if s.source[i] == ';' {
-				semicolon_pos = i
-			}
-
-			if semicolon_pos > 0 && i+2 < len(s.source) {
-				// Comments after proc starting with `//` are not picked up, but
-				// those with `///` are picked up.
-				if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
-					comment_start = i
-				}
-			}
-
-			if s.source[i] == '\n' {
-				if comment_start != 0 {
-					post_comment = s.source[comment_start:i]
-				}
-				break
-			}
+		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
+			side_comment, _ = find_side_comment(end_offset, s)
 		}
 
 		append(&s.decls, Function {
@@ -209,7 +218,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			return_type = has_return_type ? return_type : "",
 			comment = comment,
 			comment_before = comment_before,
-			post_comment = post_comment,
+			post_comment = side_comment,
 		})
 	} else if kind == "RecordDecl" {
 		name, name_ok := json_get_string(decl, "name")
@@ -306,19 +315,48 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		}
 
 		name, _ := json_get_string(decl, "name")
+		line, line_ok := json_get_int(decl, "loc.line")
+		pre_comment: string
+		side_comment: string
 
 		if typedef_inner, typedef_inner_ok := json_get_array(decl, "inner"); typedef_inner_ok {
 			for &i in typedef_inner {
-				if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id"); typedeffed_id_ok {
-					type = typedeffed_id
+				inner_kind := json_get_string(i, "kind") or_continue
+
+				if inner_kind == "ElaboratedType" {
+					if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id"); typedeffed_id_ok {
+						type = typedeffed_id
+					}	
+				} else if inner_kind == "FullComment" {
+					comment, comment_line, comment_line_ok, comment_ok := get_comment_with_line(i, s)
+
+					if comment_ok {
+						if comment_line_ok {
+							if line_ok {
+								if comment_line < line {
+									pre_comment = comment	
+								} else {
+									side_comment = comment
+								}
+							}
+						} else {
+							pre_comment = comment
+						}
+					}
 				}
 			}
+		}
+
+		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
+			side_comment, _ = find_side_comment(end_offset, s)
 		}
 
 		s.typedefs[type] = name
 		append(&s.decls, Typedef {
 			name = name,
 			type = type,
+			pre_comment = pre_comment,
+			side_comment = side_comment,
 		})
 	} else if kind == "EnumDecl" {
 		name, _ := json_get_string(decl, "name")
@@ -1194,12 +1232,19 @@ gen :: proc(input: string, c: Config) {
 			t := translate_type(s, name)
 
 			if t in s.opaque_type_lookup {
+				if d.pre_comment != "" {
+					output_comment(f, d.pre_comment)
+				}
 				fpf(f, "%v :: struct {{}}\n\n", t)
 				continue
 			}
 
 			if t in s.created_symbols || strings.has_prefix(d.type, "0x") {
 				continue
+			}
+
+			if d.pre_comment != "" {
+				output_comment(f, d.pre_comment)
 			}
 
 			t = final_name(t, s)
@@ -1210,6 +1255,11 @@ gen :: proc(input: string, c: Config) {
 
 			if override, override_ok := s.type_overrides[t]; override_ok {
 				fp(f, override)
+
+				if d.side_comment != "" {
+					output_comment(f, d.side_comment)
+				}
+
 				fp(f, "\n\n")
 				continue
 			}
@@ -1220,15 +1270,21 @@ gen :: proc(input: string, c: Config) {
 				// This is a weird case -- I used this for opaque types in the
 				// beginning, but opaque types are now handled by
 				// `s.opaque_type_lookup`, so perhaps this isn't needed anymore?
-				fp(f, "struct {}\n\n")
+				fp(f, "struct {}")
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
 				fp(f, translate_type(s, type))
-				fp(f, "\n\n")
 				add_to_set(&s.type_is_proc, t)
 			} else {
-				fpf(f, "%v\n\n", translate_type(s, type))
+				fpf(f, "%v", translate_type(s, type))
 			}
+
+			if d.side_comment != "" {
+				fp(f, ' ')
+				fp(f, d.side_comment)
+			}
+
+			fp(f, "\n\n")
 		}
 	}
 
