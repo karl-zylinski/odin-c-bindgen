@@ -431,8 +431,6 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 	// This makes sure to add in the starting `//` and any ending `*/` that clang
 	// might not have included in the comment.
 
-	fmt.println(begin)
-
 	for idx := int(begin); idx >= 0; idx -= 1 {
 		if idx + 2 >= len(s.source) {
 			continue
