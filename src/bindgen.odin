@@ -941,7 +941,7 @@ gen :: proc(input: string, c: Config) {
 				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			n := vet_name(trim_prefix(name, s.remove_type_prefix))
+			n := final_name(vet_name(trim_prefix(name, s.remove_type_prefix)), s)
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
@@ -1075,7 +1075,7 @@ gen :: proc(input: string, c: Config) {
 				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			trimmed_name := final_name(trim_prefix(name, s.remove_type_prefix), s)
+			trimmed_name := final_name(vet_name(trim_prefix(name, s.remove_type_prefix)), s)
 
 			// It has no name, turn it into a bunch of constants
 			if trimmed_name == "" {
