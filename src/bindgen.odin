@@ -683,6 +683,7 @@ Config :: struct {
 	remove_prefix: string,
 	import_lib: string,
 	imports_file: string,
+	clang_include_path: string,
 	debug_dump_json_ast: bool,
 
 	opaque_types: []string,
@@ -731,8 +732,16 @@ gen :: proc(input: string, c: Config) {
 	// Run clang and produce an AST in json format that describes the headers.
 	//
 
+	command := [dynamic]string {
+		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
+	}
+
+	if c.clang_include_path != "" {
+		append(&command, fmt.tprintf("-I%v", c.clang_include_path))
+	}
+
 	process_desc := os2.Process_Desc {
-		command = { "clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input },
+		command = command[:],
 	}
 
 	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)

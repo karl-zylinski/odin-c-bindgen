@@ -103,6 +103,10 @@ opaque_types = [
 	// "Some_Type"
 ]
 
+// additional include path to send into clang. While generating the bindings
+// clang will look into this path in search for included headers.
+clang_include_path = ""
+
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
 ```
@@ -125,6 +129,14 @@ Add it to the input folder.
 ### How do I manually specify which libraries to load on different platforms etc?
 
 Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
+
+### My headers can't find other headers in the same folder
+
+If the generator is processing `include/some_folder/header.h` and it can't find some other header `include/some_folder/something.h`, then add `include` to the include search path by adding he following to `bindgen.sjson`:
+
+```
+clang_include_path = "include"
+```
 
 ## Acknowledgements
 
