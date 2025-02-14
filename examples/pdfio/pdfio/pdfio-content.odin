@@ -33,7 +33,7 @@ linejoin_t :: enum c.int {
 	BEVEL, // Bevel joint
 }
 
-matrix_t :: [3][2]f64
+matrix_t :: [3][2]f64 // Transform matrix
 
 textrendering_t :: enum c.int {
 	FILL,                 // Fill text

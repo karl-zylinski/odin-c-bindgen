@@ -8,8 +8,11 @@ inputs = [
 // Output folder: One .odin file per processed header
 output_folder = "raylib"
 
-// Remove this prefix from type names and procedure names
-remove_prefix = ""
+// Remove this prefix from types names (structs, enums, etc)
+remove_type_prefix = ""
+
+// Remove this prefix from function names (and add it as link_prefix) to the foreign group
+remove_function_prefix = ""
 
 // Only include things that has this prefix
 required_prefix = ""

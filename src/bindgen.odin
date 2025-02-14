@@ -608,7 +608,9 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	base_type = trim_prefix(base_type, "struct ")
 	base_type = trim_prefix(base_type, "enum ")
 	base_type = strings.trim_space(base_type)
-	base_type = trim_prefix(base_type, s.remove_prefix)
+	if base_type != s.remove_type_prefix {
+		base_type = trim_prefix(base_type, s.remove_type_prefix)
+	}
 	base_type = strings.trim_space(base_type)
 
 	transf_type := base_type
@@ -723,6 +725,8 @@ Config :: struct {
 	package_name: string,
 	required_prefix: string,
 	remove_prefix: string,
+	remove_type_prefix: string,
+	remove_function_prefix: string,
 	import_lib: string,
 	imports_file: string,
 	clang_include_path: string,
@@ -797,7 +801,9 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	if len(serr) > 0 {
-		panic(string(serr))
+		fmt.eprintln(string(serr))
+		fmt.eprintfln("Aborting generation for %v", input)
+		return
 	}
 
 	ensure(state.success, "Failed running clang")
@@ -813,7 +819,9 @@ gen :: proc(input: string, c: Config) {
 	json_in, json_in_err := json.parse(sout, parse_integers = true)
 
 	if json_in_err != nil {
-		fmt.panicf("Error parsing json: %v. %v", json_in_err, string(serr))
+		fmt.eprintfln("Error parsing json: %v. %v", json_in_err, string(serr))
+		fmt.eprintfln("Aborting generation for %v", input)
+		return
 	}
 
 	// We use the header source text to extract some comments.
@@ -915,7 +923,7 @@ gen :: proc(input: string, c: Config) {
 		ci := c
 		for l in strings.split_lines_iterator(&ci) {
 			fp(f, indent)
-			fpln(f, strings.trim_prefix(l, indent))
+			fpln(f, strings.trim_space(l))
 		}
 	}
 
@@ -928,10 +936,10 @@ gen :: proc(input: string, c: Config) {
 
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_prefix))
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			n := trim_prefix(name, s.remove_prefix)
+			n := trim_prefix(name, s.remove_type_prefix)
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
@@ -1062,10 +1070,10 @@ gen :: proc(input: string, c: Config) {
 
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_prefix))
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			trimmed_name := final_name(trim_prefix(name, s.remove_prefix), s)
+			trimmed_name := final_name(trim_prefix(name, s.remove_type_prefix), s)
 
 			fp(f, trimmed_name)
 			fp(f, " :: enum c.int {\n")
@@ -1207,7 +1215,7 @@ gen :: proc(input: string, c: Config) {
 				// There was a member with value `-1`... That means all bits are
 				// set. Create a bit_set constant with all variants set.
 				if bit_set_all_constant != "" {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_prefix)))
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_type_prefix)))
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
@@ -1330,7 +1338,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	if len(groups) > 0 {
-		fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_prefix)
+		fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_function_prefix)
 		fmt.fprintln(f, "foreign lib {")
 
 		for &g, gidx in groups {
@@ -1362,7 +1370,7 @@ gen :: proc(input: string, c: Config) {
 
 				w :: strings.write_string
 
-				proc_name := trim_prefix(d.name, s.remove_prefix)
+				proc_name := trim_prefix(d.name, s.remove_function_prefix)
 				w(&b, proc_name)
 
 				for _ in 0..<longest_function_name-len(d.name) {
@@ -1499,6 +1507,10 @@ main :: proc() {
 				config.output_folder = stat.name
 			}
 		}
+	}
+
+	if config.remove_prefix != "" {
+		panic("Error in bindgen.sjson: remove_prefix has been split into remove_function_prefix and remove_type_prefix")
 	}
 
 	input_files: [dynamic]string
