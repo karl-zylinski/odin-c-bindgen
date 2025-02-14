@@ -115,15 +115,15 @@ debug_dump_json_ast = false
 ```
 </details>
 
-## FAQ
+## FAQ and common problems
 
 ### Why didn't my bindings generate correctly?
-
-The binding generator does not understand any kind of C macros or inline functions. Those you'll have to port manually.
 
 If your bindings don't work because of a missing C type, then chances are I've forgotten to add support for it. Try adding it to `c_type_mapping` inside `bindgen.odin` and recompile the generator.
 
 If you have some library that is hard to generate bindings for, then submit an issue on this GitHub page and provide the headers in a zip. I'll try to help if I can find some time.
+
+The generator won't bring along any `#define`'s or inline functions.
 
 ### How do I include a pre-made Odin file?
 
@@ -132,6 +132,20 @@ Add it to the input folder.
 ### How do I manually specify which libraries to load on different platforms etc?
 
 Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
+
+### How can I turn an enum into a bit_set?
+
+In `bindgen.sjson`:
+
+```
+bit_setify = {
+	"your_enum" = "the_bit_set_type"
+}
+```
+
+This will create a type `the_bit_set_type :: bit_set[your_enum; c.int`.
+
+It will also translate the values of the enum by calculating their log2 value (that gives you the bit index instead of the integer value corresponding to that bit).
 
 ### My headers can't find other headers in the same folder
 
