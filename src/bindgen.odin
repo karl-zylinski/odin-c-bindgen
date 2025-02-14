@@ -1105,6 +1105,10 @@ gen :: proc(input: string, c: Config) {
 				}
 
 				for idx in 1..<len(d.members) {
+					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) && bit_setify {
+						continue
+					}
+
 					mn := d.members[idx].name
 					length := strings.prefix_length(mn, overlap_length_source)
 
@@ -1131,7 +1135,7 @@ gen :: proc(input: string, c: Config) {
 			members: [dynamic]Formatted_Member
 
 			for &m in d.members {
-				if m.value == -1 && bit_setify {
+				if (m.value == -1 || m.value == 2147483647) && bit_setify {
 					bit_set_all_constant = m.name
 					continue
 				}
