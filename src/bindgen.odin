@@ -657,7 +657,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		strings.write_string(&b, "^")
 	}
 
-	strings.write_string(&b, vet_name(transf_type))
+	strings.write_string(&b, final_name(vet_name(transf_type), s))
 
 	return strings.to_string(b)
 }
