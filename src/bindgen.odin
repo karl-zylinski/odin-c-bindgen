@@ -267,8 +267,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 							if prev.original_line == field_line && prev.type == field_type {
 								merge = true
 							}
-						} else {
-							fmt.assertf(prev.type == field_type, "%v and %v should be on same line, but the type is different.", prev.names, field_name)
+						} else if prev.type == field_type {
 							merge = true
 						}
 					}
@@ -432,6 +431,8 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 	// This makes sure to add in the starting `//` and any ending `*/` that clang
 	// might not have included in the comment.
 
+	fmt.println(begin)
+
 	for idx := int(begin); idx >= 0; idx -= 1 {
 		if idx + 2 >= len(s.source) {
 			continue
@@ -444,10 +445,6 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 
 		if cur == "/*" {
 			begin = idx
-		}
-
-		if s.source[idx] == '\n' {
-			break
 		}
 	}
 
