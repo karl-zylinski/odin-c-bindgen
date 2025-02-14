@@ -431,6 +431,8 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 	// This makes sure to add in the starting `//` and any ending `*/` that clang
 	// might not have included in the comment.
 
+	double_slash_found := false
+
 	for idx := int(begin); idx >= 0; idx -= 1 {
 		if idx + 2 >= len(s.source) {
 			continue
@@ -439,10 +441,16 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 		cur := s.source[idx:idx+2]
 		if cur == "//" {
 			begin = idx
+			double_slash_found = true
 		}
 
 		if cur == "/*" {
 			begin = idx
+			break
+		}
+
+		if s.source[idx] == '\n' && double_slash_found {
+			break
 		}
 	}
 
