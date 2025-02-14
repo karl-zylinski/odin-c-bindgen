@@ -525,7 +525,7 @@ foreign lib {
 	/// @see b2ShapeDef::material
 	Shape_SetMaterial :: proc(shapeId: ShapeId, material: i32) ---
 
-	/// Get the shape material identifier 
+	/// Get the shape material identifier
 	Shape_GetMaterial :: proc(shapeId: ShapeId) -> i32 ---
 
 	/// Get the shape filter

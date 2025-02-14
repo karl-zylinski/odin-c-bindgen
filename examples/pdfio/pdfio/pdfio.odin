@@ -20,10 +20,12 @@ array_t :: struct {}
 
 dict_t :: struct {}
 
+// Key/value dictionary
 dict_cb_t :: proc "c" (^dict_t, cstring, rawptr) -> bool
 
 file_t :: struct {}
 
+// PDF file
 error_cb_t :: proc "c" (^file_t, cstring, rawptr) -> bool
 
 // Error callback
@@ -53,6 +55,7 @@ obj_t :: struct {}
 
 output_cb_t :: proc "c" (rawptr, rawptr, uint) -> int
 
+// Output callback for pdfioFileCreateOutput
 password_cb_t :: proc "c" (rawptr, cstring) -> cstring
 
 // Password callback for pdfioFileOpen
