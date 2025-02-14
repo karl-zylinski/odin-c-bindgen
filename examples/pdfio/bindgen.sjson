@@ -73,5 +73,9 @@ opaque_types = [
 	"obj_t"
 ]
 
+// additional include path to send into clang. While generating the bindings
+// clang will look into this path in search for included headers.
+clang_include_path = ""
+
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
