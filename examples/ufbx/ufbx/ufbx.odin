@@ -25,16 +25,16 @@ Blob :: struct {
 }
 
 // 2D vector
-Vec2 :: [2]f32
+Vec2 :: [2]Real
 
 // 3D vector
-Vec3 :: [3]f32
+Vec3 :: [3]Real
 
 // 4D vector
-Vec4 :: [4]f32
+Vec4 :: [4]Real
 
 // Quaternion
-Quat :: quaternion128
+Quat :: quaternion256
 
 // Order in which Euler-angle rotation axes are applied for a transform
 // NOTE: The order in the name refers to the order of axes *applied*,
