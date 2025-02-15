@@ -530,6 +530,10 @@ c_type_mapping := map[string]string {
 	"int32_t" = "i32",
 	"uint64_t" = "u64",
 	"int64_t" = "i64",
+	"bool" = "bool",
+	"void" = "void",
+	"uintptr_t" = "uintptr",
+	"ptrdiff_t" = "int",
 }
 
 // TODO: Replace this whole proc with something smarter. Perhaps make a small
@@ -631,10 +635,10 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 
 	if is_c_type(transf_type) {
 		transf_type = c_type_mapping[transf_type]
-	}
-
-	if is_libc_type(transf_type) {
+	} else if is_libc_type(transf_type) {
 		transf_type = fmt.tprintf("libc.%v", transf_type)
+	} else if s.force_ada_case_types { 
+		transf_type = strings.to_ada_case(transf_type)
 	}
 
 	if array_start != -1 {
@@ -657,7 +661,9 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		strings.write_string(&b, "^")
 	}
 
-	strings.write_string(&b, final_name(vet_name(transf_type), s))
+	final_type := final_name(vet_name(transf_type), s)
+
+	strings.write_string(&b, final_type)
 
 	return strings.to_string(b)
 }
@@ -732,6 +738,7 @@ Config :: struct {
 	import_lib: string,
 	imports_file: string,
 	clang_include_path: string,
+	force_ada_case_types: bool,
 	debug_dump_json_ast: bool,
 
 	opaque_types: []string,
@@ -941,7 +948,13 @@ gen :: proc(input: string, c: Config) {
 				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			n := final_name(vet_name(trim_prefix(name, s.remove_type_prefix)), s)
+			name = trim_prefix(name, s.remove_type_prefix)
+
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
+
+			n := final_name(vet_name(name), s)
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
@@ -1075,7 +1088,13 @@ gen :: proc(input: string, c: Config) {
 				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
 			}
 
-			trimmed_name := final_name(vet_name(trim_prefix(name, s.remove_type_prefix)), s)
+			name = trim_prefix(name, s.remove_type_prefix)
+
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
+
+			trimmed_name := final_name(vet_name(name), s)
 
 			// It has no name, turn it into a bunch of constants
 			if trimmed_name == "" {
@@ -1160,9 +1179,11 @@ gen :: proc(input: string, c: Config) {
 				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
 
 				if vv, v_ok := m.value.?; v_ok {
-					for _ in 0..<suffix_pad {
-						// Padding between name and `=`
-						strings.write_rune(&b, ' ')
+					if !m.comment_before {
+						for _ in 0..<suffix_pad {
+							// Padding between name and `=`
+							strings.write_rune(&b, ' ')
+						}
 					}
 
 					val_string: string
