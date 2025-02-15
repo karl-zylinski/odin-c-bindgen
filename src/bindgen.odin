@@ -987,7 +987,7 @@ gen :: proc(input: string, c: Config) {
 				}
 
 				name = trim_prefix(name, s.remove_type_prefix)
-				
+
 				if s.force_ada_case_types {
 					name = strings.to_ada_case(name)
 				}
@@ -1031,7 +1031,7 @@ gen :: proc(input: string, c: Config) {
 
 			fp(f, "{\n")
 
-			longest_field_name: int
+			longest_field_name_with_side_comment: int
 
 			for &field in d.fields {
 				field_len: int
@@ -1042,8 +1042,8 @@ gen :: proc(input: string, c: Config) {
 
 					field_len += len(vet_name(fn))
 				}
-				if field_len > longest_field_name {
-					longest_field_name = field_len
+				if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
+					longest_field_name_with_side_comment = field_len
 				}
 			}
 
@@ -1073,7 +1073,7 @@ gen :: proc(input: string, c: Config) {
 
 				if !field.comment_before {
 					// Padding between name and =
-					for _ in 0..<longest_field_name-names_len {
+					for _ in 0..<longest_field_name_with_side_comment-names_len {
 						strings.write_rune(&b, ' ')
 					}
 				}
@@ -1098,10 +1098,12 @@ gen :: proc(input: string, c: Config) {
 				})
 			}
 
-			longest_field: int
+			longest_field_with_side_comment: int
 
 			for &field in fields {
-				longest_field = max(len(field.field), longest_field)
+				if field.comment != "" && !field.comment_before {
+					longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
+				}
 			}
 
 			for &field, field_idx in fields {
@@ -1121,7 +1123,7 @@ gen :: proc(input: string, c: Config) {
 
 				if has_comment && !comment_before {
 					// Padding in front of comment
-					for _ in 0..<(longest_field - len(field.field)) {
+					for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
 						fp(f, " ")
 					}
 					
@@ -1252,11 +1254,11 @@ gen :: proc(input: string, c: Config) {
 				})
 			}
 
-			longest_member_name: int
+			longest_member_name_with_side_comment: int
 
 			for &m in members {
-				if len(m.member) > longest_member_name {
-					longest_member_name = len(m.member)
+				if m.comment != "" && !m.comment_before && len(m.member) > longest_member_name_with_side_comment {
+					longest_member_name_with_side_comment = len(m.member)
 				}
 			}
 
@@ -1276,7 +1278,7 @@ gen :: proc(input: string, c: Config) {
 				fp(f, ",")
 
 				if has_comment && !comment_before {
-					for _ in 0..<(longest_member_name - len(m.member)) {
+					for _ in 0..<(longest_member_name_with_side_comment - len(m.member)) {
 						// Padding in front of comment
 						fp(f, " ")
 					}
