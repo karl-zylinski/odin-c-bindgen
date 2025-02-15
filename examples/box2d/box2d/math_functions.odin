@@ -20,7 +20,7 @@ Vec2 :: struct {
 CosSin :: struct {
 	/// cosine and sine
 	cosine: f32,
-	sine:   f32,
+	sine: f32,
 }
 
 /// 2D rotation
