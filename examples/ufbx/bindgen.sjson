@@ -1,0 +1,34 @@
+inputs = [
+    "."
+]
+
+remove_type_prefix = "ufbx_"
+
+remove_function_prefix = "ufbx_"
+
+import_lib = "ufbx.lib"
+
+package_name = "ufbx"
+
+output_folder = "ufbx"
+
+force_ada_case_types = true
+
+type_overrides = {
+    "Vec2" = "[2]f32"
+    "Vec3" = "[3]f32"
+    "Vec4" = "[4]f32"
+    "Quat" = "quaternion128"
+}
+
+rename_types = {
+    "Prop_Flags" = "Prop_Flag"
+    "Transform_Flags" = "Transform_Flag"
+    "Baked_Key_Flags" = "Baked_Key_Flag"
+}
+
+bit_setify = {
+    "Prop_Flag" = "Prop_Flags"
+    "Transform_Flag" = "Transform_Flags"
+    "Baked_Key_Flag" = "Baked_Key_Flags"
+}

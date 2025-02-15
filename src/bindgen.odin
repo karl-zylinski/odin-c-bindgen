@@ -530,8 +530,6 @@ c_type_mapping := map[string]string {
 	"int32_t" = "i32",
 	"uint64_t" = "u64",
 	"int64_t" = "i64",
-	"bool" = "bool",
-	"void" = "void",
 	"uintptr_t" = "uintptr",
 	"ptrdiff_t" = "int",
 }
@@ -637,8 +635,15 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		transf_type = c_type_mapping[transf_type]
 	} else if is_libc_type(transf_type) {
 		transf_type = fmt.tprintf("libc.%v", transf_type)
-	} else if s.force_ada_case_types { 
-		transf_type = strings.to_ada_case(transf_type)
+	}
+
+	if s.force_ada_case_types {
+		ada := strings.to_ada_case(final_name(transf_type, s))
+		if ada in s.created_types {
+			transf_type = ada
+		}
+	} else {
+		transf_type = final_name(vet_name(transf_type), s)
 	}
 
 	if array_start != -1 {
@@ -661,9 +666,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		strings.write_string(&b, "^")
 	}
 
-	final_type := final_name(vet_name(transf_type), s)
-
-	strings.write_string(&b, final_type)
+	strings.write_string(&b, transf_type)
 
 	return strings.to_string(b)
 }
@@ -760,6 +763,7 @@ Gen_State :: struct {
 	created_symbols: map[string]struct{},
 	type_is_proc: map[string]struct{},
 	opaque_type_lookup: map[string]struct{},
+	created_types: map[string]struct{},
 	needs_import_c: bool,
 	needs_import_libc: bool,
 }
@@ -936,25 +940,75 @@ gen :: proc(input: string, c: Config) {
 		}
 	}
 
+	//
+	// Figure out all type names
+	//
+
+	for &du in s.decls {
+		switch &d in du {
+			case Struct:
+				name := d.name
+
+				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+					name = typedef
+					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				}
+
+				name = trim_prefix(name, s.remove_type_prefix)
+
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
+
+				d.name = final_name(vet_name(name), s)
+				add_to_set(&s.created_types, d.name)
+			case Function:
+			case Enum:
+				name := d.name
+
+				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+					name = typedef
+					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				}
+
+				name = trim_prefix(name, s.remove_type_prefix)
+
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
+
+				d.name = final_name(vet_name(name), s)
+				add_to_set(&s.created_types, d.name)
+			case Typedef:
+				name := d.name
+
+				if is_c_type(name) {
+					continue
+				}
+
+				name = trim_prefix(name, s.remove_type_prefix)
+				
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
+
+				name = final_name(name, s)
+				d.name = name
+				add_to_set(&s.created_types, d.name)
+
+		}
+	}
+
+	for _, b in s.bit_setify {
+		add_to_set(&s.created_types, b)
+	}
+
 	for &du in s.decls {
 		switch d in du {
 		case Struct:
 			output_comment(f, d.comment)
 
-			name := d.name
-
-			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-			}
-
-			name = trim_prefix(name, s.remove_type_prefix)
-
-			if s.force_ada_case_types {
-				name = strings.to_ada_case(name)
-			}
-
-			n := final_name(vet_name(name), s)
+			n := d.name
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
@@ -1083,21 +1137,8 @@ gen :: proc(input: string, c: Config) {
 
 			name := d.name
 
-			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-			}
-
-			name = trim_prefix(name, s.remove_type_prefix)
-
-			if s.force_ada_case_types {
-				name = strings.to_ada_case(name)
-			}
-
-			trimmed_name := final_name(vet_name(name), s)
-
 			// It has no name, turn it into a bunch of constants
-			if trimmed_name == "" {
+			if name == "" {
 				for &m in d.members {
 					fpf(f, "%v :: %v\n\n", trim_prefix(m.name, s.remove_type_prefix), m.value)
 				}	
@@ -1105,10 +1146,10 @@ gen :: proc(input: string, c: Config) {
 				break
 			}
 
-			fp(f, trimmed_name)
+			fp(f, name)
 			fp(f, " :: enum c.int {\n")
 
-			bit_set_name, bit_setify := s.bit_setify[trimmed_name]
+			bit_set_name, bit_setify := s.bit_setify[name]
 			bit_set_all_constant: string
 
 			overlap_length := 0
@@ -1249,7 +1290,7 @@ gen :: proc(input: string, c: Config) {
 			fp(f, "}\n\n")
 
 			if bit_setify {
-				fpf(f, "%v :: distinct bit_set[%v; c.int]\n\n", bit_set_name, trimmed_name)
+				fpf(f, "%v :: distinct bit_set[%v; c.int]\n\n", bit_set_name, name)
 
 				// In case there is a typedef for this in the code.
 				add_to_set(&s.created_symbols, bit_set_name)
@@ -1277,13 +1318,7 @@ gen :: proc(input: string, c: Config) {
 			// handled later. This makes all procs end up at bottom, after types.
 
 		case Typedef:
-			name := d.name
-
-			if is_c_type(name) {
-				continue
-			}
-
-			t := translate_type(s, name)
+			t := d.name
 
 			if t in s.opaque_type_lookup {
 				if d.pre_comment != "" {
@@ -1300,8 +1335,6 @@ gen :: proc(input: string, c: Config) {
 			if d.pre_comment != "" {
 				output_comment(f, d.pre_comment)
 			}
-
-			t = final_name(t, s)
 
 			fp(f, t)
 
