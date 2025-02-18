@@ -839,7 +839,7 @@ gen :: proc(input: string, c: Config) {
 
 	// We use the header source text to extract some comments.
 	source_data, source_data_ok := os.read_entire_file(input)
-	fmt.ensuref(source_data_ok, "Failed reading soruce file: %v", input)
+	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
