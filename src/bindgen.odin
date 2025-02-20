@@ -519,6 +519,7 @@ c_type_mapping := map[string]string {
 	"unsigned short" = "u16",
 	"unsigned char" = "u8",
 	"unsigned int" = "u32",
+	"unsigned long" = "c.ulong",
 	"Bool" = "bool",
 	"BOOL" = "bool",
 	"long" = "c.long",
@@ -839,7 +840,7 @@ gen :: proc(input: string, c: Config) {
 
 	// We use the header source text to extract some comments.
 	source_data, source_data_ok := os.read_entire_file(input)
-	fmt.ensuref(source_data_ok, "Failed reading soruce file: %v", input)
+	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
