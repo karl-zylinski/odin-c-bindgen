@@ -519,6 +519,7 @@ c_type_mapping := map[string]string {
 	"char" = "u8",
 	"unsigned short" = "u16",
 	"unsigned char" = "u8",
+	"void" = "rawptr",
 	"unsigned int" = "u32",
 	"unsigned long" = "c.ulong",
 	"Bool" = "bool",
