@@ -36,14 +36,14 @@ linejoin_t :: enum c.int {
 matrix_t :: [3][2]f64 // Transform matrix
 
 textrendering_t :: enum c.int {
-	FILL,                 // Fill text
-	STROKE,               // Stroke text
-	FILL_AND_STROKE,      // Fill then stroke text
-	INVISIBLE,            // Don't fill or stroke (invisible)
-	FILL_PATH,            // Fill text and add to path
-	STROKE_PATH,          // Stroke text and add to path
+	FILL,            // Fill text
+	STROKE,          // Stroke text
+	FILL_AND_STROKE, // Fill then stroke text
+	INVISIBLE,       // Don't fill or stroke (invisible)
+	FILL_PATH,       // Fill text and add to path
+	STROKE_PATH,     // Stroke text and add to path
 	FILL_AND_STROKE_PATH,
-	TEXT_PATH,            // Add text to path (invisible)
+	TEXT_PATH,       // Add text to path (invisible)
 }
 
 @(default_calling_convention="c", link_prefix="pdfio")

@@ -41,6 +41,11 @@ inputs = [
 	"input"
 ]
 
+// Files to ignore when processing files in the inputs folders
+ignore_inputs = [
+	// "file.h"
+]
+
 // Output folder: One .odin file per processed header
 output_folder = "my_lib"
 
@@ -106,9 +111,11 @@ opaque_types = [
 	// "Some_Type"
 ]
 
-// additional include path to send into clang. While generating the bindings
+// additional include paths to send into clang. While generating the bindings
 // clang will look into this path in search for included headers.
-clang_include_path = ""
+clang_include_paths = [
+	// "include"
+]
 
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false

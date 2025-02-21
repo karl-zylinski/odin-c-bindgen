@@ -120,9 +120,11 @@ opaque_types = [
 	// "Some_Type"
 ]
 
-// additional include path to send into clang. While generating the bindings
+// additional include paths to send into clang. While generating the bindings
 // clang will look into this path in search for included headers.
-clang_include_path = ""
+clang_include_paths = [
+	// "some_path"
+]
 
 // Writes the clang JSON ast dump for debug inspection
 debug_dump_json_ast = true
