@@ -22,6 +22,7 @@ import "core:encoding/json"
 import "core:strconv"
 import "core:unicode/utf8"
 import "core:unicode"
+import "core:slice"
 
 Struct_Field :: struct {
 	names: [dynamic]string,
@@ -733,6 +734,7 @@ fpfln :: fmt.fprintfln
 
 Config :: struct {
 	inputs: []string,
+	ignore_inputs: []string,
 	output_folder: string,
 	package_name: string,
 	required_prefix: string,
@@ -741,7 +743,7 @@ Config :: struct {
 	remove_function_prefix: string,
 	import_lib: string,
 	imports_file: string,
-	clang_include_path: string,
+	clang_include_path: []string,
 	force_ada_case_types: bool,
 	debug_dump_json_ast: bool,
 
@@ -796,8 +798,10 @@ gen :: proc(input: string, c: Config) {
 		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
 	}
 
-	if c.clang_include_path != "" {
-		append(&command, fmt.tprintf("-I%v", c.clang_include_path))
+	if len(c.clang_include_path) != 0 {
+		for include in c.clang_include_path {
+			append(&command, fmt.tprintf("-I%v", include))
+		}
 	}
 
 	process_desc := os2.Process_Desc {
@@ -1549,18 +1553,25 @@ main :: proc() {
 	context.temp_allocator = permanent_allocator*/
 
 	ensure(len(os.args) == 2, "Usage: bindgen directory")
-	input_directory := os.args[1]
+	input_arg := os.args[1]
 
-	if !os.is_dir(input_directory) {
-		fmt.panicf("%v is not a directory", input_directory)
+	config_filename := "bindgen.sjson"
+	config_dir: string
+	if strings.has_suffix(input_arg, ".sjson") && os.is_file(input_arg) {
+		config_filename = filepath.base(input_arg)
+		config_dir = filepath.dir(input_arg, context.temp_allocator)
+	} else if os.is_dir(input_arg) {
+		config_dir = input_arg
+	} else {
+        fmt.panicf("%v is not a directory nor a valid config file", input_arg)
 	}
 
-	os.set_current_directory(input_directory)
-
-	config: Config
-	config_filename := "bindgen.sjson"
+	if err := os.set_current_directory(config_dir); err != nil {
+		fmt.panicf("failed to set current working directory: %v", err)
+	}
 
 	// Config file is optional
+	config: Config
 	if os.is_file(config_filename) {
 		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
 			config_err := json.unmarshal(config_data, &config, .SJSON)
@@ -1579,7 +1590,7 @@ main :: proc() {
 		// We need the actual name of the directory for the package name and
 		// output folder. Since args[1] can be `.` we can't just use that. So
 		// we open the directory and stat it to get the name.
-		if input_dir, input_dir_err := os2.open(input_directory); input_dir_err == nil {
+		if input_dir, input_dir_err := os2.open(input_arg); input_dir_err == nil {
 			if stat, stat_err := input_dir.fstat(input_dir, context.allocator); stat_err == nil {
 				config.package_name = stat.name
 				config.output_folder = stat.name
@@ -1601,7 +1612,7 @@ main :: proc() {
 			fmt.ensuref(iter_err == nil, "Failed creating directory iterator for %v", input_folder)
 
 			for f in os2.read_directory_iterator(&iter) {
-				if f.type != .Regular {
+				if f.type != .Regular || slice.contains(config.ignore_inputs, f.name) {
 					continue
 				}
 
