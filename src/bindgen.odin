@@ -519,7 +519,6 @@ c_type_mapping := map[string]string {
 	"char" = "u8",
 	"unsigned short" = "u16",
 	"unsigned char" = "u8",
-	"void" = "rawptr",
 	"unsigned int" = "u32",
 	"unsigned long" = "c.ulong",
 	"Bool" = "bool",
@@ -585,6 +584,9 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 
 	if t == "void *" || t == "const void *" {
 		return "rawptr"
+	}
+	if t == "void **" || t == "const void **" {
+		return "^rawptr"
 	}
 
 	if t == "const char *const *" {
