@@ -93,6 +93,10 @@ get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: b
 		s.needs_import_libc = true
 	}
 
+	if is_posix_type(t) {
+		s.needs_import_posix = true
+	}
+
 	return t, true
 }
 
@@ -507,6 +511,25 @@ is_libc_type :: proc(t: string) -> bool{
 	return false
 }
 
+//Types that would require "import 'core:sys/posix'"
+is_posix_type :: proc(t:string) -> bool {
+	base_type := strings.trim_suffix(t,"*")
+	base_type = strings.trim_space(base_type)
+	switch t {
+		case "dev_t" : return true
+		case "blkcnt_t": return true
+		case "blksize_t" : return true
+		case "clock_t" : return true
+		case "clockid_t": return true
+		case "fsblkcnt_t" : return true
+		case "off_t" : return true
+		case "gid_t": return true
+		case "pid_t":  return true
+		case "timespec": return true
+	}
+	return false
+}
+
 // This is probably missing some built-in C types (or common types that come
 // from stdint.h etc). Please add and send in a Pull Request if you needed to
 // add anything here!
@@ -638,6 +661,9 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	} else if is_libc_type(transf_type) {
 		transf_type = fmt.tprintf("libc.%v", transf_type)
 	}
+	else if is_posix_type(transf_type) {
+		transf_type = fmt.tprintf("posix.%v",transf_type)
+	}
 
 	if s.force_ada_case_types {
 		ada := strings.to_ada_case(final_name(transf_type, s))
@@ -711,6 +737,7 @@ VET_NAMES :: [?]string {
 	// Because we import these two
 	"_c",
 	"_libc",
+	"_posix"
 }
 
 vet_name :: proc(s: string) -> string {
@@ -769,6 +796,7 @@ Gen_State :: struct {
 	created_types: map[string]struct{},
 	needs_import_c: bool,
 	needs_import_libc: bool,
+	needs_import_posix:bool
 }
 
 gen :: proc(input: string, c: Config) {
@@ -829,7 +857,7 @@ gen :: proc(input: string, c: Config) {
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)
 	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
-
+	
 	if s.debug_dump_json_ast {
 		os.write_entire_file(fmt.tprintf("%v-debug_dump.json", output_filename), sout)
 	}
@@ -916,6 +944,10 @@ gen :: proc(input: string, c: Config) {
 		fpln(f, `import "core:c/libc"`)
 	}
 
+	if(s.needs_import_posix) {
+		fpln(f,`import "core:sys/posix"`)
+	}
+
 	fp(f, "\n")
 
 	if s.needs_import_c {
@@ -923,6 +955,9 @@ gen :: proc(input: string, c: Config) {
 	}
 	if s.needs_import_libc {
 		fpln(f, "_ :: libc")
+	}
+	if s.needs_import_posix {
+		fpln(f,"_ :: posix")
 	}
 
 	fp(f, "\n")
