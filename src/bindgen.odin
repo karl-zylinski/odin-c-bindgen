@@ -608,6 +608,9 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	if t == "void *" || t == "const void *" {
 		return "rawptr"
 	}
+	if t == "void **" || t == "const void **" {
+		return "^rawptr"
+	}
 
 	if t == "const char *const *" {
 		return "[^]cstring"
