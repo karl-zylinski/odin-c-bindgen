@@ -23,6 +23,7 @@ import "core:strconv"
 import "core:unicode/utf8"
 import "core:unicode"
 import "core:slice"
+import vmem "core:mem/virtual"
 
 Struct_Field :: struct {
 	names: [dynamic]string,
@@ -805,11 +806,10 @@ gen :: proc(input: string, c: Config) {
 	// Everything allocated within this call to `gen` is allocated on a single
 	// arena, which is destroyed when this procedure ends.
 
-	// Disabled due to bug in virtual growing allocator: https://github.com/odin-lang/Odin/issues/4834
-	/*gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
-	context.temp_allocator = vmem.arena_allocator(&gen_arena)*/
+	context.temp_allocator = vmem.arena_allocator(&gen_arena)
 
 	s := Gen_State {
 		config = c, 
@@ -1582,12 +1582,10 @@ gen :: proc(input: string, c: Config) {
 }
 
 main :: proc() {
-	// Disabled due to bug in virtual growing allocator: https://github.com/odin-lang/Odin/issues/4834
-
-	/*permanent_arena: vmem.Arena
+	permanent_arena: vmem.Arena
 	permanent_allocator := vmem.arena_allocator(&permanent_arena)
 	context.allocator = permanent_allocator
-	context.temp_allocator = permanent_allocator*/
+	context.temp_allocator = permanent_allocator
 
 	ensure(len(os.args) == 2, "Usage: bindgen directory")
 	input_arg := os.args[1]
@@ -1603,12 +1601,23 @@ main :: proc() {
         fmt.panicf("%v is not a directory nor a valid config file", input_arg)
 	}
 
+	// Config file is optional
+	config: Config
+
+	default_output_folder := "output"
+	default_package_name := "pkg"
+
+	if input_dir, input_dir_err := os2.open(input_arg); input_dir_err == nil {
+		if stat, stat_err := input_dir.fstat(input_dir, context.allocator); stat_err == nil {
+			default_output_folder = stat.name
+			default_package_name = stat.name
+		}
+	}
+
 	if err := os.set_current_directory(config_dir); err != nil {
 		fmt.panicf("failed to set current working directory: %v", err)
 	}
 
-	// Config file is optional
-	config: Config
 	if os.is_file(config_filename) {
 		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
 			config_err := json.unmarshal(config_data, &config, .SJSON)
@@ -1620,19 +1629,14 @@ main :: proc() {
 		config.inputs = {
 			".",
 		}
+	}
 
-		config.output_folder = "output"
-		config.package_name = "pkg"
+	if config.output_folder == "" {
+		config.output_folder = default_output_folder
+	}
 
-		// We need the actual name of the directory for the package name and
-		// output folder. Since args[1] can be `.` we can't just use that. So
-		// we open the directory and stat it to get the name.
-		if input_dir, input_dir_err := os2.open(input_arg); input_dir_err == nil {
-			if stat, stat_err := input_dir.fstat(input_dir, context.allocator); stat_err == nil {
-				config.package_name = stat.name
-				config.output_folder = stat.name
-			}
-		}
+	if config.package_name == "" {
+		config.package_name = default_package_name
 	}
 
 	if config.remove_prefix != "" {
