@@ -516,16 +516,16 @@ is_posix_type :: proc(t:string) -> bool {
 	base_type := strings.trim_suffix(t,"*")
 	base_type = strings.trim_space(base_type)
 	switch t {
-		case "dev_t" : return true
-		case "blkcnt_t": return true
-		case "blksize_t" : return true
-		case "clock_t" : return true
-		case "clockid_t": return true
-		case "fsblkcnt_t" : return true
-		case "off_t" : return true
-		case "gid_t": return true
-		case "pid_t":  return true
-		case "timespec": return true
+	case "dev_t" : return true
+	case "blkcnt_t": return true
+	case "blksize_t" : return true
+	case "clock_t" : return true
+	case "clockid_t": return true
+	case "fsblkcnt_t" : return true
+	case "off_t" : return true
+	case "gid_t": return true
+	case "pid_t":  return true
+	case "timespec": return true
 	}
 	return false
 }
@@ -663,8 +663,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		transf_type = c_type_mapping[transf_type]
 	} else if is_libc_type(transf_type) {
 		transf_type = fmt.tprintf("libc.%v", transf_type)
-	}
-	else if is_posix_type(transf_type) {
+	} else if is_posix_type(transf_type) {
 		transf_type = fmt.tprintf("posix.%v",transf_type)
 	}
 
@@ -740,7 +739,7 @@ VET_NAMES :: [?]string {
 	// Because we import these two
 	"_c",
 	"_libc",
-	"_posix"
+	"_posix",
 }
 
 vet_name :: proc(s: string) -> string {
@@ -799,7 +798,7 @@ Gen_State :: struct {
 	created_types: map[string]struct{},
 	needs_import_c: bool,
 	needs_import_libc: bool,
-	needs_import_posix:bool
+	needs_import_posix: bool,
 }
 
 gen :: proc(input: string, c: Config) {
@@ -1646,8 +1645,7 @@ main :: proc() {
 		if os.is_dir(i) {
 			input_folder, input_folder_err := os2.open(i)
 			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
-			iter, iter_err := os2.read_directory_iterator_create(input_folder)	
-			fmt.ensuref(iter_err == nil, "Failed creating directory iterator for %v", input_folder)
+			iter := os2.read_directory_iterator_create(input_folder)	
 
 			for f in os2.read_directory_iterator(&iter) {
 				if f.type != .Regular || slice.contains(config.ignore_inputs, f.name) {
