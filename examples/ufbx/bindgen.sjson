@@ -36,6 +36,3 @@ bit_setify = {
     "Transform_Flag" = "Transform_Flags"
     "Baked_Key_Flag" = "Baked_Key_Flags"
 }
-
-
-debug_dump_json_ast = true
