@@ -51,7 +51,7 @@ Rotation_Order :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_ROTATION_ORDER_COUNT :: 7
+ROTATION_ORDER_COUNT :: 7
 
 // Explicit translation+rotation+scale transformation.
 // NOTE: Rotation is a quaternion, not Euler angles!
@@ -130,7 +130,7 @@ Dom_Value_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_DOM_VALUE_TYPE_COUNT :: 9
+DOM_VALUE_TYPE_COUNT :: 9
 
 Dom_Value :: struct {
 	type:        Dom_Value_Type,
@@ -180,7 +180,7 @@ Prop_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_PROP_TYPE_COUNT :: 16
+PROP_TYPE_COUNT :: 16
 
 // Property flags: Advanced information about properties, not usually needed.
 Prop_Flag :: enum c.int {
@@ -577,7 +577,7 @@ Element_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_ELEMENT_TYPE_COUNT :: 42
+ELEMENT_TYPE_COUNT :: 42
 
 // Connection between two elements.
 // Source and destination are somewhat arbitrary but the destination is
@@ -664,7 +664,7 @@ Inherit_Mode :: enum c.int {
 	//   child.node_to_world = parent.unscaled_node_to_world * t;
 }
 
-UFBX_INHERIT_MODE_COUNT :: 3
+INHERIT_MODE_COUNT :: 3
 
 // Axis used to mirror transformations for handedness conversion.
 Mirror_Axis :: enum c.int {
@@ -675,7 +675,7 @@ Mirror_Axis :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_MIRROR_AXIS_COUNT :: 4
+MIRROR_AXIS_COUNT :: 4
 
 // Nodes form the scene transformation hierarchy and can contain attached
 // elements such as meshes or lights. In normal cases a single `ufbx_node`
@@ -1032,7 +1032,7 @@ Subdivision_Display_Mode :: enum c.int {
 	MODE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_SUBDIVISION_DISPLAY_MODE_COUNT :: 4
+SUBDIVISION_DISPLAY_MODE_COUNT :: 4
 
 Subdivision_Boundary :: enum c.int {
 	DEFAULT,
@@ -1052,7 +1052,7 @@ Subdivision_Boundary :: enum c.int {
 	FORCE_32BIT = 2147483647, // OpenSubdiv: `FVAR_LINEAR_ALL`
 }
 
-UFBX_SUBDIVISION_BOUNDARY_COUNT :: 6
+SUBDIVISION_BOUNDARY_COUNT :: 6
 
 // Polygonal mesh geometry.
 //
@@ -1235,7 +1235,7 @@ Light_Type :: enum c.int {
 	// TODO: How does this work
 }
 
-UFBX_LIGHT_TYPE_COUNT :: 5
+LIGHT_TYPE_COUNT :: 5
 
 // How fast does the light intensity decay at a distance
 Light_Decay :: enum c.int {
@@ -1246,7 +1246,7 @@ Light_Decay :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_LIGHT_DECAY_COUNT :: 4
+LIGHT_DECAY_COUNT :: 4
 
 Light_Area_Shape :: enum c.int {
 	RECTANGLE,
@@ -1254,7 +1254,7 @@ Light_Area_Shape :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_LIGHT_AREA_SHAPE_COUNT :: 2
+LIGHT_AREA_SHAPE_COUNT :: 2
 
 // Light source attached to a `ufbx_node`
 Light :: struct {
@@ -1297,7 +1297,7 @@ Projection_Mode :: enum c.int {
 	FORCE_32BIT = 2147483647, // Orthographic projection.
 }
 
-UFBX_PROJECTION_MODE_COUNT :: 2
+PROJECTION_MODE_COUNT :: 2
 
 // Method of specifying the rendering resolution from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1319,7 +1319,7 @@ Aspect_Mode :: enum c.int {
 	FORCE_32BIT = 2147483647, // < `"AspectHeight"` is pixels, `"AspectWidth"` is relative to height
 }
 
-UFBX_ASPECT_MODE_COUNT :: 5
+ASPECT_MODE_COUNT :: 5
 
 // Method of specifying the field of view from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1338,7 +1338,7 @@ Aperture_Mode :: enum c.int {
 	FORCE_32BIT = 2147483647, // Compute the field of view from the render gate size and focal length
 }
 
-UFBX_APERTURE_MODE_COUNT :: 4
+APERTURE_MODE_COUNT :: 4
 
 // Method of specifying the render gate size from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1365,7 +1365,7 @@ Gate_Fit :: enum c.int {
 	// TODO: Does this differ from `UFBX_GATE_FIT_NONE`?
 }
 
-UFBX_GATE_FIT_COUNT :: 6
+GATE_FIT_COUNT :: 6
 
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1385,7 +1385,7 @@ Aperture_Format :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_APERTURE_FORMAT_COUNT :: 12
+APERTURE_FORMAT_COUNT :: 12
 
 Coordinate_Axis :: enum c.int {
 	POSITIVE_X,
@@ -1398,7 +1398,7 @@ Coordinate_Axis :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_COORDINATE_AXIS_COUNT :: 7
+COORDINATE_AXIS_COUNT :: 7
 
 // Coordinate axes the scene is represented in.
 // NOTE: `front` is the _opposite_ from forward!
@@ -1558,7 +1558,7 @@ Nurbs_Topology :: enum c.int {
 	FORCE_32BIT = 2147483647, // Repeats the first control point after the end.
 }
 
-UFBX_NURBS_TOPOLOGY_COUNT :: 3
+NURBS_TOPOLOGY_COUNT :: 3
 
 // NURBS basis functions for an axis
 Nurbs_Basis :: struct {
@@ -1728,7 +1728,7 @@ Marker_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_MARKER_TYPE_COUNT :: 3
+MARKER_TYPE_COUNT :: 3
 
 // Tracking marker for effectors
 Marker :: struct {
@@ -1755,7 +1755,7 @@ Lod_Display :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_LOD_DISPLAY_COUNT :: 3
+LOD_DISPLAY_COUNT :: 3
 
 // Single LOD level within an LOD group.
 // Specifies properties of the Nth child of the _node_ containing the LOD group.
@@ -1826,7 +1826,7 @@ Skinning_Method :: enum c.int {
 	// or in `ufbx_skin_deformer.dq_vertices/dq_weights` (indexed by vertex).
 }
 
-UFBX_SKINNING_METHOD_COUNT :: 4
+SKINNING_METHOD_COUNT :: 4
 
 // Skin weight information for a single mesh vertex
 Skin_Vertex :: struct {
@@ -2006,7 +2006,7 @@ Cache_File_Format :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_CACHE_FILE_FORMAT_COUNT :: 3
+CACHE_FILE_FORMAT_COUNT :: 3
 
 Cache_Data_Format :: enum c.int {
 	UNKNOWN,     // < Unknown data format
@@ -2017,7 +2017,7 @@ Cache_Data_Format :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_CACHE_DATA_FORMAT_COUNT :: 5
+CACHE_DATA_FORMAT_COUNT :: 5
 
 Cache_Data_Encoding :: enum c.int {
 	UNKNOWN,       // < Unknown data encoding
@@ -2026,7 +2026,7 @@ Cache_Data_Encoding :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_CACHE_DATA_ENCODING_COUNT :: 3
+CACHE_DATA_ENCODING_COUNT :: 3
 
 // Known interpretations of geometry cache data.
 Cache_Interpretation :: enum c.int {
@@ -2045,7 +2045,7 @@ Cache_Interpretation :: enum c.int {
 	FORCE_32BIT = 2147483647, // Vertex normals.
 }
 
-UFBX_CACHE_INTERPRETATION_COUNT :: 4
+CACHE_INTERPRETATION_COUNT :: 4
 
 Cache_Frame :: struct {
 	// Name of the channel this frame belongs to.
@@ -2278,7 +2278,7 @@ Shader_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647, // Wavefront .mtl format shader (used by .obj files)
 }
 
-UFBX_SHADER_TYPE_COUNT :: 12
+SHADER_TYPE_COUNT :: 12
 
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum c.int {
@@ -2305,7 +2305,7 @@ Material_Fbx_Map :: enum c.int {
 	MAP_FORCE_32BIT = 2147483647,
 }
 
-UFBX_MATERIAL_FBX_MAP_COUNT :: 20
+MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
 Material_Pbr_Map :: enum c.int {
@@ -2367,7 +2367,7 @@ Material_Pbr_Map :: enum c.int {
 	MAP_FORCE_32BIT = 2147483647,
 }
 
-UFBX_MATERIAL_PBR_MAP_COUNT :: 55
+MATERIAL_PBR_MAP_COUNT :: 55
 
 // Known material features
 Material_Feature :: enum c.int {
@@ -2397,7 +2397,7 @@ Material_Feature :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_MATERIAL_FEATURE_COUNT :: 23
+MATERIAL_FEATURE_COUNT :: 23
 
 Material_Fbx_Maps :: struct {
 	using _: struct #raw_union {
@@ -2576,7 +2576,7 @@ Texture_Type :: enum c.int {
 	// Use `ufbx_texture.shader` for more information.
 }
 
-UFBX_TEXTURE_TYPE_COUNT :: 4
+TEXTURE_TYPE_COUNT :: 4
 
 // Blend modes to combine layered textures with, compatible with common blend
 // mode definitions in many art programs. Simpler blend modes have equations
@@ -2617,7 +2617,7 @@ Blend_Mode :: enum c.int {
 	MODE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_BLEND_MODE_COUNT :: 31
+BLEND_MODE_COUNT :: 31
 
 // Blend modes to combine layered textures with, compatible with common blend
 Wrap_Mode :: enum c.int {
@@ -2626,7 +2626,7 @@ Wrap_Mode :: enum c.int {
 	MODE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_WRAP_MODE_COUNT :: 2
+WRAP_MODE_COUNT :: 2
 
 // Single layer in a layered texture
 Texture_Layer :: struct {
@@ -2655,7 +2655,7 @@ Shader_Texture_Type :: enum c.int {
 	// https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
 }
 
-UFBX_SHADER_TEXTURE_TYPE_COUNT :: 3
+SHADER_TEXTURE_TYPE_COUNT :: 3
 
 // Input to a shader texture, see `ufbx_shader_texture`.
 Shader_Texture_Input :: struct {
@@ -3065,7 +3065,7 @@ Interpolation :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_INTERPOLATION_COUNT :: 4
+INTERPOLATION_COUNT :: 4
 
 // Tangent vector at a keyframe, may be split into left/right
 Tangent :: struct {
@@ -3198,7 +3198,7 @@ Constraint_Type :: enum c.int {
 	// `targets` optionally contains a list of pole targets!
 }
 
-UFBX_CONSTRAINT_TYPE_COUNT :: 7
+CONSTRAINT_TYPE_COUNT :: 7
 
 // Target to follow with a constraint
 Constraint_Target :: struct {
@@ -3222,7 +3222,7 @@ Constraint_Aim_Up_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
+CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
 
 // Method to determine the up vector in aim constraints
 Constraint_Ik_Pole_Type :: enum c.int {
@@ -3231,7 +3231,7 @@ Constraint_Ik_Pole_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_CONSTRAINT_IK_POLE_TYPE_COUNT :: 2
+CONSTRAINT_IK_POLE_TYPE_COUNT :: 2
 
 Constraint :: struct {
 	using _: struct #raw_union {
@@ -3406,7 +3406,7 @@ Exporter :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_EXPORTER_COUNT :: 5
+EXPORTER_COUNT :: 5
 
 Application :: struct {
 	vendor:  String,
@@ -3422,7 +3422,7 @@ File_Format :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_FILE_FORMAT_COUNT :: 4
+FILE_FORMAT_COUNT :: 4
 
 Warning_Type :: enum c.int {
 	// Missing external file file (for example .mtl for Wavefront .obj file or a
@@ -3476,7 +3476,7 @@ Warning_Type :: enum c.int {
 	// See `ufbx_warning.count` for how many times they happened.
 }
 
-UFBX_WARNING_TYPE_COUNT :: 13
+WARNING_TYPE_COUNT :: 13
 
 // Warning about a non-fatal issue in the file.
 // Often contains information about issues that ufbx has corrected about the
@@ -3507,7 +3507,7 @@ Thumbnail_Format :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_THUMBNAIL_FORMAT_COUNT :: 3
+THUMBNAIL_FORMAT_COUNT :: 3
 
 // Specify how unit / coordinate system conversion should be performed.
 // Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
@@ -3532,7 +3532,7 @@ Space_Conversion :: enum c.int {
 	// applies scaling to geometry as well.
 }
 
-UFBX_SPACE_CONVERSION_COUNT :: 3
+SPACE_CONVERSION_COUNT :: 3
 
 // Embedded thumbnail in the file, valid if the dimensions are non-zero.
 Thumbnail :: struct {
@@ -3652,7 +3652,7 @@ Time_Mode :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_TIME_MODE_COUNT :: 18
+TIME_MODE_COUNT :: 18
 
 Time_Protocol :: enum c.int {
 	SMPTE,
@@ -3661,7 +3661,7 @@ Time_Protocol :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_TIME_PROTOCOL_COUNT :: 3
+TIME_PROTOCOL_COUNT :: 3
 
 Snap_Mode :: enum c.int {
 	NONE,
@@ -3671,7 +3671,7 @@ Snap_Mode :: enum c.int {
 	FORCE_32BIT = 2147483647,
 }
 
-UFBX_SNAP_MODE_COUNT :: 4
+SNAP_MODE_COUNT :: 4
 
 // Global settings: Axes and time/unit scales
 Scene_Settings :: struct {
@@ -3924,7 +3924,7 @@ Open_File_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-UFBX_OPEN_FILE_TYPE_COUNT :: 3
+OPEN_FILE_TYPE_COUNT :: 3
 
 Open_File_Context :: uintptr
 
@@ -4081,7 +4081,7 @@ Error_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647, // Duplicated override property in `ufbx_create_anim()`
 }
 
-UFBX_ERROR_TYPE_COUNT :: 23
+ERROR_TYPE_COUNT :: 23
 
 // Error description with detailed stack trace
 // HINT: You can use `ufbx_format_error()` for formatting the error
@@ -4195,7 +4195,7 @@ Index_Error_Handling :: enum c.int {
 	// `ufbx_get_vertex_TYPE()` memory-unsafe to use.
 }
 
-UFBX_INDEX_ERROR_HANDLING_COUNT :: 4
+INDEX_ERROR_HANDLING_COUNT :: 4
 
 Unicode_Error_Handling :: enum c.int {
 	// Replace errors with U+FFFD "Replacement Character"
@@ -4222,7 +4222,7 @@ Unicode_Error_Handling :: enum c.int {
 	// UNSAFE: Breaks API guarantee that `ufbx_string` is UTF-8 encoded.
 }
 
-UFBX_UNICODE_ERROR_HANDLING_COUNT :: 6
+UNICODE_ERROR_HANDLING_COUNT :: 6
 
 // How to handle FBX node geometry transforms.
 // FBX nodes can have "geometry transforms" that affect only the attached meshes,
@@ -4255,7 +4255,7 @@ Geometry_Transform_Handling :: enum c.int {
 	// NOTE: This will not work correctly for instanced geometry.
 }
 
-UFBX_GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
+GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
 
 // How to handle FBX transform inherit modes.
 Inherit_Mode_Handling :: enum c.int {
@@ -4290,7 +4290,7 @@ Inherit_Mode_Handling :: enum c.int {
 	// results from importers/programs that don't support inherit modes.
 }
 
-UFBX_INHERIT_MODE_HANDLING_COUNT :: 5
+INHERIT_MODE_HANDLING_COUNT :: 5
 
 // How to handle FBX transform pivots.
 Pivot_Handling :: enum c.int {
@@ -4308,7 +4308,7 @@ Pivot_Handling :: enum c.int {
 	// to interpret these in a standard scene graph.
 }
 
-UFBX_PIVOT_HANDLING_COUNT :: 2
+PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum c.int {
 	// This keyframe represents a constant step from the left side
@@ -4859,7 +4859,7 @@ Bake_Step_Handling :: enum c.int {
 	ufbx_bake_step_handling_FORCE_32BIT = 2147483647, // Treat all stepped tangents as linearly interpolated.
 }
 
-UFBX_BAKE_STEP_HANDLING_COUNT :: 5
+BAKE_STEP_HANDLING_COUNT :: 5
 
 Bake_Opts :: struct {
 	_begin_zero:      u32,
