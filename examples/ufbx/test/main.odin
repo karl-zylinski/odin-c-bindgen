@@ -10,17 +10,19 @@ main :: proc() {
 	scene := ufbx.load_file("thing.fbx", &opts, &error)
 	fmt.ensuref(scene != nil, "Failed to load %s", error.description.data)
 
-	// Does not yet work because scene is missing an anonymous union, due to
-	// a missing feature in bindgen (hopefully coming soon).
-	/*for i in 0..<scene.nodes.count {
-		ufbx_node *node = scene->nodes.data[i];
-		if (node->is_root) continue;
+	for i in 0..<scene.nodes.count {
+		node := scene.nodes.data[i]
 
-		printf("Object: %s\n", node->name.data);
-		if (node->mesh) {
-			printf("-> mesh with %zu faces\n", node->mesh->faces.count);
+		if node.is_root {
+			continue
 		}
-	}*/
+
+		fmt.printfln("Object: %s", node.name.data)
+
+		if node.mesh != nil {
+			fmt.printfln("-> mesh with %v faces", node.mesh.faces.count);
+		}
+	}
 	
 	ufbx.free_scene(scene)
 }

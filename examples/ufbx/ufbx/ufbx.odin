@@ -64,6 +64,16 @@ Transform :: struct {
 // 4x3 matrix encoding an affine transformation.
 // `cols[0..2]` are the X/Y/Z basis vectors, `cols[3]` is the translation
 Matrix :: struct {
+	using _: struct #raw_union {
+		using _: struct {
+			m00, m10, m20: Real,
+			m01, m11, m21: Real,
+			m02, m12, m22: Real,
+			m03, m13, m23: Real,
+		},
+		cols: [4]Vec3,
+		v:    [12]Real,
+	},
 }
 
 Void_List :: struct {
@@ -281,6 +291,13 @@ Prop :: struct {
 	value_str:     String,
 	value_blob:    Blob,
 	value_int:     i64,
+	using _: struct #raw_union {
+		value_real_arr: [4]Real,
+		value_real:     Real,
+		value_vec2:     Vec2,
+		value_vec3:     Vec3,
+		value_vec4:     Vec4,
+	},
 }
 
 Prop_List :: struct {
@@ -308,7 +325,7 @@ Unknown_List :: struct {
 }
 
 Node_List :: struct {
-	data:  ^^Node,
+	data:  [^]^Node,
 	count: uint,
 }
 
@@ -597,6 +614,17 @@ Element :: struct {
 
 // -- Unknown
 Unknown :: struct {
+	// Shared "base-class" header, see `ufbx_element`.
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// FBX format specific type information.
 	// In ASCII FBX format:
 	//   super_type: ID, "type::name", "sub_type" { ... }
@@ -653,6 +681,16 @@ UFBX_MIRROR_AXIS_COUNT :: 4
 // elements such as meshes or lights. In normal cases a single `ufbx_node`
 // contains only a single attached element, so using `type/mesh/...` is safe.
 Node :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Parent node containing this one if not root.
 	//
 	// Always non-`NULL` for non-root nodes unless
@@ -891,6 +929,12 @@ Color_Set_List :: struct {
 
 // Edge between two _indices_ in a mesh
 Edge :: struct {
+	using _: struct #raw_union {
+		using _: struct {
+			a, b: u32,
+		},
+		indices: [2]u32,
+	},
 }
 
 Edge_List :: struct {
@@ -1058,6 +1102,16 @@ UFBX_SUBDIVISION_BOUNDARY_COUNT :: 6
 //   0 0 0 1 1 1  vertex_normal.indices[vertex_first_index[vertex]]
 //   ^ ^ ^ v v v  vertex_normal.data[vertex_normal.indices[vertex_first_index[vertex]]]
 Mesh :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 	num_vertices:              uint,        // < Number of logical "vertex" points
 	num_indices:               uint,        // < Number of combiend vertex/attribute tuples
 	num_faces:                 uint,        // < Number of faces (polygons) in the mesh
@@ -1204,6 +1258,17 @@ UFBX_LIGHT_AREA_SHAPE_COUNT :: 2
 
 // Light source attached to a `ufbx_node`
 Light :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Color and intensity of the light, usually you want to use `color * intensity`
 	// NOTE: `intensity` is 0.01x of the property `"Intensity"` as that matches
 	// matches values in DCC programs before exporting.
@@ -1345,6 +1410,17 @@ Coordinate_Axes :: struct {
 
 // Camera attached to a `ufbx_node`
 Camera :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Projection mode (perspective/orthographic).
 	projection_mode: Projection_Mode,
 
@@ -1404,6 +1480,17 @@ Camera :: struct {
 // Bone attached to a `ufbx_node`, provides the logical length of the bone
 // but most interesting information is directly in `ufbx_node`.
 Bone :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Visual radius of the bone
 	radius: Real,
 
@@ -1416,6 +1503,16 @@ Bone :: struct {
 
 // Empty/NULL/locator connected to a node, actual details in `ufbx_node`
 Empty :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 }
 
 // Segment of a `ufbx_line_curve`, indices refer to `ufbx_line_curve.point_indices[]`
@@ -1430,6 +1527,16 @@ Line_Segment_List :: struct {
 }
 
 Line_Curve :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 	color:          Vec3,
 	control_points: Vec3_List,   // < List of possible values the line passes through
 	point_indices:  Uint32_List, // < Indices to `control_points[]` the line goes through
@@ -1488,6 +1595,17 @@ Nurbs_Basis :: struct {
 }
 
 Nurbs_Curve :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Basis in the U axis
 	basis: Nurbs_Basis,
 
@@ -1498,6 +1616,17 @@ Nurbs_Curve :: struct {
 }
 
 Nurbs_Surface :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Basis in the U/V axes
 	basis_u: Nurbs_Basis,
 	basis_v:              Nurbs_Basis,
@@ -1525,21 +1654,71 @@ Nurbs_Surface :: struct {
 }
 
 Nurbs_Trim_Surface :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 }
 
 Nurbs_Trim_Boundary :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 }
 
 // -- Node attributes (advanced)
 Procedural_Geometry :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 }
 
 Stereo_Camera :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 	left:  ^Camera,
 	right: ^Camera,
 }
 
 Camera_Switcher :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
 }
 
 Marker_Type :: enum c.int {
@@ -1553,6 +1732,17 @@ UFBX_MARKER_TYPE_COUNT :: 3
 
 // Tracking marker for effectors
 Marker :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// Type of the marker
 	type: Marker_Type,
 }
@@ -1589,6 +1779,17 @@ Lod_Level_List :: struct {
 // Group of LOD (Level of Detail) levels for an object.
 // The actual LOD models are defined in the parent `ufbx_node.children`.
 Lod_Group :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+			instances:  Node_List,
+		},
+	},
+
 	// If set to `true`, `ufbx_lod_level.distance` represents a screen size percentage.
 	relative_distances: bool,
 
@@ -1657,6 +1858,15 @@ Skin_Weight_List :: struct {
 // and a mesh. Each bone is represented by a `ufbx_skin_cluster` that contains
 // the binding matrix and a `ufbx_node *bone` that has the current transformation.
 Skin_Deformer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	skinning_method: Skinning_Method,
 
 	// Clusters (bones) in the skin
@@ -1679,6 +1889,16 @@ Skin_Deformer :: struct {
 
 // Cluster of vertices bound to a single bone.
 Skin_Cluster :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// The bone node the cluster is attached to
 	// NOTE: Always valid if found from `ufbx_skin_deformer.clusters[]` unless
 	// `ufbx_load_opts.connect_broken_elements` is `true`.
@@ -1707,6 +1927,16 @@ Skin_Cluster :: struct {
 // Blend shape deformer can contain multiple channels (think of sliders between morphs)
 // that may optionally have in-between keyframes.
 Blend_Deformer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Independent morph targets of the deformer.
 	channels: Blend_Channel_List,
 }
@@ -1731,6 +1961,16 @@ Blend_Keyframe_List :: struct {
 // Blend channel consists of multiple morph-key targets that are interpolated.
 // In simple cases there will be only one keyframe that is the target shape.
 Blend_Channel :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Current weight of the channel
 	weight: Real,
 
@@ -1744,6 +1984,15 @@ Blend_Channel :: struct {
 
 // Blend shape target containing the actual vertex offsets
 Blend_Shape :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	num_offsets:      uint,        // < Number of vertex offsets in the following arrays
 	offset_vertices:  Uint32_List, // < Indices to `ufbx_mesh.vertices[]`
 	position_offsets: Vec3_List,   // < Always specified per-vertex offsets
@@ -1866,6 +2115,15 @@ Geometry_Cache :: struct {
 }
 
 Cache_Deformer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	channel:          String,
 	file:             ^Cache_File,
 
@@ -1875,6 +2133,16 @@ Cache_Deformer :: struct {
 }
 
 Cache_File :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Filename relative to the currently loaded file.
 	// HINT: If using functions other than `ufbx_load_file()`, you can provide
 	// `ufbx_load_opts.filename/raw_filename` to let ufbx resolve this.
@@ -1906,6 +2174,15 @@ Cache_File :: struct {
 
 // Material property, either specified with a constant value or a mapped texture
 Material_Map :: struct {
+	// Constant value or factor for the map.
+	// May be specified simultaneously with a texture, in this case most shading models
+	// use multiplicative tinting of the texture values.
+	using _: struct #raw_union {
+		value_real: Real,
+		value_vec2: Vec2,
+		value_vec3: Vec3,
+		value_vec4: Vec4,
+	},
 	value_int: i64,
 
 	// Texture if connected, otherwise `NULL`.
@@ -2123,17 +2400,140 @@ Material_Feature :: enum c.int {
 UFBX_MATERIAL_FEATURE_COUNT :: 23
 
 Material_Fbx_Maps :: struct {
+	using _: struct #raw_union {
+		maps: [20]Material_Map,
+		using _: struct {
+			diffuse_factor:             Material_Map,
+			diffuse_color:              Material_Map,
+			specular_factor:            Material_Map,
+			specular_color:             Material_Map,
+			specular_exponent:          Material_Map,
+			reflection_factor:          Material_Map,
+			reflection_color:           Material_Map,
+			transparency_factor:        Material_Map,
+			transparency_color:         Material_Map,
+			emission_factor:            Material_Map,
+			emission_color:             Material_Map,
+			ambient_factor:             Material_Map,
+			ambient_color:              Material_Map,
+			normal_map:                 Material_Map,
+			bump:                       Material_Map,
+			bump_factor:                Material_Map,
+			displacement_factor:        Material_Map,
+			displacement:               Material_Map,
+			vector_displacement_factor: Material_Map,
+			vector_displacement:        Material_Map,
+		},
+	},
 }
 
 Material_Pbr_Maps :: struct {
+	using _: struct #raw_union {
+		maps: [55]Material_Map,
+		using _: struct {
+			base_factor:                     Material_Map,
+			base_color:                      Material_Map,
+			roughness:                       Material_Map,
+			metalness:                       Material_Map,
+			diffuse_roughness:               Material_Map,
+			specular_factor:                 Material_Map,
+			specular_color:                  Material_Map,
+			specular_ior:                    Material_Map,
+			specular_anisotropy:             Material_Map,
+			specular_rotation:               Material_Map,
+			transmission_factor:             Material_Map,
+			transmission_color:              Material_Map,
+			transmission_depth:              Material_Map,
+			transmission_scatter:            Material_Map,
+			transmission_scatter_anisotropy: Material_Map,
+			transmission_dispersion:         Material_Map,
+			transmission_roughness:          Material_Map,
+			transmission_extra_roughness:    Material_Map,
+			transmission_priority:           Material_Map,
+			transmission_enable_in_aov:      Material_Map,
+			subsurface_factor:               Material_Map,
+			subsurface_color:                Material_Map,
+			subsurface_radius:               Material_Map,
+			subsurface_scale:                Material_Map,
+			subsurface_anisotropy:           Material_Map,
+			subsurface_tint_color:           Material_Map,
+			subsurface_type:                 Material_Map,
+			sheen_factor:                    Material_Map,
+			sheen_color:                     Material_Map,
+			sheen_roughness:                 Material_Map,
+			coat_factor:                     Material_Map,
+			coat_color:                      Material_Map,
+			coat_roughness:                  Material_Map,
+			coat_ior:                        Material_Map,
+			coat_anisotropy:                 Material_Map,
+			coat_rotation:                   Material_Map,
+			coat_normal:                     Material_Map,
+			coat_affect_base_color:          Material_Map,
+			coat_affect_base_roughness:      Material_Map,
+			thin_film_thickness:             Material_Map,
+			thin_film_ior:                   Material_Map,
+			emission_factor:                 Material_Map,
+			emission_color:                  Material_Map,
+			opacity:                         Material_Map,
+			indirect_diffuse:                Material_Map,
+			indirect_specular:               Material_Map,
+			normal_map:                      Material_Map,
+			tangent_map:                     Material_Map,
+			displacement_map:                Material_Map,
+			matte_factor:                    Material_Map,
+			matte_color:                     Material_Map,
+			ambient_occlusion:               Material_Map,
+			glossiness:                      Material_Map,
+			coat_glossiness:                 Material_Map,
+			transmission_glossiness:         Material_Map,
+		},
+	},
 }
 
 Material_Features :: struct {
+	using _: struct #raw_union {
+		features: [23]Material_Feature_Info,
+		using _: struct {
+			pbr:                                  Material_Feature_Info,
+			metalness:                            Material_Feature_Info,
+			diffuse:                              Material_Feature_Info,
+			specular:                             Material_Feature_Info,
+			emission:                             Material_Feature_Info,
+			transmission:                         Material_Feature_Info,
+			coat:                                 Material_Feature_Info,
+			sheen:                                Material_Feature_Info,
+			opacity:                              Material_Feature_Info,
+			ambient_occlusion:                    Material_Feature_Info,
+			matte:                                Material_Feature_Info,
+			unlit:                                Material_Feature_Info,
+			ior:                                  Material_Feature_Info,
+			diffuse_roughness:                    Material_Feature_Info,
+			transmission_roughness:               Material_Feature_Info,
+			thin_walled:                          Material_Feature_Info,
+			caustics:                             Material_Feature_Info,
+			exit_to_background:                   Material_Feature_Info,
+			internal_reflections:                 Material_Feature_Info,
+			double_sided:                         Material_Feature_Info,
+			roughness_as_glossiness:              Material_Feature_Info,
+			coat_roughness_as_glossiness:         Material_Feature_Info,
+			transmission_roughness_as_glossiness: Material_Feature_Info,
+		},
+	},
 }
 
 // Surface material properties such as color, roughness, etc. Each property may
 // be optionally bound to an `ufbx_texture`.
 Material :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// FBX builtin properties
 	// NOTE: These may be empty if the material is using a custom shader
 	fbx: Material_Fbx_Maps,
@@ -2261,6 +2661,14 @@ UFBX_SHADER_TEXTURE_TYPE_COUNT :: 3
 Shader_Texture_Input :: struct {
 	// Name of the input.
 	name: String,
+
+	// Constant value of the input.
+	using _: struct #raw_union {
+		value_real: Real,
+		value_vec2: Vec2,
+		value_vec3: Vec3,
+		value_vec4: Vec4,
+	},
 	value_int:  i64,
 	value_str:  String,
 	value_blob: Blob,
@@ -2368,6 +2776,16 @@ Texture_File_List :: struct {
 
 // Texture that controls material appearance
 Texture :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Texture type (file / layered / procedural / shader)
 	type: Texture_Type,
 
@@ -2433,6 +2851,16 @@ Texture :: struct {
 
 // TODO: Video textures
 Video :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Filename relative to the currently loaded file.
 	// HINT: If using functions other than `ufbx_load_file()`, you can provide
 	// `ufbx_load_opts.filename/raw_filename` to let ufbx resolve this.
@@ -2464,6 +2892,16 @@ Video :: struct {
 // Shader specifies a shading model and contains `ufbx_shader_binding` elements
 // that define how to interpret FBX properties in the shader.
 Shader :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Known shading model
 	type: Shader_Type,
 
@@ -2485,6 +2923,15 @@ Shader_Prop_Binding_List :: struct {
 
 // Shader binding table
 Shader_Binding :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	prop_bindings: Shader_Prop_Binding_List, // < Sorted by `shader_prop`
 }
 
@@ -2544,6 +2991,15 @@ Anim :: struct {
 }
 
 Anim_Stack :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	time_begin: f64,
 	time_end:   f64,
 	layers:     Anim_Layer_List,
@@ -2563,6 +3019,15 @@ Anim_Prop_List :: struct {
 }
 
 Anim_Layer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	weight:              Real,
 	weight_is_animated:  bool,
 	blended:             bool,
@@ -2578,6 +3043,15 @@ Anim_Layer :: struct {
 }
 
 Anim_Value :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	default_value: Vec3,
 	curves:        ^[3]Anim_Curve,
 }
@@ -2625,6 +3099,15 @@ Keyframe_List :: struct {
 }
 
 Anim_Curve :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 	keyframes: Keyframe_List,
 	min_value: Real,
 	max_value: Real,
@@ -2632,6 +3115,16 @@ Anim_Curve :: struct {
 
 // Collection of nodes to hide/freeze
 Display_Layer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Nodes included in the layer (exclusively at most one layer per node)
 	nodes: Node_List,
 	visible:  bool, // < Contained nodes are visible
@@ -2641,12 +3134,32 @@ Display_Layer :: struct {
 
 // Named set of nodes/geometry features to select.
 Selection_Set :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Included nodes and geometry features
 	nodes: Selection_Node_List,
 }
 
 // Selection state of a node, potentially contains vertex/edge/face selection as well.
 Selection_Node :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Selection targets, possibly `NULL`
 	target_node: ^Node,
 	target_mesh:  ^Mesh,
@@ -2658,6 +3171,15 @@ Selection_Node :: struct {
 
 // -- Constraints
 Character :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 }
 
 // Type of property constrain eg. position or look-at
@@ -2712,6 +3234,16 @@ Constraint_Ik_Pole_Type :: enum c.int {
 UFBX_CONSTRAINT_IK_POLE_TYPE_COUNT :: 2
 
 Constraint :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Type of constraint to use
 	type: Constraint_Type,
 	type_name:          String,
@@ -2748,11 +3280,31 @@ Constraint :: struct {
 
 // -- Audio
 Audio_Layer :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Clips contained in this layer.
 	clips: Audio_Clip_List,
 }
 
 Audio_Clip :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Filename relative to the currently loaded file.
 	// HINT: If using functions other than `ufbx_load_file()`, you can provide
 	// `ufbx_load_opts.filename/raw_filename` to let ufbx resolve this.
@@ -2801,6 +3353,16 @@ Bone_Pose_List :: struct {
 }
 
 Pose :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
+
 	// Set if this pose is marked as a bind pose.
 	is_bind_pose: bool,
 
@@ -2810,6 +3372,15 @@ Pose :: struct {
 }
 
 Metadata_Object :: struct {
+	using _: struct #raw_union {
+		element: Element,
+		using _: struct {
+			name:       String,
+			props:      Props,
+			element_id: u32,
+			typed_id:   u32,
+		},
+	},
 }
 
 // -- Named elements
@@ -3143,6 +3714,75 @@ Scene :: struct {
 
 	// Default animation descriptor
 	anim: ^Anim,
+	using _: struct #raw_union {
+		using _: struct {
+			unknowns:              Unknown_List,
+
+			// Nodes
+			nodes: Node_List,
+
+			// Node attributes (common)
+			meshes: Mesh_List,
+			lights:                Light_List,
+			cameras:               Camera_List,
+			bones:                 Bone_List,
+			empties:               Empty_List,
+
+			// Node attributes (curves/surfaces)
+			line_curves: Line_Curve_List,
+			nurbs_curves:          Nurbs_Curve_List,
+			nurbs_surfaces:        Nurbs_Surface_List,
+			nurbs_trim_surfaces:   Nurbs_Trim_Surface_List,
+			nurbs_trim_boundaries: Nurbs_Trim_Boundary_List,
+
+			// Node attributes (advanced)
+			procedural_geometries: Procedural_Geometry_List,
+			stereo_cameras:        Stereo_Camera_List,
+			camera_switchers:      Camera_Switcher_List,
+			markers:               Marker_List,
+			lod_groups:            Lod_Group_List,
+
+			// Deformers
+			skin_deformers: Skin_Deformer_List,
+			skin_clusters:         Skin_Cluster_List,
+			blend_deformers:       Blend_Deformer_List,
+			blend_channels:        Blend_Channel_List,
+			blend_shapes:          Blend_Shape_List,
+			cache_deformers:       Cache_Deformer_List,
+			cache_files:           Cache_File_List,
+
+			// Materials
+			materials: Material_List,
+			textures:              Texture_List,
+			videos:                Video_List,
+			shaders:               Shader_List,
+			shader_bindings:       Shader_Binding_List,
+
+			// Animation
+			anim_stacks: Anim_Stack_List,
+			anim_layers:           Anim_Layer_List,
+			anim_values:           Anim_Value_List,
+			anim_curves:           Anim_Curve_List,
+
+			// Collections
+			display_layers: Display_Layer_List,
+			selection_sets:        Selection_Set_List,
+			selection_nodes:       Selection_Node_List,
+
+			// Constraints
+			characters: Character_List,
+			constraints:           Constraint_List,
+
+			// Audio
+			audio_layers: Audio_Layer_List,
+			audio_clips:           Audio_Clip_List,
+
+			// Miscellaneous
+			poses: Pose_List,
+			metadata_objects:      Metadata_Object_List,
+		},
+		elements_by_type: [42]Element_List,
+	},
 
 	// Unique texture files referenced by the scene.
 	texture_files: Texture_File_List,

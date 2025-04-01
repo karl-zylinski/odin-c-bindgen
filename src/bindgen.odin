@@ -29,6 +29,7 @@ Struct_Field :: struct {
 	names: [dynamic]string,
 	type: string,
 	anon_struct_type: Maybe(Struct),
+	anon_using: bool,
 	comment: string,
 	comment_before: bool,
 	original_line: int,
@@ -160,13 +161,29 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 			}
 		}
 
+		prev_line := 0
 		prev_idx := -1
 		for &i in inner {
+			if loc, loc_ok := json_get_object(i, "loc"); loc_ok {
+				if lline, lline_ok := json_get_int(loc, "line"); lline_ok {
+					prev_line = lline
+				}
+			}
+
 			i_kind := json_get_string(i, "kind") or_continue
 			if i_kind == "FieldDecl" {
-				field_name := json_get_string(i, "name") or_continue
+				field_name, field_name_exists := json_get_string(i, "name")
 				field_type := get_parameter_type(s, i) or_continue
 				field_anon_struct_type: Maybe(Struct)
+
+				is_implicit := json_check_bool(i, "isImplicit")
+
+
+				has_unnamed_type: bool
+				unnamed_type_line: int
+				unnamed_type_col: int
+				anon_using: bool
+
 
 				ANON_STRUCT_MARKER :: "struct (unnamed struct at "
 				ANON_UNION_MARKER :: "union (unnamed union at "
@@ -180,15 +197,32 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 					loc_parts := strings.split(location, ":")
 					assert(len(loc_parts) == 3)
 
-					line := strconv.atoi(loc_parts[1])
-					col := strconv.atoi(loc_parts[2])
+					has_unnamed_type = true
+					unnamed_type_line = strconv.atoi(loc_parts[1])
+					unnamed_type_col = strconv.atoi(loc_parts[2])
+				} else if is_implicit {
+					LOC_START_MARKER :: "anonymous at "
+					loc_start := strings.index(field_type, LOC_START_MARKER)
 
+					if loc_start != -1 {
+						location := field_type[loc_start + len(LOC_START_MARKER):len(field_type)-1]
+						loc_parts := strings.split(location, ":")
+						assert(len(loc_parts) == 3)
+
+						anon_using = true
+						has_unnamed_type = true
+						unnamed_type_line = strconv.atoi(loc_parts[1])
+						unnamed_type_col = strconv.atoi(loc_parts[2])
+					}
+				}
+
+				if has_unnamed_type {
 					for a in anonymous_struct_types {
 						aloc := json_get(a, "loc", json.Object) or_continue
-						aline := json_get(aloc, "line", json.Integer) or_continue
+						aline := json_get(aloc, "line", json.Integer) or_else i64(prev_line)
 						acol := json_get(aloc, "col", json.Integer) or_continue
 
-						if line == int(aline) && col == int(acol) {
+						if unnamed_type_line == int(aline) && unnamed_type_col == int(acol) {
 							if anon_struct, anon_struct_ok := parse_struct_decl(s, a); anon_struct_ok {
 								field_anon_struct_type = anon_struct
 							}
@@ -219,7 +253,7 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 				}
 
 				merge: bool
-				if prev_idx != -1 {
+				if field_name_exists && prev_idx != -1 {
 					prev := &out_fields[prev_idx]
 
 					if field_line_ok {
@@ -240,11 +274,16 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 					f := Struct_Field {
 						type = field_type,
 						anon_struct_type = field_anon_struct_type,
+						anon_using = anon_using,
 						comment = field_comment,
 						comment_before = field_comment_before,
 						original_line = field_line, 
 					}
-					append(&f.names, field_name)
+					
+					if field_name_exists {
+						append(&f.names, field_name)
+					}
+
 					append(&out_fields, f)
 				}
 			} else if i_kind == "FullComment" {
@@ -1157,27 +1196,32 @@ gen :: proc(input: string, c: Config) {
 				for &field in d.fields {
 					b := strings.builder_make()
 
-					for fn, nidx in field.names {
-						if nidx != 0 {
-							strings.write_string(&b, ", ")
-						}
-
-						strings.write_string(&b, vet_name(fn))
-					}
-
-					names_len := strings.builder_len(b)
 					override_key: string
 
-					if name, name_ok := n.?; name_ok {
-						override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
-					}
+					if field.anon_using {
+						strings.write_string(&b, "using _: ")
+					} else {
+						for fn, nidx in field.names {
+							if nidx != 0 {
+								strings.write_string(&b, ", ")
+							}
 
-					strings.write_string(&b, ": ")
+							strings.write_string(&b, vet_name(fn))
+						}
 
-					if !field.comment_before {
-						// Padding between name and =
-						for _ in 0..<longest_field_name_with_side_comment-names_len {
-							strings.write_rune(&b, ' ')
+						names_len := strings.builder_len(b)
+
+						if name, name_ok := n.?; name_ok {
+							override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
+						}
+
+						strings.write_string(&b, ": ")
+
+						if !field.comment_before {
+							// Padding between name and =
+							for _ in 0..<longest_field_name_with_side_comment-names_len {
+								strings.write_rune(&b, ' ')
+							}
 						}
 					}
 					
