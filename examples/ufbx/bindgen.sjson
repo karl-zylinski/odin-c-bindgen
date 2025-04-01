@@ -21,6 +21,10 @@ type_overrides = {
     "Quat" = "quaternion256"
 }
 
+struct_field_overrides = {
+    "Node_List.data" = "[^]"
+}
+
 rename_types = {
     "Prop_Flags" = "Prop_Flag"
     "Transform_Flags" = "Transform_Flag"
@@ -32,3 +36,6 @@ bit_setify = {
     "Transform_Flag" = "Transform_Flags"
     "Baked_Key_Flag" = "Baked_Key_Flags"
 }
+
+
+debug_dump_json_ast = true
