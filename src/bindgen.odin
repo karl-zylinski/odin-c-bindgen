@@ -1322,7 +1322,17 @@ gen :: proc(input: string, c: Config) {
 			// It has no name, turn it into a bunch of constants
 			if name == "" {
 				for &m in d.members {
-					fpf(f, "%v :: %v\n\n", trim_prefix(m.name, s.remove_type_prefix), m.value)
+					mn := m.name
+
+					if strings.has_prefix(strings.to_lower(mn), strings.to_lower(s.remove_type_prefix)) {
+						mn = mn[len(s.remove_type_prefix):]
+
+						if strings.has_prefix(mn, "_") {
+							mn = mn[1:]
+						}
+					}
+
+					fpf(f, "%v :: %v\n\n", mn, m.value)
 				}	
 
 				break
