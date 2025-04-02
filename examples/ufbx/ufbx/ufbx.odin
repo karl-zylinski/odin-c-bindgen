@@ -10,7 +10,7 @@ foreign import lib "ufbx.lib"
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
 // as `float` instead.
 // You can also manually define `UFBX_REAL_TYPE` to any floating point type.
-Real :: f64
+Real :: f32
 
 // Null-terminated UTF-8 encoded string within an FBX file
 String :: struct {
@@ -34,7 +34,7 @@ Vec3 :: [3]Real
 Vec4 :: [4]Real
 
 // Quaternion
-Quat :: quaternion256
+Quat :: quaternion128
 
 // Order in which Euler-angle rotation axes are applied for a transform
 // NOTE: The order in the name refers to the order of axes *applied*,
@@ -87,7 +87,7 @@ Bool_List :: struct {
 }
 
 Uint32_List :: struct {
-	data:  ^u32,
+	data:  [^]u32,
 	count: uint,
 }
 
@@ -102,7 +102,7 @@ Vec2_List :: struct {
 }
 
 Vec3_List :: struct {
-	data:  ^Vec3,
+	data:  [^]Vec3,
 	count: uint,
 }
 
@@ -953,7 +953,7 @@ Face :: struct {
 }
 
 Face_List :: struct {
-	data:  ^Face,
+	data:  [^]Face,
 	count: uint,
 }
 
@@ -2264,6 +2264,10 @@ Shader_Type :: enum c.int {
 	// https://help.autodesk.com/view/3DSMAX/2023/ENU/?guid=GUID-7ABFB805-1D9F-417E-9C22-704BFDF160FA
 	GLTF_MATERIAL,
 
+	// 3ds OpenPBR Material
+	// https://help.autodesk.com/view/3DSMAX/2025/ENU/?guid=GUID-CD90329C-1E2B-4BBA-9285-3BB46253B9C2
+	OPENPBR_MATERIAL,
+
 	// Stingray ShaderFX shader graph.
 	// Contains a serialized `"ShaderGraph"` in `ufbx_props`.
 	SHADERFX_GRAPH,
@@ -2278,7 +2282,7 @@ Shader_Type :: enum c.int {
 	TYPE_FORCE_32BIT = 2147483647, // Wavefront .mtl format shader (used by .obj files)
 }
 
-SHADER_TYPE_COUNT :: 12
+SHADER_TYPE_COUNT :: 13
 
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum c.int {
@@ -2348,6 +2352,7 @@ Material_Pbr_Map :: enum c.int {
 	COAT_NORMAL,
 	COAT_AFFECT_BASE_COLOR,
 	COAT_AFFECT_BASE_ROUGHNESS,
+	THIN_FILM_FACTOR,
 	THIN_FILM_THICKNESS,
 	THIN_FILM_IOR,
 	EMISSION_FACTOR,
@@ -2367,7 +2372,7 @@ Material_Pbr_Map :: enum c.int {
 	MAP_FORCE_32BIT = 2147483647,
 }
 
-MATERIAL_PBR_MAP_COUNT :: 55
+MATERIAL_PBR_MAP_COUNT :: 56
 
 // Known material features
 Material_Feature :: enum c.int {
@@ -2429,7 +2434,7 @@ Material_Fbx_Maps :: struct {
 
 Material_Pbr_Maps :: struct {
 	using _: struct #raw_union {
-		maps: [55]Material_Map,
+		maps: [56]Material_Map,
 		using _: struct {
 			base_factor:                     Material_Map,
 			base_color:                      Material_Map,
@@ -2470,6 +2475,7 @@ Material_Pbr_Maps :: struct {
 			coat_normal:                     Material_Map,
 			coat_affect_base_color:          Material_Map,
 			coat_affect_base_roughness:      Material_Map,
+			thin_film_factor:                Material_Map,
 			thin_film_thickness:             Material_Map,
 			thin_film_ior:                   Material_Map,
 			emission_factor:                 Material_Map,
@@ -3067,6 +3073,25 @@ Interpolation :: enum c.int {
 
 INTERPOLATION_COUNT :: 4
 
+Extrapolation_Mode :: enum c.int {
+	CONSTANT,        // < Use the value of the first/last keyframe
+	REPEAT,          // < Repeat the whole animation curve
+	MIRROR,          // < Repeat with mirroring
+	SLOPE,           // < Use the tangent of the last keyframe to linearly extrapolate
+	REPEAT_RELATIVE, // < Repeat the animation curve but connect the first and last keyframe values
+	FORCE_32BIT = 2147483647,
+}
+
+EXTRAPOLATION_MODE_COUNT :: 5
+
+Extrapolation :: struct {
+	mode: Extrapolation_Mode,
+
+	// Count used for repeating modes.
+	// Negative values mean infinite repetition.
+	repeat_count: i32,
+}
+
 // Tangent vector at a keyframe, may be split into left/right
 Tangent :: struct {
 	dx: f32, // < Derivative in the time axis
@@ -3108,9 +3133,23 @@ Anim_Curve :: struct {
 			typed_id:   u32,
 		},
 	},
+
+	// List of keyframes that define the curve.
 	keyframes: Keyframe_List,
+
+	// Extrapolation before the curve.
+	pre_extrapolation: Extrapolation,
+
+	// Extrapolation after the curve.
+	post_extrapolation: Extrapolation,
+
+	// Value range for all the keyframes.
 	min_value: Real,
 	max_value: Real,
+
+	// Time range for all the keyframes.
+	min_time: f64,
+	max_time:  f64,
 }
 
 // Collection of nodes to hide/freeze
@@ -3448,6 +3487,10 @@ Warning_Type :: enum c.int {
 	// Missing polygon mapping type.
 	MISSING_POLYGON_MAPPING,
 
+	// Unsupported version, loaded but may be incorrect.
+	// If the loading fails `UFBX_ERROR_UNSUPPORTED_VERSION` is issued instead.
+	UNSUPPORTED_VERSION,
+
 	// Out-of-bounds index has been clamped to be in-bounds.
 	// HINT: You can use `ufbx_index_error_handling` to adjust behavior.
 	INDEX_CLAMPED,
@@ -3455,6 +3498,9 @@ Warning_Type :: enum c.int {
 	// Non-UTF8 encoded strings.
 	// HINT: You can use `ufbx_unicode_error_handling` to adjust behavior.
 	BAD_UNICODE,
+
+	// Invalid base64-encoded embedded content ignored.
+	BAD_BASE64_CONTENT,
 
 	// Non-node element connected to root.
 	BAD_ELEMENT_CONNECTED_TO_ROOT,
@@ -3471,12 +3517,12 @@ Warning_Type :: enum c.int {
 
 	// Warnings after this one are deduplicated.
 	// See `ufbx_warning.count` for how many times they happened.
-	TYPE_FIRST_DEDUPLICATED = 7,
+	TYPE_FIRST_DEDUPLICATED = 8,
 	TYPE_FORCE_32BIT = 2147483647, // Warnings after this one are deduplicated.
 	// See `ufbx_warning.count` for how many times they happened.
 }
 
-WARNING_TYPE_COUNT :: 13
+WARNING_TYPE_COUNT :: 15
 
 // Warning about a non-fatal issue in the file.
 // Often contains information about issues that ufbx has corrected about the
@@ -3584,7 +3630,7 @@ Metadata :: struct {
 
 	// Flag for each possible warning type.
 	// See `ufbx_metadata.warnings[]` for detailed warning information.
-	has_warning: [13]bool,
+	has_warning: [15]bool,
 	creator:                        String,
 	big_endian:                     bool,
 	filename:                       String,
@@ -4078,10 +4124,15 @@ Error_Type :: enum c.int {
 
 	// Duplicated override property in `ufbx_create_anim()`
 	DUPLICATE_OVERRIDE,
-	TYPE_FORCE_32BIT = 2147483647, // Duplicated override property in `ufbx_create_anim()`
+
+	// Unsupported file format version.
+	// ufbx still tries to load files with unsupported versions, see `UFBX_WARNING_UNSUPPORTED_VERSION`.
+	UNSUPPORTED_VERSION,
+	TYPE_FORCE_32BIT = 2147483647, // Unsupported file format version.
+	// ufbx still tries to load files with unsupported versions, see `UFBX_WARNING_UNSUPPORTED_VERSION`.
 }
 
-ERROR_TYPE_COUNT :: 23
+ERROR_TYPE_COUNT :: 24
 
 // Error description with detailed stack trace
 // HINT: You can use `ufbx_format_error()` for formatting the error
@@ -4514,6 +4565,13 @@ Thread_Opts :: struct {
 	memory_limit: uint,
 }
 
+// Flags to control nanimation evaluation functions.
+Evaluate_Flags :: enum c.int {
+	// Do not extrapolate past the keyframes.
+	UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION = 1,
+	ufbx_evaluate_flags_FORCE_32BIT     = 2147483647, // Do not extrapolate past the keyframes.
+}
+
 // Options for `ufbx_load_file/memory/stream/stdio()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Load_Opts :: struct {
@@ -4694,7 +4752,7 @@ Load_Opts :: struct {
 	use_root_transform: bool,
 	root_transform:         Transform,
 
-	// Animation keyframe clamp threhsold, only applies to specific interpolation modes.
+	// Animation keyframe clamp threshold, only applies to specific interpolation modes.
 	key_clamp_threshold: f64,
 
 	// Specify how to handle Unicode errors in strings.
@@ -4766,6 +4824,10 @@ Evaluate_Opts :: struct {
 	result_allocator:  Allocator_Opts, // < Allocator used for the final scene
 	evaluate_skinning: bool,           // < Evaluate skinning (see ufbx_mesh.skinned_vertices)
 	evaluate_caches:   bool,           // < Evaluate vertex caches (see ufbx_mesh.skinned_vertices)
+
+	// Evaluation flags.
+	// See `ufbx_evaluate_flags` for information.
+	evaluate_flags: u32,
 
 	// WARNING: Potentially unsafe! Try to open external files such as geometry caches
 	load_external_files: bool,
@@ -4914,6 +4976,10 @@ Bake_Opts :: struct {
 	// Defined as the minimum fractional decrease/increase in key time, ie.
 	// `time / (1.0 + step_custom_epsilon)` and `time * (1.0 + step_custom_epsilon)`.
 	step_custom_epsilon: f64,
+
+	// Flags passed to animation evaluation functions.
+	// See `ufbx_evaluate_flags`.
+	evaluate_flags: u32,
 
 	// Enable key reduction.
 	key_reduction_enabled: bool,
@@ -5070,11 +5136,15 @@ Transform_Flag :: enum c.int {
 
 	// If `UFBX_TRANSFORM_FLAG_EXPLICIT_INCLUDES`: Evaluate `ufbx_transform.scale`.
 	INCLUDE_SCALE = 6,
+
+	// Do not extrapolate keyframes.
+	// See `UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION`.
+	NO_EXTRAPOLATION = 7,
 }
 
 Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
-TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE }
+TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
@@ -5209,21 +5279,27 @@ foreign lib {
 
 	// Evaluate a single animation `curve` at a `time`.
 	// Returns `default_value` only if `curve == NULL` or it has no keyframes.
-	evaluate_curve :: proc(curve: ^Anim_Curve, time: f64, default_value: Real) -> Real ---
+	evaluate_curve       :: proc(curve: ^Anim_Curve, time: f64, default_value: Real) -> Real ---
+	evaluate_curve_flags :: proc(curve: ^Anim_Curve, time: f64, default_value: Real, flags: u32) -> Real ---
 
 	// Evaluate a value from bundled animation curves.
-	evaluate_anim_value_real :: proc(anim_value: ^Anim_Value, time: f64) -> Real ---
-	evaluate_anim_value_vec3 :: proc(anim_value: ^Anim_Value, time: f64) -> Vec3 ---
+	evaluate_anim_value_real       :: proc(anim_value: ^Anim_Value, time: f64) -> Real ---
+	evaluate_anim_value_vec3       :: proc(anim_value: ^Anim_Value, time: f64) -> Vec3 ---
+	evaluate_anim_value_real_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Real ---
+	evaluate_anim_value_vec3_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Vec3 ---
 
 	// Evaluate an animated property `name` from `element` at `time`.
 	// NOTE: If the property is not found it will have the flag `UFBX_PROP_FLAG_NOT_FOUND`.
-	evaluate_prop_len :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: uint, time: f64) -> Prop ---
-	evaluate_prop     :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64) -> Prop ---
+	evaluate_prop_len       :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: uint, time: f64) -> Prop ---
+	evaluate_prop           :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64) -> Prop ---
+	evaluate_prop_len_flags :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: uint, time: f64, flags: u32) -> Prop ---
+	evaluate_prop_flags     :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64, flags: u32) -> Prop ---
 
 	// Evaluate all _animated_ properties of `element`.
 	// HINT: This function returns an `ufbx_props` structure with the original properties as
 	// `ufbx_props.defaults`. This lets you use `ufbx_find_prop/value()` for the results.
-	evaluate_props :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: uint) -> Props ---
+	evaluate_props       :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: uint) -> Props ---
+	evaluate_props_flags :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: uint, flags: u32) -> Props ---
 
 	// Evaluate the animated transform of a node given a time.
 	// The returned transform is the local transform of the node (ie. relative to the parent),
@@ -5233,7 +5309,8 @@ foreign lib {
 
 	// Evaluate the blend shape weight of a blend channel.
 	// NOTE: Return value uses `1.0` for full weight, instead of `100.0` that the internal property `UFBX_Weight` uses.
-	evaluate_blend_weight :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64) -> Real ---
+	evaluate_blend_weight       :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64) -> Real ---
+	evaluate_blend_weight_flags :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64, flags: u32) -> Real ---
 
 	// Evaluate the whole `scene` at a specific `time` in the animation `anim`.
 	// The returned scene behaves as if it had been exported at a specific time
@@ -5449,7 +5526,7 @@ foreign lib {
 	// Generate an index buffer for a flat vertex buffer.
 	// `streams` specifies one or more vertex data arrays, each stream must contain `num_indices` vertices.
 	// This function compacts the data within `streams` in-place, writing the deduplicated indices to `indices`.
-	generate_indices :: proc(streams: ^Vertex_Stream, num_streams: uint, indices: ^u32, num_indices: uint, allocator: ^Allocator_Opts, error: ^Error) -> uint ---
+	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: uint, indices: ^u32, num_indices: uint, allocator: ^Allocator_Opts, error: ^Error) -> uint ---
 
 	// Run a single thread pool task.
 	// See `ufbx_thread_pool_run_fn` for more information.

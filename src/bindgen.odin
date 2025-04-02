@@ -863,6 +863,7 @@ Config :: struct {
 	import_lib: string,
 	imports_file: string,
 	clang_include_paths: []string,
+	clang_defines: map[string]string,
 	force_ada_case_types: bool,
 	debug_dump_json_ast: bool,
 
@@ -917,10 +918,12 @@ gen :: proc(input: string, c: Config) {
 		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
 	}
 
-	if len(c.clang_include_paths) != 0 {
-		for include in c.clang_include_paths {
-			append(&command, fmt.tprintf("-I%v", include))
-		}
+	for include in c.clang_include_paths {
+		append(&command, fmt.tprintf("-I%v", include))
+	}
+
+	for k, v in c.clang_defines {
+		append(&command, fmt.tprintf("-D%v=%v", k, v))
 	}
 
 	process_desc := os2.Process_Desc {
