@@ -97,7 +97,7 @@ Real_List :: struct {
 }
 
 Vec2_List :: struct {
-	data:  ^Vec2,
+	data:  [^]Vec2,
 	count: uint,
 }
 
@@ -107,7 +107,7 @@ Vec3_List :: struct {
 }
 
 Vec4_List :: struct {
-	data:  ^Vec4,
+	data:  [^]Vec4,
 	count: uint,
 }
 
