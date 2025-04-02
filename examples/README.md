@@ -1,6 +1,6 @@
 This folder contains examples of how to use the binding generator and how to configure it using `bindgen.sjson`.
 
-Note that these bindings are _not_ production ready. For example, I haven't added every procedure parameter that should be a multi-pointer or use `#by_ptr`, but I provide examples of how to accomplish that.
+Note that the bindings created by these examples are _not_ production ready. For example, within `bindgen.sjson` of each binding I haven't added every procedure parameter that should be a multi-pointer or use `#by_ptr`.
 
 ## How to generate the bindings
 
