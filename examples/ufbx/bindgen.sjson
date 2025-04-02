@@ -18,11 +18,24 @@ type_overrides = {
     "Vec2" = "[2]Real"
     "Vec3" = "[3]Real"
     "Vec4" = "[4]Real"
-    "Quat" = "quaternion256"
+
+    // Assumes UFBX_REAL_IS_FLOAT to be set below, so that `Real :: f32`
+    "Quat" = "quaternion128"
+}
+
+clang_defines = {
+    "UFBX_REAL_IS_FLOAT" = "1"
 }
 
 struct_field_overrides = {
     "Node_List.data" = "[^]"
+    "Face_List.data" = "[^]"
+    "Uint32_List.data" = "[^]"
+    "Vec3_List.data" = "[^]"
+}
+
+procedure_type_overrides = {
+    "generate_indices.streams" = "[^]"
 }
 
 rename_types = {
@@ -36,3 +49,4 @@ bit_setify = {
     "Transform_Flag" = "Transform_Flags"
     "Baked_Key_Flag" = "Baked_Key_Flags"
 }
+
