@@ -51,9 +51,10 @@ Loads raylib meshes using ufbx.
 The returned array is allocated using `allocator`. The meshes themselves are
 allocated using raylib's allocator, destroy each using `rl.UnloadMesh(mesh)`.
 
-Does triangulation using `ufbx.triangulate_face`. In order to do that it turns
-each mesh into an intermediate representation. It then calculates the indices
-and de-duplicates the vertices using `ufbx.generate_indices`.
+Does triangulation using `ufbx.triangulate_face`. Note that the triangulated
+faces are put into an `vertices` array. That's an intermediate array, used for
+de-duplicating vertices and also calculating indices using. That's all done
+using `ufbx.generate_indices`.
 */
 load_fbx_meshes :: proc(filename: string, allocator := context.allocator, loc := #caller_location) -> []rl.Mesh {
 	opts: ufbx.Load_Opts
