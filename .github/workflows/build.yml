@@ -36,12 +36,8 @@ jobs:
       - name: pdfio
         run: |
           .\bindgen.exe examples/pdfio
-          odin run examples/pdfio/test
-
-      - name: pdfio
-        run: |
-          .\bindgen.exe examples/pdfio
-          odin run examples/pdfio/test
+          cd examples/pdfio/test
+          odin run .
 
       - name: ufbx
         run: |
