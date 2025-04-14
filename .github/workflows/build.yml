@@ -25,26 +25,26 @@ jobs:
       
       - name: Raylib
         run: |
-          bindgen.exe examples/raylib
+          .\bindgen.exe examples/raylib
           odin build examples/raylib/test
 
       - name: Box2D 
         run: |
-          bindgen.exe examples/raylib
-          odin build examples/raylib/test
+          .\bindgen.exe examples/box2d
+          odin build examples/box2d/test
 
       - name: pdfio
         run: |
-          bindgen.exe examples/pdfio
+          .\bindgen.exe examples/pdfio
           odin run examples/pdfio/test
 
       - name: pdfio
         run: |
-          bindgen.exe examples/pdfio
+          .\bindgen.exe examples/pdfio
           odin run examples/pdfio/test
 
       - name: ufbx
         run: |
-          bindgen.exe examples/ufbx
+          .\bindgen.exe examples/ufbx
           odin build examples/ufbx/test
 
