@@ -37,6 +37,7 @@ jobs:
         run: |
           .\bindgen.exe examples/pdfio
           cd examples/pdfio/test
+          copy ..\pdfio\pdfio1.dll .
           odin run .
 
       - name: ufbx
