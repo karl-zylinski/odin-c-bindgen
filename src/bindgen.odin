@@ -1297,7 +1297,7 @@ gen :: proc(input: string, c: Config) {
 			case "f":
 				fpfln(f, "%v: c.float : %v", name, val[:i])
 			}
-		} else { // If it's not a number, just define it as a string. I think this works for all cases but should be checked!
+		} else { // If it's not a number, just define it as a string. Doesn't always work but it covers most baisc cases.
 			fpfln(f, "%v :: %v", name, val)
 		}
 	}
