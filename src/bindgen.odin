@@ -459,6 +459,8 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		comment: string
 		out_members: [dynamic]Enum_Member
 
+		s.needs_import_c = true // enums all use c.int
+
 		if inner, inner_ok := json_get_array(decl, "inner"); inner_ok {
 			for &m in inner {
 				inner_kind := json_get_string(m, "kind") or_continue
