@@ -760,6 +760,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	} else if is_posix_type(transf_type) {
 		transf_type = fmt.tprintf("posix.%v",transf_type)
 	} else if s.force_ada_case_types && transf_type != "void" {
+		// It makes sense to, in the case we can't find the type, to just follow our naming rules and hoping the type is defined somewhere else.
 		transf_type = final_name(vet_name(strings.to_ada_case(transf_type)), s)
 	} else {
 		transf_type = final_name(vet_name(transf_type), s)
