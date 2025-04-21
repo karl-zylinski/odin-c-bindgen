@@ -308,15 +308,7 @@ parse_macros :: proc(s: ^Gen_State, c: Config, input: string) {
 	define_from_file: [dynamic]string
 	defer delete(define_from_file)
 	{
-		file_data, err := os2.read_entire_file(input, context.allocator)
-		defer delete(file_data)
-		
-		if err != nil {
-			fmt.eprintfln("Error reading file: %v", err)
-			return
-		}
-		
-		file_lines := strings.split_lines(string(file_data))
+		file_lines := strings.split_lines(s.source)
 		defer delete(file_lines)
 		for i := 0; i < len(file_lines); i += 1 {
 			line := strings.trim_space(file_lines[i])
@@ -362,10 +354,6 @@ parse_macros :: proc(s: ^Gen_State, c: Config, input: string) {
 		defer delete(sout)
 
 		if err != nil {
-			if err == .Not_Exist {
-				panic("Could not find clang. Do you have clang installed and in your path?")
-			}
-
 			fmt.panicf("Error generating macro dump. Error: %v", err)
 		}
 
@@ -1024,8 +1012,6 @@ gen :: proc(input: string, c: Config) {
 		add_to_set(&s.opaque_type_lookup, ot)
 	}
 
-	parse_macros(&s, c, input) // Parse macros so we can add them as constants in Odin
-
 	//
 	// Run clang and produce an AST in json format that describes the headers.
 	//
@@ -1084,6 +1070,8 @@ gen :: proc(input: string, c: Config) {
 	source_data, source_data_ok := os.read_entire_file(input)
 	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
+
+	parse_macros(&s, c, input) // Parse macros so we can add them as constants in Odin
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
 
