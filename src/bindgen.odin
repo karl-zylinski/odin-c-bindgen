@@ -1255,10 +1255,10 @@ gen :: proc(input: string, c: Config) {
 			continue // Don't parse multi-value defines
 		}
 		
-		val = strings.trim_space(strings.trim(val, "()")) // Remove parentheses from the value as this can cause issues with parsing
-		if val[0] == '-' && val[0] - '0' >= 0 && val[0] - '0' <= 9 { // This will catch numbers including binary (0b), hex (0x) and octal(0). This hasn't been tested!
+		val = strings.trim(val, " ()") // Remove parentheses from the value as this can cause issues with parsing
+		if val[0] == '-' || (val[0] >= '0' && val[0] <= '9') { // This will catch numbers including binary (0b), hex (0x) and octal(0). This hasn't been tested!
 			i := len(val) - 1 // Check for type suffix
-			for val[i] - '0' < 0 || val[i] - '0' > 9 {
+			for val[i] < '0' || val[i] > '9' {
 				i -= 1
 			}
 
@@ -1267,6 +1267,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
+			i += 1
 			switch strings.to_lower(val[i:len(val)]) { // Define with type if suffix exists
 			case "u":
 				fpfln(f, "%v: c.uint : %v", name, val[:i])
@@ -1284,6 +1285,8 @@ gen :: proc(input: string, c: Config) {
 				fpfln(f, "%v: c.ulonglong : %v", name, val[:i])
 			case "f":
 				fpfln(f, "%v: c.float : %v", name, val[:i])
+			case:
+				fmt.printfln("Unknown type suffix for define %v: %v", name, val[i:len(val)])
 			}
 		} else { // If it's not a number, just define it as a string. Doesn't always work but it covers most baisc cases.
 			fpfln(f, "%v :: %v", name, val)
