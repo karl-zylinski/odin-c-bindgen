@@ -1246,7 +1246,7 @@ gen :: proc(input: string, c: Config) {
 	for def, &val in s.defines {
 		// Changing MACRO names can cause issues if a macro is defined as using another macro. For example:
 		// #define MACRO_FLAGS (FLAG1 | FLAG2 | FLAG3)
-		// If we don't also change the name of the FLAG macros then we will end up with a constant that is usues defined values in Odin.
+		// If we don't also change the name of the FLAG macros then we will end up with a constant that is uses undefined values in Odin.
 		// I don't want to hanle this so for now we don't remove the prefix from macro names.
 		name := def
 		// name := strings.to_upper(vet_name(trim_prefix(strings.to_lower(def), s.remove_type_prefix)))
@@ -1256,9 +1256,22 @@ gen :: proc(input: string, c: Config) {
 		}
 		
 		val = strings.trim(val, " ()") // Remove parentheses from the value as this can cause issues with parsing
-		if val[0] == '-' || (val[0] >= '0' && val[0] <= '9') { // This will catch numbers including binary (0b), hex (0x) and octal(0). This hasn't been tested!
+		if val[0] == '-' || (val[0] >= '0' && val[0] <= '9') { // This will catch numbers including binary (0b), hex (0x) and octal(0).
+			if len(val) == 1 {
+				fpfln(f, "%v :: %v", name, val)
+				continue
+			}
+			
+			is_hex := val[1] == 'x'
+			if is_hex {
+				val = strings.to_lower(val)
+			}
+
 			i := len(val) - 1 // Check for type suffix
 			for val[i] < '0' || val[i] > '9' {
+				if is_hex && val[i] >= 'a' && val[i] <= 'f' { // If hex then a-f are numbers
+					break
+				}
 				i -= 1
 			}
 
@@ -1288,7 +1301,7 @@ gen :: proc(input: string, c: Config) {
 			case:
 				fmt.printfln("Unknown type suffix for define %v: %v", name, val[i:len(val)])
 			}
-		} else { // If it's not a number, just define it as a string. Doesn't always work but it covers most baisc cases.
+		} else { // If it's not a number, just define it assuming it's a string literal. Doesn't always work but it covers most basic cases.
 			fpfln(f, "%v :: %v", name, val)
 		}
 	}
