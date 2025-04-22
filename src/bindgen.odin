@@ -303,6 +303,107 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 	return
 }
 
+parse_macros :: proc(s: ^Gen_State, c: Config, input: string) {
+	// First parse the file to find all #defines that are part of the file
+	define_from_file: [dynamic]string
+	defer delete(define_from_file)
+	{
+		file_lines := strings.split_lines(s.source)
+		defer delete(file_lines)
+		for i := 0; i < len(file_lines); i += 1 {
+			line := strings.trim_space(file_lines[i])
+
+			if len(line) == 0 { // Don't parse empty lines
+				continue
+			}
+
+			for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+				i += 1
+				line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(file_lines[i]))
+			}
+
+			if strings.has_prefix(line, "#define") { // #define macroName keyValue
+				parts := strings.split(line, " ")
+				if len(parts) < 3 || strings.contains(parts[1], "(") { // If string contians `(`, it is a function-like macro which we don't want to parse
+					continue
+				}
+				append(&define_from_file, parts[1])
+			}
+		}
+	}
+
+	// Get all defined macros and check which ones are in the file
+	{
+		command := [dynamic]string { // Runs clangs preprocessor to get all macros
+			"clang", "-dM", "-E", input,
+		}
+
+		for include in c.clang_include_paths {
+			append(&command, fmt.tprintf("-I%v", include))
+		}
+
+		for k, v in c.clang_defines {
+			append(&command, fmt.tprintf("-D%v=%v", k, v))
+		}
+
+		process_desc := os2.Process_Desc {
+			command = command[:],
+		}
+
+		state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
+		defer delete(sout)
+
+		if err != nil {
+			fmt.panicf("Error generating macro dump. Error: %v", err)
+		}
+
+		if len(serr) > 0 {
+			fmt.eprintln(string(serr))
+			fmt.eprintfln("Aborting generation for %v", input)
+			return
+		}
+
+		ensure(state.success, "Failed running clang")
+
+		input_filename := filepath.base(input)
+		output_stem := filepath.stem(input_filename)
+		output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
+		
+		if s.debug_dump_json_ast {
+			os.write_entire_file(fmt.tprintf("%v-macro_dump.txt", output_filename), sout)
+		}
+
+		macro_lines := strings.split_lines(string(sout))
+		defer delete(macro_lines)
+		for i := 0; i < len(macro_lines); i += 1 {
+			line := strings.trim_space(macro_lines[i])
+
+			if len(line) == 0 { // Don't parse empty lines
+				continue
+			}
+
+			for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+				i += 1
+				line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(macro_lines[i]))
+			}
+
+			if strings.has_prefix(line, "#define") { // #define macroName keyValue
+				parts := strings.split(line, " ")
+				if len(parts) < 3 {
+					continue
+				}
+
+				for &define in define_from_file { // Check if the macro is defined by the file only adding it to the list if it is
+					if define == parts[1] {
+						s.defines[parts[1]] = strings.join(parts[2:], " ")
+						break
+					}
+				}
+			}
+		}
+	}
+}
+
 parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 	if json_has(decl, "loc.includedFrom") {
 		return
@@ -881,6 +982,7 @@ Gen_State :: struct {
 
 	source: string,
 	decls: [dynamic]Declaration,
+	defines: map[string]string,
 	symbol_indices: map[string]int,
 	typedefs: map[string]string,
 	created_symbols: map[string]struct{},
@@ -968,6 +1070,8 @@ gen :: proc(input: string, c: Config) {
 	source_data, source_data_ok := os.read_entire_file(input)
 	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
+
+	parse_macros(&s, c, input) // Parse macros so we can add them as constants in Odin
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
 
@@ -1136,6 +1240,73 @@ gen :: proc(input: string, c: Config) {
 	for _, b in s.bit_setify {
 		add_to_set(&s.created_types, b)
 	}
+
+	// As far as I can tell there isn't a way to parse comments from defines without grabing them straight from the source code so for now I'm just ignoring them. This isn't ideal but it works for now.
+	// This will add defines as constants that it shouldn't but it's easier to remove them manually than to add them manually.
+	for def, &val in s.defines {
+		// Changing MACRO names can cause issues if a macro is defined as using another macro. For example:
+		// #define MACRO_FLAGS (FLAG1 | FLAG2 | FLAG3)
+		// If we don't also change the name of the FLAG macros then we will end up with a constant that is uses undefined values in Odin.
+		// I don't want to hanle this so for now we don't remove the prefix from macro names.
+		name := def
+		// name := strings.to_upper(vet_name(trim_prefix(strings.to_lower(def), s.remove_type_prefix)))
+
+		if len(strings.split(val, ",")) > 1 {
+			continue // Don't parse multi-value defines
+		}
+		
+		val = strings.trim(val, " ()") // Remove parentheses from the value as this can cause issues with parsing
+		if val[0] == '-' || (val[0] >= '0' && val[0] <= '9') { // This will catch numbers including binary (0b), hex (0x) and octal(0).
+			if len(val) == 1 {
+				fpfln(f, "%v :: %v", name, val)
+				continue
+			}
+			
+			is_hex := val[1] == 'x'
+			if is_hex {
+				val = strings.to_lower(val)
+			}
+
+			i := len(val) - 1 // Check for type suffix
+			for val[i] < '0' || val[i] > '9' {
+				if is_hex && val[i] >= 'a' && val[i] <= 'f' { // If hex then a-f are numbers
+					break
+				}
+				i -= 1
+			}
+
+			if i == len(val) - 1 { // If no suffix just define it without a type
+				fpfln(f, "%v :: %v", name, val)
+				continue
+			}
+
+			i += 1
+			switch strings.to_lower(val[i:len(val)]) { // Define with type if suffix exists
+			case "u":
+				fpfln(f, "%v: c.uint : %v", name, val[:i])
+			case "l":
+				if strings.contains(val[:i], ".") {
+					fpfln(f, "%v: c.longdouble : %v", name, val[:i])
+				} else {
+					fpfln(f, "%v: c.long : %v", name, val[:i])
+				}
+			case "ul":
+				fpfln(f, "%v: c.ulong : %v", name, val[:i])
+			case "ll":
+				fpfln(f, "%v: c.longlong : %v", name, val[:i])
+			case "ull":
+				fpfln(f, "%v: c.ulonglong : %v", name, val[:i])
+			case "f":
+				fpfln(f, "%v: c.float : %v", name, val[:i])
+			case:
+				fmt.printfln("Unknown type suffix for define %v: %v", name, val[i:len(val)])
+			}
+		} else { // If it's not a number, just define it assuming it's a string literal. Doesn't always work but it covers most basic cases.
+			fpfln(f, "%v :: %v", name, val)
+		}
+	}
+
+	fp(f, "\n\n")
 
 	for &du in s.decls {
 		switch d in du {
