@@ -119,6 +119,8 @@ clang_include_paths = [
 
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
+// Writes the clang preprocessor macro dump
+debug_dump_macros = false
 ```
 </details>
 

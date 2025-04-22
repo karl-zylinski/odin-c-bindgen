@@ -369,7 +369,7 @@ parse_macros :: proc(s: ^Gen_State, c: Config, input: string) {
 		output_stem := filepath.stem(input_filename)
 		output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
 		
-		if s.debug_dump_json_ast {
+		if s.debug_dump_macros {
 			os.write_entire_file(fmt.tprintf("%v-macro_dump.txt", output_filename), sout)
 		}
 
@@ -967,6 +967,7 @@ Config :: struct {
 	clang_defines: map[string]string,
 	force_ada_case_types: bool,
 	debug_dump_json_ast: bool,
+	debug_dump_macros: bool,
 
 	opaque_types: []string,
 	rename_types: map[string]string,
