@@ -6,35 +6,35 @@ _ :: c
 
 foreign import lib "ufbx.lib"
 
-// UFBX_STDC :: _Stdc_Version
-UFBX_CPP :: 0
-// UFBX_PLATFORM_MSC :: Msc_Ver
-UFBX_PLATFORM_GNUC :: 0
-UFBX_CPP11 :: 0
-// ufbx_inline :: Static _Forceinline
-// ufbx_abi_data :: Extern
-UFBX_REAL_TYPE :: f32
-UFBX_ERROR_STACK_MAX_DEPTH :: 8
-UFBX_PANIC_MESSAGE_LENGTH :: 128
-UFBX_ERROR_INFO_LENGTH :: 256
-UFBX_THREAD_GROUP_COUNT :: 4
-UFBX_HAS_FORCE_32BIT :: 1
-UFBX_HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
-UFBX_VERSION :: UFBX_HEADER_VERSION
-UFBX_NO_INDEX :: ~u32(0)
-UFBX_Lcl_Translation :: "Lcl Translation"
-UFBX_Lcl_Rotation :: "Lcl Rotation"
-UFBX_Lcl_Scaling :: "Lcl Scaling"
-UFBX_RotationOrder :: "Rotation_Order"
-UFBX_ScalingPivot :: "Scaling_Pivot"
-UFBX_RotationPivot :: "Rotation_Pivot"
-UFBX_ScalingOffset :: "Scaling_Offset"
-UFBX_RotationOffset :: "Rotation_Offset"
-UFBX_PreRotation :: "Pre_Rotation"
-UFBX_PostRotation :: "Post_Rotation"
-UFBX_Visibility :: "Visibility"
-UFBX_Weight :: "Weight"
-UFBX_DeformPercent :: "Deform_Percent"
+STDC :: _Stdc_Version
+CPP :: 0
+PLATFORM_MSC :: Msc_Ver
+PLATFORM_GNUC :: 0
+CPP11 :: 0
+ufbx_inline :: Static _Forceinline
+ufbx_abi_data :: Extern
+REAL_TYPE :: f32
+ERROR_STACK_MAX_DEPTH :: 8
+PANIC_MESSAGE_LENGTH :: 128
+ERROR_INFO_LENGTH :: 256
+THREAD_GROUP_COUNT :: 4
+HAS_FORCE_32BIT :: 1
+HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
+VERSION :: HEADER_VERSION
+NO_INDEX :: (u32)~0
+Lcl_Translation :: "Lcl Translation"
+Lcl_Rotation :: "Lcl Rotation"
+Lcl_Scaling :: "Lcl Scaling"
+RotationOrder :: "RotationOrder"
+ScalingPivot :: "ScalingPivot"
+RotationPivot :: "RotationPivot"
+ScalingOffset :: "ScalingOffset"
+RotationOffset :: "RotationOffset"
+PreRotation :: "PreRotation"
+PostRotation :: "PostRotation"
+Visibility :: "Visibility"
+Weight :: "Weight"
+DeformPercent :: "DeformPercent"
 
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
