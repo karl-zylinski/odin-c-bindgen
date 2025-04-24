@@ -6,6 +6,8 @@ remove_type_prefix = "ufbx_"
 
 remove_function_prefix = "ufbx_"
 
+remove_macro_prefix = "UFBX_"
+
 import_lib = "ufbx.lib"
 
 package_name = "ufbx"
