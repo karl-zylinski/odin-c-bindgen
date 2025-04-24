@@ -204,7 +204,7 @@ test_parse_macros :: proc(t: ^testing.T) {
 	s := Gen_State {
 		source = string(data),
 	}
-	file_defined_macros := parse_macros(&s, "test/test.h")
+	_ = parse_macros(&s, "test/test.h")
 
 	expected_macros := map[string]string {
 		"ARRAY"            = "{1}",

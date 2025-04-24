@@ -316,8 +316,8 @@ Macro_Token :: struct {
 	values: []string,
 }
 
-trim_encapsulating_parens :: proc(str: string) -> string {
-	str := strings.trim_space(str)
+trim_encapsulating_parens :: proc(s: string) -> string {
+	str := strings.trim_space(s)
 	// There could be an arbitrary number of parentheses inside the string so we repeat until we're sure we've removed all the outer ones.
 	for str[0] == '(' && str[len(str) - 1] == ')' {
 		parens := 1
@@ -336,8 +336,7 @@ trim_encapsulating_parens :: proc(str: string) -> string {
 		// It's not our responsibility to ensure the code is valid C. Also clang should have produced an error if there was a syntax error.
 		if i == len(str) && parens == 0 {
 			str = strings.trim_space(str[1: len(str) - 1])
-		}
-		else {
+		} else {
 			break
 		}
 	}
@@ -345,13 +344,13 @@ trim_encapsulating_parens :: proc(str: string) -> string {
 }
 
 parse_value :: proc(s: string) -> (r: []string, type: Macro_Type = .Constant_Expression) {
-	s := strings.trim_space(s)
+	str := strings.trim_space(s)
 
 	ret: [dynamic]string
 	grouping_delimiter := 0
 	tracker := 0
-	for i := 0; i < len(s); i += 1 {
-		switch s[i] {
+	for i := 0; i < len(str); i += 1 {
+		switch str[i] {
 		// We track grouping delimiters so we can ignore commas and spaces inside them such as {10, 20, 30}.
 		case '(', '{', '[':
 			grouping_delimiter += 1
@@ -359,43 +358,43 @@ parse_value :: proc(s: string) -> (r: []string, type: Macro_Type = .Constant_Exp
 			grouping_delimiter -= 1
 		case ',':
 			if grouping_delimiter == 0 {
-				str := strings.trim_space(s[tracker:i])
-				if len(str) > 0 {
-					append(&ret, str)
+				tmp := strings.trim_space(s[tracker:i])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
 				}
 				tracker = i + 1
 				type = .Multivalue
 			}
 		case ' ':
 			if grouping_delimiter == 0 {
-				str := strings.trim_space(s[tracker:i])
-				if len(str) > 0 {
-					append(&ret, str)
+				tmp := strings.trim_space(s[tracker:i])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
 				}
 				tracker = i + 1
 			}
 		case '"':
 			// We need to find the end of the string. We can't just use `strings.index` because the string can contain escaped quotes.
-			for i < len(s) {
+			for i < len(str) {
 				i += 1
-				if s[i] == '"' {
+				if str[i] == '"' {
 					break
-				} else if s[i] == '\\' {
+				} else if str[i] == '\\' {
 					i += 1 // Skip the escaped character
 				}
 			}
 			if grouping_delimiter == 0 {
-				str := strings.trim_space(s[tracker:i+1])
-				if len(str) > 0 {
-					append(&ret, str)
+				tmp := strings.trim_space(str[tracker:i+1])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
 				}
 				tracker = i + 1
 			}
 		}
 	}
-	str := strings.trim_space(s[tracker:])
-	if len(str) > 0 {
-		append(&ret, str)
+	tmp := strings.trim_space(s[tracker:])
+	if len(tmp) > 0 {
+		append(&ret, tmp)
 	}
 
 	return ret[:], type
@@ -409,18 +408,16 @@ char_type :: proc(c: u8) -> enum {
 } {
 	if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' {
 		return .Char
-	}
-	else if (c >= '0' && c <= '9') || c == '.' { // Assume '.' is decimal point
+	} else if (c >= '0' && c <= '9') || c == '.' { // Assume '.' is decimal point
 		return .Num
-	}
-	else if c == '"' {
+	} else if c == '"' {
 		return .Quote
 	}
 	return .Other
 }
 
-parse_macro :: proc(line: string) -> (macro_token: Macro_Token) {
-	line := strings.trim_space(line)
+parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
+	line := strings.trim_space(s)
 	i := 0
 	for; i < len(line); i += 1 {
 		switch line[i] {
@@ -475,11 +472,9 @@ parse_macro :: proc(line: string) -> (macro_token: Macro_Token) {
 			for i: u32 = 0; i < u32(len(value)); i += 1 {
 				if char_type(value[i]) == .Num {
 					i = parse_number(value, i, &b, params) - 1
-				}
-				else if char_type(value[i]) == .Char {
+				} else if char_type(value[i]) == .Char {
 					i = parse_name(value, i, &b, params) - 1
-				}
-				else {
+				} else {
 					strings.write_byte(&b, value[i])
 				}
 			}
@@ -651,8 +646,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		for ; params_start < len(value); params_start += 1 { // Finds first parenthesis after the macro name
 			if value[params_start] == '(' {
 				break
-			}
-			else if value[params_start] != ' ' {
+			} else if value[params_start] != ' ' {
 				return value^
 			}
 		}
@@ -728,8 +722,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		}
 		if macro, _ := macros[value[name_start:name_end]]; macro.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro, macros)
-		}
-		else if macro.type == .Multivalue {
+		} else if macro.type == .Multivalue {
 			return macro.values
 		}
 		return nil
@@ -744,8 +737,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
 			check_value_for_macro_and_expand(value, macros)
-		}
-		else if macro_token.type == .Multivalue {
+		} else if macro_token.type == .Multivalue {
 			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
 			if name_end < len(value) {
 				tmp = fmt.tprintf("%s%s", tmp, value[name_end:])
@@ -1631,14 +1623,11 @@ gen :: proc(input: string, c: Config) {
 		}
 		if str[:i] in s.defines {
 			strings.write_string(b, trim_prefix(str[:i], s.remove_macro_prefix))
-		}
-		else if type, exists := c_type_mapping[str[:i]]; exists {
+		} else if type, exists := c_type_mapping[str[:i]]; exists {
 			strings.write_string(b, type)
-		}
-		else if s.force_ada_case_types {
+		} else if s.force_ada_case_types {
 			strings.write_string(b, strings.to_ada_case(trim_prefix(str[:i], s.remove_type_prefix)))
-		}
-		else {
+		} else {
 			strings.write_string(b, trim_prefix(str[:i], s.remove_type_prefix))
 		}
 		return i
@@ -1650,8 +1639,7 @@ gen :: proc(input: string, c: Config) {
 		for ; i < len(str); i += 1 {
 			if type := char_type(str[i]); type == .Char && suffix_index == 0 {
 				suffix_index = i
-			}
-			else if type != .Num && type != .Char {
+			} else if type != .Num && type != .Char {
 				break
 			}
 		}
@@ -1668,8 +1656,7 @@ gen :: proc(input: string, c: Config) {
 			if str[i] == '\\' {
 				i += 1
 				continue
-			}
-			else if str[i] == '"' {
+			} else if str[i] == '"' {
 				break
 			}
 		}
@@ -2366,7 +2353,7 @@ main :: proc() {
 		if os.is_dir(i) {
 			input_folder, input_folder_err := os2.open(i)
 			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
-			iter := os2.read_directory_iterator_create(input_folder)	
+			iter, _ := os2.read_directory_iterator_create(input_folder)	
 
 			for f in os2.read_directory_iterator(&iter) {
 				if f.type != .Regular || slice.contains(config.ignore_inputs, f.name) {
