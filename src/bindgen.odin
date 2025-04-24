@@ -1611,80 +1611,75 @@ gen :: proc(input: string, c: Config) {
 		add_to_set(&s.created_types, b)
 	}
 
-	// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
-	// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
-	// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
-	parse_text :: proc(str: string, s: Gen_State, b: ^strings.Builder) -> int {
-		i := 0
-		for ; i < len(str); i += 1 {
-			if char_type(str[i]) != .Char && char_type(str[i]) != .Num {
-				break
-			}
-		}
-		if str[:i] in s.defines {
-			strings.write_string(b, trim_prefix(str[:i], s.remove_macro_prefix))
-		} else if type, exists := c_type_mapping[str[:i]]; exists {
-			strings.write_string(b, type)
-		} else if s.force_ada_case_types {
-			strings.write_string(b, strings.to_ada_case(trim_prefix(str[:i], s.remove_type_prefix)))
-		} else {
-			strings.write_string(b, trim_prefix(str[:i], s.remove_type_prefix))
-		}
-		return i
-	}
-
-	parse_number :: proc(str: string, s: Gen_State, b: ^strings.Builder) -> int {
-		suffix_index := 0
-		i := 0
-		for ; i < len(str); i += 1 {
-			if type := char_type(str[i]); type == .Char && suffix_index == 0 {
-				suffix_index = i
-			} else if type != .Num && type != .Char {
-				break
-			}
-		}
-		if suffix_index == 0 {
-			suffix_index = i
-		}
-		strings.write_string(b, str[:suffix_index])
-		return i
-	}
-
-	parse_string :: proc(str: string, b: ^strings.Builder) -> int {
-		i := 1
-		for ; i < len(str); i += 1 {
-			if str[i] == '\\' {
-				i += 1
-				continue
-			} else if str[i] == '"' {
-				break
-			}
-		}
-		strings.write_string(b, str[:i + 1])
-		return i
-	}
-
 	for &macro in macros {
 		val, exist := s.defines[macro]
 		if !exist {
 			continue
 		}
+
+		comment_out := false
 		
 		val = trim_encapsulating_parens(val)
 		b := strings.builder_make()
 		for i := 0; i < len(val); i += 1 {
 			switch char_type(val[i]) {
 			case .Char:
-				i += parse_text(val[i:], s, &b) - 1
+				// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
+				// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
+				// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
+				start := i
+				for ; i < len(val); i += 1 {
+					if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
+						break
+					}
+				}
+				if val[start:i] in s.defines {
+					strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
+				} else if type, exists := c_type_mapping[val[start:i]]; exists {
+					strings.write_string(&b, type)
+				} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+					strings.write_string(&b, val[start:i])
+				} else if s.force_ada_case_types {
+					comment_out = true
+					strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+				} else {
+					comment_out = true
+					strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+				}
+				i -= 1
 			case .Num:
-				i += parse_number(val[i:], s, &b) - 1
+				suffix_index := 0
+				start := i
+				for ; i < len(val); i += 1 {
+					if type := char_type(val[i]); type == .Char && suffix_index == 0 {
+						suffix_index = i
+					} else if type != .Num && type != .Char {
+						break
+					}
+				}
+				if suffix_index == 0 {
+					suffix_index = i
+				}
+				strings.write_string(&b, val[start:suffix_index])
+				i -= 1
 			case .Quote:
-				i += parse_string(val[i:], &b)
+				start := i
+				for i += 1; i < len(val); i += 1 {
+					if val[i] == '\\' {
+						i += 1
+						continue
+					} else if val[i] == '"' {
+						break
+					}
+				}
+				strings.write_string(&b, val[start:i + 1])
 			case .Other:
 				strings.write_byte(&b, val[i])
 			}
 		}
-
+		if comment_out {
+			fp(f, "// ")
+		}
 		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), strings.to_string(b))
 	}
 
