@@ -8,6 +8,9 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+B2_PI :: 3.14159265359
+
+
 /// 2D vector
 /// This can be used to represent a point or free vector
 Vec2 :: struct {

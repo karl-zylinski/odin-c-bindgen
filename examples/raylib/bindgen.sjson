@@ -128,4 +128,4 @@ clang_include_paths = [
 
 // Writes the clang JSON ast dump for debug inspection
 debug_dump_json_ast = false
-debug_dump_macros = true
+debug_dump_macros = false

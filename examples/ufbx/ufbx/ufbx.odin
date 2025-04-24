@@ -6,6 +6,37 @@ _ :: c
 
 foreign import lib "ufbx.lib"
 
+// UFBX_STDC :: _Stdc_Version
+UFBX_CPP :: 0
+// UFBX_PLATFORM_MSC :: Msc_Ver
+UFBX_PLATFORM_GNUC :: 0
+UFBX_CPP11 :: 0
+// ufbx_inline :: Static _Forceinline
+// ufbx_abi_data :: Extern
+UFBX_REAL_TYPE :: f32
+UFBX_ERROR_STACK_MAX_DEPTH :: 8
+UFBX_PANIC_MESSAGE_LENGTH :: 128
+UFBX_ERROR_INFO_LENGTH :: 256
+UFBX_THREAD_GROUP_COUNT :: 4
+UFBX_HAS_FORCE_32BIT :: 1
+UFBX_HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
+UFBX_VERSION :: UFBX_HEADER_VERSION
+UFBX_NO_INDEX :: ~u32(0)
+UFBX_Lcl_Translation :: "Lcl Translation"
+UFBX_Lcl_Rotation :: "Lcl Rotation"
+UFBX_Lcl_Scaling :: "Lcl Scaling"
+UFBX_RotationOrder :: "Rotation_Order"
+UFBX_ScalingPivot :: "Scaling_Pivot"
+UFBX_RotationPivot :: "Rotation_Pivot"
+UFBX_ScalingOffset :: "Scaling_Offset"
+UFBX_RotationOffset :: "Rotation_Offset"
+UFBX_PreRotation :: "Pre_Rotation"
+UFBX_PostRotation :: "Post_Rotation"
+UFBX_Visibility :: "Visibility"
+UFBX_Weight :: "Weight"
+UFBX_DeformPercent :: "Deform_Percent"
+
+
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
 // as `float` instead.
@@ -287,7 +318,7 @@ Prop :: struct {
 	name:          String,
 	_internal_key: u32,
 	type:          Prop_Type,
-	flags:         Prop_Flags,
+	flags:         Prop_Flag,
 	value_str:     String,
 	value_blob:    Blob,
 	value_int:     i64,
@@ -4385,9 +4416,9 @@ Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
 BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
 Baked_Vec3 :: struct {
-	time:  f64,             // < Time of the keyframe, in seconds
-	value: Vec3,            // < Value at `time`, can be linearly interpolated
-	flags: Baked_Key_Flags, // < Additional information about the keyframe
+	time:  f64,            // < Time of the keyframe, in seconds
+	value: Vec3,           // < Value at `time`, can be linearly interpolated
+	flags: Baked_Key_Flag, // < Additional information about the keyframe
 }
 
 Baked_Vec3_List :: struct {
@@ -4396,9 +4427,9 @@ Baked_Vec3_List :: struct {
 }
 
 Baked_Quat :: struct {
-	time:  f64,             // < Time of the keyframe, in seconds
-	value: Quat,            // < Value at `time`, can be (spherically) linearly interpolated
-	flags: Baked_Key_Flags, // < Additional information about the keyframe
+	time:  f64,            // < Time of the keyframe, in seconds
+	value: Quat,           // < Value at `time`, can be (spherically) linearly interpolated
+	flags: Baked_Key_Flag, // < Additional information about the keyframe
 }
 
 Baked_Quat_List :: struct {
