@@ -2353,7 +2353,7 @@ main :: proc() {
 		if os.is_dir(i) {
 			input_folder, input_folder_err := os2.open(i)
 			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
-			iter, _ := os2.read_directory_iterator_create(input_folder)	
+			iter := os2.read_directory_iterator_create(input_folder)	
 
 			for f in os2.read_directory_iterator(&iter) {
 				if f.type != .Regular || slice.contains(config.ignore_inputs, f.name) {
