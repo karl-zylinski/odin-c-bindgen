@@ -6,13 +6,13 @@ _ :: c
 
 foreign import lib "ufbx.lib"
 
-STDC :: _Stdc_Version
+// STDC :: _Stdc_Version
 CPP :: 0
-PLATFORM_MSC :: Msc_Ver
+// PLATFORM_MSC :: Msc_Ver
 PLATFORM_GNUC :: 0
 CPP11 :: 0
-ufbx_inline :: Static _Forceinline
-ufbx_abi_data :: Extern
+// ufbx_inline :: Static _Forceinline
+// ufbx_abi_data :: Extern
 REAL_TYPE :: f32
 ERROR_STACK_MAX_DEPTH :: 8
 PANIC_MESSAGE_LENGTH :: 128
