@@ -1337,6 +1337,7 @@ Config :: struct {
 	remove_prefix: string,
 	remove_type_prefix: string,
 	remove_function_prefix: string,
+	remove_macro_prefix: string,
 	import_lib: string,
 	imports_file: string,
 	clang_include_paths: []string,
@@ -1629,7 +1630,7 @@ gen :: proc(input: string, c: Config) {
 			}
 		}
 		if str[:i] in s.defines {
-			strings.write_string(b, str[:i])
+			strings.write_string(b, trim_prefix(str[:i], s.remove_macro_prefix))
 		}
 		else if type, exists := c_type_mapping[str[:i]]; exists {
 			strings.write_string(b, type)
@@ -1662,7 +1663,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	parse_string :: proc(str: string, b: ^strings.Builder) -> int {
-		i := 0
+		i := 1
 		for ; i < len(str); i += 1 {
 			if str[i] == '\\' {
 				i += 1
@@ -1697,7 +1698,7 @@ gen :: proc(input: string, c: Config) {
 			}
 		}
 
-		fpfln(f, "%v :: %v", macro, strings.to_string(b))
+		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), strings.to_string(b))
 	}
 
 	fp(f, "\n\n")
