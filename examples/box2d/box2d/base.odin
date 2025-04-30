@@ -10,7 +10,6 @@ foreign import lib "box2d.lib"
 
 // B2_API :: BOX2D_EXPORT
 // B2_INLINE :: static inline
-B2_ZERO_INIT :: {0}
 // B2_BREAKPOINT :: _debugbreak()
 B2_HASH_INIT :: 5381
 

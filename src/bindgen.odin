@@ -1677,10 +1677,15 @@ gen :: proc(input: string, c: Config) {
 				strings.write_byte(&b, val[i])
 			}
 		}
+
+		value_string := strings.to_string(b)
+		if value_string == "{}" || value_string == "{0}" {
+			continue
+		}
 		if comment_out {
 			fp(f, "// ")
 		}
-		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), strings.to_string(b))
+		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), value_string)
 	}
 
 	fp(f, "\n\n")
