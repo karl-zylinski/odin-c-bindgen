@@ -78,11 +78,22 @@ Typedef :: struct {
 	side_comment: string,
 }
 
-Declaration :: union {
+Declaration_Variant :: union {
 	Struct,
 	Function,
 	Enum,
-	Typedef,
+	Typedef,	
+}
+
+Declaration :: struct {
+	// Used for sorting the declarations. They may be added out-of-order due to macros
+	// coming in from a separate code path.
+	line: int,
+
+	// The original idx in `s.decls`. This is for tie-breaking when line is the same.
+	original_idx: int,
+
+	variant: Declaration_Variant,
 }
 
 get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
@@ -737,7 +748,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
 			check_value_for_macro_and_expand(value, macros)
-		} else if macro_token.type == .Multivalue {
+	} else if macro_token.type == .Multivalue {
 			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
 			if name_end < len(value) {
 				tmp = fmt.tprintf("%s%s", tmp, value[name_end:])
@@ -772,7 +783,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 	return defined_from_file
 }
 
-parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
+parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 	if json_has(decl, "loc.includedFrom") {
 		return
 	}
@@ -804,7 +815,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			return
 		}
 
-		line, line_ok := json_get_int(decl, "loc.line")
+		_, line_ok := json_get_int(decl, "loc.line")
 
 		if !line_ok {
 			return
@@ -846,13 +857,17 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			side_comment, _ = find_side_comment(end_offset, s)
 		}
 
-		append(&s.decls, Function {
-			name = name,
-			parameters = out_params[:],
-			return_type = has_return_type ? return_type : "",
-			comment = comment,
-			comment_before = comment_before,
-			post_comment = side_comment,
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Function {
+				name = name,
+				parameters = out_params[:],
+				return_type = has_return_type ? return_type : "",
+				comment = comment,
+				comment_before = comment_before,
+				post_comment = side_comment,
+			},
 		})
 	} else if kind == "RecordDecl" {
 		name, name_ok := json_get_string(decl, "name")
@@ -865,12 +880,12 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			struct_decl.name = name
 			struct_decl.id = id
 			if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-				s.decls[forward_idx] = nil
+				s.decls[forward_idx] = {}
 			}
 
 			s.symbol_indices[name] = len(s.decls)
 
-			append(&s.decls, struct_decl)
+			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
 		}
 	} else if kind == "TypedefDecl" {
 		type, type_ok := get_parameter_type(s, decl)
@@ -880,7 +895,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		}
 
 		name, _ := json_get_string(decl, "name")
-		line, line_ok := json_get_int(decl, "loc.line")
+		_, line_ok := json_get_int(decl, "loc.line")
 		pre_comment: string
 		side_comment: string
 
@@ -917,11 +932,15 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		}
 
 		s.typedefs[type] = name
-		append(&s.decls, Typedef {
-			name = name,
-			type = type,
-			pre_comment = pre_comment,
-			side_comment = side_comment,
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Typedef {
+				name = name,
+				type = type,
+				pre_comment = pre_comment,
+				side_comment = side_comment,
+			},
 		})
 	} else if kind == "EnumDecl" {
 		name, _ := json_get_string(decl, "name")
@@ -974,11 +993,15 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			}
 		}
 
-		append(&s.decls, Enum {
-			name = name,
-			id = id,
-			comment = comment,
-			members = out_members[:],
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Enum {
+				name = name,
+				id = id,
+				comment = comment,
+				members = out_members[:],
+			},
 		})
 	}
 }
@@ -1450,6 +1473,8 @@ gen :: proc(input: string, c: Config) {
 	// to s.decls)
 	//
 
+	line := 0
+
 	for &in_decl in inner {
 		if s.required_prefix != "" {
 			if name, name_ok := json_get_string(in_decl, "name"); name_ok {
@@ -1458,9 +1483,21 @@ gen :: proc(input: string, c: Config) {
 				}
 			}		
 		}
+		
+		// Some decls don't have a line, in that case we send in the most recent line instead.
+		if cur_line, cur_line_ok := json_get_int(in_decl, "loc.line"); cur_line_ok {
+			line = cur_line
+		}
 
-		parse_decl(&s, in_decl)
+		parse_decl(&s, in_decl, line)
 	}
+
+	slice.sort_by(s.decls[:], proc(i, j: Declaration) -> bool {
+		if i.line == j.line {
+			return i.original_idx < j.original_idx
+		}
+		return i.line < j.line
+	})
 
 	//
 	// Use the stuff in `s` and `s.decl` to write out the bindings.
@@ -1552,7 +1589,8 @@ gen :: proc(input: string, c: Config) {
 	// Figure out all type names
 	//
 
-	for &du in s.decls {
+	for &decl in s.decls {
+		du := &decl.variant
 		switch &d in du {
 			case Struct:
 				name := d.name
@@ -1690,7 +1728,8 @@ gen :: proc(input: string, c: Config) {
 
 	fp(f, "\n\n")
 
-	for &du in s.decls {
+	for &decl in s.decls {
+		du := &decl.variant
 		switch d in du {
 		case Struct:
 			output_comment(f, d.comment)
@@ -2140,7 +2179,8 @@ gen :: proc(input: string, c: Config) {
 	groups: [dynamic]Function_Group
 	curr_group: Function_Group
 
-	for &du in s.decls {
+	for &decl in s.decls {
+		du := &decl.variant
 		if f, f_ok := du.(Function); f_ok {
 			if f.comment != "" {
 				if len(curr_group.functions) > 0 {
