@@ -2,4 +2,5 @@
 *.rdi
 *.exe
 *debug_dump.json
+*macro_dump.h
 scrap

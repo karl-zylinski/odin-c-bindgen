@@ -119,6 +119,8 @@ clang_include_paths = [
 
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
+// Writes the clang preprocessor macro dump
+debug_dump_macros = false
 ```
 </details>
 
@@ -130,7 +132,7 @@ If your bindings don't work because of a missing C type, then chances are I've f
 
 If you have some library that is hard to generate bindings for, then submit an issue on this GitHub page and provide the headers in a zip. I'll try to help if I can find some time.
 
-The generator won't bring along any `#define`'s or inline functions.
+The generator won't bring along any inline functions.
 
 ### How do I include a pre-made Odin file?
 

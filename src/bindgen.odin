@@ -303,6 +303,475 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 	return
 }
 
+Macro_Type :: enum {
+	Valueless,
+	Constant_Expression,
+	Multivalue,
+	Function,
+}
+
+Macro_Token :: struct {
+	type: Macro_Type,
+	name: string,
+	values: []string,
+}
+
+trim_encapsulating_parens :: proc(s: string) -> string {
+	str := strings.trim_space(s)
+	// There could be an arbitrary number of parentheses inside the string so we repeat until we're sure we've removed all the outer ones.
+	for str[0] == '(' && str[len(str) - 1] == ')' {
+		parens := 1
+		i := 1
+		// It's important to make sure that the parens at the begining and end are a pair.
+		// For example without the check a cast statement like `(type)(value)` would have its outer parens removed.
+		for ; parens > 0 && i < len(str); i += 1 {
+			if str[i] == '(' {
+				parens += 1
+			} else if str[i] == ')' {
+				parens -= 1
+			}
+		}
+		// If parens is 0 before reaching the end of the string then the starting parenthesis doesn't pair with the ending one.
+		// If parens doesn't reach 0 then we have unbalanced parenthesis. Maybe we should error here but I'm just going to ignore it for now.
+		// It's not our responsibility to ensure the code is valid C. Also clang should have produced an error if there was a syntax error.
+		if i == len(str) && parens == 0 {
+			str = strings.trim_space(str[1: len(str) - 1])
+		} else {
+			break
+		}
+	}
+	return str
+}
+
+parse_value :: proc(s: string) -> (r: []string, type: Macro_Type = .Constant_Expression) {
+	str := strings.trim_space(s)
+
+	ret: [dynamic]string
+	grouping_delimiter := 0
+	tracker := 0
+	for i := 0; i < len(str); i += 1 {
+		switch str[i] {
+		// We track grouping delimiters so we can ignore commas and spaces inside them such as {10, 20, 30}.
+		case '(', '{', '[':
+			grouping_delimiter += 1
+		case ')', '}', ']':
+			grouping_delimiter -= 1
+		case ',':
+			if grouping_delimiter == 0 {
+				tmp := strings.trim_space(s[tracker:i])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
+				}
+				tracker = i + 1
+				type = .Multivalue
+			}
+		case ' ':
+			if grouping_delimiter == 0 {
+				tmp := strings.trim_space(s[tracker:i])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
+				}
+				tracker = i + 1
+			}
+		case '"':
+			// We need to find the end of the string. We can't just use `strings.index` because the string can contain escaped quotes.
+			for i < len(str) {
+				i += 1
+				if str[i] == '"' {
+					break
+				} else if str[i] == '\\' {
+					i += 1 // Skip the escaped character
+				}
+			}
+			if grouping_delimiter == 0 {
+				tmp := strings.trim_space(str[tracker:i+1])
+				if len(tmp) > 0 {
+					append(&ret, tmp)
+				}
+				tracker = i + 1
+			}
+		}
+	}
+	tmp := strings.trim_space(s[tracker:])
+	if len(tmp) > 0 {
+		append(&ret, tmp)
+	}
+
+	return ret[:], type
+} 
+
+char_type :: proc(c: u8) -> enum {
+	Char,
+	Num,
+	Quote,
+	Other,
+} {
+	if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' {
+		return .Char
+	} else if (c >= '0' && c <= '9') || c == '.' { // Assume '.' is decimal point
+		return .Num
+	} else if c == '"' {
+		return .Quote
+	}
+	return .Other
+}
+
+parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
+	line := strings.trim_space(s)
+	i := 0
+	for; i < len(line); i += 1 {
+		switch line[i] {
+		case '(': // Function-like macro
+			macro_token.type = .Function
+			macro_token.name = line[:i]
+
+			fn_end := strings.index(line, ")") // fn macros can only have one `(` and `)`
+			params := strings.split(line[i + 1:fn_end], ",")
+			defer delete(params)
+			for &param in params {
+				param = strings.trim_space(param)
+			}
+
+			parse_number :: proc(str: string, start: u32, b: ^strings.Builder, names: []string) -> u32 {
+				end := start + 1
+				for; end < u32(len(str)); end += 1 {
+					if char_type(str[end]) == .Other { // Assume chars are a type suffix or 'b'/'x' for binary and hex (We'll validate these later)
+						break
+					}
+				}
+				strings.write_string(b, str[start:end])
+				return end
+			}
+
+			parse_name :: proc(str: string, start: u32, b: ^strings.Builder, names: []string) -> u32 {
+				end := start + 1
+				for; end < u32(len(str)); end += 1 {
+					if char_type(str[end]) == .Other { 
+						break 
+					}
+				}
+				
+				for name, i in names {
+					if str[start:end] == name {
+						// This will allow me to index the parameter with the number of the parameter similar to pythons "{0}" formatting.
+						// We can't copy python syntax exactly here because C uses {} for initializers and we don't want to confuse the two.
+						strings.write_string(b, "${")
+						strings.write_int(b, i)
+						strings.write_string(b, "}$")
+						return end
+					}
+				}
+				strings.write_string(b, str[start:end])
+				return end
+			}
+
+			b := strings.builder_make()
+			value := strings.trim_space(line[fn_end+1:])
+			
+			// We go throught the string and replace all the parameters with `${index}$`.
+			for i: u32 = 0; i < u32(len(value)); i += 1 {
+				if char_type(value[i]) == .Num {
+					i = parse_number(value, i, &b, params) - 1
+				} else if char_type(value[i]) == .Char {
+					i = parse_name(value, i, &b, params) - 1
+				} else {
+					strings.write_byte(&b, value[i])
+				}
+			}
+			macro_token.values = make([]string, 1)
+			macro_token.values[0] = strings.to_string(b)
+			return
+		case ' ': // Non function-like macro
+			macro_token.name = line[:i]
+			macro_token.values, macro_token.type = parse_value(trim_encapsulating_parens(line[i:]))
+			return
+		}
+	}
+	macro_token = {
+		name = line,
+		type = .Valueless,
+	}
+	return
+}
+
+// Parses the file and finds all the macros that are defined in it.
+parse_file_macros :: proc(s: ^Gen_State) -> []string {
+	defined: [dynamic]string
+	file_lines := strings.split_lines(s.source)
+	defer delete(file_lines)
+	main_loop: for i := 0; i < len(file_lines); i += 1 {
+		line := strings.trim_space(file_lines[i])
+
+		if len(line) == 0 { // Don't parse empty lines
+			continue
+		}
+
+		for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+			i += 1
+			line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(file_lines[i]))
+		}
+
+		if strings.has_prefix(line, "#define") { // #define macroName keyValue
+			parts := strings.split(line, " ")
+			defer delete(parts)
+			if len(parts) < 3 { // We need at least 3 parts to be a valid define
+				continue
+			}
+
+			end_of_name := strings.index(parts[1], "(")
+			end_of_name = end_of_name == -1 ? len(parts[1]) : end_of_name
+
+			for &defined_macro in defined { // Make sure we don't add duplicates
+				if defined_macro == parts[1][:end_of_name] {
+					continue main_loop
+				}
+			}
+
+			append(&defined, parts[1][:end_of_name])
+		}
+	}
+
+	return defined[:]
+}
+
+// This function runs clangs preprocessor to get all the macros that are defined during compilation
+parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_Token) {
+	command := [dynamic]string {
+		"clang", "-dM", "-E", input,
+	}
+	defer delete(command)
+
+	for include in s.clang_include_paths {
+		append(&command, fmt.tprintf("-I%v", include))
+	}
+
+	for k, v in s.clang_defines {
+		append(&command, fmt.tprintf("-D%v=%v", k, v))
+	}
+
+	process_desc := os2.Process_Desc {
+		command = command[:],
+	}
+
+	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
+	defer delete(sout)
+
+	if err != nil {
+		fmt.panicf("Error generating macro dump. Error: %v", err)
+	}
+
+	if len(serr) > 0 {
+		fmt.eprintln(string(serr))
+		fmt.eprintfln("Aborting generation for %v", input)
+		return nil
+	}
+
+	ensure(state.success, "Failed running clang")
+
+	input_filename := filepath.base(input)
+	output_stem := filepath.stem(input_filename)
+	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
+	
+	if s.debug_dump_macros {
+		os.write_entire_file(fmt.tprintf("%v-macro_dump.h", output_filename), sout)
+	}
+
+	tokenized_macros: map[string]Macro_Token
+
+	macro_lines := strings.split_lines(string(sout))
+	defer delete(macro_lines)
+	for i := 0; i < len(macro_lines); i += 1 {
+		line := strings.trim_space(macro_lines[i])
+
+		if len(line) == 0 { // Don't parse empty lines
+			continue
+		}
+
+		for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+			i += 1
+			line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(macro_lines[i]))
+		}
+
+		if strings.has_prefix(line, "#define") {
+			token := parse_macro(line[len("#define "):])
+			if token.type == .Valueless {
+				continue // We don't care about valueless macros
+			}
+			tokenized_macros[token.name] = token
+		}
+	}
+
+	return tokenized_macros
+}
+
+parse_pystring :: proc(s: string, params: []string) -> string {
+	b := strings.builder_make(context.temp_allocator)
+	index := 0
+	for i := strings.index(s[index:], "${"); i != -1; i = strings.index(s[index:], "${") {
+		start_brace := i + index
+		end_brace := strings.index(s[start_brace:], "}$")
+		if end_brace == -1 {
+			break // No closing brace found. The macro is malformed.
+		}
+		end_brace += start_brace
+		param_index := strconv.atoi(s[start_brace+2:end_brace])
+		if param_index < 0 || param_index >= len(params) {
+			break // Invalid parameter index
+		}
+
+		strings.write_string(&b, s[index:index+i])
+		strings.write_string(&b, params[param_index])
+		index = end_brace + 2
+	}
+	strings.write_string(&b, s[index:])
+	return strings.to_string(b)
+}
+
+parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
+	defined_from_file := parse_file_macros(s)
+
+	tokenized_macros := parse_clang_macros(s, input)
+	defer delete(tokenized_macros)
+	defer for _, &macro in tokenized_macros {
+        if macro.type == .Function {
+            for &str in macro.values {
+                delete(str)
+            }
+        }
+        delete(macro.values)
+    }
+
+	expand_fn_macro :: proc(value: ^string, name_start, name_end: int, macro_token: Macro_Token, macros: ^map[string]Macro_Token) -> string {
+		params_start := name_end
+		for ; params_start < len(value); params_start += 1 { // Finds first parenthesis after the macro name
+			if value[params_start] == '(' {
+				break
+			} else if value[params_start] != ' ' {
+				return value^
+			}
+		}
+		if params_start == len(value) {
+			return value^
+		}
+
+		params_start += 1
+		params_end := params_start
+		parens := 1
+		for ; parens > 0 && params_end < len(value); params_end += 1 {
+			if value[params_end] == '(' {
+				parens += 1
+			} else if value[params_end] == ')' {
+				parens -= 1
+			}
+		}
+		if parens != 0 {
+			return value^
+		}
+		params_end -= 1
+
+		params, _ := parse_value(value[params_start:params_end])
+		for param_index := 0; param_index < len(params); param_index += 1 {
+			// If our param contains a macro we need to expand it first.
+			strs := check_param_for_macro_and_expand(&params[param_index], macros)
+			if len(strs) > 0 {
+				new_params := make([]string, len(params) + len(strs) - 1)
+				for i := 0; i < param_index; i += 1 {
+					new_params[i] = params[i]
+				}
+				for i := 0; i < len(strs); i += 1 {
+					new_params[param_index + i] = strs[i]
+				}
+				for i := 0; i < len(params) - param_index - 1; i += 1 {
+					new_params[param_index + len(strs) + i] = params[param_index + i + 1]
+				}
+				params = new_params // It might not be safe to do this while looping over the array.
+			}
+		}
+
+		ret := fmt.tprintf("%s%s", value[:name_start], parse_pystring(macro_token.values[0], params))
+		if params_end + 1 < len(value) {
+			ret = fmt.tprintf("%s%s", ret, value[params_end + 1:])
+		}
+		return ret
+	}
+
+	check_for_macro :: proc(value: ^string, macros: ^map[string]Macro_Token) -> (int, int) {
+		for i := 0; i < len(value); i += 1 {
+			if char_type(value[i]) != .Char {
+				continue
+			}
+
+			name_start := i
+			for ; i < len(value); i += 1 {
+				if char_type(value[i]) == .Other {
+					break
+				}
+			}
+			
+			if _, exists := macros[value[name_start:i]]; exists {
+				return name_start, i
+			}
+		}
+		return -1, -1
+	}
+
+	check_param_for_macro_and_expand :: proc(value: ^string, macros: ^map[string]Macro_Token) -> []string {
+		name_start, name_end := check_for_macro(value, macros)
+		if name_start == -1 {
+			return nil
+		}
+		if macro, _ := macros[value[name_start:name_end]]; macro.type == .Function {
+			value^ = expand_fn_macro(value, name_start, name_end, macro, macros)
+		} else if macro.type == .Multivalue {
+			return macro.values
+		}
+		return nil
+	}
+
+	check_value_for_macro_and_expand :: proc(value: ^string, macros: ^map[string]Macro_Token) {
+		name_start, name_end := check_for_macro(value, macros)
+		if name_start == -1 {
+			return
+		}
+
+		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
+			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
+			check_value_for_macro_and_expand(value, macros)
+		} else if macro_token.type == .Multivalue {
+			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
+			if name_end < len(value) {
+				tmp = fmt.tprintf("%s%s", tmp, value[name_end:])
+			}
+			value^ = tmp
+			check_value_for_macro_and_expand(value, macros)
+		}
+	}
+
+	for _, &macro in tokenized_macros {
+		if macro.type != .Constant_Expression {
+			continue
+		}
+
+		// I'm not a fan of this way of checking if the macro is defined in the file. Feel free to suggest better ways to do this.
+		defined := false
+		for i := 0; i < len(defined_from_file); i += 1 {
+			if defined_from_file[i] == macro.name {
+				defined = true
+				break
+			}
+		}
+		if !defined {
+			continue
+		}
+
+		for &value in macro.values {
+			check_value_for_macro_and_expand(&value, &tokenized_macros)
+		}
+		s.defines[macro.name] = strings.join(macro.values, " ")
+	}
+	return defined_from_file
+}
+
 parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 	if json_has(decl, "loc.includedFrom") {
 		return
@@ -860,12 +1329,14 @@ Config :: struct {
 	remove_prefix: string,
 	remove_type_prefix: string,
 	remove_function_prefix: string,
+	remove_macro_prefix: string,
 	import_lib: string,
 	imports_file: string,
 	clang_include_paths: []string,
 	clang_defines: map[string]string,
 	force_ada_case_types: bool,
 	debug_dump_json_ast: bool,
+	debug_dump_macros: bool,
 
 	opaque_types: []string,
 	rename_types: map[string]string,
@@ -881,6 +1352,7 @@ Gen_State :: struct {
 
 	source: string,
 	decls: [dynamic]Declaration,
+	defines: map[string]string,
 	symbol_indices: map[string]int,
 	typedefs: map[string]string,
 	created_symbols: map[string]struct{},
@@ -968,6 +1440,8 @@ gen :: proc(input: string, c: Config) {
 	source_data, source_data_ok := os.read_entire_file(input)
 	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
+
+	macros := parse_macros(&s, input) // Parse macros so we can add them as constants in Odin
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
 
@@ -1136,6 +1610,85 @@ gen :: proc(input: string, c: Config) {
 	for _, b in s.bit_setify {
 		add_to_set(&s.created_types, b)
 	}
+
+	for &macro in macros {
+		val, exist := s.defines[macro]
+		if !exist {
+			continue
+		}
+
+		comment_out := false
+		
+		val = trim_encapsulating_parens(val)
+		b := strings.builder_make()
+		for i := 0; i < len(val); i += 1 {
+			switch char_type(val[i]) {
+			case .Char:
+				// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
+				// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
+				// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
+				start := i
+				for ; i < len(val); i += 1 {
+					if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
+						break
+					}
+				}
+				if val[start:i] in s.defines {
+					strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
+				} else if type, exists := c_type_mapping[val[start:i]]; exists {
+					strings.write_string(&b, type)
+				} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+					strings.write_string(&b, val[start:i])
+				} else if s.force_ada_case_types {
+					comment_out = true
+					strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+				} else {
+					comment_out = true
+					strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+				}
+				i -= 1
+			case .Num:
+				suffix_index := 0
+				start := i
+				for ; i < len(val); i += 1 {
+					if type := char_type(val[i]); type == .Char && suffix_index == 0 {
+						suffix_index = i
+					} else if type != .Num && type != .Char {
+						break
+					}
+				}
+				if suffix_index == 0 {
+					suffix_index = i
+				}
+				strings.write_string(&b, val[start:suffix_index])
+				i -= 1
+			case .Quote:
+				start := i
+				for i += 1; i < len(val); i += 1 {
+					if val[i] == '\\' {
+						i += 1
+						continue
+					} else if val[i] == '"' {
+						break
+					}
+				}
+				strings.write_string(&b, val[start:i + 1])
+			case .Other:
+				strings.write_byte(&b, val[i])
+			}
+		}
+
+		value_string := strings.to_string(b)
+		if value_string == "{}" || value_string == "{0}" {
+			continue
+		}
+		if comment_out {
+			fp(f, "// ")
+		}
+		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), value_string)
+	}
+
+	fp(f, "\n\n")
 
 	for &du in s.decls {
 		switch d in du {

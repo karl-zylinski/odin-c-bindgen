@@ -8,6 +8,9 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+B2_MAX_POLYGON_VERTICES :: 8
+
+
 /// Low level ray cast input data
 RayCastInput :: struct {
 	/// Start point of the ray cast
