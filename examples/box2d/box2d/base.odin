@@ -10,10 +10,6 @@ foreign import lib "box2d.lib"
 
 // B2_API :: BOX2D_EXPORT
 // B2_INLINE :: static inline
-// B2_BREAKPOINT :: _debugbreak()
-B2_HASH_INIT :: 5381
-
-
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
@@ -25,6 +21,8 @@ FreeFcn :: proc "c" (rawptr)
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
+
+// B2_BREAKPOINT :: _debugbreak()
 
 /// Version numbering scheme.
 /// See https://semver.org/
@@ -38,6 +36,8 @@ Version :: struct {
 	/// Bug fixes
 	revision: i32,
 }
+
+B2_HASH_INIT :: 5381
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {

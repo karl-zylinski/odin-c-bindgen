@@ -8,8 +8,6 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
-
-
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
 	/// Create a world for rigid body simulation. A world contains bodies, shapes, and constraints. You make create

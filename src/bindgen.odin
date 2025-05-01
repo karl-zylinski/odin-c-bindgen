@@ -78,11 +78,17 @@ Typedef :: struct {
 	side_comment: string,
 }
 
+Macro :: struct {
+	name: string,
+	val: string,
+}
+
 Declaration_Variant :: union {
 	Struct,
 	Function,
 	Enum,
-	Typedef,	
+	Typedef,
+	Macro,
 }
 
 Declaration :: struct {
@@ -505,12 +511,20 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 	return
 }
 
+File_Macro :: struct {
+	line: int,
+	macro_name: string,
+}
+
 // Parses the file and finds all the macros that are defined in it.
-parse_file_macros :: proc(s: ^Gen_State) -> []string {
-	defined: [dynamic]string
+parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
+	defined := make(map[string]int, context.temp_allocator)
+
+	// TODO: Avoid splitting for real, use split iterators instead if possible.
 	file_lines := strings.split_lines(s.source)
 	defer delete(file_lines)
-	main_loop: for i := 0; i < len(file_lines); i += 1 {
+	for i := 0; i < len(file_lines); i += 1 {
+		line_idx := i
 		line := strings.trim_space(file_lines[i])
 
 		if len(line) == 0 { // Don't parse empty lines
@@ -531,18 +545,26 @@ parse_file_macros :: proc(s: ^Gen_State) -> []string {
 
 			end_of_name := strings.index(parts[1], "(")
 			end_of_name = end_of_name == -1 ? len(parts[1]) : end_of_name
+			name := parts[1][:end_of_name]
 
-			for &defined_macro in defined { // Make sure we don't add duplicates
-				if defined_macro == parts[1][:end_of_name] {
-					continue main_loop
-				}
+			if name in defined {
+				continue
 			}
 
-			append(&defined, parts[1][:end_of_name])
+			defined[name] = line_idx
 		}
 	}
 
-	return defined[:]
+	res := make([dynamic]File_Macro, 0, len(defined))
+
+	for macro_name, line in defined {
+		append(&res, File_Macro {
+			line = line,
+			macro_name = macro_name,
+		})
+	}
+
+	return res[:]
 }
 
 // This function runs clangs preprocessor to get all the macros that are defined during compilation
@@ -638,7 +660,7 @@ parse_pystring :: proc(s: string, params: []string) -> string {
 	return strings.to_string(b)
 }
 
-parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
+parse_macros :: proc(s: ^Gen_State, input: string) {
 	defined_from_file := parse_file_macros(s)
 
 	tokenized_macros := parse_clang_macros(s, input)
@@ -765,9 +787,11 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 
 		// I'm not a fan of this way of checking if the macro is defined in the file. Feel free to suggest better ways to do this.
 		defined := false
+		line_idx := 0
 		for i := 0; i < len(defined_from_file); i += 1 {
-			if defined_from_file[i] == macro.name {
+			if defined_from_file[i].macro_name == macro.name {
 				defined = true
+				line_idx = defined_from_file[i].line
 				break
 			}
 		}
@@ -778,9 +802,15 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		for &value in macro.values {
 			check_value_for_macro_and_expand(&value, &tokenized_macros)
 		}
-		s.defines[macro.name] = strings.join(macro.values, " ")
+
+		append(&s.decls, Declaration {
+			line = line_idx,
+			variant = Macro {
+				name = macro.name,
+				val = strings.join(macro.values, " "),
+			},
+		})
 	}
-	return defined_from_file
 }
 
 parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
@@ -1464,7 +1494,7 @@ gen :: proc(input: string, c: Config) {
 	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
 
-	macros := parse_macros(&s, input) // Parse macros so we can add them as constants in Odin
+	parse_macros(&s, input) // Parse macros so we can add them as constants in Odin
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
 
@@ -1642,6 +1672,12 @@ gen :: proc(input: string, c: Config) {
 				d.name = name
 				add_to_set(&s.created_types, d.name)
 
+			case Macro:
+				name := d.name
+				name = trim_prefix(name, s.remove_macro_prefix)
+				name = final_name(name, s)
+				d.name = name
+				add_to_set(&s.created_types, d.name)
 		}
 	}
 
@@ -1649,86 +1685,7 @@ gen :: proc(input: string, c: Config) {
 		add_to_set(&s.created_types, b)
 	}
 
-	for &macro in macros {
-		val, exist := s.defines[macro]
-		if !exist {
-			continue
-		}
-
-		comment_out := false
-		
-		val = trim_encapsulating_parens(val)
-		b := strings.builder_make()
-		for i := 0; i < len(val); i += 1 {
-			switch char_type(val[i]) {
-			case .Char:
-				// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
-				// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
-				// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
-				start := i
-				for ; i < len(val); i += 1 {
-					if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
-						break
-					}
-				}
-				if val[start:i] in s.defines {
-					strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
-				} else if type, exists := c_type_mapping[val[start:i]]; exists {
-					strings.write_string(&b, type)
-				} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
-					strings.write_string(&b, val[start:i])
-				} else if s.force_ada_case_types {
-					comment_out = true
-					strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
-				} else {
-					comment_out = true
-					strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
-				}
-				i -= 1
-			case .Num:
-				suffix_index := 0
-				start := i
-				for ; i < len(val); i += 1 {
-					if type := char_type(val[i]); type == .Char && suffix_index == 0 {
-						suffix_index = i
-					} else if type != .Num && type != .Char {
-						break
-					}
-				}
-				if suffix_index == 0 {
-					suffix_index = i
-				}
-				strings.write_string(&b, val[start:suffix_index])
-				i -= 1
-			case .Quote:
-				start := i
-				for i += 1; i < len(val); i += 1 {
-					if val[i] == '\\' {
-						i += 1
-						continue
-					} else if val[i] == '"' {
-						break
-					}
-				}
-				strings.write_string(&b, val[start:i + 1])
-			case .Other:
-				strings.write_byte(&b, val[i])
-			}
-		}
-
-		value_string := strings.to_string(b)
-		if value_string == "{}" || value_string == "{0}" {
-			continue
-		}
-		if comment_out {
-			fp(f, "// ")
-		}
-		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), value_string)
-	}
-
-	fp(f, "\n\n")
-
-	for &decl in s.decls {
+	for &decl, decl_idx in s.decls {
 		du := &decl.variant
 		switch d in du {
 		case Struct:
@@ -2159,6 +2116,89 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			fp(f, "\n\n")
+
+		case Macro:
+			val := d.val
+
+			comment_out := false
+			
+			val = trim_encapsulating_parens(val)
+			b := strings.builder_make()
+			for i := 0; i < len(val); i += 1 {
+				switch char_type(val[i]) {
+				case .Char:
+					// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
+					// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
+					// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
+					start := i
+					for ; i < len(val); i += 1 {
+						if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
+							break
+						}
+					}
+					if val[start:i] in s.defines {
+						strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
+					} else if type, exists := c_type_mapping[val[start:i]]; exists {
+						strings.write_string(&b, type)
+					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+						strings.write_string(&b, val[start:i])
+					} else if s.force_ada_case_types {
+						comment_out = true
+						strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+					} else {
+						comment_out = true
+						strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+					}
+					i -= 1
+				case .Num:
+					suffix_index := 0
+					start := i
+					for ; i < len(val); i += 1 {
+						if type := char_type(val[i]); type == .Char && suffix_index == 0 {
+							suffix_index = i
+						} else if type != .Num && type != .Char {
+							break
+						}
+					}
+					if suffix_index == 0 {
+						suffix_index = i
+					}
+					strings.write_string(&b, val[start:suffix_index])
+					i -= 1
+				case .Quote:
+					start := i
+					for i += 1; i < len(val); i += 1 {
+						if val[i] == '\\' {
+							i += 1
+							continue
+						} else if val[i] == '"' {
+							break
+						}
+					}
+					strings.write_string(&b, val[start:i + 1])
+				case .Other:
+					strings.write_byte(&b, val[i])
+				}
+			}
+
+			value_string := strings.to_string(b)
+			if value_string == "{}" || value_string == "{0}" {
+				continue
+			}
+			if comment_out {
+				fp(f, "// ")
+			}
+			fpfln(f, "%v :: %v", d.name, value_string)
+
+			if decl_idx < len(s.decls) - 1 {
+				next := &s.decls[decl_idx + 1]
+
+				_, next_is_macro := next.variant.(Macro)
+
+				if !next_is_macro {
+					fp(f, "\n")
+				}
+			}
 		}
 	}
 
