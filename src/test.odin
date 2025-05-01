@@ -131,7 +131,7 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	expected := []string{"FIVE"}
 
 	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+		testing.expect_value(t, macro.macro_name, expected[i])
 	}
 
 	s = {
@@ -140,7 +140,7 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	macros = parse_file_macros(&s)
 	expected = []string{"FIVE", "TEN", "TWENTY"}
 	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+		testing.expect_value(t, macro.macro_name, expected[i])
 	}
 
 	s = {
@@ -149,7 +149,7 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	macros = parse_file_macros(&s)
 	expected = []string{"ADD", "SUB"}
 	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+		testing.expect_value(t, macro.macro_name, expected[i])
 	}
 }
 
@@ -204,7 +204,7 @@ test_parse_macros :: proc(t: ^testing.T) {
 	s := Gen_State {
 		source = string(data),
 	}
-	_ = parse_macros(&s, "test/test.h")
+	parse_macros(&s, "test/test.h")
 
 	expected_macros := map[string]string {
 		"ARRAY"            = "{1}",

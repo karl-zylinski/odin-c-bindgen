@@ -20,22 +20,7 @@ ERROR_INFO_LENGTH :: 256
 THREAD_GROUP_COUNT :: 4
 HAS_FORCE_32BIT :: 1
 HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
-VERSION :: HEADER_VERSION
-NO_INDEX :: (u32)~0
-Lcl_Translation :: "Lcl Translation"
-Lcl_Rotation :: "Lcl Rotation"
-Lcl_Scaling :: "Lcl Scaling"
-RotationOrder :: "RotationOrder"
-ScalingPivot :: "ScalingPivot"
-RotationPivot :: "RotationPivot"
-ScalingOffset :: "ScalingOffset"
-RotationOffset :: "RotationOffset"
-PreRotation :: "PreRotation"
-PostRotation :: "PostRotation"
-Visibility :: "Visibility"
-Weight :: "Weight"
-DeformPercent :: "DeformPercent"
-
+// VERSION :: Ufbx_Header_Version
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
@@ -146,6 +131,8 @@ String_List :: struct {
 	data:  ^String,
 	count: uint,
 }
+
+NO_INDEX :: (u32)~0
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {
@@ -5177,6 +5164,19 @@ Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
+Lcl_Translation :: "Lcl Translation"
+Lcl_Rotation :: "Lcl Rotation"
+Lcl_Scaling :: "Lcl Scaling"
+RotationOrder :: "RotationOrder"
+ScalingPivot :: "ScalingPivot"
+RotationPivot :: "RotationPivot"
+ScalingOffset :: "ScalingOffset"
+RotationOffset :: "RotationOffset"
+PreRotation :: "PreRotation"
+PostRotation :: "PostRotation"
+Visibility :: "Visibility"
+Weight :: "Weight"
+DeformPercent :: "DeformPercent"
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
 	// Practically always `true` (see below), if not you need to be careful with threads.

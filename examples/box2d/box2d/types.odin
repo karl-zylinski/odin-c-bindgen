@@ -11,7 +11,6 @@ foreign import lib "box2d.lib"
 B2_DEFAULT_CATEGORY_BITS :: 0
 // B2_DEFAULT_MASK_BITS :: UINT64_MAX
 
-
 /// Task interface
 /// This is prototype for a Box2D task. Your task system is expected to invoke the Box2D task with these arguments.
 /// The task spans a range of the parallel-for: [startIndex, endIndex)

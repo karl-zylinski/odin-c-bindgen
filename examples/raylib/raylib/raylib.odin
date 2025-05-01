@@ -96,8 +96,6 @@ foreign import lib {
 	"system:Shell32.lib",
 }
 
-// Some Basic Colors
-// NOTE: Custom raylib color palette for amazing visuals on WHITE background
 
 RAYLIB_VERSION_MAJOR :: 5
 RAYLIB_VERSION_MINOR :: 6
@@ -132,15 +130,6 @@ BLACK :: (Color){ 0, 0, 0, 255 }
 BLANK :: (Color){ 0, 0, 0, 0 }
 MAGENTA :: (Color){ 255, 0, 255, 255 }
 RAYWHITE :: (Color){ 245, 245, 245, 255 }
-// MOUSE_LEFT_BUTTON :: MOUSE_BUTTON_LEFT
-// MOUSE_RIGHT_BUTTON :: MOUSE_BUTTON_RIGHT
-// MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
-// MATERIAL_MAP_DIFFUSE :: MATERIAL_MAP_ALBEDO
-// MATERIAL_MAP_SPECULAR :: MATERIAL_MAP_METALNESS
-// SHADER_LOC_MAP_DIFFUSE :: SHADER_LOC_MAP_ALBEDO
-// SHADER_LOC_MAP_SPECULAR :: SHADER_LOC_MAP_METALNESS
-// GetMouseRay :: GetScreenToWorldRay
-
 
 // Vector2, 2 components
 Vector2 :: [2]f32
@@ -587,6 +576,10 @@ KeyboardKey :: enum c.int {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
+// MOUSE_LEFT_BUTTON :: MOUSE_BUTTON_LEFT
+// MOUSE_RIGHT_BUTTON :: MOUSE_BUTTON_RIGHT
+// MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
+
 // Mouse buttons
 MouseButton :: enum c.int {
 	LEFT    = 0, // Mouse button left
@@ -660,6 +653,9 @@ MaterialMapIndex :: enum c.int {
 	BRDF,       // Brdf material
 }
 
+// MATERIAL_MAP_DIFFUSE :: MATERIAL_MAP_ALBEDO
+// MATERIAL_MAP_SPECULAR :: MATERIAL_MAP_METALNESS
+
 // Shader location index
 ShaderLocationIndex :: enum c.int {
 	VERTEX_POSITION = 0, // Shader location: vertex attribute: position
@@ -693,6 +689,9 @@ ShaderLocationIndex :: enum c.int {
 	BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
 	VERTEX_INSTANCE_TX,  // Shader location: vertex attribute: instanceTransform
 }
+
+// SHADER_LOC_MAP_DIFFUSE :: SHADER_LOC_MAP_ALBEDO
+// SHADER_LOC_MAP_SPECULAR :: SHADER_LOC_MAP_METALNESS
 
 // Shader uniform data type
 ShaderUniformDataType :: enum c.int {
@@ -846,6 +845,8 @@ SaveFileDataCallback :: proc "c" (cstring, rawptr, i32) -> bool // FileIO: Save 
 LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
 
 SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
+
+// GetMouseRay :: GetScreenToWorldRay
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

@@ -6,6 +6,3 @@ foreign import lib {
 	"system:User32.lib",
 	"system:Shell32.lib",
 }
-
-// Some Basic Colors
-// NOTE: Custom raylib color palette for amazing visuals on WHITE background
