@@ -444,7 +444,7 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 
 			fn_end := strings.index(line, ")") // fn macros can only have one `(` and `)`
 			params := strings.split(line[i + 1:fn_end], ",")
-			defer delete(params)
+
 			for &param in params {
 				param = strings.trim_space(param)
 			}
@@ -520,9 +520,7 @@ File_Macro :: struct {
 parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
 	defined := make(map[string]int, context.temp_allocator)
 
-	// TODO: Avoid splitting for real, use split iterators instead if possible.
 	file_lines := strings.split_lines(s.source)
-	defer delete(file_lines)
 	for i := 0; i < len(file_lines); i += 1 {
 		line_idx := i
 		line := strings.trim_space(file_lines[i])
@@ -537,15 +535,27 @@ parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
 		}
 
 		if strings.has_prefix(line, "#define") { // #define macroName keyValue
-			parts := strings.split(line, " ")
-			defer delete(parts)
-			if len(parts) < 3 { // We need at least 3 parts to be a valid define
+			l := strings.trim_prefix(line, "#define")
+			l = strings.trim_space(l)
+
+			end_of_name := strings.index(l, " ")
+
+			if end_of_name == -1 {
+				end_of_name = strings.index(l, "\t")
+			}
+
+			// Macro parameter list start
+			first_left_paren := strings.index(l, "(")
+
+			if first_left_paren != -1 && first_left_paren < end_of_name {
+				end_of_name = first_left_paren
+			}
+
+			if end_of_name == -1 {
 				continue
 			}
 
-			end_of_name := strings.index(parts[1], "(")
-			end_of_name = end_of_name == -1 ? len(parts[1]) : end_of_name
-			name := parts[1][:end_of_name]
+			name := l[:end_of_name]
 
 			if name in defined {
 				continue
@@ -572,7 +582,6 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	command := [dynamic]string {
 		"clang", "-dM", "-E", input,
 	}
-	defer delete(command)
 
 	for include in s.clang_include_paths {
 		append(&command, fmt.tprintf("-I%v", include))
@@ -587,7 +596,6 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	}
 
 	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
-	defer delete(sout)
 
 	if err != nil {
 		fmt.panicf("Error generating macro dump. Error: %v", err)
@@ -610,9 +618,8 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	}
 
 	tokenized_macros: map[string]Macro_Token
-
 	macro_lines := strings.split_lines(string(sout))
-	defer delete(macro_lines)
+
 	for i := 0; i < len(macro_lines); i += 1 {
 		line := strings.trim_space(macro_lines[i])
 
@@ -662,17 +669,7 @@ parse_pystring :: proc(s: string, params: []string) -> string {
 
 parse_macros :: proc(s: ^Gen_State, input: string) {
 	defined_from_file := parse_file_macros(s)
-
 	tokenized_macros := parse_clang_macros(s, input)
-	defer delete(tokenized_macros)
-	defer for _, &macro in tokenized_macros {
-        if macro.type == .Function {
-            for &str in macro.values {
-                delete(str)
-            }
-        }
-        delete(macro.values)
-    }
 
 	expand_fn_macro :: proc(value: ^string, name_start, name_end: int, macro_token: Macro_Token, macros: ^map[string]Macro_Token) -> string {
 		params_start := name_end
