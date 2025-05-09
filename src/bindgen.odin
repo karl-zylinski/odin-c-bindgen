@@ -81,6 +81,9 @@ Typedef :: struct {
 Macro :: struct {
 	name: string,
 	val: string,
+	side_comment: string,
+	whitespace_after_name: int,
+	whitespace_before_side_comment: int,
 }
 
 Declaration_Variant :: union {
@@ -138,7 +141,7 @@ get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
 	return t, true
 }
 
-find_side_comment :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
 	comment_start: int
 	semicolon_pos: int
 	for i in start_offset..<len(s.source) {
@@ -163,6 +166,22 @@ find_side_comment :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: st
 		}
 	}
 	return
+}
+
+// used to get comments to the right of macros
+find_comment_at_line_end :: proc(str: string) -> (string, int) {
+	spaces_counter := 0
+	for c, i in str {
+		if c == ' ' {
+			spaces_counter += 1
+		} else if c == '/' && i+1 < len(str) && str[i+1] == '/' {
+			return str[i:], spaces_counter
+		} else {
+			spaces_counter = 0
+		}
+	}
+
+	return "", 0
 }
 
 parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: bool) {
@@ -514,11 +533,14 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 File_Macro :: struct {
 	line: int,
 	macro_name: string,
+	side_comment: string,
+	whitespace_after_name: int,
+	whitespace_before_side_comment: int,
 }
 
 // Parses the file and finds all the macros that are defined in it.
 parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
-	defined := make(map[string]int, context.temp_allocator)
+	defined := make(map[string]File_Macro)
 
 	file_lines := strings.split_lines(s.source)
 	for i := 0; i < len(file_lines); i += 1 {
@@ -561,20 +583,31 @@ parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
 				continue
 			}
 
-			defined[name] = line_idx
+			whitespace_after_name := 0
+
+			for c in l[end_of_name:] {
+				if c == ' ' {
+					whitespace_after_name += 1
+				} else {
+					break
+				}
+			}
+
+			side_comment, side_comment_align_whitespace := find_comment_at_line_end(line)
+
+			defined[name] = File_Macro {
+				macro_name = name,
+				line = line_idx,
+				side_comment = side_comment,
+				whitespace_before_side_comment = side_comment_align_whitespace,
+				whitespace_after_name = whitespace_after_name,
+			}
 		}
 	}
 
-	res := make([dynamic]File_Macro, 0, len(defined))
-
-	for macro_name, line in defined {
-		append(&res, File_Macro {
-			line = line,
-			macro_name = macro_name,
-		})
-	}
-
-	return res[:]
+	res, res_err := slice.map_values(defined)
+	fmt.assertf(res_err == nil, "Error: %v", res_err)
+	return res
 }
 
 // This function runs clangs preprocessor to get all the macros that are defined during compilation
@@ -784,11 +817,12 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 
 		// I'm not a fan of this way of checking if the macro is defined in the file. Feel free to suggest better ways to do this.
 		defined := false
-		line_idx := 0
+		file_macro: File_Macro
 		for i := 0; i < len(defined_from_file); i += 1 {
-			if defined_from_file[i].macro_name == macro.name {
+			d := defined_from_file[i]
+			if d.macro_name == macro.name {
 				defined = true
-				line_idx = defined_from_file[i].line
+				file_macro = d
 				break
 			}
 		}
@@ -801,10 +835,14 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		}
 
 		append(&s.decls, Declaration {
-			line = line_idx,
+			line = file_macro.line,
+			original_idx = len(s.decls),
 			variant = Macro {
 				name = macro.name,
 				val = strings.join(macro.values, " "),
+				side_comment = file_macro.side_comment,
+				whitespace_after_name = file_macro.whitespace_after_name,
+				whitespace_before_side_comment = file_macro.whitespace_before_side_comment,
 			},
 		})
 	}
@@ -881,7 +919,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		side_comment: string
 
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-			side_comment, _ = find_side_comment(end_offset, s)
+			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
 
 		append(&s.decls, Declaration {
@@ -955,7 +993,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		}
 
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-			side_comment, _ = find_side_comment(end_offset, s)
+			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
 
 		s.typedefs[type] = name
@@ -2191,14 +2229,20 @@ gen :: proc(input: string, c: Config) {
 			if comment_out {
 				fp(f, "// ")
 			}
-			fpfln(f, "%v :: %v", d.name, value_string)
+			fpf(f, "%v%*s:: %v", d.name, max(d.whitespace_after_name, 1), "", value_string)
+
+			if d.side_comment != "" {
+				fpf(f, "%*s%v", d.whitespace_before_side_comment, "", d.side_comment)
+			}
+
+			fp(f, "\n")
 
 			if decl_idx < len(s.decls) - 1 {
 				next := &s.decls[decl_idx + 1]
 
 				_, next_is_macro := next.variant.(Macro)
 
-				if !next_is_macro {
+				if !next_is_macro || next.line != decl.line + 1 {
 					fp(f, "\n")
 				}
 			}
