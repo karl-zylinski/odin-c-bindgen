@@ -16,6 +16,10 @@ _ :: libc
 
 foreign import lib "pdfio1.lib"
 
+array_t :: struct {}
+
+dict_t :: struct {}
+
 // Key/value dictionary
 dict_cb_t :: proc "c" (^dict_t, cstring, rawptr) -> bool
 
@@ -93,10 +97,6 @@ valtype_t :: enum c.int {
 	NUMBER,   // Number (integer or real)
 	STRING,   // String
 }
-
-array_t :: struct {}
-
-dict_t :: struct {}
 
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {

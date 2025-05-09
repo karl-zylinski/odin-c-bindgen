@@ -1578,17 +1578,17 @@ gen :: proc(input: string, c: Config) {
 	line := 0
 
 	for &in_decl in inner {
+		// Some decls don't have a line, in that case we send in the most recent line instead.
+		if cur_line, cur_line_ok := json_get_int(in_decl, "loc.line"); cur_line_ok {
+			line = cur_line
+		}
+
 		if s.required_prefix != "" {
 			if name, name_ok := json_get_string(in_decl, "name"); name_ok {
 				if !strings.has_prefix(name, s.required_prefix) {
 					continue
 				}
 			}		
-		}
-		
-		// Some decls don't have a line, in that case we send in the most recent line instead.
-		if cur_line, cur_line_ok := json_get_int(in_decl, "loc.line"); cur_line_ok {
-			line = cur_line
 		}
 
 		parse_decl(&s, in_decl, line)
