@@ -10,6 +10,7 @@ foreign import lib "box2d.lib"
 
 // B2_API :: BOX2D_EXPORT
 // B2_INLINE :: static inline
+
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
@@ -37,6 +38,7 @@ Version :: struct {
 	revision: i32,
 }
 
+/// Simple djb2 hash function for determinism testing
 B2_HASH_INIT :: 5381
 
 @(default_calling_convention="c", link_prefix="b2")

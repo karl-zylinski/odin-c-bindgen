@@ -81,6 +81,7 @@ Typedef :: struct {
 Macro :: struct {
 	name: string,
 	val: string,
+	comment: string,
 	side_comment: string,
 	whitespace_after_name: int,
 	whitespace_before_side_comment: int,
@@ -533,6 +534,7 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 File_Macro :: struct {
 	line: int,
 	macro_name: string,
+	comment: string,
 	side_comment: string,
 	whitespace_after_name: int,
 	whitespace_before_side_comment: int,
@@ -595,9 +597,51 @@ parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
 
 			side_comment, side_comment_align_whitespace := find_comment_at_line_end(line)
 
+			cbidx := i - 1
+			cb_block_comment := false
+			comment_start := -1
+			comment_end := -1
+
+			for cbidx >= 0 {
+				cbl := file_lines[cbidx]
+				cbl_trim := strings.trim_space(cbl)
+				
+				if strings.has_prefix(cbl_trim, "/*") && cb_block_comment {
+					comment_start = cbidx
+					break
+				} else if strings.has_suffix(cbl_trim, "*/") {
+					cb_block_comment = true
+					comment_end = cbidx
+				} else if strings.has_prefix(cbl_trim, "//") {
+					if comment_end == -1 {
+						comment_end = cbidx
+					}
+
+					comment_start = cbidx
+				} else if cbl_trim != "" {
+					break
+				}
+
+				cbidx -= 1
+			}
+
+			comment: string
+
+			if comment_start != -1 && comment_end != -1 {
+				comment_builder := strings.builder_make()
+
+				for comment_line_idx in comment_start..=comment_end {
+					strings.write_string(&comment_builder, file_lines[comment_line_idx])
+					strings.write_rune(&comment_builder, '\n')
+				}
+
+				comment = strings.to_string(comment_builder)
+			}
+
 			defined[name] = File_Macro {
 				macro_name = name,
 				line = line_idx,
+				comment = comment,
 				side_comment = side_comment,
 				whitespace_before_side_comment = side_comment_align_whitespace,
 				whitespace_after_name = whitespace_after_name,
@@ -840,6 +884,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 			variant = Macro {
 				name = macro.name,
 				val = strings.join(macro.values, " "),
+				comment = file_macro.comment,
 				side_comment = file_macro.side_comment,
 				whitespace_after_name = file_macro.whitespace_after_name,
 				whitespace_before_side_comment = file_macro.whitespace_before_side_comment,
@@ -2226,6 +2271,11 @@ gen :: proc(input: string, c: Config) {
 			if value_string == "{}" || value_string == "{0}" {
 				continue
 			}
+
+			if d.comment != "" {
+				fp(f, d.comment)
+			}
+
 			if comment_out {
 				fp(f, "// ")
 			}

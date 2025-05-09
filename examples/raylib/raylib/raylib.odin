@@ -107,6 +107,8 @@ DEG2RAD :: PI/180.0
 
 RAD2DEG :: 180.0/PI
 
+// Some Basic Colors
+// NOTE: Custom raylib color palette for amazing visuals on WHITE background
 LIGHTGRAY  :: (Color){ 200, 200, 200, 255 }   // Light Gray
 GRAY       :: (Color){ 130, 130, 130, 255 }   // Gray
 DARKGRAY   :: (Color){ 80, 80, 80, 255 }      // Dark Gray
@@ -580,6 +582,7 @@ KeyboardKey :: enum c.int {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
+// Add backwards compatibility support for deprecated names
 // MOUSE_LEFT_BUTTON   :: MOUSE_BUTTON_LEFT
 // MOUSE_RIGHT_BUTTON  :: MOUSE_BUTTON_RIGHT
 // MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
@@ -850,6 +853,7 @@ LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
 
 SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
 
+// Screen-space-related functions
 // GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib versions
 
 //------------------------------------------------------------------------------------
