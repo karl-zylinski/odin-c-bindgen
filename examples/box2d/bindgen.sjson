@@ -19,6 +19,8 @@ remove_type_prefix = "b2"
 // Remove this prefix from function names (and add it as link_prefix) to the foreign group
 remove_function_prefix = "b2"
 
+remove_macro_prefix = "B2_"
+
 // Only include things that has this prefix
 required_prefix = "b2"
 

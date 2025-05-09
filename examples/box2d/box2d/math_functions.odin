@@ -48,7 +48,7 @@ AABB :: struct {
 	upperBound: Vec2,
 }
 
-B2_PI :: 3.14159265359
+PI :: 3.14159265359
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
