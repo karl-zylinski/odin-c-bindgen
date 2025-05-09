@@ -30,9 +30,6 @@ Features:
 
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the [examples folder](https://github.com/karl-zylinski/odin-c-bindgen/tree/main/examples) for more advanced examples.
 
-<details>
-  <summary>bindgen.sjson template</summary>
-
 ```
 // Inputs can be folders or files. It will look for header (.h) files inside
 // any folder. The bindings will be based on those headers. Also, any .lib,
@@ -51,6 +48,9 @@ output_folder = "my_lib"
 
 // Remove this prefix from types names (structs, enums, etc)
 remove_type_prefix = ""
+
+// Remove this prefix from macro names
+remove_macro_prefix = ""
 
 // Remove this prefix from function names (and add it as link_prefix) to the foreign group
 remove_function_prefix = ""
@@ -119,10 +119,10 @@ clang_include_paths = [
 
 // Writes the clang JSON ast dump for debug inspection (in output folder)
 debug_dump_json_ast = false
+
 // Writes the clang preprocessor macro dump
 debug_dump_macros = false
 ```
-</details>
 
 ## FAQ and common problems
 
