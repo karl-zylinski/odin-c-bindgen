@@ -767,7 +767,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
 			check_value_for_macro_and_expand(value, macros)
-	} else if macro_token.type == .Multivalue {
+		} else if macro_token.type == .Multivalue {
 			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
 			if name_end < len(value) {
 				tmp = fmt.tprintf("%s%s", tmp, value[name_end:])
@@ -2139,12 +2139,14 @@ gen :: proc(input: string, c: Config) {
 						strings.write_string(&b, type)
 					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
 						strings.write_string(&b, val[start:i])
-					} else if s.force_ada_case_types {
-						comment_out = true
-						strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
 					} else {
 						comment_out = true
-						strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+
+						if s.force_ada_case_types {
+							strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+						} else {
+							strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+						}
 					}
 					i -= 1
 				case .Num:
@@ -2174,6 +2176,10 @@ gen :: proc(input: string, c: Config) {
 					}
 					strings.write_string(&b, val[start:i + 1])
 				case .Other:
+					if val[i] == '~' {
+						comment_out = true
+					}
+
 					strings.write_byte(&b, val[i])
 				}
 			}
