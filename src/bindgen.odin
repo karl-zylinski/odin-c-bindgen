@@ -78,11 +78,32 @@ Typedef :: struct {
 	side_comment: string,
 }
 
-Declaration :: union {
+Macro :: struct {
+	name: string,
+	val: string,
+	comment: string,
+	side_comment: string,
+	whitespace_after_name: int,
+	whitespace_before_side_comment: int,
+}
+
+Declaration_Variant :: union {
 	Struct,
 	Function,
 	Enum,
 	Typedef,
+	Macro,
+}
+
+Declaration :: struct {
+	// Used for sorting the declarations. They may be added out-of-order due to macros
+	// coming in from a separate code path.
+	line: int,
+
+	// The original idx in `s.decls`. This is for tie-breaking when line is the same.
+	original_idx: int,
+
+	variant: Declaration_Variant,
 }
 
 get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
@@ -121,7 +142,7 @@ get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
 	return t, true
 }
 
-find_side_comment :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
 	comment_start: int
 	semicolon_pos: int
 	for i in start_offset..<len(s.source) {
@@ -146,6 +167,22 @@ find_side_comment :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: st
 		}
 	}
 	return
+}
+
+// used to get comments to the right of macros
+find_comment_at_line_end :: proc(str: string) -> (string, int) {
+	spaces_counter := 0
+	for c, i in str {
+		if c == ' ' {
+			spaces_counter += 1
+		} else if c == '/' && i+1 < len(str) && str[i+1] == '/' {
+			return str[i:], spaces_counter
+		} else {
+			spaces_counter = 0
+		}
+	}
+
+	return "", 0
 }
 
 parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: bool) {
@@ -427,7 +464,7 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 
 			fn_end := strings.index(line, ")") // fn macros can only have one `(` and `)`
 			params := strings.split(line[i + 1:fn_end], ",")
-			defer delete(params)
+
 			for &param in params {
 				param = strings.trim_space(param)
 			}
@@ -494,12 +531,22 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 	return
 }
 
+File_Macro :: struct {
+	line: int,
+	macro_name: string,
+	comment: string,
+	side_comment: string,
+	whitespace_after_name: int,
+	whitespace_before_side_comment: int,
+}
+
 // Parses the file and finds all the macros that are defined in it.
-parse_file_macros :: proc(s: ^Gen_State) -> []string {
-	defined: [dynamic]string
+parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
+	defined := make(map[string]File_Macro)
+
 	file_lines := strings.split_lines(s.source)
-	defer delete(file_lines)
-	main_loop: for i := 0; i < len(file_lines); i += 1 {
+	for i := 0; i < len(file_lines); i += 1 {
+		line_idx := i
 		line := strings.trim_space(file_lines[i])
 
 		if len(line) == 0 { // Don't parse empty lines
@@ -512,26 +559,97 @@ parse_file_macros :: proc(s: ^Gen_State) -> []string {
 		}
 
 		if strings.has_prefix(line, "#define") { // #define macroName keyValue
-			parts := strings.split(line, " ")
-			defer delete(parts)
-			if len(parts) < 3 { // We need at least 3 parts to be a valid define
+			l := strings.trim_prefix(line, "#define")
+			l = strings.trim_space(l)
+
+			end_of_name := strings.index(l, " ")
+
+			if end_of_name == -1 {
+				end_of_name = strings.index(l, "\t")
+			}
+
+			// Macro parameter list start
+			first_left_paren := strings.index(l, "(")
+
+			if first_left_paren != -1 && first_left_paren < end_of_name {
+				end_of_name = first_left_paren
+			}
+
+			if end_of_name == -1 {
 				continue
 			}
 
-			end_of_name := strings.index(parts[1], "(")
-			end_of_name = end_of_name == -1 ? len(parts[1]) : end_of_name
+			name := l[:end_of_name]
 
-			for &defined_macro in defined { // Make sure we don't add duplicates
-				if defined_macro == parts[1][:end_of_name] {
-					continue main_loop
+			if name in defined {
+				continue
+			}
+
+			whitespace_after_name := 0
+
+			for c in l[end_of_name:] {
+				if c == ' ' {
+					whitespace_after_name += 1
+				} else {
+					break
 				}
 			}
 
-			append(&defined, parts[1][:end_of_name])
+			side_comment, side_comment_align_whitespace := find_comment_at_line_end(line)
+
+			cbidx := i - 1
+			cb_block_comment := false
+			comment_start := -1
+			comment_end := -1
+
+			for cbidx >= 0 {
+				cbl := file_lines[cbidx]
+				cbl_trim := strings.trim_space(cbl)
+				
+				if strings.has_prefix(cbl_trim, "/*") && cb_block_comment {
+					comment_start = cbidx
+					break
+				} else if strings.has_suffix(cbl_trim, "*/") {
+					cb_block_comment = true
+					comment_end = cbidx
+				} else if strings.has_prefix(cbl_trim, "//") {
+					if comment_end == -1 {
+						comment_end = cbidx
+					}
+
+					comment_start = cbidx
+				} else if cbl_trim != "" {
+					break
+				}
+
+				cbidx -= 1
+			}
+
+			comment: string
+
+			if comment_start != -1 && comment_end != -1 {
+				comment_builder := strings.builder_make()
+
+				for comment_line_idx in comment_start..=comment_end {
+					strings.write_string(&comment_builder, file_lines[comment_line_idx])
+					strings.write_rune(&comment_builder, '\n')
+				}
+
+				comment = strings.to_string(comment_builder)
+			}
+
+			defined[name] = File_Macro {
+				macro_name = name,
+				line = line_idx,
+				comment = comment,
+				side_comment = side_comment,
+				whitespace_before_side_comment = side_comment_align_whitespace,
+				whitespace_after_name = whitespace_after_name,
+			}
 		}
 	}
 
-	return defined[:]
+	return defined
 }
 
 // This function runs clangs preprocessor to get all the macros that are defined during compilation
@@ -539,7 +657,6 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	command := [dynamic]string {
 		"clang", "-dM", "-E", input,
 	}
-	defer delete(command)
 
 	for include in s.clang_include_paths {
 		append(&command, fmt.tprintf("-I%v", include))
@@ -554,7 +671,6 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	}
 
 	state, sout, serr, err := os2.process_exec(process_desc, context.allocator)
-	defer delete(sout)
 
 	if err != nil {
 		fmt.panicf("Error generating macro dump. Error: %v", err)
@@ -577,9 +693,8 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	}
 
 	tokenized_macros: map[string]Macro_Token
-
 	macro_lines := strings.split_lines(string(sout))
-	defer delete(macro_lines)
+
 	for i := 0; i < len(macro_lines); i += 1 {
 		line := strings.trim_space(macro_lines[i])
 
@@ -627,19 +742,11 @@ parse_pystring :: proc(s: string, params: []string) -> string {
 	return strings.to_string(b)
 }
 
-parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
+parse_macros :: proc(s: ^Gen_State, input: string) {
+	// First we find all macros in the file, then we also fetch them through clang, so they
+	// respect the preprocesor defines etc.
 	defined_from_file := parse_file_macros(s)
-
 	tokenized_macros := parse_clang_macros(s, input)
-	defer delete(tokenized_macros)
-	defer for _, &macro in tokenized_macros {
-        if macro.type == .Function {
-            for &str in macro.values {
-                delete(str)
-            }
-        }
-        delete(macro.values)
-    }
 
 	expand_fn_macro :: proc(value: ^string, name_start, name_end: int, macro_token: Macro_Token, macros: ^map[string]Macro_Token) -> string {
 		params_start := name_end
@@ -753,13 +860,8 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		}
 
 		// I'm not a fan of this way of checking if the macro is defined in the file. Feel free to suggest better ways to do this.
-		defined := false
-		for i := 0; i < len(defined_from_file); i += 1 {
-			if defined_from_file[i] == macro.name {
-				defined = true
-				break
-			}
-		}
+		file_macro, defined := defined_from_file[macro.name]
+
 		if !defined {
 			continue
 		}
@@ -767,12 +869,23 @@ parse_macros :: proc(s: ^Gen_State, input: string) -> []string {
 		for &value in macro.values {
 			check_value_for_macro_and_expand(&value, &tokenized_macros)
 		}
-		s.defines[macro.name] = strings.join(macro.values, " ")
+
+		append(&s.decls, Declaration {
+			line = file_macro.line,
+			original_idx = len(s.decls),
+			variant = Macro {
+				name = macro.name,
+				val = strings.join(macro.values, " "),
+				comment = file_macro.comment,
+				side_comment = file_macro.side_comment,
+				whitespace_after_name = file_macro.whitespace_after_name,
+				whitespace_before_side_comment = file_macro.whitespace_before_side_comment,
+			},
+		})
 	}
-	return defined_from_file
 }
 
-parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
+parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 	if json_has(decl, "loc.includedFrom") {
 		return
 	}
@@ -804,7 +917,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			return
 		}
 
-		line, line_ok := json_get_int(decl, "loc.line")
+		_, line_ok := json_get_int(decl, "loc.line")
 
 		if !line_ok {
 			return
@@ -843,16 +956,20 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		side_comment: string
 
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-			side_comment, _ = find_side_comment(end_offset, s)
+			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
 
-		append(&s.decls, Function {
-			name = name,
-			parameters = out_params[:],
-			return_type = has_return_type ? return_type : "",
-			comment = comment,
-			comment_before = comment_before,
-			post_comment = side_comment,
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Function {
+				name = name,
+				parameters = out_params[:],
+				return_type = has_return_type ? return_type : "",
+				comment = comment,
+				comment_before = comment_before,
+				post_comment = side_comment,
+			},
 		})
 	} else if kind == "RecordDecl" {
 		name, name_ok := json_get_string(decl, "name")
@@ -865,12 +982,12 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			struct_decl.name = name
 			struct_decl.id = id
 			if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-				s.decls[forward_idx] = nil
+				s.decls[forward_idx] = {}
 			}
 
 			s.symbol_indices[name] = len(s.decls)
 
-			append(&s.decls, struct_decl)
+			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
 		}
 	} else if kind == "TypedefDecl" {
 		type, type_ok := get_parameter_type(s, decl)
@@ -880,7 +997,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		}
 
 		name, _ := json_get_string(decl, "name")
-		line, line_ok := json_get_int(decl, "loc.line")
+		_, line_ok := json_get_int(decl, "loc.line")
 		pre_comment: string
 		side_comment: string
 
@@ -913,15 +1030,19 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 		}
 
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-			side_comment, _ = find_side_comment(end_offset, s)
+			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
 
 		s.typedefs[type] = name
-		append(&s.decls, Typedef {
-			name = name,
-			type = type,
-			pre_comment = pre_comment,
-			side_comment = side_comment,
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Typedef {
+				name = name,
+				type = type,
+				pre_comment = pre_comment,
+				side_comment = side_comment,
+			},
 		})
 	} else if kind == "EnumDecl" {
 		name, _ := json_get_string(decl, "name")
@@ -974,11 +1095,15 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value) {
 			}
 		}
 
-		append(&s.decls, Enum {
-			name = name,
-			id = id,
-			comment = comment,
-			members = out_members[:],
+		append(&s.decls, Declaration {
+			line = line,
+			original_idx = len(s.decls),
+			variant = Enum {
+				name = name,
+				id = id,
+				comment = comment,
+				members = out_members[:],
+			},
 		})
 	}
 }
@@ -1441,7 +1566,7 @@ gen :: proc(input: string, c: Config) {
 	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
 	s.source = string(source_data)
 
-	macros := parse_macros(&s, input) // Parse macros so we can add them as constants in Odin
+	parse_macros(&s, input) // Parse macros so we can add them as constants in Odin
 
 	inner := json_in.(json.Object)["inner"].(json.Array)
 
@@ -1450,7 +1575,14 @@ gen :: proc(input: string, c: Config) {
 	// to s.decls)
 	//
 
+	line := 0
+
 	for &in_decl in inner {
+		// Some decls don't have a line, in that case we send in the most recent line instead.
+		if cur_line, cur_line_ok := json_get_int(in_decl, "loc.line"); cur_line_ok {
+			line = cur_line
+		}
+
 		if s.required_prefix != "" {
 			if name, name_ok := json_get_string(in_decl, "name"); name_ok {
 				if !strings.has_prefix(name, s.required_prefix) {
@@ -1459,8 +1591,15 @@ gen :: proc(input: string, c: Config) {
 			}		
 		}
 
-		parse_decl(&s, in_decl)
+		parse_decl(&s, in_decl, line)
 	}
+
+	slice.sort_by(s.decls[:], proc(i, j: Declaration) -> bool {
+		if i.line == j.line {
+			return i.original_idx < j.original_idx
+		}
+		return i.line < j.line
+	})
 
 	//
 	// Use the stuff in `s` and `s.decl` to write out the bindings.
@@ -1552,7 +1691,8 @@ gen :: proc(input: string, c: Config) {
 	// Figure out all type names
 	//
 
-	for &du in s.decls {
+	for &decl in s.decls {
+		du := &decl.variant
 		switch &d in du {
 			case Struct:
 				name := d.name
@@ -1604,6 +1744,12 @@ gen :: proc(input: string, c: Config) {
 				d.name = name
 				add_to_set(&s.created_types, d.name)
 
+			case Macro:
+				name := d.name
+				name = trim_prefix(name, s.remove_macro_prefix)
+				name = final_name(name, s)
+				d.name = name
+				add_to_set(&s.created_types, d.name)
 		}
 	}
 
@@ -1611,86 +1757,8 @@ gen :: proc(input: string, c: Config) {
 		add_to_set(&s.created_types, b)
 	}
 
-	for &macro in macros {
-		val, exist := s.defines[macro]
-		if !exist {
-			continue
-		}
-
-		comment_out := false
-		
-		val = trim_encapsulating_parens(val)
-		b := strings.builder_make()
-		for i := 0; i < len(val); i += 1 {
-			switch char_type(val[i]) {
-			case .Char:
-				// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
-				// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
-				// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
-				start := i
-				for ; i < len(val); i += 1 {
-					if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
-						break
-					}
-				}
-				if val[start:i] in s.defines {
-					strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
-				} else if type, exists := c_type_mapping[val[start:i]]; exists {
-					strings.write_string(&b, type)
-				} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
-					strings.write_string(&b, val[start:i])
-				} else if s.force_ada_case_types {
-					comment_out = true
-					strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
-				} else {
-					comment_out = true
-					strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
-				}
-				i -= 1
-			case .Num:
-				suffix_index := 0
-				start := i
-				for ; i < len(val); i += 1 {
-					if type := char_type(val[i]); type == .Char && suffix_index == 0 {
-						suffix_index = i
-					} else if type != .Num && type != .Char {
-						break
-					}
-				}
-				if suffix_index == 0 {
-					suffix_index = i
-				}
-				strings.write_string(&b, val[start:suffix_index])
-				i -= 1
-			case .Quote:
-				start := i
-				for i += 1; i < len(val); i += 1 {
-					if val[i] == '\\' {
-						i += 1
-						continue
-					} else if val[i] == '"' {
-						break
-					}
-				}
-				strings.write_string(&b, val[start:i + 1])
-			case .Other:
-				strings.write_byte(&b, val[i])
-			}
-		}
-
-		value_string := strings.to_string(b)
-		if value_string == "{}" || value_string == "{0}" {
-			continue
-		}
-		if comment_out {
-			fp(f, "// ")
-		}
-		fpfln(f, "%v :: %v", trim_prefix(macro, s.remove_macro_prefix), value_string)
-	}
-
-	fp(f, "\n\n")
-
-	for &du in s.decls {
+	for &decl, decl_idx in s.decls {
+		du := &decl.variant
 		switch d in du {
 		case Struct:
 			output_comment(f, d.comment)
@@ -2120,6 +2188,106 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			fp(f, "\n\n")
+
+		case Macro:
+			val := d.val
+
+			comment_out := false
+			
+			val = trim_encapsulating_parens(val)
+			b := strings.builder_make()
+			for i := 0; i < len(val); i += 1 {
+				switch char_type(val[i]) {
+				case .Char:
+					// Parsing text here is quite annoying. Is it a type? Is it another macro? Maybe it's an enum field. We don't know.
+					// My implementation will check if it's a built-in type or a macro. If it's neither we are going to assume it's a user-defined type.
+					// As discussed here https://github.com/karl-zylinski/odin-c-bindgen/pull/27 we dont know all the defined types so figuring out what it is isn't always possible.
+					start := i
+					for ; i < len(val); i += 1 {
+						if char_type(val[i]) != .Char && char_type(val[i]) != .Num {
+							break
+						}
+					}
+					if val[start:i] in s.defines {
+						strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
+					} else if type, exists := c_type_mapping[val[start:i]]; exists {
+						strings.write_string(&b, type)
+					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+						strings.write_string(&b, val[start:i])
+					} else {
+						comment_out = true
+
+						if s.force_ada_case_types {
+							strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+						} else {
+							strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+						}
+					}
+					i -= 1
+				case .Num:
+					suffix_index := 0
+					start := i
+					for ; i < len(val); i += 1 {
+						if type := char_type(val[i]); type == .Char && suffix_index == 0 {
+							suffix_index = i
+						} else if type != .Num && type != .Char {
+							break
+						}
+					}
+					if suffix_index == 0 {
+						suffix_index = i
+					}
+					strings.write_string(&b, val[start:suffix_index])
+					i -= 1
+				case .Quote:
+					start := i
+					for i += 1; i < len(val); i += 1 {
+						if val[i] == '\\' {
+							i += 1
+							continue
+						} else if val[i] == '"' {
+							break
+						}
+					}
+					strings.write_string(&b, val[start:i + 1])
+				case .Other:
+					if val[i] == '~' {
+						comment_out = true
+					}
+
+					strings.write_byte(&b, val[i])
+				}
+			}
+
+			value_string := strings.to_string(b)
+			if value_string == "{}" || value_string == "{0}" {
+				continue
+			}
+
+			if d.comment != "" {
+				fp(f, d.comment)
+			}
+
+			if comment_out {
+				fp(f, "// ")
+			}
+			fpf(f, "%v%*s:: %v", d.name, max(d.whitespace_after_name, 1), "", value_string)
+
+			if d.side_comment != "" {
+				fpf(f, "%*s%v", d.whitespace_before_side_comment, "", d.side_comment)
+			}
+
+			fp(f, "\n")
+
+			if decl_idx < len(s.decls) - 1 {
+				next := &s.decls[decl_idx + 1]
+
+				_, next_is_macro := next.variant.(Macro)
+
+				if !next_is_macro || next.line != decl.line + 1 {
+					fp(f, "\n")
+				}
+			}
 		}
 	}
 
@@ -2140,7 +2308,8 @@ gen :: proc(input: string, c: Config) {
 	groups: [dynamic]Function_Group
 	curr_group: Function_Group
 
-	for &du in s.decls {
+	for &decl in s.decls {
+		du := &decl.variant
 		if f, f_ok := du.(Function); f_ok {
 			if f.comment != "" {
 				if len(curr_group.functions) > 0 {

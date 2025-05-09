@@ -1,19 +1,15 @@
+// See README.md in root of repository for documentation and more configuration options.
+
 inputs = [
     "."
 ]
 
 remove_type_prefix = "ufbx_"
-
 remove_function_prefix = "ufbx_"
-
 remove_macro_prefix = "UFBX_"
-
 import_lib = "ufbx.lib"
-
 package_name = "ufbx"
-
 output_folder = "ufbx"
-
 force_ada_case_types = true
 
 type_overrides = {
@@ -53,4 +49,3 @@ bit_setify = {
     "Transform_Flag" = "Transform_Flags"
     "Baked_Key_Flag" = "Baked_Key_Flags"
 }
-

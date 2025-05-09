@@ -8,9 +8,6 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
-B2_PI :: 3.14159265359
-
-
 /// 2D vector
 /// This can be used to represent a point or free vector
 Vec2 :: struct {
@@ -50,6 +47,8 @@ AABB :: struct {
 	lowerBound: Vec2,
 	upperBound: Vec2,
 }
+
+PI :: 3.14159265359
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
