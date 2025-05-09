@@ -541,7 +541,7 @@ File_Macro :: struct {
 }
 
 // Parses the file and finds all the macros that are defined in it.
-parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
+parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 	defined := make(map[string]File_Macro)
 
 	file_lines := strings.split_lines(s.source)
@@ -649,9 +649,7 @@ parse_file_macros :: proc(s: ^Gen_State) -> []File_Macro {
 		}
 	}
 
-	res, res_err := slice.map_values(defined)
-	fmt.assertf(res_err == nil, "Error: %v", res_err)
-	return res
+	return defined
 }
 
 // This function runs clangs preprocessor to get all the macros that are defined during compilation
@@ -745,6 +743,8 @@ parse_pystring :: proc(s: string, params: []string) -> string {
 }
 
 parse_macros :: proc(s: ^Gen_State, input: string) {
+	// First we find all macros in the file, then we also fetch them through clang, so they
+	// respect the preprocesor defines etc.
 	defined_from_file := parse_file_macros(s)
 	tokenized_macros := parse_clang_macros(s, input)
 
@@ -860,16 +860,8 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		}
 
 		// I'm not a fan of this way of checking if the macro is defined in the file. Feel free to suggest better ways to do this.
-		defined := false
-		file_macro: File_Macro
-		for i := 0; i < len(defined_from_file); i += 1 {
-			d := defined_from_file[i]
-			if d.macro_name == macro.name {
-				defined = true
-				file_macro = d
-				break
-			}
-		}
+		file_macro, defined := defined_from_file[macro.name]
+
 		if !defined {
 			continue
 		}
