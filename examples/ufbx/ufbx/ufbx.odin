@@ -7,18 +7,29 @@ _ :: c
 foreign import lib "ufbx.lib"
 
 // STDC :: _Stdc_Version
+
 CPP :: 0
+
 // PLATFORM_MSC :: Msc_Ver
+
 PLATFORM_GNUC :: 0
+
 CPP11 :: 0
+
 // ufbx_inline :: Static _Forceinline
+
 // ufbx_abi_data :: Extern
+
 REAL_TYPE :: f32
+
 ERROR_STACK_MAX_DEPTH :: 8
 PANIC_MESSAGE_LENGTH :: 128
 ERROR_INFO_LENGTH :: 256
+
 THREAD_GROUP_COUNT :: 4
+
 HAS_FORCE_32BIT :: 1
+
 HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
 // VERSION :: Ufbx_Header_Version
 
@@ -5165,17 +5176,29 @@ Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
 Lcl_Translation :: "Lcl Translation"
+
 Lcl_Rotation :: "Lcl Rotation"
+
 Lcl_Scaling :: "Lcl Scaling"
+
 RotationOrder :: "RotationOrder"
+
 ScalingPivot :: "ScalingPivot"
+
 RotationPivot :: "RotationPivot"
+
 ScalingOffset :: "ScalingOffset"
+
 RotationOffset :: "RotationOffset"
+
 PreRotation :: "PreRotation"
+
 PostRotation :: "PostRotation"
+
 Visibility :: "Visibility"
+
 Weight :: "Weight"
+
 DeformPercent :: "DeformPercent"
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
