@@ -14,7 +14,7 @@ import vmem "core:mem/virtual"
 // Feel free to add more tests/test cases as you see fit. I haven't added any test cases for malformed macros but it's not our problem to deal with bad c code.
 @(test)
 test_parse_value :: proc(t: ^testing.T) {
-    gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
@@ -47,7 +47,7 @@ compare_arrays :: #force_inline proc(a, b: []string, t: ^testing.T) {
 
 @(test)
 test_parse_macro :: proc(t: ^testing.T) {
-    gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
@@ -119,7 +119,7 @@ test_parse_pystring :: proc(t: ^testing.T) {
 
 @(test)
 test_parse_file_macros :: proc(t: ^testing.T) {
-    gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
@@ -130,8 +130,8 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	macros := parse_file_macros(&s)
 	expected := []string{"FIVE"}
 
-	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+	for e in expected {
+		testing.expect(t, e in macros)
 	}
 
 	s = {
@@ -139,8 +139,8 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	}
 	macros = parse_file_macros(&s)
 	expected = []string{"FIVE", "TEN", "TWENTY"}
-	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+	for e in expected {
+		testing.expect(t, e in macros)
 	}
 
 	s = {
@@ -148,15 +148,15 @@ test_parse_file_macros :: proc(t: ^testing.T) {
 	}
 	macros = parse_file_macros(&s)
 	expected = []string{"ADD", "SUB"}
-	for macro, i in macros {
-		testing.expect_value(t, macro, expected[i])
+	for e in expected {
+		testing.expect(t, e in macros)
 	}
 }
 
 
 @(test)
 test_parse_clang_macros :: proc(t: ^testing.T) {
-    gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
@@ -175,7 +175,7 @@ test_parse_clang_macros :: proc(t: ^testing.T) {
 		{type = .Constant_Expression, name = "FALSE", values = {"!", "true"}},
 		{type = .Constant_Expression, name = "TRUE", values = {"!false"}},
 		{type = .Multivalue, name = "MULT_VAL", values = {"10", "20", "30"}},
-        {type = .Constant_Expression, name = "ARRAY_TEST", values = {"{FUNC_TEST}"}},
+		{type = .Constant_Expression, name = "ARRAY_TEST", values = {"{FUNC_TEST}"}},
 	}
 	for &macro_token in macro_tokens {
 		macro, found := macros_map[macro_token.name]
@@ -189,7 +189,7 @@ test_parse_clang_macros :: proc(t: ^testing.T) {
 
 @(test)
 test_parse_macros :: proc(t: ^testing.T) {
-    gen_arena: vmem.Arena
+	gen_arena: vmem.Arena
 	defer vmem.arena_destroy(&gen_arena)
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
@@ -204,7 +204,7 @@ test_parse_macros :: proc(t: ^testing.T) {
 	s := Gen_State {
 		source = string(data),
 	}
-	_ = parse_macros(&s, "test/test.h")
+	parse_macros(&s, "test/test.h")
 
 	expected_macros := map[string]string {
 		"ARRAY"            = "{1}",

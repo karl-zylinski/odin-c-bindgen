@@ -7,35 +7,40 @@ _ :: c
 foreign import lib "ufbx.lib"
 
 // STDC :: _Stdc_Version
+
 CPP :: 0
+
 // PLATFORM_MSC :: Msc_Ver
+
 PLATFORM_GNUC :: 0
+
 CPP11 :: 0
+
 // ufbx_inline :: Static _Forceinline
+
 // ufbx_abi_data :: Extern
+
 REAL_TYPE :: f32
+
+// Limits for embedded arrays within structures.
 ERROR_STACK_MAX_DEPTH :: 8
 PANIC_MESSAGE_LENGTH :: 128
 ERROR_INFO_LENGTH :: 256
-THREAD_GROUP_COUNT :: 4
-HAS_FORCE_32BIT :: 1
-HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
-VERSION :: HEADER_VERSION
-NO_INDEX :: (u32)~0
-Lcl_Translation :: "Lcl Translation"
-Lcl_Rotation :: "Lcl Rotation"
-Lcl_Scaling :: "Lcl Scaling"
-RotationOrder :: "RotationOrder"
-ScalingPivot :: "ScalingPivot"
-RotationPivot :: "RotationPivot"
-ScalingOffset :: "ScalingOffset"
-RotationOffset :: "RotationOffset"
-PreRotation :: "PreRotation"
-PostRotation :: "PostRotation"
-Visibility :: "Visibility"
-Weight :: "Weight"
-DeformPercent :: "DeformPercent"
 
+// Number of thread groups to use if threading is enabled.
+// A thread group processes a number of tasks and is then waited and potentially
+// re-used later. In essence, this controls the granularity of threading.
+THREAD_GROUP_COUNT :: 4
+
+HAS_FORCE_32BIT :: 1
+
+// Version of the ufbx header.
+// `UFBX_VERSION` is simply an alias of `UFBX_HEADER_VERSION`.
+// `ufbx_source_version` contains the version of the corresponding source file.
+// HINT: The version can be compared numerically to the result of `ufbx_pack_version()`,
+// for example `#if UFBX_VERSION >= ufbx_pack_version(0, 12, 0)`.
+HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
+// VERSION :: Ufbx_Header_Version
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
@@ -146,6 +151,9 @@ String_List :: struct {
 	data:  ^String,
 	count: uint,
 }
+
+// Sentinel value used to represent a missing index.
+// NO_INDEX :: (u32)~0
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {
@@ -5177,6 +5185,67 @@ Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
+// bindgen-enable
+
+// -- Properties
+
+// Names of common properties in `ufbx_props`.
+// Some of these differ from ufbx interpretations.
+
+// Local translation.
+// Used by: `ufbx_node`
+Lcl_Translation :: "Lcl Translation"
+
+// Local rotation expressed in Euler degrees.
+// Used by: `ufbx_node`
+// The rotation order is defined by the `UFBX_RotationOrder` property.
+Lcl_Rotation :: "Lcl Rotation"
+
+// Local scaling factor, 3D vector.
+// Used by: `ufbx_node`
+Lcl_Scaling :: "Lcl Scaling"
+
+// Euler rotation interpretation, used by `UFBX_Lcl_Rotation`.
+// Used by: `ufbx_node`, enum value `ufbx_rotation_order`.
+RotationOrder :: "RotationOrder"
+
+// Scaling pivot: point around which scaling is performed.
+// Used by: `ufbx_node`.
+ScalingPivot :: "ScalingPivot"
+
+// Scaling pivot: point around which rotation is performed.
+// Used by: `ufbx_node`.
+RotationPivot :: "RotationPivot"
+
+// Scaling offset: translation added after scaling is performed.
+// Used by: `ufbx_node`.
+ScalingOffset :: "ScalingOffset"
+
+// Rotation offset: translation added after rotation is performed.
+// Used by: `ufbx_node`.
+RotationOffset :: "RotationOffset"
+
+// Pre-rotation: Rotation applied _after_ `UFBX_Lcl_Rotation`.
+// Used by: `ufbx_node`.
+// Affected by `UFBX_RotationPivot` but not `UFBX_RotationOrder`.
+PreRotation :: "PreRotation"
+
+// Post-rotation: Rotation applied _before_ `UFBX_Lcl_Rotation`.
+// Used by: `ufbx_node`.
+// Affected by `UFBX_RotationPivot` but not `UFBX_RotationOrder`.
+PostRotation :: "PostRotation"
+
+// Controls whether the node should be displayed or not.
+// Used by: `ufbx_node`.
+Visibility :: "Visibility"
+
+// Weight of an animation layer in percentage (100.0 being full).
+// Used by: `ufbx_anim_layer`.
+Weight :: "Weight"
+
+// Blend shape deformation weight (100.0 being full).
+// Used by: `ufbx_blend_channel`.
+DeformPercent :: "DeformPercent"
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
 	// Practically always `true` (see below), if not you need to be careful with threads.

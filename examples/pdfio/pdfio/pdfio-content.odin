@@ -14,8 +14,6 @@ _ :: c
 
 foreign import lib "pdfio1.lib"
 
-
-
 // Types and constants...
 cs_t :: enum c.int {
 	ADOBE,  // AdobeRGB 1998
