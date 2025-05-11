@@ -1180,13 +1180,8 @@ final_name :: proc(s: string, state: Gen_State) -> string {
 	return s
 }
 
-is_c_type :: proc(t: string) -> bool{
-	base_type := strings.trim_suffix(t, "*")
-	base_type = strings.trim_space(base_type)
-	return base_type in c_type_mapping
-}
-
-// Types that would need `import "core:c/libc"`
+// Types that would need `import "core:c/libc"`. Please add and send in a Pull Request if you needed
+// to add anything here!
 is_libc_type :: proc(t: string) -> bool{
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
@@ -1199,7 +1194,8 @@ is_libc_type :: proc(t: string) -> bool{
 	return false
 }
 
-//Types that would require "import 'core:sys/posix'"
+// Types that would need "import 'core:sys/posix'". Please add and send in a Pull Request if you
+// needed to add anything here!
 is_posix_type :: proc(t:string) -> bool {
 	base_type := strings.trim_suffix(t,"*")
 	base_type = strings.trim_space(base_type)
@@ -1216,6 +1212,12 @@ is_posix_type :: proc(t:string) -> bool {
 	case "timespec": return true
 	}
 	return false
+}
+
+is_c_type :: proc(t: string) -> bool{
+	base_type := strings.trim_suffix(t, "*")
+	base_type = strings.trim_space(base_type)
+	return base_type in c_type_mapping
 }
 
 // This is probably missing some built-in C types (or common types that come
@@ -1249,16 +1251,13 @@ c_type_mapping := map[string]string {
 	"ptrdiff_t" = "int",
 }
 
-// TODO: Replace this whole proc with something smarter. Perhaps make a small
-// library that can take a C type and returns an Odin type, and it does the
-// correct tokenization and analysis of it.
+// For translating type names in procedure parameters and struct fields.
 translate_type :: proc(s: Gen_State, t: string) -> string {
 	t := t
 	t = strings.trim_space(t)
 
+	// Treat as function typedef
 	if strings.contains(t, "(") && strings.contains(t, ")") && !strings.contains(t, ")[") {
-		// function pointer typedef
-
 		delimiter := strings.index(t, "(*)(")
 		remainder_start := delimiter + 4
 
@@ -1295,19 +1294,12 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		return strings.to_string(func_builder)
 	}
 
-	if t == "void *" || t == "const void *" {
-		return "rawptr"
-	}
-	if t == "void **" || t == "const void **" {
-		return "^rawptr"
-	}
-
+	// This type usually means "an array of strings"
 	if t == "const char *const *" {
 		return "[^]cstring"
 	}
 
-	switch t {
-	case "const char *", "char *":
+	if t == "const char *" || t == "char *" {
 		return "cstring"
 	}
 
@@ -1315,61 +1307,90 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		return "^c.va_list"
 	}
 
-	num_ptrs := strings.count(t, "*")
+	// Tokenize the type and skip over some parameter type keywords that have no meaning in Odin.
+	type_tokens: [dynamic]string
+	token_start := 0
+	num_ptrs := 0
 
-	base_type: string
+	for s, idx in t {
+		tok: string
 
-	if strings.contains(t, "(*)") {
-		base_type = t
-	} else {
-		base_type, _ = strings.remove_all(t, "*")
+		if strings.is_space(s) {
+			tok = t[token_start:idx]
+			token_start = idx + utf8.rune_size(s)
+		} else if s == '*' {
+			tok = t[token_start:idx]
+			token_start = idx + utf8.rune_size(s)
+			num_ptrs += 1
+		} else if idx == len(t) - 1{
+			tok = t[token_start:idx + 1]
+		}
+
+		if len(tok) > 0 {
+			if tok == "const" {
+				continue
+			}
+
+			if tok == "struct" {
+				continue
+			}
+
+			if tok == "enum" {
+				continue
+			}
+
+			append(&type_tokens, tok)
+		}
 	}
 
-	base_type, _ = strings.remove_all(base_type, "const ")
-	base_type = strings.trim_space(base_type)
-	base_type = trim_prefix(base_type, "struct ")
-	base_type = trim_prefix(base_type, "enum ")
-	base_type = strings.trim_space(base_type)
-	if base_type != s.remove_type_prefix {
-		base_type = trim_prefix(base_type, s.remove_type_prefix)
-	}
-	base_type = strings.trim_space(base_type)
+	t = strings.join(type_tokens[:], " ")
 
-	transf_type := base_type
-
-	multi_array := strings.index(base_type, "(*)")
-	array_start := strings.index(base_type, "[")
-	array_end := strings.last_index(base_type, "]")
+	// A hack to check if something is an array of arrays. Then it will appear as `(*)[3] etc. But
+	// the code above removes the `*`, so we check for `( )[`
+	t_original := t
+	multi_array := strings.index(t_original, "( )[")
+	array_start := strings.index(t_original, "[")
+	array_end := strings.last_index(t_original, "]")
 
 	if multi_array != -1 {
-		transf_type = transf_type[:multi_array]
+		t = t[:multi_array]
 	} else if array_start != -1 {
-		transf_type = transf_type[:array_start]
+		t = t[:array_start]
 	}
 
-	transf_type = strings.trim_space(transf_type)
+	if t != s.remove_type_prefix {
+		t = trim_prefix(t, s.remove_type_prefix)
+	}
 
-	if is_c_type(transf_type) {
-		transf_type = c_type_mapping[transf_type]
-	} else if is_libc_type(transf_type) {
-		transf_type = fmt.tprintf("libc.%v", transf_type)
-	} else if is_posix_type(transf_type) {
-		transf_type = fmt.tprintf("posix.%v",transf_type)
-	} else if s.force_ada_case_types && transf_type != "void" {
-		// It makes sense, in the case we can't find the type, to just follow our naming rules and hope the type is defined somewhere else.
-		transf_type = final_name(vet_name(strings.to_ada_case(transf_type)), s)
+	t = strings.trim_space(t)
+
+	if is_c_type(t) {
+		t = c_type_mapping[t]
+	} else if is_libc_type(t) {
+		t = fmt.tprintf("libc.%v", t)
+	} else if is_posix_type(t) {
+		t = fmt.tprintf("posix.%v",t)
+	} else if s.force_ada_case_types && t != "void" {
+		// It makes sense, in the case we can't find the type, to just follow our naming rules and
+		// hope the type is defined somewhere else.
+		t = final_name(vet_name(strings.to_ada_case(t)), s)
 	} else {
-		transf_type = final_name(vet_name(transf_type), s)
+		t = final_name(vet_name(t), s)
 	}
 
 	if array_start != -1 {
-		transf_type = fmt.tprintf("%s%s%s", multi_array != -1 ? "[^]" : "", base_type[array_start:array_end + 1], transf_type)
+		t = fmt.tprintf("%s%s%s", multi_array != -1 ? "[^]" : "", t_original[array_start:array_end + 1], t)
 	}
 
 	b := strings.builder_make()
 
 	if num_ptrs > 0 {
-		if transf_type in s.type_is_proc {
+		if t == "void" {
+			t = "rawptr"
+			num_ptrs -= 1
+		}
+
+		if t in s.type_is_proc {
 			num_ptrs -= 1
 		}
 
@@ -1382,8 +1403,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		strings.write_string(&b, "^")
 	}
 
-	strings.write_string(&b, transf_type)
-
+	strings.write_string(&b, t)
 	return strings.to_string(b)
 }
 
@@ -1422,7 +1442,7 @@ VET_NAMES :: [?]string {
 	"_matrix",
 	"_string",
 
-	// Because we import these two
+	// Because we import these three
 	"_c",
 	"_libc",
 	"_posix",
