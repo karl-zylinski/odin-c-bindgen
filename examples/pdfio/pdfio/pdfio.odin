@@ -18,11 +18,13 @@ foreign import lib "pdfio1.lib"
 
 array_t :: struct {}
 
+// Array of PDF values
 dict_t :: struct {}
 
 // Key/value dictionary
 dict_cb_t :: proc "c" (^dict_t, cstring, rawptr) -> bool
 
+// Dictionary iterator callback
 file_t :: struct {}
 
 // PDF file
@@ -51,7 +53,7 @@ filter_t :: enum c.int {
 	RUNLENGTH, // RunLengthDecode filter (reading only)
 }
 
-obj_t :: struct {}
+obj_t :: struct {} // Numbered object in PDF file
 
 output_cb_t :: proc "c" (rawptr, rawptr, uint) -> int
 

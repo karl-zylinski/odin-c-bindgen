@@ -1015,14 +1015,8 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 					comment, comment_line, comment_line_ok, comment_ok := get_comment_with_line(i, s)
 
 					if comment_ok {
-						if comment_line_ok {
-							if line_ok {
-								if comment_line < line {
-									pre_comment = comment	
-								} else {
-									side_comment = comment
-								}
-							}
+						if comment_line_ok && line_ok && comment_line >= line {
+							side_comment = comment
 						} else {
 							pre_comment = comment
 						}
@@ -2171,7 +2165,14 @@ gen :: proc(input: string, c: Config) {
 				if d.pre_comment != "" {
 					output_comment(f, d.pre_comment)
 				}
-				fpf(f, "%v :: struct {{}}\n\n", t)
+				fpf(f, "%v :: struct {{}}", t)
+
+				if d.side_comment != "" {
+					fp(f, ' ')
+					fp(f, d.side_comment)
+				}
+
+				fp(f, "\n\n")
 				continue
 			}
 
