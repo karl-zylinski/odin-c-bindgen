@@ -41,6 +41,7 @@ Struct :: struct {
 	fields: []Struct_Field,
 	comment: string,
 	is_union: bool,
+	is_forward_declare: bool,
 }
 
 Function_Parameter :: struct {
@@ -333,6 +334,7 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 		comment = comment,
 		fields = out_fields[:],
 		is_union = (json_get_string(decl, "tagUsed") or_else "") == "union",
+		is_forward_declare = !json_check_bool(decl, "completeDefinition"),
 	}
 
 	ok = true
@@ -1761,9 +1763,18 @@ gen :: proc(input: string, c: Config) {
 		du := &decl.variant
 		switch d in du {
 		case Struct:
-			output_comment(f, d.comment)
-
 			n := d.name
+
+			if d.is_forward_declare {
+				if n in s.opaque_type_lookup && d.id not_in s.typedefs {
+					output_comment(f, d.comment)
+					fpf(f, "%v :: struct {{}}\n\n", n)
+				}
+
+				break
+			}
+
+			output_comment(f, d.comment)
 
 			if inject, has_injection := s.inject_before[n]; has_injection {
 				fpf(f, "%v\n\n", inject)
