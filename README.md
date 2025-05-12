@@ -58,11 +58,14 @@ remove_function_prefix = ""
 // Only include things that has this prefix
 required_prefix = ""
 
-// Single lib file to import
-import_lib = "my_lib.lib" // For example: "some_lib.lib"
+// Set to true translate type names to Ada_Case
+force_ada_case_types = false
 
-// Code file that contain libray import code and whatever else extra you need.
-// Overrides lib_file. Is pasted near top of the final bindings.
+// Single lib file to import
+import_lib = "my_lib.lib"
+
+// Use this file instead of `import_lib`. This is a whole file that is pasted near
+// the top of the file. In it you can do platform-specific library imports etc.
 imports_file = ""
 
 // For package line at top of output files
@@ -163,6 +166,17 @@ If the generator is processing `include/some_folder/header.h` and it can't find 
 ```
 clang_include_path = "include"
 ```
+
+### My forward-declared type is missing in the bindings
+
+Add the typename to `opaque_types` in `bindgen.sjson`:
+```
+opaque_types = [
+	"The_Type"
+]
+```
+
+You should put in the translated type name, as it would appear in the Odin file (will all prefixes removed, etc).
 
 ## Acknowledgements
 
