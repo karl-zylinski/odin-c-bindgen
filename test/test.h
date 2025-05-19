@@ -34,6 +34,11 @@
 #define VALUE 20010
 #define VALUE_STRING #VALUE
 
+#define CINDEX_VERSION_MAJOR 0
+#define CINDEX_VERSION_MINOR 64
+
+#define CINDEX_VERSION_STRING #CINDEX_VERSION_MAJOR "." #CINDEX_VERSION_MINOR
+
 struct Color {
     int r;
     int g;

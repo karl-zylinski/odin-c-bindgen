@@ -179,6 +179,13 @@ test_parse_clang_macros :: proc(t: ^testing.T) {
 		{type = .Constant_Expression, name = "NO_INDEX", values = {"(uint32_t)0"}},
 		{type = .Constant_Expression, name = "VALUE", values = {"20010"}},
 		{type = .Constant_Expression, name = "VALUE_STRING", values = {"#VALUE"}},
+		{type = .Constant_Expression, name = "CINDEX_VERSION_MAJOR", values = {"0"}},
+		{type = .Constant_Expression, name = "CINDEX_VERSION_MINOR", values = {"64"}},
+		{
+			type = .Constant_Expression,
+			name = "CINDEX_VERSION_STRING",
+			values = {"#CINDEX_VERSION_MAJOR", "\".\"", "#CINDEX_VERSION_MINOR"},
+		},
 	}
 	for &macro_token in macro_tokens {
 		macro, found := macros_map[macro_token.name]
@@ -210,18 +217,21 @@ test_parse_macros :: proc(t: ^testing.T) {
 	parse_macros(&s, "../test/test.h")
 
 	expected_macros := map[string]string {
-		"ARRAY"               = "{1}",
-		"FIVE_SUB_TWO"        = "(float) (5) - (float)(2)",
-		"UNNEST"              = "(\"Test\")",
-		"LIGHTGRAY"           = "(Color){ 200, 200, 200, 255 }",
-		"FUNC_TEST_RESULT"    = "(1 + 2 + 3)",
-		"FALSE"               = "! true",
-		"TRUE"                = "!false",
-		"ARRAY_TEST"          = "{1, 2, 3}",
-		"UFBX_HEADER_VERSION" = "((uint32_t)(0)*1000000u + (uint32_t)(18)*1000u + (uint32_t)(0))",
-		"NO_INDEX"            = "(uint32_t)0",
-		"VALUE"               = "20010",
-		"VALUE_STRING"        = "#20010",
+		"ARRAY"                 = "{1}",
+		"FIVE_SUB_TWO"          = "(float) (5) - (float)(2)",
+		"UNNEST"                = "(\"Test\")",
+		"LIGHTGRAY"             = "(Color){ 200, 200, 200, 255 }",
+		"FUNC_TEST_RESULT"      = "(1 + 2 + 3)",
+		"FALSE"                 = "! true",
+		"TRUE"                  = "!false",
+		"ARRAY_TEST"            = "{1, 2, 3}",
+		"UFBX_HEADER_VERSION"   = "((uint32_t)(0)*1000000u + (uint32_t)(18)*1000u + (uint32_t)(0))",
+		"NO_INDEX"              = "(uint32_t)0",
+		"VALUE"                 = "20010",
+		"VALUE_STRING"          = "#20010", // TODO: This needs to become \"20010\"
+		"CINDEX_VERSION_MAJOR"  = "0",
+		"CINDEX_VERSION_MINOR"  = "64",
+		"CINDEX_VERSION_STRING" = "#CINDEX_VERSION_MAJOR \".\" #CINDEX_VERSION_MINOR", // TODO: This needs to become \"0.64\"
 	}
 	testing.expect_value(t, len(s.defines), len(expected_macros))
 	for name, expected_value in expected_macros {
