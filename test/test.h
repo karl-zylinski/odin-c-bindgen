@@ -8,7 +8,7 @@
 #define SUB(x, y) (float) (x) - (float)(y)
 
 #define FIVE_SUB_TWO SUB(5, 2)
-#define UNNEST NEST("Test") // Sould resolve to ("Test")
+#define UNNEST NEST("Test")
 
 #define ARRAY {1}
 
@@ -28,5 +28,22 @@
 
 #define ufbx_pack_version(major, minor, patch) ((uint32_t)(major)*1000000u + (uint32_t)(minor)*1000u + (uint32_t)(patch))
 #define UFBX_HEADER_VERSION ufbx_pack_version(0, 18, 0)
+
+#define NO_INDEX (uint32_t)0
+
+#define VALUE 20010
+#define VALUE_STRING #VALUE
+
+#define CINDEX_VERSION_MAJOR 0
+#define CINDEX_VERSION_MINOR 64
+
+#define CINDEX_VERSION_STRING #CINDEX_VERSION_MAJOR "." #CINDEX_VERSION_MINOR
+
+struct Color {
+    int r;
+    int g;
+    int b;
+    int a;
+};
 
 #pragma GCC pop_options
