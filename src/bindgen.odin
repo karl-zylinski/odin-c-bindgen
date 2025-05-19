@@ -2283,7 +2283,7 @@ gen :: proc(input: string, c: Config) {
 					}
 					strings.write_string(&b, val[start:i + 1])
 				case .Other:
-					if val[i] == '~' {
+					if val[i] == '~' || val[i] == '#' {
 						comment_out = true
 					}
 

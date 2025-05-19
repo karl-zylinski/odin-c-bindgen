@@ -5,9 +5,9 @@ package bindgen
 
 
 import "core:fmt"
+import vmem "core:mem/virtual"
 import "core:os/os2"
 import "core:testing"
-import vmem "core:mem/virtual"
 
 
 // These are just some simple tests that I wrote while working on the macro parser. They are not exhaustive, but they do cover some of the basic functionality.
@@ -162,7 +162,7 @@ test_parse_clang_macros :: proc(t: ^testing.T) {
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
 
 	s: Gen_State = {}
-	macros_map := parse_clang_macros(&s, ".\\test\\test.h")
+	macros_map := parse_clang_macros(&s, "test/test.h")
 	macro_tokens := []Macro_Token {
 		{type = .Function, name = "SUB", values = {"(float) (${0}$) - (float)(${1}$)"}},
 		{type = .Function, name = "NEST", values = {"NEST1(${0}$)"}},
@@ -176,6 +176,9 @@ test_parse_clang_macros :: proc(t: ^testing.T) {
 		{type = .Constant_Expression, name = "TRUE", values = {"!false"}},
 		{type = .Multivalue, name = "MULT_VAL", values = {"10", "20", "30"}},
 		{type = .Constant_Expression, name = "ARRAY_TEST", values = {"{FUNC_TEST}"}},
+		{type = .Constant_Expression, name = "NO_INDEX", values = {"(uint32_t)0"}},
+		{type = .Constant_Expression, name = "VALUE", values = {"20010"}},
+		{type = .Constant_Expression, name = "VALUE_STRING", values = {"#VALUE"}},
 	}
 	for &macro_token in macro_tokens {
 		macro, found := macros_map[macro_token.name]
@@ -194,28 +197,31 @@ test_parse_macros :: proc(t: ^testing.T) {
 	context.allocator = vmem.arena_allocator(&gen_arena)
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
 
-	data, err := os2.read_entire_file("test/test.h", context.allocator)
+	// Why ../ here and not in test_parse_clang_macros? IDK but I tested them both and that's how it is.
+	data, err := os2.read_entire_file("../test/test.h", context.allocator)
 	if err != nil {
 		fmt.print("Error reading file: %s\n", err)
 		return
 	}
-	defer delete(data)
 
 	s := Gen_State {
 		source = string(data),
 	}
-	parse_macros(&s, "test/test.h")
+	parse_macros(&s, "../test/test.h")
 
 	expected_macros := map[string]string {
-		"ARRAY"            = "{1}",
-		"FIVE_SUB_TWO"     = "(float) (5) - (float)(2)",
-		"UNNEST"           = "(\"Test\")",
-		"LIGHTGRAY"        = "(Color){ 200, 200, 200, 255 }",
-		"FUNC_TEST_RESULT" = "(1 + 2 + 3)",
-		"FALSE"            = "! true",
-		"TRUE"             = "!false",
-		"ARRAY_TEST"       = "{1, 2, 3}",
+		"ARRAY"               = "{1}",
+		"FIVE_SUB_TWO"        = "(float) (5) - (float)(2)",
+		"UNNEST"              = "(\"Test\")",
+		"LIGHTGRAY"           = "(Color){ 200, 200, 200, 255 }",
+		"FUNC_TEST_RESULT"    = "(1 + 2 + 3)",
+		"FALSE"               = "! true",
+		"TRUE"                = "!false",
+		"ARRAY_TEST"          = "{1, 2, 3}",
 		"UFBX_HEADER_VERSION" = "((uint32_t)(0)*1000000u + (uint32_t)(18)*1000u + (uint32_t)(0))",
+		"NO_INDEX"            = "(uint32_t)0",
+		"VALUE"               = "20010",
+		"VALUE_STRING"        = "#20010",
 	}
 	testing.expect_value(t, len(s.defines), len(expected_macros))
 	for name, expected_value in expected_macros {
