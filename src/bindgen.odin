@@ -974,21 +974,19 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			},
 		})
 	} else if kind == "RecordDecl" {
-		name, name_ok := json_get_string(decl, "name")
-
-		if !name_ok {
-			name = id
-		}
+		name, _ := json_get_string(decl, "name")
 
 		if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 			struct_decl.name = name
 			struct_decl.id = id
-			if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-				s.decls[forward_idx] = {}
+
+			if name != "" {
+				if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
+					s.decls[forward_idx] = {}
+				}
+
+				s.symbol_indices[name] = len(s.decls)
 			}
-
-			s.symbol_indices[name] = len(s.decls)
-
 			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
 		}
 	} else if kind == "TypedefDecl" {
@@ -1604,7 +1602,7 @@ gen :: proc(input: string, c: Config) {
 				if !strings.has_prefix(name, s.required_prefix) {
 					continue
 				}
-			}		
+			}
 		}
 
 		parse_decl(&s, in_decl, line)
@@ -1712,10 +1710,6 @@ gen :: proc(input: string, c: Config) {
 		switch &d in du {
 			case Struct:
 				name := d.name
-
-				if strings.has_prefix(name, "0x") {
-					continue
-				}
 
 				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 					name = typedef
@@ -1941,10 +1935,6 @@ gen :: proc(input: string, c: Config) {
 		case Struct:
 			n := d.name
 
-			if strings.has_prefix(n, "0x") {
-				continue
-			}
-
 			if d.is_forward_declare {
 				if n in s.opaque_type_lookup && d.id not_in s.typedefs {
 					output_comment(f, d.comment)
@@ -2120,7 +2110,7 @@ gen :: proc(input: string, c: Config) {
 					output_comment(f, m.comment, "\t")	
 				}
 
-				fp(f, "\t")
+				fp(f, "\t")	
 				fp(f, m.member)
 				fp(f, ",")
 
@@ -2184,7 +2174,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if n in s.created_symbols {
+			if n in s.created_symbols || strings.has_prefix(d.type, "0x") {
 				continue
 			}
 
@@ -2209,10 +2199,11 @@ gen :: proc(input: string, c: Config) {
 
 			type := d.type
 
-			if strings.has_prefix(type, "0x") { // Check if this is a typedef for an annonymous struct
-				if index, ok := s.symbol_indices[type]; ok {
-					fp(f, output_struct(s, s.decls[index].variant.(Struct), 0, n))
-				}
+			if strings.has_prefix(type, "struct ") {
+				// This is a weird case -- I used this for opaque types in the
+				// beginning, but opaque types are now handled by
+				// `s.opaque_type_lookup`, so perhaps this isn't needed anymore?
+				fp(f, "struct {}")
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
 				fp(f, translate_type(s, type))
