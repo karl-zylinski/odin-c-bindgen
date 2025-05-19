@@ -977,7 +977,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		name, name_ok := json_get_string(decl, "name")
 
 		if !name_ok {
-			return
+			name = id
 		}
 
 		if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
@@ -1713,6 +1713,10 @@ gen :: proc(input: string, c: Config) {
 			case Struct:
 				name := d.name
 
+				if strings.has_prefix(name, "0x") {
+					continue
+				}
+
 				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 					name = typedef
 					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
@@ -1773,11 +1777,173 @@ gen :: proc(input: string, c: Config) {
 		add_to_set(&s.created_types, b)
 	}
 
+	output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: Maybe(string)) -> string {
+		w := strings.builder_make()
+		ws :: strings.write_string
+		ws(&w, "struct ")
+
+		if d.is_union {
+			ws(&w, "#raw_union ")
+		}
+
+		ws(&w, "{\n")
+
+		longest_field_name_with_side_comment: int
+
+		for &field in d.fields {
+			if _, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
+				continue
+			}
+
+			field_len: int
+			for fn, nidx in field.names {
+				if nidx != 0 {
+					field_len += 2 // for comma and space
+				}
+
+				field_len += len(vet_name(fn))
+			}
+			if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
+				longest_field_name_with_side_comment = field_len
+			}
+		}
+
+		Formatted_Field :: struct {
+			field: string,
+			comment: string,
+			comment_before: bool,
+		}
+
+		fields: [dynamic]Formatted_Field
+
+		for &field in d.fields {
+			b := strings.builder_make()
+
+			override_key: string
+
+			if field.anon_using {
+				strings.write_string(&b, "using _: ")
+			} else {
+				for fn, nidx in field.names {
+					if nidx != 0 {
+						strings.write_string(&b, ", ")
+					}
+
+					strings.write_string(&b, vet_name(fn))
+				}
+
+				names_len := strings.builder_len(b)
+
+				if name, name_ok := n.?; name_ok {
+					override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
+				}
+
+				strings.write_string(&b, ": ")
+
+				if !field.comment_before {
+					// Padding between name and =
+					for _ in 0..<longest_field_name_with_side_comment-names_len {
+						strings.write_rune(&b, ' ')
+					}
+				}
+			}
+			
+			field_type := translate_type(s, field.type)
+
+			if override_key != "" {
+				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
+					if field_type_override == "[^]" {
+						// Change first `^` for `[^]`
+						field_type = fmt.tprintf("[^]%v", strings.trim_prefix(field_type, "^"))
+					} else {
+						field_type = field_type_override
+					}
+				}
+			}
+
+			comment := field.comment
+			comment_before := field.comment_before
+
+			if anon_struct, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
+				if anon_struct.comment != "" {
+					comment = anon_struct.comment
+					comment_before = true
+				}
+
+				field_type = output_struct(s, anon_struct, indent + 1, nil)
+			}
+
+			strings.write_string(&b, field_type)
+
+			append(&fields, Formatted_Field {
+				field = strings.to_string(b),
+				comment = comment,
+				comment_before = comment_before,
+			})
+		}
+
+		longest_field_with_side_comment: int
+
+		for &field in fields {
+			if field.comment != "" && !field.comment_before {
+				longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
+			}
+		}
+
+		for &field, field_idx in fields {
+			has_comment := field.comment != ""
+			comment_before := field.comment_before
+
+			if has_comment && comment_before {
+				if field_idx != 0 {
+					ws(&w, "\n")
+				}
+
+				ci := field.comment
+				for l in strings.split_lines_iterator(&ci) {
+					for _ in 0..<indent+1 {
+						ws(&w, "\t")
+					}
+					ws(&w, strings.trim_space(l))
+					ws(&w, "\n")
+				}
+			}
+
+			for _ in 0..<indent+1 {
+				ws(&w, "\t")
+			}
+			ws(&w, field.field)
+			ws(&w, ",")
+
+			if has_comment && !comment_before {
+				// Padding in front of comment
+				for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
+					ws(&w, " ")
+				}
+				
+				ws(&w, " ")
+				ws(&w, field.comment)
+			}
+
+			ws(&w, "\n")
+		}
+
+		for _ in 0..<indent {
+			ws(&w, "\t")
+		}
+		ws(&w, "}")
+		return strings.to_string(w)
+	}
+
 	for &decl, decl_idx in s.decls {
 		du := &decl.variant
 		switch d in du {
 		case Struct:
 			n := d.name
+
+			if strings.has_prefix(n, "0x") {
+				continue
+			}
 
 			if d.is_forward_declare {
 				if n in s.opaque_type_lookup && d.id not_in s.typedefs {
@@ -1801,164 +1967,6 @@ gen :: proc(input: string, c: Config) {
 				fp(f, override)
 				fp(f, "\n\n")
 				break
-			}
-
-			output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: Maybe(string)) -> string {
-				w := strings.builder_make()
-				ws :: strings.write_string
-				ws(&w, "struct ")
-
-				if d.is_union {
-					ws(&w, "#raw_union ")
-				}
-
-				ws(&w, "{\n")
-
-				longest_field_name_with_side_comment: int
-
-				for &field in d.fields {
-					if _, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
-						continue
-					}
-
-					field_len: int
-					for fn, nidx in field.names {
-						if nidx != 0 {
-							field_len += 2 // for comma and space
-						}
-
-						field_len += len(vet_name(fn))
-					}
-					if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
-						longest_field_name_with_side_comment = field_len
-					}
-				}
-
-				Formatted_Field :: struct {
-					field: string,
-					comment: string,
-					comment_before: bool,
-				}
-
-				fields: [dynamic]Formatted_Field
-
-				for &field in d.fields {
-					b := strings.builder_make()
-
-					override_key: string
-
-					if field.anon_using {
-						strings.write_string(&b, "using _: ")
-					} else {
-						for fn, nidx in field.names {
-							if nidx != 0 {
-								strings.write_string(&b, ", ")
-							}
-
-							strings.write_string(&b, vet_name(fn))
-						}
-
-						names_len := strings.builder_len(b)
-
-						if name, name_ok := n.?; name_ok {
-							override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
-						}
-
-						strings.write_string(&b, ": ")
-
-						if !field.comment_before {
-							// Padding between name and =
-							for _ in 0..<longest_field_name_with_side_comment-names_len {
-								strings.write_rune(&b, ' ')
-							}
-						}
-					}
-					
-					field_type := translate_type(s, field.type)
-
-					if override_key != "" {
-						if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
-							if field_type_override == "[^]" {
-								// Change first `^` for `[^]`
-								field_type = fmt.tprintf("[^]%v", strings.trim_prefix(field_type, "^"))
-							} else {
-								field_type = field_type_override
-							}
-						}
-					}
-
-					comment := field.comment
-					comment_before := field.comment_before
-
-					if anon_struct, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
-						if anon_struct.comment != "" {
-							comment = anon_struct.comment
-							comment_before = true
-						}
-
-						field_type = output_struct(s, anon_struct, indent + 1, nil)
-					}
-
-					strings.write_string(&b, field_type)
-
-					append(&fields, Formatted_Field {
-						field = strings.to_string(b),
-						comment = comment,
-						comment_before = comment_before,
-					})
-				}
-
-				longest_field_with_side_comment: int
-
-				for &field in fields {
-					if field.comment != "" && !field.comment_before {
-						longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
-					}
-				}
-
-				for &field, field_idx in fields {
-					has_comment := field.comment != ""
-					comment_before := field.comment_before
-
-					if has_comment && comment_before {
-						if field_idx != 0 {
-							ws(&w, "\n")
-						}
-
-						ci := field.comment
-						for l in strings.split_lines_iterator(&ci) {
-							for _ in 0..<indent+1 {
-								ws(&w, "\t")
-							}
-							ws(&w, strings.trim_space(l))
-							ws(&w, "\n")
-						}
-					}
-
-					for _ in 0..<indent+1 {
-						ws(&w, "\t")
-					}
-					ws(&w, field.field)
-					ws(&w, ",")
-
-					if has_comment && !comment_before {
-						// Padding in front of comment
-						for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
-							ws(&w, " ")
-						}
-						
-						ws(&w, " ")
-						ws(&w, field.comment)
-					}
-
-					ws(&w, "\n")
-				}
-
-				for _ in 0..<indent {
-					ws(&w, "\t")
-				}
-				ws(&w, "}")
-				return strings.to_string(w)
 			}
 
 			fp(f, output_struct(s, d, 0, n))
@@ -2159,13 +2167,13 @@ gen :: proc(input: string, c: Config) {
 			// handled later. This makes all procs end up at bottom, after types.
 
 		case Typedef:
-			t := d.name
+			n := d.name
 
-			if t in s.opaque_type_lookup {
+			if n in s.opaque_type_lookup {
 				if d.pre_comment != "" {
 					output_comment(f, d.pre_comment)
 				}
-				fpf(f, "%v :: struct {{}}", t)
+				fpf(f, "%v :: struct {{}}", n)
 
 				if d.side_comment != "" {
 					fp(f, ' ')
@@ -2176,7 +2184,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if t in s.created_symbols || strings.has_prefix(d.type, "0x") {
+			if n in s.created_symbols {
 				continue
 			}
 
@@ -2184,11 +2192,11 @@ gen :: proc(input: string, c: Config) {
 				output_comment(f, d.pre_comment)
 			}
 
-			fp(f, t)
+			fp(f, n)
 
 			fp(f, " :: ")
 
-			if override, override_ok := s.type_overrides[t]; override_ok {
+			if override, override_ok := s.type_overrides[n]; override_ok {
 				fp(f, override)
 
 				if d.side_comment != "" {
@@ -2201,15 +2209,14 @@ gen :: proc(input: string, c: Config) {
 
 			type := d.type
 
-			if strings.has_prefix(type, "struct ") {
-				// This is a weird case -- I used this for opaque types in the
-				// beginning, but opaque types are now handled by
-				// `s.opaque_type_lookup`, so perhaps this isn't needed anymore?
-				fp(f, "struct {}")
+			if strings.has_prefix(type, "0x") { // Check if this is a typedef for an annonymous struct
+				if index, ok := s.symbol_indices[type]; ok {
+					fp(f, output_struct(s, s.decls[index].variant.(Struct), 0, n))
+				}
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
 				fp(f, translate_type(s, type))
-				add_to_set(&s.type_is_proc, t)
+				add_to_set(&s.type_is_proc, n)
 			} else {
 				fpf(f, "%v", translate_type(s, type))
 			}
