@@ -323,6 +323,14 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 					}
 
 					append(&out_fields, f)
+					
+					if is_c_type(field_type) {
+						s.needs_import_c = true
+					} else if is_libc_type(field_type) {
+						s.needs_import_libc = true
+					} else if is_posix_type(field_type) {
+						s.needs_import_posix = true
+					}
 				}
 			} else if i_kind == "FullComment" {
 				comment, _ = get_comment(i, s)
@@ -926,6 +934,16 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		}
 
 		return_type, has_return_type := get_return_type(decl)
+		if has_return_type {
+			if is_c_type(return_type) {
+				s.needs_import_c = true
+			} else if is_libc_type(return_type) {
+				s.needs_import_libc = true
+			} else if is_posix_type(return_type) {
+				s.needs_import_posix = true
+			}
+		}
+
 		out_params: [dynamic]Function_Parameter
 		comment: string
 		comment_before: bool
@@ -1218,31 +1236,67 @@ is_c_type :: proc(t: string) -> bool{
 // from stdint.h etc). Please add and send in a Pull Request if you needed to
 // add anything here!
 c_type_mapping := map[string]string {
-	"ssize_t" = "int",
-	"size_t" = "uint",
-	"float" = "f32",
-	"double" = "f64",
-	"int" = "i32",
-	"char" = "u8",
-	"long long" = "c.longlong",
-	"unsigned short" = "u16",
-	"unsigned char" = "u8",
-	"unsigned int" = "u32",
-	"unsigned long" = "c.ulong",
+	"char" = "c.char",
+
+	"signed char" = "c.schar",
+	"short"       = "c.short",
+	"int"         = "c.int",
+	"long"        = "c.long",
+	"long long"   = "c.longlong",
+
+	"unsigned char"      = "c.uchar",
+	"unsigned short"     = "c.ushort",
+	"unsigned int"       = "c.uint",
+	"unsigned long"      = "c.ulong",
 	"unsigned long long" = "c.ulonglong",
-	"Bool" = "bool",
-	"BOOL" = "bool",
-	"long" = "c.long",
-	"uint8_t" = "u8",
-	"int8_t" = "i8",
-	"uint16_t" = "u16",
-	"int16_t" = "i16",
-	"uint32_t" = "u32",
-	"int32_t" = "i32",
-	"uint64_t" = "u64",
-	"int64_t" = "i64",
-	"uintptr_t" = "uintptr",
-	"ptrdiff_t" = "int",
+
+	"bool" = "c.bool",
+	"BOOL" = "c.bool", // bool is sometimes a macro for BOOL
+
+	"size_t"  = "c.size_t",
+	"ssize_t" = "c.ssize_t",
+	"wchar_t" = "c.wchar_t",
+
+	"float"          = "c.float",
+	"double"         = "c.double",
+	// I think clang changes this to something else so this might not work.
+	// I tried testing it but I couldn't get the complex type working in C.
+	"float complex"  = "c.complex_float",
+	"double complex" = "c.complex_double",
+
+	"int8_t"   = "c.int8_t",
+	"uint8_t"  = "c.uint8_t",
+	"int16_t"  = "c.int16_t",
+	"uint16_t" = "c.uint16_t",
+	"int32_t"  = "c.int32_t",
+	"uint32_t" = "c.uint32_t",
+	"int64_t"  = "c.int64_t",
+	"uint64_t" = "c.uint64_t",
+
+	"int_least8_t"   = "c.int_least8_t",
+	"uint_least8_t"  = "c.uint_least8_t",
+	"int_least16_t"  = "c.int_least16_t",
+	"uint_least16_t" = "c.uint_least16_t",
+	"int_least32_t"  = "c.int_least32_t",
+	"uint_least32_t" = "c.uint_least32_t",
+	"int_least64_t"  = "c.int_least64_t",
+	"uint_least64_t" = "c.uint_least64_t",
+	
+	"int_fast8_t"   = "c.int_fast8_t",
+	"uint_fast8_t"  = "c.uint_fast8_t",
+	"int_fast16_t"  = "c.int_fast16_t",
+	"uint_fast16_t" = "c.uint_fast16_t",
+	"int_fast32_t"  = "c.int_fast32_t",
+	"uint_fast32_t" = "c.uint_fast32_t",
+	"int_fast64_t"  = "c.int_fast64_t",
+	"uint_fast64_t" = "c.uint_fast64_t",
+	
+	"intptr_t"  = "c.intptr_t",
+	"uintptr_t" = "c.uintptr_t",
+	"ptrdiff_t" = "c.ptrdiff_t",
+
+	"intmax_t"  = "c.intmax_t",
+	"uintmax_t" = "c.uintmax_t",
 }
 
 // For translating type names in procedure parameters and struct fields.
