@@ -19,7 +19,7 @@ RayCastInput :: struct {
 	translation: Vec2,
 
 	/// The maximum fraction of the translation to consider, typically 1
-	maxFraction: f32,
+	maxFraction: c.float,
 }
 
 /// Low level shape cast input in generic form. This allows casting an arbitrary point
@@ -30,16 +30,16 @@ ShapeCastInput :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 
 	/// The radius around the point cloud
-	radius: f32,
+	radius: c.float,
 
 	/// The translation of the shape cast
 	translation: Vec2,
 
 	/// The maximum fraction of the translation to consider, typically 1
-	maxFraction: f32,
+	maxFraction: c.float,
 }
 
 /// Low level ray cast or shape-cast output data
@@ -51,25 +51,25 @@ CastOutput :: struct {
 	point: Vec2,
 
 	/// The fraction of the input translation at collision
-	fraction: f32,
+	fraction: c.float,
 
 	/// The number of iterations used
-	iterations: i32,
+	iterations: c.int,
 
 	/// Did the cast hit?
-	hit: bool,
+	hit: c.bool,
 }
 
 /// This holds the mass data computed for a shape.
 MassData :: struct {
 	/// The mass of the shape, usually in kilograms.
-	mass: f32,
+	mass: c.float,
 
 	/// The position of the shape's centroid relative to the shape's origin.
 	center: Vec2,
 
 	/// The rotational inertia of the shape about the local origin.
-	rotationalInertia: f32,
+	rotationalInertia: c.float,
 }
 
 /// A solid circle
@@ -78,7 +78,7 @@ Circle :: struct {
 	center: Vec2,
 
 	/// The radius
-	radius: f32,
+	radius: c.float,
 }
 
 /// A solid capsule can be viewed as two semicircles connected
@@ -91,7 +91,7 @@ Capsule :: struct {
 	center2: Vec2,
 
 	/// The radius of the semicircles
-	radius: f32,
+	radius: c.float,
 }
 
 /// A solid convex polygon. It is assumed that the interior of the polygon is to
@@ -111,10 +111,10 @@ Polygon :: struct {
 	centroid: Vec2,
 
 	/// The external radius for rounded polygons
-	radius: f32,
+	radius: c.float,
 
 	/// The number of polygon vertices
-	count: i32,
+	count: c.int,
 }
 
 /// A line segment with two-sided collision.
@@ -140,7 +140,7 @@ ChainSegment :: struct {
 	ghost2: Vec2,
 
 	/// The owning chain shape index (internal usage only)
-	chainId: i32,
+	chainId: c.int,
 }
 
 /// A convex hull. Used to create convex polygons.
@@ -150,7 +150,7 @@ Hull :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 }
 
 /// Result of computing the distance between two line segments
@@ -162,13 +162,13 @@ SegmentDistanceResult :: struct {
 	closest2: Vec2,
 
 	/// The barycentric coordinate on the first segment
-	fraction1: f32,
+	fraction1: c.float,
 
 	/// The barycentric coordinate on the second segment
-	fraction2: f32,
+	fraction2: c.float,
 
 	/// The squared distance between the closest points
-	distanceSquared: f32,
+	distanceSquared: c.float,
 }
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
@@ -177,10 +177,10 @@ ShapeProxy :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 
 	/// The external radius of the point cloud
-	radius: f32,
+	radius: c.float,
 }
 
 /// Used to warm start the GJK simplex. If you call this function multiple times with nearby
@@ -189,13 +189,13 @@ ShapeProxy :: struct {
 /// Users should generally just zero initialize this structure for each call.
 SimplexCache :: struct {
 	/// The number of stored simplex points
-	count: u16,
+	count: c.uint16_t,
 
 	/// The cached simplex indices on shape A
-	indexA: [3]u8,
+	indexA: [3]c.uint8_t,
 
 	/// The cached simplex indices on shape B
-	indexB: [3]u8,
+	indexB: [3]c.uint8_t,
 }
 
 /// Input for b2ShapeDistance
@@ -213,32 +213,32 @@ DistanceInput :: struct {
 	transformB: Transform,
 
 	/// Should the proxy radius be considered?
-	useRadii: bool,
+	useRadii: c.bool,
 }
 
 /// Output for b2ShapeDistance
 DistanceOutput :: struct {
-	pointA:       Vec2, ///< Closest point on shapeA
-	pointB:       Vec2, ///< Closest point on shapeB
-	distance:     f32,  ///< The final distance, zero if overlapped
-	iterations:   i32,  ///< Number of GJK iterations used
-	simplexCount: i32,  ///< The number of simplexes stored in the simplex array
+	pointA:       Vec2,    ///< Closest point on shapeA
+	pointB:       Vec2,    ///< Closest point on shapeB
+	distance:     c.float, ///< The final distance, zero if overlapped
+	iterations:   c.int,   ///< Number of GJK iterations used
+	simplexCount: c.int,   ///< The number of simplexes stored in the simplex array
 }
 
 /// Simplex vertex for debugging the GJK algorithm
 SimplexVertex :: struct {
-	wA:     Vec2, ///< support point in proxyA
-	wB:     Vec2, ///< support point in proxyB
-	w:      Vec2, ///< wB - wA
-	a:      f32,  ///< barycentric coordinate for closest point
-	indexA: i32,  ///< wA index
-	indexB: i32,  ///< wB index
+	wA:     Vec2,    ///< support point in proxyA
+	wB:     Vec2,    ///< support point in proxyB
+	w:      Vec2,    ///< wB - wA
+	a:      c.float, ///< barycentric coordinate for closest point
+	indexA: c.int,   ///< wA index
+	indexB: c.int,   ///< wB index
 }
 
 /// Simplex from the GJK algorithm
 Simplex :: struct {
 	v1, v2, v3: SimplexVertex, ///< vertices
-	count:      i32,           ///< number of valid vertices
+	count:      c.int,         ///< number of valid vertices
 }
 
 /// Input parameters for b2ShapeCast
@@ -248,7 +248,7 @@ ShapeCastPairInput :: struct {
 	transformA:   Transform,  ///< The world transform for shape A
 	transformB:   Transform,  ///< The world transform for shape B
 	translationB: Vec2,       ///< The translation of shape B
-	maxFraction:  f32,        ///< The fraction of the translation to consider, typically 1
+	maxFraction:  c.float,    ///< The fraction of the translation to consider, typically 1
 }
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
@@ -268,7 +268,7 @@ TOIInput :: struct {
 	proxyB:      ShapeProxy, ///< The proxy for shape B
 	sweepA:      Sweep,      ///< The movement of shape A
 	sweepB:      Sweep,      ///< The movement of shape B
-	maxFraction: f32,        ///< Defines the sweep interval [0, maxFraction]
+	maxFraction: c.float,    ///< Defines the sweep interval [0, maxFraction]
 }
 
 /// Describes the TOI output
@@ -283,7 +283,7 @@ TOIState :: enum c.int {
 /// Output parameters for b2TimeOfImpact.
 TOIOutput :: struct {
 	state:    TOIState, ///< The type of result
-	fraction: f32,      ///< The sweep time of the collision
+	fraction: c.float,  ///< The sweep time of the collision
 }
 
 /// A manifold point is a contact point belonging to a contact manifold.
@@ -305,27 +305,27 @@ ManifoldPoint :: struct {
 	anchorB: Vec2,
 
 	/// The separation of the contact point, negative if penetrating
-	separation: f32,
+	separation: c.float,
 
 	/// The impulse along the manifold normal vector.
-	normalImpulse: f32,
+	normalImpulse: c.float,
 
 	/// The friction impulse
-	tangentImpulse: f32,
+	tangentImpulse: c.float,
 
 	/// The maximum normal impulse applied during sub-stepping. This is important
 	/// to identify speculative contact points that had an interaction in the time step.
-	maxNormalImpulse: f32,
+	maxNormalImpulse: c.float,
 
 	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
 	/// zero then there was no hit. Negative means shapes are approaching.
-	normalVelocity: f32,
+	normalVelocity: c.float,
 
 	/// Uniquely identifies a contact point between two shapes
-	id: u16,
+	id: c.uint16_t,
 
 	/// Did this contact point exist the previous step?
-	persisted: bool,
+	persisted: c.bool,
 }
 
 /// A contact manifold describes the contact points between colliding shapes.
@@ -335,13 +335,13 @@ Manifold :: struct {
 	normal: Vec2,
 
 	/// Angular impulse applied for rolling resistance. N * m * s = kg * m^2 / s
-	rollingImpulse: f32,
+	rollingImpulse: c.float,
 
 	/// The manifold points, up to two are possible in 2D
 	points: [2]ManifoldPoint,
 
 	/// The number of contacts points, will be 0, 1, or 2
-	pointCount: i32,
+	pointCount: c.int,
 }
 
 /// The dynamic tree structure. This should be considered private data.
@@ -353,22 +353,22 @@ DynamicTree :: struct {
 	nodes: [^]TreeNode,
 
 	/// The root index
-	root: i32,
+	root: c.int,
 
 	/// The number of nodes
-	nodeCount: i32,
+	nodeCount: c.int,
 
 	/// The allocated node space
-	nodeCapacity: i32,
+	nodeCapacity: c.int,
 
 	/// Node free list
-	freeList: i32,
+	freeList: c.int,
 
 	/// Number of proxies created
-	proxyCount: i32,
+	proxyCount: c.int,
 
 	/// Leaf indices for rebuild
-	leafIndices: ^i32,
+	leafIndices: ^c.int,
 
 	/// Leaf bounding boxes for rebuild
 	leafBoxes: ^AABB,
@@ -377,47 +377,47 @@ DynamicTree :: struct {
 	leafCenters: ^Vec2,
 
 	/// Bins for sorting during rebuild
-	binIndices: ^i32,
+	binIndices: ^c.int,
 
 	/// Allocated space for rebuilding
-	rebuildCapacity: i32,
+	rebuildCapacity: c.int,
 }
 
 /// These are performance results returned by dynamic tree queries.
 TreeStats :: struct {
 	/// Number of internal nodes visited during the query
-	nodeVisits: i32,
+	nodeVisits: c.int,
 
 	/// Number of leaf nodes visited during the query
-	leafVisits: i32,
+	leafVisits: c.int,
 }
 
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
-TreeQueryCallbackFcn :: proc "c" (i32, i32, rawptr) -> bool
+TreeQueryCallbackFcn :: proc "c" (c.int, c.int, rawptr) -> c.bool
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-TreeRayCastCallbackFcn :: proc "c" (^RayCastInput, i32, i32, rawptr) -> f32
+TreeRayCastCallbackFcn :: proc "c" (^RayCastInput, c.int, c.int, rawptr) -> c.float
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-TreeShapeCastCallbackFcn :: proc "c" (^ShapeCastInput, i32, i32, rawptr) -> f32
+TreeShapeCastCallbackFcn :: proc "c" (^ShapeCastInput, c.int, c.int, rawptr) -> c.float
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
 	/// Validate ray cast input data (NaN, etc)
-	IsValidRay :: proc(input: ^RayCastInput) -> bool ---
+	IsValidRay :: proc(input: ^RayCastInput) -> c.bool ---
 
 	/// Make a convex polygon from a convex hull. This will assert if the hull is not valid.
 	/// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
-	MakePolygon :: proc(hull: ^Hull, radius: f32) -> Polygon ---
+	MakePolygon :: proc(hull: ^Hull, radius: c.float) -> Polygon ---
 
 	/// Make an offset convex polygon from a convex hull. This will assert if the hull is not valid.
 	/// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
@@ -425,29 +425,29 @@ foreign lib {
 
 	/// Make an offset convex polygon from a convex hull. This will assert if the hull is not valid.
 	/// @warning Do not manually fill in the hull data, it must come directly from b2ComputeHull
-	MakeOffsetRoundedPolygon :: proc(hull: ^Hull, position: Vec2, rotation: Rot, radius: f32) -> Polygon ---
+	MakeOffsetRoundedPolygon :: proc(hull: ^Hull, position: Vec2, rotation: Rot, radius: c.float) -> Polygon ---
 
 	/// Make a square polygon, bypassing the need for a convex hull.
 	/// @param halfWidth the half-width
-	MakeSquare :: proc(halfWidth: f32) -> Polygon ---
+	MakeSquare :: proc(halfWidth: c.float) -> Polygon ---
 
 	/// Make a box (rectangle) polygon, bypassing the need for a convex hull.
 	/// @param halfWidth the half-width (x-axis)
 	/// @param halfHeight the half-height (y-axis)
-	MakeBox :: proc(halfWidth: f32, halfHeight: f32) -> Polygon ---
+	MakeBox :: proc(halfWidth: c.float, halfHeight: c.float) -> Polygon ---
 
 	/// Make a rounded box, bypassing the need for a convex hull.
 	/// @param halfWidth the half-width (x-axis)
 	/// @param halfHeight the half-height (y-axis)
 	/// @param radius the radius of the rounded extension
-	MakeRoundedBox :: proc(halfWidth: f32, halfHeight: f32, radius: f32) -> Polygon ---
+	MakeRoundedBox :: proc(halfWidth: c.float, halfHeight: c.float, radius: c.float) -> Polygon ---
 
 	/// Make an offset box, bypassing the need for a convex hull.
 	/// @param halfWidth the half-width (x-axis)
 	/// @param halfHeight the half-height (y-axis)
 	/// @param center the local center of the box
 	/// @param rotation the local rotation of the box
-	MakeOffsetBox :: proc(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot) -> Polygon ---
+	MakeOffsetBox :: proc(halfWidth: c.float, halfHeight: c.float, center: Vec2, rotation: Rot) -> Polygon ---
 
 	/// Make an offset rounded box, bypassing the need for a convex hull.
 	/// @param halfWidth the half-width (x-axis)
@@ -455,19 +455,19 @@ foreign lib {
 	/// @param center the local center of the box
 	/// @param rotation the local rotation of the box
 	/// @param radius the radius of the rounded extension
-	MakeOffsetRoundedBox :: proc(halfWidth: f32, halfHeight: f32, center: Vec2, rotation: Rot, radius: f32) -> Polygon ---
+	MakeOffsetRoundedBox :: proc(halfWidth: c.float, halfHeight: c.float, center: Vec2, rotation: Rot, radius: c.float) -> Polygon ---
 
 	/// Transform a polygon. This is useful for transferring a shape from one body to another.
 	TransformPolygon :: proc(transform: Transform, polygon: ^Polygon) -> Polygon ---
 
 	/// Compute mass properties of a circle
-	ComputeCircleMass :: proc(shape: ^Circle, density: f32) -> MassData ---
+	ComputeCircleMass :: proc(shape: ^Circle, density: c.float) -> MassData ---
 
 	/// Compute mass properties of a capsule
-	ComputeCapsuleMass :: proc(shape: ^Capsule, density: f32) -> MassData ---
+	ComputeCapsuleMass :: proc(shape: ^Capsule, density: c.float) -> MassData ---
 
 	/// Compute mass properties of a polygon
-	ComputePolygonMass :: proc(shape: ^Polygon, density: f32) -> MassData ---
+	ComputePolygonMass :: proc(shape: ^Polygon, density: c.float) -> MassData ---
 
 	/// Compute the bounding box of a transformed circle
 	ComputeCircleAABB :: proc(shape: ^Circle, transform: Transform) -> AABB ---
@@ -482,13 +482,13 @@ foreign lib {
 	ComputeSegmentAABB :: proc(shape: ^Segment, transform: Transform) -> AABB ---
 
 	/// Test a point for overlap with a circle in local space
-	PointInCircle :: proc(point: Vec2, shape: ^Circle) -> bool ---
+	PointInCircle :: proc(point: Vec2, shape: ^Circle) -> c.bool ---
 
 	/// Test a point for overlap with a capsule in local space
-	PointInCapsule :: proc(point: Vec2, shape: ^Capsule) -> bool ---
+	PointInCapsule :: proc(point: Vec2, shape: ^Capsule) -> c.bool ---
 
 	/// Test a point for overlap with a convex polygon in local space
-	PointInPolygon :: proc(point: Vec2, shape: ^Polygon) -> bool ---
+	PointInPolygon :: proc(point: Vec2, shape: ^Polygon) -> c.bool ---
 
 	/// Ray cast versus circle shape in local space. Initial overlap is treated as a miss.
 	RayCastCircle :: proc(input: ^RayCastInput, shape: ^Circle) -> CastOutput ---
@@ -498,7 +498,7 @@ foreign lib {
 
 	/// Ray cast versus segment shape in local space. Optionally treat the segment as one-sided with hits from
 	/// the left side being treated as a miss.
-	RayCastSegment :: proc(input: ^RayCastInput, shape: ^Segment, oneSided: bool) -> CastOutput ---
+	RayCastSegment :: proc(input: ^RayCastInput, shape: ^Segment, oneSided: c.bool) -> CastOutput ---
 
 	/// Ray cast versus polygon shape in local space. Initial overlap is treated as a miss.
 	RayCastPolygon :: proc(input: ^RayCastInput, shape: ^Polygon) -> CastOutput ---
@@ -523,13 +523,13 @@ foreign lib {
 	/// - more than B2_MAX_POLYGON_VERTICES points
 	/// This welds close points and removes collinear points.
 	/// @warning Do not modify a hull once it has been computed
-	ComputeHull :: proc(points: ^Vec2, count: i32) -> Hull ---
+	ComputeHull :: proc(points: ^Vec2, count: c.int) -> Hull ---
 
 	/// This determines if a hull is valid. Checks for:
 	/// - convexity
 	/// - collinear points
 	/// This is expensive and should not be called at runtime.
-	ValidateHull :: proc(hull: ^Hull) -> bool ---
+	ValidateHull :: proc(hull: ^Hull) -> c.bool ---
 
 	/// Compute the distance between two line segments, clamping at the end points if needed.
 	SegmentDistance :: proc(p1: Vec2, q1: Vec2, p2: Vec2, q2: Vec2) -> SegmentDistanceResult ---
@@ -537,16 +537,16 @@ foreign lib {
 	/// Compute the closest points between two shapes represented as point clouds.
 	/// b2SimplexCache cache is input/output. On the first call set b2SimplexCache.count to zero.
 	/// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
-	ShapeDistance :: proc(cache: ^SimplexCache, input: ^DistanceInput, simplexes: ^Simplex, simplexCapacity: i32) -> DistanceOutput ---
+	ShapeDistance :: proc(cache: ^SimplexCache, input: ^DistanceInput, simplexes: ^Simplex, simplexCapacity: c.int) -> DistanceOutput ---
 
 	/// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
 	ShapeCast :: proc(input: ^ShapeCastPairInput) -> CastOutput ---
 
 	/// Make a proxy for use in GJK and related functions.
-	MakeProxy :: proc(vertices: ^Vec2, count: i32, radius: f32) -> ShapeProxy ---
+	MakeProxy :: proc(vertices: ^Vec2, count: c.int, radius: c.float) -> ShapeProxy ---
 
 	/// Evaluate the transform sweep at a specific time.
-	GetSweepTransform :: proc(sweep: ^Sweep, time: f32) -> Transform ---
+	GetSweepTransform :: proc(sweep: ^Sweep, time: c.float) -> Transform ---
 
 	/// Compute the upper bound on time before two shapes penetrate. Time is represented as
 	/// a fraction between [0,tMax]. This uses a swept separating axis and may miss some intermediate,
@@ -597,20 +597,20 @@ foreign lib {
 	DynamicTree_Destroy :: proc(tree: ^DynamicTree) ---
 
 	/// Create a proxy. Provide an AABB and a userData value.
-	DynamicTree_CreateProxy :: proc(tree: ^DynamicTree, aabb: AABB, categoryBits: u64, userData: i32) -> i32 ---
+	DynamicTree_CreateProxy :: proc(tree: ^DynamicTree, aabb: AABB, categoryBits: c.uint64_t, userData: c.int) -> c.int ---
 
 	/// Destroy a proxy. This asserts if the id is invalid.
-	DynamicTree_DestroyProxy :: proc(tree: ^DynamicTree, proxyId: i32) ---
+	DynamicTree_DestroyProxy :: proc(tree: ^DynamicTree, proxyId: c.int) ---
 
 	/// Move a proxy to a new AABB by removing and reinserting into the tree.
-	DynamicTree_MoveProxy :: proc(tree: ^DynamicTree, proxyId: i32, aabb: AABB) ---
+	DynamicTree_MoveProxy :: proc(tree: ^DynamicTree, proxyId: c.int, aabb: AABB) ---
 
 	/// Enlarge a proxy and enlarge ancestors as necessary.
-	DynamicTree_EnlargeProxy :: proc(tree: ^DynamicTree, proxyId: i32, aabb: AABB) ---
+	DynamicTree_EnlargeProxy :: proc(tree: ^DynamicTree, proxyId: c.int, aabb: AABB) ---
 
 	/// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 	///	@return performance data
-	DynamicTree_Query :: proc(tree: ^DynamicTree, aabb: AABB, maskBits: u64, callback: TreeQueryCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_Query :: proc(tree: ^DynamicTree, aabb: AABB, maskBits: c.uint64_t, callback: TreeQueryCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Ray cast against the proxies in the tree. This relies on the callback
 	/// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -625,7 +625,7 @@ foreign lib {
 	/// @param callback a callback class that is called for each proxy that is hit by the ray
 	/// @param context user context that is passed to the callback
 	///	@return performance data
-	DynamicTree_RayCast :: proc(tree: ^DynamicTree, input: ^RayCastInput, maskBits: u64, callback: TreeRayCastCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_RayCast :: proc(tree: ^DynamicTree, input: ^RayCastInput, maskBits: c.uint64_t, callback: TreeRayCastCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Ray cast against the proxies in the tree. This relies on the callback
 	/// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -638,28 +638,28 @@ foreign lib {
 	/// @param callback a callback class that is called for each proxy that is hit by the shape
 	/// @param context user context that is passed to the callback
 	///	@return performance data
-	DynamicTree_ShapeCast :: proc(tree: ^DynamicTree, input: ^ShapeCastInput, maskBits: u64, callback: TreeShapeCastCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_ShapeCast :: proc(tree: ^DynamicTree, input: ^ShapeCastInput, maskBits: c.uint64_t, callback: TreeShapeCastCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Get the height of the binary tree.
-	DynamicTree_GetHeight :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetHeight :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Get the ratio of the sum of the node areas to the root area.
-	DynamicTree_GetAreaRatio :: proc(tree: ^DynamicTree) -> f32 ---
+	DynamicTree_GetAreaRatio :: proc(tree: ^DynamicTree) -> c.float ---
 
 	/// Get the number of proxies created
-	DynamicTree_GetProxyCount :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetProxyCount :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
-	DynamicTree_Rebuild :: proc(tree: ^DynamicTree, fullBuild: bool) -> i32 ---
+	DynamicTree_Rebuild :: proc(tree: ^DynamicTree, fullBuild: c.bool) -> c.int ---
 
 	/// Get the number of bytes used by this tree
-	DynamicTree_GetByteCount :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetByteCount :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Get proxy user data
-	DynamicTree_GetUserData :: proc(tree: ^DynamicTree, proxyId: i32) -> i32 ---
+	DynamicTree_GetUserData :: proc(tree: ^DynamicTree, proxyId: c.int) -> c.int ---
 
 	/// Get the AABB of a proxy
-	DynamicTree_GetAABB :: proc(tree: ^DynamicTree, proxyId: i32) -> AABB ---
+	DynamicTree_GetAABB :: proc(tree: ^DynamicTree, proxyId: c.int) -> AABB ---
 
 	/// Validate this tree. For testing.
 	DynamicTree_Validate :: proc(tree: ^DynamicTree) ---

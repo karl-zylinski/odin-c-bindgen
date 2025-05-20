@@ -10,61 +10,61 @@ foreign import lib "box2d.lib"
 
 /// World id references a world instance. This should be treated as an opaque handle.
 WorldId :: struct {
-	index1:     u16,
-	generation: u16,
+	index1:     c.uint16_t,
+	generation: c.uint16_t,
 }
 
 /// Body id references a body instance. This should be treated as an opaque handle.
 BodyId :: struct {
-	index1:     i32,
-	world0:     u16,
-	generation: u16,
+	index1:     c.int32_t,
+	world0:     c.uint16_t,
+	generation: c.uint16_t,
 }
 
 /// Shape id references a shape instance. This should be treated as an opaque handle.
 ShapeId :: struct {
-	index1:     i32,
-	world0:     u16,
-	generation: u16,
+	index1:     c.int32_t,
+	world0:     c.uint16_t,
+	generation: c.uint16_t,
 }
 
 /// Chain id references a chain instances. This should be treated as an opaque handle.
 ChainId :: struct {
-	index1:     i32,
-	world0:     u16,
-	generation: u16,
+	index1:     c.int32_t,
+	world0:     c.uint16_t,
+	generation: c.uint16_t,
 }
 
 /// Joint id references a joint instance. This should be treated as an opaque handle.
 JointId :: struct {
-	index1:     i32,
-	world0:     u16,
-	generation: u16,
+	index1:     c.int32_t,
+	world0:     c.uint16_t,
+	generation: c.uint16_t,
 }
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
 	/// Store a body id into a uint64_t.
-	StoreBodyId :: proc(id: BodyId) -> u64 ---
+	StoreBodyId :: proc(id: BodyId) -> c.uint64_t ---
 
 	/// Load a uint64_t into a body id.
-	LoadBodyId :: proc(x: u64) -> BodyId ---
+	LoadBodyId :: proc(x: c.uint64_t) -> BodyId ---
 
 	/// Store a shape id into a uint64_t.
-	StoreShapeId :: proc(id: ShapeId) -> u64 ---
+	StoreShapeId :: proc(id: ShapeId) -> c.uint64_t ---
 
 	/// Load a uint64_t into a shape id.
-	LoadShapeId :: proc(x: u64) -> ShapeId ---
+	LoadShapeId :: proc(x: c.uint64_t) -> ShapeId ---
 
 	/// Store a chain id into a uint64_t.
-	StoreChainId :: proc(id: ChainId) -> u64 ---
+	StoreChainId :: proc(id: ChainId) -> c.uint64_t ---
 
 	/// Load a uint64_t into a chain id.
-	LoadChainId :: proc(x: u64) -> ChainId ---
+	LoadChainId :: proc(x: c.uint64_t) -> ChainId ---
 
 	/// Store a joint id into a uint64_t.
-	StoreJointId :: proc(id: JointId) -> u64 ---
+	StoreJointId :: proc(id: JointId) -> c.uint64_t ---
 
 	/// Load a uint64_t into a joint id.
-	LoadJointId :: proc(x: u64) -> JointId ---
+	LoadJointId :: proc(x: c.uint64_t) -> JointId ---
 }

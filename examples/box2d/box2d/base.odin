@@ -14,14 +14,14 @@ foreign import lib "box2d.lib"
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
-AllocFcn :: proc "c" (u32, i32) -> rawptr
+AllocFcn :: proc "c" (c.uint, c.int) -> rawptr
 
 /// Prototype for user free function
 /// @param mem the memory previously allocated through `b2AllocFcn`
 FreeFcn :: proc "c" (rawptr)
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
-AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
+AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
 
 // BREAKPOINT :: _debugbreak()
 
@@ -29,13 +29,13 @@ AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
 /// See https://semver.org/
 Version :: struct {
 	/// Significant changes
-	major: i32,
+	major: c.int,
 
 	/// Incremental changes
-	minor: i32,
+	minor: c.int,
 
 	/// Bug fixes
-	revision: i32,
+	revision: c.int,
 }
 
 /// Simple djb2 hash function for determinism testing
@@ -48,26 +48,26 @@ foreign lib {
 	SetAllocator :: proc(allocFcn: AllocFcn, freeFcn: FreeFcn) ---
 
 	/// @return the total bytes allocated by Box2D
-	GetByteCount :: proc() -> i32 ---
+	GetByteCount :: proc() -> c.int ---
 
 	/// Override the default assert callback
 	/// @param assertFcn a non-null assert callback
 	SetAssertFcn      :: proc(assertFcn: AssertFcn) ---
-	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: i32) -> i32 ---
+	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: c.int) -> c.int ---
 
 	/// Get the current version of Box2D
 	GetVersion :: proc() -> Version ---
 
 	/// Get the absolute number of system ticks. The value is platform specific.
-	GetTicks :: proc() -> u64 ---
+	GetTicks :: proc() -> c.uint64_t ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMilliseconds :: proc(ticks: u64) -> f32 ---
+	GetMilliseconds :: proc(ticks: c.uint64_t) -> c.float ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMillisecondsAndReset :: proc(ticks: ^u64) -> f32 ---
+	GetMillisecondsAndReset :: proc(ticks: ^c.uint64_t) -> c.float ---
 
 	/// Yield to be used in a busy loop.
 	Yield :: proc() ---
-	Hash  :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
+	Hash  :: proc(hash: c.uint32_t, data: ^c.uint8_t, count: c.int) -> c.uint32_t ---
 }
