@@ -19,13 +19,13 @@ foreign lib {
 	DestroyWorld :: proc(worldId: WorldId) ---
 
 	/// World id validation. Provides validation for up to 64K allocations.
-	World_IsValid :: proc(id: WorldId) -> bool ---
+	World_IsValid :: proc(id: WorldId) -> c.bool ---
 
 	/// Simulate a world for one time step. This performs collision detection, integration, and constraint solution.
 	/// @param worldId The world to simulate
 	/// @param timeStep The amount of time to simulate, this should be a fixed number. Usually 1/60.
 	/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase accuracy. Usually 4.
-	World_Step :: proc(worldId: WorldId, timeStep: f32, subStepCount: i32) ---
+	World_Step :: proc(worldId: WorldId, timeStep: c.float, subStepCount: c.int) ---
 
 	/// Call this to draw shapes and other debug draw data
 	World_Draw :: proc(worldId: WorldId, draw: ^DebugDraw) ---
@@ -86,35 +86,35 @@ foreign lib {
 	/// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 	/// by disabling sleep completely at the world level.
 	/// @see b2WorldDef
-	World_EnableSleeping :: proc(worldId: WorldId, flag: bool) ---
+	World_EnableSleeping :: proc(worldId: WorldId, flag: c.bool) ---
 
 	/// Is body sleeping enabled?
-	World_IsSleepingEnabled :: proc(worldId: WorldId) -> bool ---
+	World_IsSleepingEnabled :: proc(worldId: WorldId) -> c.bool ---
 
 	/// Enable/disable continuous collision between dynamic and static bodies. Generally you should keep continuous
 	/// collision enabled to prevent fast moving objects from going through static objects. The performance gain from
 	/// disabling continuous collision is minor.
 	/// @see b2WorldDef
-	World_EnableContinuous :: proc(worldId: WorldId, flag: bool) ---
+	World_EnableContinuous :: proc(worldId: WorldId, flag: c.bool) ---
 
 	/// Is continuous collision enabled?
-	World_IsContinuousEnabled :: proc(worldId: WorldId) -> bool ---
+	World_IsContinuousEnabled :: proc(worldId: WorldId) -> c.bool ---
 
 	/// Adjust the restitution threshold. It is recommended not to make this value very small
 	/// because it will prevent bodies from sleeping. Usually in meters per second.
 	/// @see b2WorldDef
-	World_SetRestitutionThreshold :: proc(worldId: WorldId, value: f32) ---
+	World_SetRestitutionThreshold :: proc(worldId: WorldId, value: c.float) ---
 
 	/// Get the the restitution speed threshold. Usually in meters per second.
-	World_GetRestitutionThreshold :: proc(worldId: WorldId) -> f32 ---
+	World_GetRestitutionThreshold :: proc(worldId: WorldId) -> c.float ---
 
 	/// Adjust the hit event threshold. This controls the collision speed needed to generate a b2ContactHitEvent.
 	/// Usually in meters per second.
 	/// @see b2WorldDef::hitEventThreshold
-	World_SetHitEventThreshold :: proc(worldId: WorldId, value: f32) ---
+	World_SetHitEventThreshold :: proc(worldId: WorldId, value: c.float) ---
 
 	/// Get the the hit event speed threshold. Usually in meters per second.
-	World_GetHitEventThreshold :: proc(worldId: WorldId) -> f32 ---
+	World_GetHitEventThreshold :: proc(worldId: WorldId) -> c.float ---
 
 	/// Register the custom filter callback. This is optional.
 	World_SetCustomFilterCallback :: proc(worldId: WorldId, fcn: ^CustomFilterFcn, _context: rawptr) ---
@@ -141,30 +141,30 @@ foreign lib {
 	/// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
 	/// @param pushSpeed The maximum contact constraint push out speed (meters per second)
 	/// @note Advanced feature
-	World_SetContactTuning :: proc(worldId: WorldId, hertz: f32, dampingRatio: f32, pushSpeed: f32) ---
+	World_SetContactTuning :: proc(worldId: WorldId, hertz: c.float, dampingRatio: c.float, pushSpeed: c.float) ---
 
 	/// Adjust joint tuning parameters
 	/// @param worldId The world id
 	/// @param hertz The contact stiffness (cycles per second)
 	/// @param dampingRatio The contact bounciness with 1 being critical damping (non-dimensional)
 	/// @note Advanced feature
-	World_SetJointTuning :: proc(worldId: WorldId, hertz: f32, dampingRatio: f32) ---
+	World_SetJointTuning :: proc(worldId: WorldId, hertz: c.float, dampingRatio: c.float) ---
 
 	/// Set the maximum linear speed. Usually in m/s.
-	World_SetMaximumLinearSpeed :: proc(worldId: WorldId, maximumLinearSpeed: f32) ---
+	World_SetMaximumLinearSpeed :: proc(worldId: WorldId, maximumLinearSpeed: c.float) ---
 
 	/// Get the maximum linear speed. Usually in m/s.
-	World_GetMaximumLinearSpeed :: proc(worldId: WorldId) -> f32 ---
+	World_GetMaximumLinearSpeed :: proc(worldId: WorldId) -> c.float ---
 
 	/// Enable/disable constraint warm starting. Advanced feature for testing. Disabling
 	/// sleeping greatly reduces stability and provides no performance gain.
-	World_EnableWarmStarting :: proc(worldId: WorldId, flag: bool) ---
+	World_EnableWarmStarting :: proc(worldId: WorldId, flag: c.bool) ---
 
 	/// Is constraint warm starting enabled?
-	World_IsWarmStartingEnabled :: proc(worldId: WorldId) -> bool ---
+	World_IsWarmStartingEnabled :: proc(worldId: WorldId) -> c.bool ---
 
 	/// Get the number of awake bodies.
-	World_GetAwakeBodyCount :: proc(worldId: WorldId) -> i32 ---
+	World_GetAwakeBodyCount :: proc(worldId: WorldId) -> c.int ---
 
 	/// Get the current world performance profile
 	World_GetProfile :: proc(worldId: WorldId) -> Profile ---
@@ -191,7 +191,7 @@ foreign lib {
 	World_RebuildStaticTree :: proc(worldId: WorldId) ---
 
 	/// This is for internal testing
-	World_EnableSpeculative :: proc(worldId: WorldId, flag: bool) ---
+	World_EnableSpeculative :: proc(worldId: WorldId, flag: c.bool) ---
 
 	/// Create a rigid body given a definition. No reference to the definition is retained. So you can create the definition
 	/// on the stack and pass it as a pointer.
@@ -207,7 +207,7 @@ foreign lib {
 	DestroyBody :: proc(bodyId: BodyId) ---
 
 	/// Body identifier validation. Can be used to detect orphaned ids. Provides validation for up to 64K allocations.
-	Body_IsValid :: proc(id: BodyId) -> bool ---
+	Body_IsValid :: proc(id: BodyId) -> c.bool ---
 
 	/// Get the body type: static, kinematic, or dynamic
 	Body_GetType :: proc(bodyId: BodyId) -> BodyType ---
@@ -258,13 +258,13 @@ foreign lib {
 	Body_GetLinearVelocity :: proc(bodyId: BodyId) -> Vec2 ---
 
 	/// Get the angular velocity of a body in radians per second
-	Body_GetAngularVelocity :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetAngularVelocity :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Set the linear velocity of a body. Usually in meters per second.
 	Body_SetLinearVelocity :: proc(bodyId: BodyId, linearVelocity: Vec2) ---
 
 	/// Set the angular velocity of a body in radians per second
-	Body_SetAngularVelocity :: proc(bodyId: BodyId, angularVelocity: f32) ---
+	Body_SetAngularVelocity :: proc(bodyId: BodyId, angularVelocity: c.float) ---
 
 	/// Get the linear velocity of a local point attached to a body. Usually in meters per second.
 	Body_GetLocalPointVelocity :: proc(bodyId: BodyId, localPoint: Vec2) -> Vec2 ---
@@ -279,21 +279,21 @@ foreign lib {
 	/// @param force The world force vector, usually in newtons (N)
 	/// @param point The world position of the point of application
 	/// @param wake Option to wake up the body
-	Body_ApplyForce :: proc(bodyId: BodyId, force: Vec2, point: Vec2, wake: bool) ---
+	Body_ApplyForce :: proc(bodyId: BodyId, force: Vec2, point: Vec2, wake: c.bool) ---
 
 	/// Apply a force to the center of mass. This optionally wakes up the body.
 	/// The force is ignored if the body is not awake.
 	/// @param bodyId The body id
 	/// @param force the world force vector, usually in newtons (N).
 	/// @param wake also wake up the body
-	Body_ApplyForceToCenter :: proc(bodyId: BodyId, force: Vec2, wake: bool) ---
+	Body_ApplyForceToCenter :: proc(bodyId: BodyId, force: Vec2, wake: c.bool) ---
 
 	/// Apply a torque. This affects the angular velocity without affecting the linear velocity.
 	/// This optionally wakes the body. The torque is ignored if the body is not awake.
 	/// @param bodyId The body id
 	/// @param torque about the z-axis (out of the screen), usually in N*m.
 	/// @param wake also wake up the body
-	Body_ApplyTorque :: proc(bodyId: BodyId, torque: f32, wake: bool) ---
+	Body_ApplyTorque :: proc(bodyId: BodyId, torque: c.float, wake: c.bool) ---
 
 	/// Apply an impulse at a point. This immediately modifies the velocity.
 	/// It also modifies the angular velocity if the point of application
@@ -305,7 +305,7 @@ foreign lib {
 	/// @param wake also wake up the body
 	/// @warning This should be used for one-shot impulses. If you need a steady force,
 	/// use a force instead, which will work better with the sub-stepping solver.
-	Body_ApplyLinearImpulse :: proc(bodyId: BodyId, impulse: Vec2, point: Vec2, wake: bool) ---
+	Body_ApplyLinearImpulse :: proc(bodyId: BodyId, impulse: Vec2, point: Vec2, wake: c.bool) ---
 
 	/// Apply an impulse to the center of mass. This immediately modifies the velocity.
 	/// The impulse is ignored if the body is not awake. This optionally wakes the body.
@@ -314,7 +314,7 @@ foreign lib {
 	/// @param wake also wake up the body
 	/// @warning This should be used for one-shot impulses. If you need a steady force,
 	/// use a force instead, which will work better with the sub-stepping solver.
-	Body_ApplyLinearImpulseToCenter :: proc(bodyId: BodyId, impulse: Vec2, wake: bool) ---
+	Body_ApplyLinearImpulseToCenter :: proc(bodyId: BodyId, impulse: Vec2, wake: c.bool) ---
 
 	/// Apply an angular impulse. The impulse is ignored if the body is not awake.
 	/// This optionally wakes the body.
@@ -323,13 +323,13 @@ foreign lib {
 	/// @param wake also wake up the body
 	/// @warning This should be used for one-shot impulses. If you need a steady force,
 	/// use a force instead, which will work better with the sub-stepping solver.
-	Body_ApplyAngularImpulse :: proc(bodyId: BodyId, impulse: f32, wake: bool) ---
+	Body_ApplyAngularImpulse :: proc(bodyId: BodyId, impulse: c.float, wake: c.bool) ---
 
 	/// Get the mass of the body, usually in kilograms
-	Body_GetMass :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetMass :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Get the rotational inertia of the body, usually in kg*m^2
-	Body_GetRotationalInertia :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetRotationalInertia :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Get the center of mass position of the body in local space
 	Body_GetLocalCenterOfMass :: proc(bodyId: BodyId) -> Vec2 ---
@@ -353,46 +353,46 @@ foreign lib {
 	Body_ApplyMassFromShapes :: proc(bodyId: BodyId) ---
 
 	/// Adjust the linear damping. Normally this is set in b2BodyDef before creation.
-	Body_SetLinearDamping :: proc(bodyId: BodyId, linearDamping: f32) ---
+	Body_SetLinearDamping :: proc(bodyId: BodyId, linearDamping: c.float) ---
 
 	/// Get the current linear damping.
-	Body_GetLinearDamping :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetLinearDamping :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Adjust the angular damping. Normally this is set in b2BodyDef before creation.
-	Body_SetAngularDamping :: proc(bodyId: BodyId, angularDamping: f32) ---
+	Body_SetAngularDamping :: proc(bodyId: BodyId, angularDamping: c.float) ---
 
 	/// Get the current angular damping.
-	Body_GetAngularDamping :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetAngularDamping :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Adjust the gravity scale. Normally this is set in b2BodyDef before creation.
 	/// @see b2BodyDef::gravityScale
-	Body_SetGravityScale :: proc(bodyId: BodyId, gravityScale: f32) ---
+	Body_SetGravityScale :: proc(bodyId: BodyId, gravityScale: c.float) ---
 
 	/// Get the current gravity scale
-	Body_GetGravityScale :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetGravityScale :: proc(bodyId: BodyId) -> c.float ---
 
 	/// @return true if this body is awake
-	Body_IsAwake :: proc(bodyId: BodyId) -> bool ---
+	Body_IsAwake :: proc(bodyId: BodyId) -> c.bool ---
 
 	/// Wake a body from sleep. This wakes the entire island the body is touching.
 	/// @warning Putting a body to sleep will put the entire island of bodies touching this body to sleep,
 	/// which can be expensive and possibly unintuitive.
-	Body_SetAwake :: proc(bodyId: BodyId, awake: bool) ---
+	Body_SetAwake :: proc(bodyId: BodyId, awake: c.bool) ---
 
 	/// Enable or disable sleeping for this body. If sleeping is disabled the body will wake.
-	Body_EnableSleep :: proc(bodyId: BodyId, enableSleep: bool) ---
+	Body_EnableSleep :: proc(bodyId: BodyId, enableSleep: c.bool) ---
 
 	/// Returns true if sleeping is enabled for this body
-	Body_IsSleepEnabled :: proc(bodyId: BodyId) -> bool ---
+	Body_IsSleepEnabled :: proc(bodyId: BodyId) -> c.bool ---
 
 	/// Set the sleep threshold, usually in meters per second
-	Body_SetSleepThreshold :: proc(bodyId: BodyId, sleepThreshold: f32) ---
+	Body_SetSleepThreshold :: proc(bodyId: BodyId, sleepThreshold: c.float) ---
 
 	/// Get the sleep threshold, usually in meters per second.
-	Body_GetSleepThreshold :: proc(bodyId: BodyId) -> f32 ---
+	Body_GetSleepThreshold :: proc(bodyId: BodyId) -> c.float ---
 
 	/// Returns true if this body is enabled
-	Body_IsEnabled :: proc(bodyId: BodyId) -> bool ---
+	Body_IsEnabled :: proc(bodyId: BodyId) -> c.bool ---
 
 	/// Disable a body by removing it completely from the simulation. This is expensive.
 	Body_Disable :: proc(bodyId: BodyId) ---
@@ -401,52 +401,52 @@ foreign lib {
 	Body_Enable :: proc(bodyId: BodyId) ---
 
 	/// Set this body to have fixed rotation. This causes the mass to be reset in all cases.
-	Body_SetFixedRotation :: proc(bodyId: BodyId, flag: bool) ---
+	Body_SetFixedRotation :: proc(bodyId: BodyId, flag: c.bool) ---
 
 	/// Does this body have fixed rotation?
-	Body_IsFixedRotation :: proc(bodyId: BodyId) -> bool ---
+	Body_IsFixedRotation :: proc(bodyId: BodyId) -> c.bool ---
 
 	/// Set this body to be a bullet. A bullet does continuous collision detection
 	/// against dynamic bodies (but not other bullets).
-	Body_SetBullet :: proc(bodyId: BodyId, flag: bool) ---
+	Body_SetBullet :: proc(bodyId: BodyId, flag: c.bool) ---
 
 	/// Is this body a bullet?
-	Body_IsBullet :: proc(bodyId: BodyId) -> bool ---
+	Body_IsBullet :: proc(bodyId: BodyId) -> c.bool ---
 
 	/// Enable/disable contact events on all shapes.
 	/// @see b2ShapeDef::enableContactEvents
 	/// @warning changing this at runtime may cause mismatched begin/end touch events
-	Body_EnableContactEvents :: proc(bodyId: BodyId, flag: bool) ---
+	Body_EnableContactEvents :: proc(bodyId: BodyId, flag: c.bool) ---
 
 	/// Enable/disable hit events on all shapes
 	/// @see b2ShapeDef::enableHitEvents
-	Body_EnableHitEvents :: proc(bodyId: BodyId, flag: bool) ---
+	Body_EnableHitEvents :: proc(bodyId: BodyId, flag: c.bool) ---
 
 	/// Get the world that owns this body
 	Body_GetWorld :: proc(bodyId: BodyId) -> WorldId ---
 
 	/// Get the number of shapes on this body
-	Body_GetShapeCount :: proc(bodyId: BodyId) -> i32 ---
+	Body_GetShapeCount :: proc(bodyId: BodyId) -> c.int ---
 
 	/// Get the shape ids for all shapes on this body, up to the provided capacity.
 	/// @returns the number of shape ids stored in the user array
-	Body_GetShapes :: proc(bodyId: BodyId, shapeArray: ^ShapeId, capacity: i32) -> i32 ---
+	Body_GetShapes :: proc(bodyId: BodyId, shapeArray: ^ShapeId, capacity: c.int) -> c.int ---
 
 	/// Get the number of joints on this body
-	Body_GetJointCount :: proc(bodyId: BodyId) -> i32 ---
+	Body_GetJointCount :: proc(bodyId: BodyId) -> c.int ---
 
 	/// Get the joint ids for all joints on this body, up to the provided capacity
 	/// @returns the number of joint ids stored in the user array
-	Body_GetJoints :: proc(bodyId: BodyId, jointArray: ^JointId, capacity: i32) -> i32 ---
+	Body_GetJoints :: proc(bodyId: BodyId, jointArray: ^JointId, capacity: c.int) -> c.int ---
 
 	/// Get the maximum capacity required for retrieving all the touching contacts on a body
-	Body_GetContactCapacity :: proc(bodyId: BodyId) -> i32 ---
+	Body_GetContactCapacity :: proc(bodyId: BodyId) -> c.int ---
 
 	/// Get the touching contact data for a body.
 	/// @note Box2D uses speculative collision so some contact points may be separated.
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
-	Body_GetContactData :: proc(bodyId: BodyId, contactData: ^ContactData, capacity: i32) -> i32 ---
+	Body_GetContactData :: proc(bodyId: BodyId, contactData: ^ContactData, capacity: c.int) -> c.int ---
 
 	/// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
 	/// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
@@ -475,10 +475,10 @@ foreign lib {
 	/// Destroy a shape. You may defer the body mass update which can improve performance if several shapes on a
 	///	body are destroyed at once.
 	///	@see b2Body_ApplyMassFromShapes
-	DestroyShape :: proc(shapeId: ShapeId, updateBodyMass: bool) ---
+	DestroyShape :: proc(shapeId: ShapeId, updateBodyMass: c.bool) ---
 
 	/// Shape identifier validation. Provides validation for up to 64K allocations.
-	Shape_IsValid :: proc(id: ShapeId) -> bool ---
+	Shape_IsValid :: proc(id: ShapeId) -> c.bool ---
 
 	/// Get the type of a shape
 	Shape_GetType :: proc(shapeId: ShapeId) -> ShapeType ---
@@ -490,7 +490,7 @@ foreign lib {
 	Shape_GetWorld :: proc(shapeId: ShapeId) -> WorldId ---
 
 	/// Returns true If the shape is a sensor
-	Shape_IsSensor :: proc(shapeId: ShapeId) -> bool ---
+	Shape_IsSensor :: proc(shapeId: ShapeId) -> c.bool ---
 
 	/// Set the user data for a shape
 	Shape_SetUserData :: proc(shapeId: ShapeId, userData: rawptr) ---
@@ -502,31 +502,31 @@ foreign lib {
 	/// Set the mass density of a shape, usually in kg/m^2.
 	/// This will optionally update the mass properties on the parent body.
 	/// @see b2ShapeDef::density, b2Body_ApplyMassFromShapes
-	Shape_SetDensity :: proc(shapeId: ShapeId, density: f32, updateBodyMass: bool) ---
+	Shape_SetDensity :: proc(shapeId: ShapeId, density: c.float, updateBodyMass: c.bool) ---
 
 	/// Get the density of a shape, usually in kg/m^2
-	Shape_GetDensity :: proc(shapeId: ShapeId) -> f32 ---
+	Shape_GetDensity :: proc(shapeId: ShapeId) -> c.float ---
 
 	/// Set the friction on a shape
 	/// @see b2ShapeDef::friction
-	Shape_SetFriction :: proc(shapeId: ShapeId, friction: f32) ---
+	Shape_SetFriction :: proc(shapeId: ShapeId, friction: c.float) ---
 
 	/// Get the friction of a shape
-	Shape_GetFriction :: proc(shapeId: ShapeId) -> f32 ---
+	Shape_GetFriction :: proc(shapeId: ShapeId) -> c.float ---
 
 	/// Set the shape restitution (bounciness)
 	/// @see b2ShapeDef::restitution
-	Shape_SetRestitution :: proc(shapeId: ShapeId, restitution: f32) ---
+	Shape_SetRestitution :: proc(shapeId: ShapeId, restitution: c.float) ---
 
 	/// Get the shape restitution
-	Shape_GetRestitution :: proc(shapeId: ShapeId) -> f32 ---
+	Shape_GetRestitution :: proc(shapeId: ShapeId) -> c.float ---
 
 	/// Set the shape material identifier
 	/// @see b2ShapeDef::material
-	Shape_SetMaterial :: proc(shapeId: ShapeId, material: i32) ---
+	Shape_SetMaterial :: proc(shapeId: ShapeId, material: c.int) ---
 
 	/// Get the shape material identifier
-	Shape_GetMaterial :: proc(shapeId: ShapeId) -> i32 ---
+	Shape_GetMaterial :: proc(shapeId: ShapeId) -> c.int ---
 
 	/// Get the shape filter
 	Shape_GetFilter :: proc(shapeId: ShapeId) -> Filter ---
@@ -540,28 +540,28 @@ foreign lib {
 	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
 	/// @see b2ShapeDef::enableContactEvents
 	/// @warning changing this at run-time may lead to lost begin/end events
-	Shape_EnableContactEvents :: proc(shapeId: ShapeId, flag: bool) ---
+	Shape_EnableContactEvents :: proc(shapeId: ShapeId, flag: c.bool) ---
 
 	/// Returns true if contact events are enabled
-	Shape_AreContactEventsEnabled :: proc(shapeId: ShapeId) -> bool ---
+	Shape_AreContactEventsEnabled :: proc(shapeId: ShapeId) -> c.bool ---
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
 	/// and must be carefully handled due to multithreading. Ignored for sensors.
 	/// @see b2PreSolveFcn
-	Shape_EnablePreSolveEvents :: proc(shapeId: ShapeId, flag: bool) ---
+	Shape_EnablePreSolveEvents :: proc(shapeId: ShapeId, flag: c.bool) ---
 
 	/// Returns true if pre-solve events are enabled
-	Shape_ArePreSolveEventsEnabled :: proc(shapeId: ShapeId) -> bool ---
+	Shape_ArePreSolveEventsEnabled :: proc(shapeId: ShapeId) -> c.bool ---
 
 	/// Enable contact hit events for this shape. Ignored for sensors.
 	/// @see b2WorldDef.hitEventThreshold
-	Shape_EnableHitEvents :: proc(shapeId: ShapeId, flag: bool) ---
+	Shape_EnableHitEvents :: proc(shapeId: ShapeId, flag: c.bool) ---
 
 	/// Returns true if hit events are enabled
-	Shape_AreHitEventsEnabled :: proc(shapeId: ShapeId) -> bool ---
+	Shape_AreHitEventsEnabled :: proc(shapeId: ShapeId) -> c.bool ---
 
 	/// Test a point for overlap with a shape
-	Shape_TestPoint :: proc(shapeId: ShapeId, point: Vec2) -> bool ---
+	Shape_TestPoint :: proc(shapeId: ShapeId, point: Vec2) -> c.bool ---
 
 	/// Ray cast a shape directly
 	Shape_RayCast :: proc(shapeId: ShapeId, input: ^RayCastInput) -> CastOutput ---
@@ -605,19 +605,19 @@ foreign lib {
 	Shape_GetParentChain :: proc(shapeId: ShapeId) -> ChainId ---
 
 	/// Get the maximum capacity required for retrieving all the touching contacts on a shape
-	Shape_GetContactCapacity :: proc(shapeId: ShapeId) -> i32 ---
+	Shape_GetContactCapacity :: proc(shapeId: ShapeId) -> c.int ---
 
 	/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the contact data.
 	/// @note Box2D uses speculative collision so some contact points may be separated.
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
-	Shape_GetContactData :: proc(shapeId: ShapeId, contactData: ^ContactData, capacity: i32) -> i32 ---
+	Shape_GetContactData :: proc(shapeId: ShapeId, contactData: ^ContactData, capacity: c.int) -> c.int ---
 
 	/// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
 	/// This returns 0 if the provided shape is not a sensor.
 	/// @param shapeId the id of a sensor shape
 	/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
-	Shape_GetSensorCapacity :: proc(shapeId: ShapeId) -> i32 ---
+	Shape_GetSensorCapacity :: proc(shapeId: ShapeId) -> c.int ---
 
 	/// Get the overlapped shapes for a sensor shape.
 	/// @param shapeId the id of a sensor shape
@@ -626,7 +626,7 @@ foreign lib {
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
 	/// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
-	Shape_GetSensorOverlaps :: proc(shapeId: ShapeId, overlaps: ^ShapeId, capacity: i32) -> i32 ---
+	Shape_GetSensorOverlaps :: proc(shapeId: ShapeId, overlaps: ^ShapeId, capacity: c.int) -> c.int ---
 
 	/// Get the current world AABB
 	Shape_GetAABB :: proc(shapeId: ShapeId) -> AABB ---
@@ -649,41 +649,41 @@ foreign lib {
 	Chain_GetWorld :: proc(chainId: ChainId) -> WorldId ---
 
 	/// Get the number of segments on this chain
-	Chain_GetSegmentCount :: proc(chainId: ChainId) -> i32 ---
+	Chain_GetSegmentCount :: proc(chainId: ChainId) -> c.int ---
 
 	/// Fill a user array with chain segment shape ids up to the specified capacity. Returns
 	/// the actual number of segments returned.
-	Chain_GetSegments :: proc(chainId: ChainId, segmentArray: ^ShapeId, capacity: i32) -> i32 ---
+	Chain_GetSegments :: proc(chainId: ChainId, segmentArray: ^ShapeId, capacity: c.int) -> c.int ---
 
 	/// Set the chain friction
 	/// @see b2ChainDef::friction
-	Chain_SetFriction :: proc(chainId: ChainId, friction: f32) ---
+	Chain_SetFriction :: proc(chainId: ChainId, friction: c.float) ---
 
 	/// Get the chain friction
-	Chain_GetFriction :: proc(chainId: ChainId) -> f32 ---
+	Chain_GetFriction :: proc(chainId: ChainId) -> c.float ---
 
 	/// Set the chain restitution (bounciness)
 	/// @see b2ChainDef::restitution
-	Chain_SetRestitution :: proc(chainId: ChainId, restitution: f32) ---
+	Chain_SetRestitution :: proc(chainId: ChainId, restitution: c.float) ---
 
 	/// Get the chain restitution
-	Chain_GetRestitution :: proc(chainId: ChainId) -> f32 ---
+	Chain_GetRestitution :: proc(chainId: ChainId) -> c.float ---
 
 	/// Set the chain material
 	/// @see b2ChainDef::material
-	Chain_SetMaterial :: proc(chainId: ChainId, material: i32) ---
+	Chain_SetMaterial :: proc(chainId: ChainId, material: c.int) ---
 
 	/// Get the chain material
-	Chain_GetMaterial :: proc(chainId: ChainId) -> i32 ---
+	Chain_GetMaterial :: proc(chainId: ChainId) -> c.int ---
 
 	/// Chain identifier validation. Provides validation for up to 64K allocations.
-	Chain_IsValid :: proc(id: ChainId) -> bool ---
+	Chain_IsValid :: proc(id: ChainId) -> c.bool ---
 
 	/// Destroy a joint
 	DestroyJoint :: proc(jointId: JointId) ---
 
 	/// Joint identifier validation. Provides validation for up to 64K allocations.
-	Joint_IsValid :: proc(id: JointId) -> bool ---
+	Joint_IsValid :: proc(id: JointId) -> c.bool ---
 
 	/// Get the joint type
 	Joint_GetType :: proc(jointId: JointId) -> JointType ---
@@ -704,10 +704,10 @@ foreign lib {
 	Joint_GetLocalAnchorB :: proc(jointId: JointId) -> Vec2 ---
 
 	/// Toggle collision between connected bodies
-	Joint_SetCollideConnected :: proc(jointId: JointId, shouldCollide: bool) ---
+	Joint_SetCollideConnected :: proc(jointId: JointId, shouldCollide: c.bool) ---
 
 	/// Is collision allowed between connected bodies?
-	Joint_GetCollideConnected :: proc(jointId: JointId) -> bool ---
+	Joint_GetCollideConnected :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the user data on a joint
 	Joint_SetUserData :: proc(jointId: JointId, userData: rawptr) ---
@@ -722,7 +722,7 @@ foreign lib {
 	Joint_GetConstraintForce :: proc(jointId: JointId) -> Vec2 ---
 
 	/// Get the current constraint torque for this joint. Usually in Newton * meters.
-	Joint_GetConstraintTorque :: proc(jointId: JointId) -> f32 ---
+	Joint_GetConstraintTorque :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a distance joint
 	/// @see b2DistanceJointDef for details
@@ -731,68 +731,68 @@ foreign lib {
 	/// Set the rest length of a distance joint
 	/// @param jointId The id for a distance joint
 	/// @param length The new distance joint length
-	DistanceJoint_SetLength :: proc(jointId: JointId, length: f32) ---
+	DistanceJoint_SetLength :: proc(jointId: JointId, length: c.float) ---
 
 	/// Get the rest length of a distance joint
-	DistanceJoint_GetLength :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetLength :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable/disable the distance joint spring. When disabled the distance joint is rigid.
-	DistanceJoint_EnableSpring :: proc(jointId: JointId, enableSpring: bool) ---
+	DistanceJoint_EnableSpring :: proc(jointId: JointId, enableSpring: c.bool) ---
 
 	/// Is the distance joint spring enabled?
-	DistanceJoint_IsSpringEnabled :: proc(jointId: JointId) -> bool ---
+	DistanceJoint_IsSpringEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the spring stiffness in Hertz
-	DistanceJoint_SetSpringHertz :: proc(jointId: JointId, hertz: f32) ---
+	DistanceJoint_SetSpringHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Set the spring damping ratio, non-dimensional
-	DistanceJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	DistanceJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the spring Hertz
-	DistanceJoint_GetSpringHertz :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetSpringHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the spring damping ratio
-	DistanceJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable joint limit. The limit only works if the joint spring is enabled. Otherwise the joint is rigid
 	/// and the limit has no effect.
-	DistanceJoint_EnableLimit :: proc(jointId: JointId, enableLimit: bool) ---
+	DistanceJoint_EnableLimit :: proc(jointId: JointId, enableLimit: c.bool) ---
 
 	/// Is the distance joint limit enabled?
-	DistanceJoint_IsLimitEnabled :: proc(jointId: JointId) -> bool ---
+	DistanceJoint_IsLimitEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the minimum and maximum length parameters of a distance joint
-	DistanceJoint_SetLengthRange :: proc(jointId: JointId, minLength: f32, maxLength: f32) ---
+	DistanceJoint_SetLengthRange :: proc(jointId: JointId, minLength: c.float, maxLength: c.float) ---
 
 	/// Get the distance joint minimum length
-	DistanceJoint_GetMinLength :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetMinLength :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the distance joint maximum length
-	DistanceJoint_GetMaxLength :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetMaxLength :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the current length of a distance joint
-	DistanceJoint_GetCurrentLength :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetCurrentLength :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable/disable the distance joint motor
-	DistanceJoint_EnableMotor :: proc(jointId: JointId, enableMotor: bool) ---
+	DistanceJoint_EnableMotor :: proc(jointId: JointId, enableMotor: c.bool) ---
 
 	/// Is the distance joint motor enabled?
-	DistanceJoint_IsMotorEnabled :: proc(jointId: JointId) -> bool ---
+	DistanceJoint_IsMotorEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the distance joint motor speed, usually in meters per second
-	DistanceJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: f32) ---
+	DistanceJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: c.float) ---
 
 	/// Get the distance joint motor speed, usually in meters per second
-	DistanceJoint_GetMotorSpeed :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetMotorSpeed :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the distance joint maximum motor force, usually in newtons
-	DistanceJoint_SetMaxMotorForce :: proc(jointId: JointId, force: f32) ---
+	DistanceJoint_SetMaxMotorForce :: proc(jointId: JointId, force: c.float) ---
 
 	/// Get the distance joint maximum motor force, usually in newtons
-	DistanceJoint_GetMaxMotorForce :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetMaxMotorForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the distance joint current motor force, usually in newtons
-	DistanceJoint_GetMotorForce :: proc(jointId: JointId) -> f32 ---
+	DistanceJoint_GetMotorForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a motor joint
 	/// @see b2MotorJointDef for details
@@ -805,28 +805,28 @@ foreign lib {
 	MotorJoint_GetLinearOffset :: proc(jointId: JointId) -> Vec2 ---
 
 	/// Set the motor joint angular offset target in radians
-	MotorJoint_SetAngularOffset :: proc(jointId: JointId, angularOffset: f32) ---
+	MotorJoint_SetAngularOffset :: proc(jointId: JointId, angularOffset: c.float) ---
 
 	/// Get the motor joint angular offset target in radians
-	MotorJoint_GetAngularOffset :: proc(jointId: JointId) -> f32 ---
+	MotorJoint_GetAngularOffset :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the motor joint maximum force, usually in newtons
-	MotorJoint_SetMaxForce :: proc(jointId: JointId, maxForce: f32) ---
+	MotorJoint_SetMaxForce :: proc(jointId: JointId, maxForce: c.float) ---
 
 	/// Get the motor joint maximum force, usually in newtons
-	MotorJoint_GetMaxForce :: proc(jointId: JointId) -> f32 ---
+	MotorJoint_GetMaxForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the motor joint maximum torque, usually in newton-meters
-	MotorJoint_SetMaxTorque :: proc(jointId: JointId, maxTorque: f32) ---
+	MotorJoint_SetMaxTorque :: proc(jointId: JointId, maxTorque: c.float) ---
 
 	/// Get the motor joint maximum torque, usually in newton-meters
-	MotorJoint_GetMaxTorque :: proc(jointId: JointId) -> f32 ---
+	MotorJoint_GetMaxTorque :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the motor joint correction factor, usually in [0, 1]
-	MotorJoint_SetCorrectionFactor :: proc(jointId: JointId, correctionFactor: f32) ---
+	MotorJoint_SetCorrectionFactor :: proc(jointId: JointId, correctionFactor: c.float) ---
 
 	/// Get the motor joint correction factor, usually in [0, 1]
-	MotorJoint_GetCorrectionFactor :: proc(jointId: JointId) -> f32 ---
+	MotorJoint_GetCorrectionFactor :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a mouse joint
 	/// @see b2MouseJointDef for details
@@ -839,22 +839,22 @@ foreign lib {
 	MouseJoint_GetTarget :: proc(jointId: JointId) -> Vec2 ---
 
 	/// Set the mouse joint spring stiffness in Hertz
-	MouseJoint_SetSpringHertz :: proc(jointId: JointId, hertz: f32) ---
+	MouseJoint_SetSpringHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the mouse joint spring stiffness in Hertz
-	MouseJoint_GetSpringHertz :: proc(jointId: JointId) -> f32 ---
+	MouseJoint_GetSpringHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the mouse joint spring damping ratio, non-dimensional
-	MouseJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	MouseJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the mouse joint damping ratio, non-dimensional
-	MouseJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> f32 ---
+	MouseJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the mouse joint maximum force, usually in newtons
-	MouseJoint_SetMaxForce :: proc(jointId: JointId, maxForce: f32) ---
+	MouseJoint_SetMaxForce :: proc(jointId: JointId, maxForce: c.float) ---
 
 	/// Get the mouse joint maximum force, usually in newtons
-	MouseJoint_GetMaxForce :: proc(jointId: JointId) -> f32 ---
+	MouseJoint_GetMaxForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a null joint.
 	/// @see b2NullJointDef for details
@@ -865,218 +865,218 @@ foreign lib {
 	CreatePrismaticJoint :: proc(worldId: WorldId, def: ^PrismaticJointDef) -> JointId ---
 
 	/// Enable/disable the joint spring.
-	PrismaticJoint_EnableSpring :: proc(jointId: JointId, enableSpring: bool) ---
+	PrismaticJoint_EnableSpring :: proc(jointId: JointId, enableSpring: c.bool) ---
 
 	/// Is the prismatic joint spring enabled or not?
-	PrismaticJoint_IsSpringEnabled :: proc(jointId: JointId) -> bool ---
+	PrismaticJoint_IsSpringEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the prismatic joint stiffness in Hertz.
 	/// This should usually be less than a quarter of the simulation rate. For example, if the simulation
 	/// runs at 60Hz then the joint stiffness should be 15Hz or less.
-	PrismaticJoint_SetSpringHertz :: proc(jointId: JointId, hertz: f32) ---
+	PrismaticJoint_SetSpringHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the prismatic joint stiffness in Hertz
-	PrismaticJoint_GetSpringHertz :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetSpringHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the prismatic joint damping ratio (non-dimensional)
-	PrismaticJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	PrismaticJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the prismatic spring damping ratio (non-dimensional)
-	PrismaticJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable/disable a prismatic joint limit
-	PrismaticJoint_EnableLimit :: proc(jointId: JointId, enableLimit: bool) ---
+	PrismaticJoint_EnableLimit :: proc(jointId: JointId, enableLimit: c.bool) ---
 
 	/// Is the prismatic joint limit enabled?
-	PrismaticJoint_IsLimitEnabled :: proc(jointId: JointId) -> bool ---
+	PrismaticJoint_IsLimitEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Get the prismatic joint lower limit
-	PrismaticJoint_GetLowerLimit :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetLowerLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the prismatic joint upper limit
-	PrismaticJoint_GetUpperLimit :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetUpperLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the prismatic joint limits
-	PrismaticJoint_SetLimits :: proc(jointId: JointId, lower: f32, upper: f32) ---
+	PrismaticJoint_SetLimits :: proc(jointId: JointId, lower: c.float, upper: c.float) ---
 
 	/// Enable/disable a prismatic joint motor
-	PrismaticJoint_EnableMotor :: proc(jointId: JointId, enableMotor: bool) ---
+	PrismaticJoint_EnableMotor :: proc(jointId: JointId, enableMotor: c.bool) ---
 
 	/// Is the prismatic joint motor enabled?
-	PrismaticJoint_IsMotorEnabled :: proc(jointId: JointId) -> bool ---
+	PrismaticJoint_IsMotorEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the prismatic joint motor speed, usually in meters per second
-	PrismaticJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: f32) ---
+	PrismaticJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: c.float) ---
 
 	/// Get the prismatic joint motor speed, usually in meters per second
-	PrismaticJoint_GetMotorSpeed :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetMotorSpeed :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the prismatic joint maximum motor force, usually in newtons
-	PrismaticJoint_SetMaxMotorForce :: proc(jointId: JointId, force: f32) ---
+	PrismaticJoint_SetMaxMotorForce :: proc(jointId: JointId, force: c.float) ---
 
 	/// Get the prismatic joint maximum motor force, usually in newtons
-	PrismaticJoint_GetMaxMotorForce :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetMaxMotorForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the prismatic joint current motor force, usually in newtons
-	PrismaticJoint_GetMotorForce :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetMotorForce :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the current joint translation, usually in meters.
-	PrismaticJoint_GetTranslation :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetTranslation :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the current joint translation speed, usually in meters per second.
-	PrismaticJoint_GetSpeed :: proc(jointId: JointId) -> f32 ---
+	PrismaticJoint_GetSpeed :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a revolute joint
 	/// @see b2RevoluteJointDef for details
 	CreateRevoluteJoint :: proc(worldId: WorldId, def: ^RevoluteJointDef) -> JointId ---
 
 	/// Enable/disable the revolute joint spring
-	RevoluteJoint_EnableSpring :: proc(jointId: JointId, enableSpring: bool) ---
+	RevoluteJoint_EnableSpring :: proc(jointId: JointId, enableSpring: c.bool) ---
 
 	/// It the revolute angular spring enabled?
-	RevoluteJoint_IsSpringEnabled :: proc(jointId: JointId) -> bool ---
+	RevoluteJoint_IsSpringEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the revolute joint spring stiffness in Hertz
-	RevoluteJoint_SetSpringHertz :: proc(jointId: JointId, hertz: f32) ---
+	RevoluteJoint_SetSpringHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the revolute joint spring stiffness in Hertz
-	RevoluteJoint_GetSpringHertz :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetSpringHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the revolute joint spring damping ratio, non-dimensional
-	RevoluteJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	RevoluteJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the revolute joint spring damping ratio, non-dimensional
-	RevoluteJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the revolute joint current angle in radians relative to the reference angle
 	/// @see b2RevoluteJointDef::referenceAngle
-	RevoluteJoint_GetAngle :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetAngle :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable/disable the revolute joint limit
-	RevoluteJoint_EnableLimit :: proc(jointId: JointId, enableLimit: bool) ---
+	RevoluteJoint_EnableLimit :: proc(jointId: JointId, enableLimit: c.bool) ---
 
 	/// Is the revolute joint limit enabled?
-	RevoluteJoint_IsLimitEnabled :: proc(jointId: JointId) -> bool ---
+	RevoluteJoint_IsLimitEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Get the revolute joint lower limit in radians
-	RevoluteJoint_GetLowerLimit :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetLowerLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the revolute joint upper limit in radians
-	RevoluteJoint_GetUpperLimit :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetUpperLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the revolute joint limits in radians
-	RevoluteJoint_SetLimits :: proc(jointId: JointId, lower: f32, upper: f32) ---
+	RevoluteJoint_SetLimits :: proc(jointId: JointId, lower: c.float, upper: c.float) ---
 
 	/// Enable/disable a revolute joint motor
-	RevoluteJoint_EnableMotor :: proc(jointId: JointId, enableMotor: bool) ---
+	RevoluteJoint_EnableMotor :: proc(jointId: JointId, enableMotor: c.bool) ---
 
 	/// Is the revolute joint motor enabled?
-	RevoluteJoint_IsMotorEnabled :: proc(jointId: JointId) -> bool ---
+	RevoluteJoint_IsMotorEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the revolute joint motor speed in radians per second
-	RevoluteJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: f32) ---
+	RevoluteJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: c.float) ---
 
 	/// Get the revolute joint motor speed in radians per second
-	RevoluteJoint_GetMotorSpeed :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetMotorSpeed :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the revolute joint current motor torque, usually in newton-meters
-	RevoluteJoint_GetMotorTorque :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetMotorTorque :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the revolute joint maximum motor torque, usually in newton-meters
-	RevoluteJoint_SetMaxMotorTorque :: proc(jointId: JointId, torque: f32) ---
+	RevoluteJoint_SetMaxMotorTorque :: proc(jointId: JointId, torque: c.float) ---
 
 	/// Get the revolute joint maximum motor torque, usually in newton-meters
-	RevoluteJoint_GetMaxMotorTorque :: proc(jointId: JointId) -> f32 ---
+	RevoluteJoint_GetMaxMotorTorque :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a weld joint
 	/// @see b2WeldJointDef for details
 	CreateWeldJoint :: proc(worldId: WorldId, def: ^WeldJointDef) -> JointId ---
 
 	/// Get the weld joint reference angle in radians
-	WeldJoint_GetReferenceAngle :: proc(jointId: JointId) -> f32 ---
+	WeldJoint_GetReferenceAngle :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the weld joint reference angle in radians, must be in [-pi,pi].
-	WeldJoint_SetReferenceAngle :: proc(jointId: JointId, angleInRadians: f32) ---
+	WeldJoint_SetReferenceAngle :: proc(jointId: JointId, angleInRadians: c.float) ---
 
 	/// Set the weld joint linear stiffness in Hertz. 0 is rigid.
-	WeldJoint_SetLinearHertz :: proc(jointId: JointId, hertz: f32) ---
+	WeldJoint_SetLinearHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the weld joint linear stiffness in Hertz
-	WeldJoint_GetLinearHertz :: proc(jointId: JointId) -> f32 ---
+	WeldJoint_GetLinearHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the weld joint linear damping ratio (non-dimensional)
-	WeldJoint_SetLinearDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	WeldJoint_SetLinearDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the weld joint linear damping ratio (non-dimensional)
-	WeldJoint_GetLinearDampingRatio :: proc(jointId: JointId) -> f32 ---
+	WeldJoint_GetLinearDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the weld joint angular stiffness in Hertz. 0 is rigid.
-	WeldJoint_SetAngularHertz :: proc(jointId: JointId, hertz: f32) ---
+	WeldJoint_SetAngularHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the weld joint angular stiffness in Hertz
-	WeldJoint_GetAngularHertz :: proc(jointId: JointId) -> f32 ---
+	WeldJoint_GetAngularHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set weld joint angular damping ratio, non-dimensional
-	WeldJoint_SetAngularDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	WeldJoint_SetAngularDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the weld joint angular damping ratio, non-dimensional
-	WeldJoint_GetAngularDampingRatio :: proc(jointId: JointId) -> f32 ---
+	WeldJoint_GetAngularDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Create a wheel joint
 	/// @see b2WheelJointDef for details
 	CreateWheelJoint :: proc(worldId: WorldId, def: ^WheelJointDef) -> JointId ---
 
 	/// Enable/disable the wheel joint spring
-	WheelJoint_EnableSpring :: proc(jointId: JointId, enableSpring: bool) ---
+	WheelJoint_EnableSpring :: proc(jointId: JointId, enableSpring: c.bool) ---
 
 	/// Is the wheel joint spring enabled?
-	WheelJoint_IsSpringEnabled :: proc(jointId: JointId) -> bool ---
+	WheelJoint_IsSpringEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the wheel joint stiffness in Hertz
-	WheelJoint_SetSpringHertz :: proc(jointId: JointId, hertz: f32) ---
+	WheelJoint_SetSpringHertz :: proc(jointId: JointId, hertz: c.float) ---
 
 	/// Get the wheel joint stiffness in Hertz
-	WheelJoint_GetSpringHertz :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetSpringHertz :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the wheel joint damping ratio, non-dimensional
-	WheelJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: f32) ---
+	WheelJoint_SetSpringDampingRatio :: proc(jointId: JointId, dampingRatio: c.float) ---
 
 	/// Get the wheel joint damping ratio, non-dimensional
-	WheelJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetSpringDampingRatio :: proc(jointId: JointId) -> c.float ---
 
 	/// Enable/disable the wheel joint limit
-	WheelJoint_EnableLimit :: proc(jointId: JointId, enableLimit: bool) ---
+	WheelJoint_EnableLimit :: proc(jointId: JointId, enableLimit: c.bool) ---
 
 	/// Is the wheel joint limit enabled?
-	WheelJoint_IsLimitEnabled :: proc(jointId: JointId) -> bool ---
+	WheelJoint_IsLimitEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Get the wheel joint lower limit
-	WheelJoint_GetLowerLimit :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetLowerLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the wheel joint upper limit
-	WheelJoint_GetUpperLimit :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetUpperLimit :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the wheel joint limits
-	WheelJoint_SetLimits :: proc(jointId: JointId, lower: f32, upper: f32) ---
+	WheelJoint_SetLimits :: proc(jointId: JointId, lower: c.float, upper: c.float) ---
 
 	/// Enable/disable the wheel joint motor
-	WheelJoint_EnableMotor :: proc(jointId: JointId, enableMotor: bool) ---
+	WheelJoint_EnableMotor :: proc(jointId: JointId, enableMotor: c.bool) ---
 
 	/// Is the wheel joint motor enabled?
-	WheelJoint_IsMotorEnabled :: proc(jointId: JointId) -> bool ---
+	WheelJoint_IsMotorEnabled :: proc(jointId: JointId) -> c.bool ---
 
 	/// Set the wheel joint motor speed in radians per second
-	WheelJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: f32) ---
+	WheelJoint_SetMotorSpeed :: proc(jointId: JointId, motorSpeed: c.float) ---
 
 	/// Get the wheel joint motor speed in radians per second
-	WheelJoint_GetMotorSpeed :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetMotorSpeed :: proc(jointId: JointId) -> c.float ---
 
 	/// Set the wheel joint maximum motor torque, usually in newton-meters
-	WheelJoint_SetMaxMotorTorque :: proc(jointId: JointId, torque: f32) ---
+	WheelJoint_SetMaxMotorTorque :: proc(jointId: JointId, torque: c.float) ---
 
 	/// Get the wheel joint maximum motor torque, usually in newton-meters
-	WheelJoint_GetMaxMotorTorque :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetMaxMotorTorque :: proc(jointId: JointId) -> c.float ---
 
 	/// Get the wheel joint current motor torque, usually in newton-meters
-	WheelJoint_GetMotorTorque :: proc(jointId: JointId) -> f32 ---
+	WheelJoint_GetMotorTorque :: proc(jointId: JointId) -> c.float ---
 }
