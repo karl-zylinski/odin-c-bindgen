@@ -992,21 +992,19 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			},
 		})
 	} else if kind == "RecordDecl" {
-		name, name_ok := json_get_string(decl, "name")
-
-		if !name_ok {
-			return
-		}
+		name, _ := json_get_string(decl, "name")
 
 		if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 			struct_decl.name = name
 			struct_decl.id = id
-			if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-				s.decls[forward_idx] = {}
+
+			if name != "" {
+				if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
+					s.decls[forward_idx] = {}
+				}
+
+				s.symbol_indices[name] = len(s.decls)
 			}
-
-			s.symbol_indices[name] = len(s.decls)
-
 			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
 		}
 	} else if kind == "TypedefDecl" {
@@ -1659,7 +1657,7 @@ gen :: proc(input: string, c: Config) {
 				if !strings.has_prefix(name, s.required_prefix) {
 					continue
 				}
-			}		
+			}
 		}
 
 		parse_decl(&s, in_decl, line)
@@ -2167,7 +2165,7 @@ gen :: proc(input: string, c: Config) {
 					output_comment(f, m.comment, "\t")	
 				}
 
-				fp(f, "\t")
+				fp(f, "\t")	
 				fp(f, m.member)
 				fp(f, ",")
 
@@ -2214,13 +2212,13 @@ gen :: proc(input: string, c: Config) {
 			// handled later. This makes all procs end up at bottom, after types.
 
 		case Typedef:
-			t := d.name
+			n := d.name
 
-			if t in s.opaque_type_lookup {
+			if n in s.opaque_type_lookup {
 				if d.pre_comment != "" {
 					output_comment(f, d.pre_comment)
 				}
-				fpf(f, "%v :: struct {{}}", t)
+				fpf(f, "%v :: struct {{}}", n)
 
 				if d.side_comment != "" {
 					fp(f, ' ')
@@ -2231,7 +2229,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if t in s.created_symbols || strings.has_prefix(d.type, "0x") {
+			if n in s.created_symbols || strings.has_prefix(d.type, "0x") {
 				continue
 			}
 
@@ -2239,11 +2237,11 @@ gen :: proc(input: string, c: Config) {
 				output_comment(f, d.pre_comment)
 			}
 
-			fp(f, t)
+			fp(f, n)
 
 			fp(f, " :: ")
 
-			if override, override_ok := s.type_overrides[t]; override_ok {
+			if override, override_ok := s.type_overrides[n]; override_ok {
 				fp(f, override)
 
 				if d.side_comment != "" {
@@ -2264,7 +2262,7 @@ gen :: proc(input: string, c: Config) {
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
 				fp(f, translate_type(s, type))
-				add_to_set(&s.type_is_proc, t)
+				add_to_set(&s.type_is_proc, n)
 			} else {
 				fpf(f, "%v", translate_type(s, type))
 			}
