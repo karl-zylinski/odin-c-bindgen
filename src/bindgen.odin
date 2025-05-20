@@ -1251,6 +1251,7 @@ c_type_mapping := map[string]string {
 	"unsigned long long" = "c.ulonglong",
 
 	"bool" = "c.bool",
+	"Bool" = "c.bool", // I don't know why this needs to have a capital B, but it does.
 	"BOOL" = "c.bool", // bool is sometimes a macro for BOOL
 
 	"size_t"  = "c.size_t",
