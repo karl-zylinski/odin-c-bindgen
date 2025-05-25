@@ -32,6 +32,33 @@ CINDEX_VERSION_MINOR :: 64
 
 // CINDEX_VERSION_STRING :: #CINDEX_VERSION_MAJOR "." #CINDEX_VERSION_MINOR
 
+// line comment one line
+LINE_COMMENT_ONE :: 1
+
+// line comment two lines
+// the other line
+LINE_COMMENT_TWO :: 2
+
+/* block comment one line */
+BLOCK_COMMENT_ONE :: 1
+
+/* block comment two lines
+ * the other line
+ */
+BLOCK_COMMENT_TWO :: 2
+
+END_LINE_COMMENT :: 12 // end line comment
+END_LINE_BLOCK_COMMENT :: 34 /* end line block comment */
+BELOW_BLOCK_COMMENT :: 56 /* inline block comment on the line above */
+
+BLOCK_ABOVE_SECTION :: 78
+
+////////////////////////////////////////////////////////////////////////////////
+//// Section header
+////////////////////////////////////////////////////////////////////////////////
+SECTIONED_ONE                 :: 1 << 0  /* end line */
+SECTIONED_TWO                 :: 1 << 1  /* end line */
+
 Color :: struct {
 	r: i32,
 	g: i32,
