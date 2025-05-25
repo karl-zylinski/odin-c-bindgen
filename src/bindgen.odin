@@ -181,7 +181,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 	for c, i in str {
 		if c == ' ' {
 			spaces_counter += 1
-		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
+		} else if c == '/' && i + 1 < len(str) && (str[i + 1] == '/' || str[i + 1] == '*') {
 			return str[i:], spaces_counter
 		} else {
 			spaces_counter = 0
