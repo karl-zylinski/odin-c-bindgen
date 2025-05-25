@@ -55,6 +55,7 @@ Function :: struct {
 	return_type: string,
 	comment: string,
 	comment_before: bool,
+	variadic: bool,
 	post_comment: string,
 }
 
@@ -960,7 +961,6 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
 			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
-
 		append(&s.decls, Declaration {
 			line = line,
 			original_idx = len(s.decls),
@@ -971,6 +971,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				comment = comment,
 				comment_before = comment_before,
 				post_comment = side_comment,
+				variadic = json_check_bool(decl,"variadic")
 			},
 		})
 	} else if kind == "RecordDecl" {
@@ -2425,6 +2426,11 @@ gen :: proc(input: string, c: Config) {
 
 					if i != len(d.parameters) - 1 {
 						w(&b, ", ")
+					}
+					else{
+						if(d.variadic) {
+						   w(&b,", #c_vararg _: ..any")
+						}
 					}
 				}
 
