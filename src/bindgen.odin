@@ -971,7 +971,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				comment = comment,
 				comment_before = comment_before,
 				post_comment = side_comment,
-				variadic = json_check_bool(decl,"variadic")
+				variadic = json_check_bool(decl,"variadic"),
 			},
 		})
 	} else if kind == "RecordDecl" {
@@ -2426,8 +2426,7 @@ gen :: proc(input: string, c: Config) {
 
 					if i != len(d.parameters) - 1 {
 						w(&b, ", ")
-					}
-					else{
+					} else {
 						if(d.variadic) {
 						   w(&b,", #c_vararg _: ..any")
 						}
