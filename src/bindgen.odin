@@ -1,3 +1,4 @@
+#+feature dynamic-literals
 /*
 Generates Odin bindings from C code.
 
@@ -8,39 +9,38 @@ The folder can contain a `bindgen.sjson` file tha can be used to do overrides
 and configure the generation. See the examples folder for how to do that.
 */
 
-#+feature dynamic-literals
 
 package bindgen
 
+import "core:encoding/json"
 import "core:fmt"
+import "core:math/bits"
+import vmem "core:mem/virtual"
 import "core:os"
 import "core:os/os2"
-import "core:strings"
 import "core:path/filepath"
-import "core:math/bits"
-import "core:encoding/json"
-import "core:strconv"
-import "core:unicode/utf8"
-import "core:unicode"
 import "core:slice"
-import vmem "core:mem/virtual"
+import "core:strconv"
+import "core:strings"
+import "core:unicode"
+import "core:unicode/utf8"
 
 Struct_Field :: struct {
-	names: [dynamic]string,
-	type: string,
+	names:            [dynamic]string,
+	type:             string,
 	anon_struct_type: Maybe(Struct),
-	anon_using: bool,
-	comment: string,
-	comment_before: bool,
-	original_line: int,
+	anon_using:       bool,
+	comment:          string,
+	comment_before:   bool,
+	original_line:    int,
 }
 
 Struct :: struct {
-	name: string,
-	id: string,
-	fields: []Struct_Field,
-	comment: string,
-	is_union: bool,
+	name:               string,
+	id:                 string,
+	fields:             []Struct_Field,
+	comment:            string,
+	is_union:           bool,
 	is_forward_declare: bool,
 }
 
@@ -50,41 +50,41 @@ Function_Parameter :: struct {
 }
 
 Function :: struct {
-	name: string,
-	parameters: []Function_Parameter,
-	return_type: string,
-	comment: string,
+	name:           string,
+	parameters:     []Function_Parameter,
+	return_type:    string,
+	comment:        string,
 	comment_before: bool,
-	post_comment: string,
+	post_comment:   string,
 }
 
 Enum_Member :: struct {
-	name: string,
-	value: Maybe(int),
-	comment: string,
+	name:           string,
+	value:          Maybe(int),
+	comment:        string,
 	comment_before: bool,
 }
 
 Enum :: struct {
-	name: string,
-	id: string,
+	name:    string,
+	id:      string,
 	members: []Enum_Member,
 	comment: string,
 }
 
 Typedef :: struct {
-	name: string,
-	type: string,
-	pre_comment: string,
+	name:         string,
+	type:         string,
+	pre_comment:  string,
 	side_comment: string,
 }
 
 Macro :: struct {
-	name: string,
-	val: string,
-	comment: string,
-	side_comment: string,
-	whitespace_after_name: int,
+	name:                           string,
+	val:                            string,
+	comment:                        string,
+	side_comment:                   string,
+	whitespace_after_name:          int,
 	whitespace_before_side_comment: int,
 }
 
@@ -99,12 +99,11 @@ Declaration_Variant :: union {
 Declaration :: struct {
 	// Used for sorting the declarations. They may be added out-of-order due to macros
 	// coming in from a separate code path.
-	line: int,
+	line:         int,
 
 	// The original idx in `s.decls`. This is for tie-breaking when line is the same.
 	original_idx: int,
-
-	variant: Declaration_Variant,
+	variant:      Declaration_Variant,
 }
 
 get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
@@ -143,15 +142,21 @@ get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
 	return t, true
 }
 
-find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+find_comment_after_semicolon :: proc(
+	start_offset: int,
+	s: ^Gen_State,
+) -> (
+	side_comment: string,
+	ok: bool,
+) {
 	comment_start: int
 	semicolon_pos: int
-	for i in start_offset..<len(s.source) {
+	for i in start_offset ..< len(s.source) {
 		if s.source[i] == ';' {
 			semicolon_pos = i
 		}
 
-		if semicolon_pos > 0 && i+2 < len(s.source) {
+		if semicolon_pos > 0 && i + 2 < len(s.source) {
 			// Comments after proc starting with `//` are not picked up, but
 			// those with `///` are picked up.
 			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
@@ -176,7 +181,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 	for c, i in str {
 		if c == ' ' {
 			spaces_counter += 1
-		} else if c == '/' && i+1 < len(str) && str[i+1] == '/' {
+		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
 			return str[i:], spaces_counter
 		} else {
 			spaces_counter = 0
@@ -230,7 +235,8 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 				is_anon_union := strings.has_prefix(field_type, ANON_UNION_MARKER)
 
 				if is_anon_struct || is_anon_union {
-					location := is_anon_struct ? field_type[len(ANON_STRUCT_MARKER):len(field_type)-1] : field_type[len(ANON_UNION_MARKER):len(field_type)-1]
+					location :=
+						is_anon_struct ? field_type[len(ANON_STRUCT_MARKER):len(field_type) - 1] : field_type[len(ANON_UNION_MARKER):len(field_type) - 1]
 
 					loc_parts := strings.split(location, ":")
 					assert(len(loc_parts) == 3)
@@ -243,7 +249,9 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 					loc_start := strings.index(field_type, LOC_START_MARKER)
 
 					if loc_start != -1 {
-						location := field_type[loc_start + len(LOC_START_MARKER):len(field_type)-1]
+						location := field_type[loc_start +
+						len(LOC_START_MARKER):len(field_type) -
+						1]
 						loc_parts := strings.split(location, ":")
 						assert(len(loc_parts) == 3)
 
@@ -261,7 +269,8 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 						acol := json_get(aloc, "col", json.Integer) or_continue
 
 						if unnamed_type_line == int(aline) && unnamed_type_col == int(acol) {
-							if anon_struct, anon_struct_ok := parse_struct_decl(s, a); anon_struct_ok {
+							if anon_struct, anon_struct_ok := parse_struct_decl(s, a);
+							   anon_struct_ok {
 								field_anon_struct_type = anon_struct
 							}
 						}
@@ -283,7 +292,8 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 								field_comment = com
 
 								if com_line_ok {
-									field_comment_before = !field_line_ok || com_line < int(field_line)
+									field_comment_before =
+										!field_line_ok || com_line < int(field_line)
 								}
 							}
 						}
@@ -310,14 +320,14 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 				} else {
 					prev_idx = len(out_fields)
 					f := Struct_Field {
-						type = field_type,
+						type             = field_type,
 						anon_struct_type = field_anon_struct_type,
-						anon_using = anon_using,
-						comment = field_comment,
-						comment_before = field_comment_before,
-						original_line = field_line, 
+						anon_using       = anon_using,
+						comment          = field_comment,
+						comment_before   = field_comment_before,
+						original_line    = field_line,
 					}
-					
+
 					if field_name_exists {
 						append(&f.names, field_name)
 					}
@@ -331,9 +341,9 @@ parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: 
 	}
 
 	res = {
-		comment = comment,
-		fields = out_fields[:],
-		is_union = (json_get_string(decl, "tagUsed") or_else "") == "union",
+		comment            = comment,
+		fields             = out_fields[:],
+		is_union           = (json_get_string(decl, "tagUsed") or_else "") == "union",
 		is_forward_declare = !json_check_bool(decl, "completeDefinition"),
 	}
 
@@ -350,8 +360,8 @@ Macro_Type :: enum {
 }
 
 Macro_Token :: struct {
-	type: Macro_Type,
-	name: string,
+	type:   Macro_Type,
+	name:   string,
 	values: []string,
 }
 
@@ -374,7 +384,7 @@ trim_encapsulating_parens :: proc(s: string) -> string {
 		// If parens doesn't reach 0 then we have unbalanced parenthesis. Maybe we should error here but I'm just going to ignore it for now.
 		// It's not our responsibility to ensure the code is valid C. Also clang should have produced an error if there was a syntax error.
 		if i == len(str) && parens == 0 {
-			str = strings.trim_space(str[1: len(str) - 1])
+			str = strings.trim_space(str[1:len(str) - 1])
 		} else {
 			break
 		}
@@ -423,7 +433,7 @@ parse_value :: proc(s: string) -> (r: []string, type: Macro_Type = .Constant_Exp
 				}
 			}
 			if grouping_delimiter == 0 {
-				tmp := strings.trim_space(str[tracker:i+1])
+				tmp := strings.trim_space(str[tracker:i + 1])
 				if len(tmp) > 0 {
 					append(&ret, tmp)
 				}
@@ -437,17 +447,17 @@ parse_value :: proc(s: string) -> (r: []string, type: Macro_Type = .Constant_Exp
 	}
 
 	return ret[:], type
-} 
+}
 
 char_type :: proc(c: u8) -> enum {
-	Char,
-	Num,
-	Quote,
-	Other,
-} {
+		Char,
+		Num,
+		Quote,
+		Other,
+	} {
 	if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' {
 		return .Char
-	} else if (c >= '0' && c <= '9') || c == '.' { // Assume '.' is decimal point
+	} else if (c >= '0' && c <= '9') || c == '.' { 	// Assume '.' is decimal point
 		return .Num
 	} else if c == '"' {
 		return .Quote
@@ -458,9 +468,10 @@ char_type :: proc(c: u8) -> enum {
 parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 	line := strings.trim_space(s)
 	i := 0
-	for; i < len(line); i += 1 {
+	for ; i < len(line); i += 1 {
 		switch line[i] {
-		case '(': // Function-like macro
+		case '(':
+			// Function-like macro
 			macro_token.type = .Function
 			macro_token.name = line[:i]
 
@@ -471,10 +482,15 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 				param = strings.trim_space(param)
 			}
 
-			parse_number :: proc(str: string, start: u32, b: ^strings.Builder, names: []string) -> u32 {
+			parse_number :: proc(
+				str: string,
+				start: u32,
+				b: ^strings.Builder,
+				names: []string,
+			) -> u32 {
 				end := start + 1
-				for; end < u32(len(str)); end += 1 {
-					if char_type(str[end]) == .Other { // Assume chars are a type suffix or 'b'/'x' for binary and hex (We'll validate these later)
+				for ; end < u32(len(str)); end += 1 {
+					if char_type(str[end]) == .Other { 	// Assume chars are a type suffix or 'b'/'x' for binary and hex (We'll validate these later)
 						break
 					}
 				}
@@ -482,14 +498,19 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 				return end
 			}
 
-			parse_name :: proc(str: string, start: u32, b: ^strings.Builder, names: []string) -> u32 {
+			parse_name :: proc(
+				str: string,
+				start: u32,
+				b: ^strings.Builder,
+				names: []string,
+			) -> u32 {
 				end := start + 1
-				for; end < u32(len(str)); end += 1 {
-					if char_type(str[end]) == .Other { 
-						break 
+				for ; end < u32(len(str)); end += 1 {
+					if char_type(str[end]) == .Other {
+						break
 					}
 				}
-				
+
 				for name, i in names {
 					if str[start:end] == name {
 						// This will allow me to index the parameter with the number of the parameter similar to pythons "{0}" formatting.
@@ -505,8 +526,8 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 			}
 
 			b := strings.builder_make()
-			value := strings.trim_space(line[fn_end+1:])
-			
+			value := strings.trim_space(line[fn_end + 1:])
+
 			// We go throught the string and replace all the parameters with `${index}$`.
 			for i: u32 = 0; i < u32(len(value)); i += 1 {
 				if char_type(value[i]) == .Num {
@@ -520,7 +541,8 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 			macro_token.values = make([]string, 1)
 			macro_token.values[0] = strings.to_string(b)
 			return
-		case ' ': // Non function-like macro
+		case ' ':
+			// Non function-like macro
 			macro_token.name = line[:i]
 			macro_token.values, macro_token.type = parse_value(trim_encapsulating_parens(line[i:]))
 			return
@@ -534,11 +556,11 @@ parse_macro :: proc(s: string) -> (macro_token: Macro_Token) {
 }
 
 File_Macro :: struct {
-	line: int,
-	macro_name: string,
-	comment: string,
-	side_comment: string,
-	whitespace_after_name: int,
+	line:                           int,
+	macro_name:                     string,
+	comment:                        string,
+	side_comment:                   string,
+	whitespace_after_name:          int,
 	whitespace_before_side_comment: int,
 }
 
@@ -551,16 +573,20 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 		line_idx := i
 		line := strings.trim_space(file_lines[i])
 
-		if len(line) == 0 { // Don't parse empty lines
+		if len(line) == 0 { 	// Don't parse empty lines
 			continue
 		}
 
-		for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+		for line[len(line) - 1] == '\\' { 	// Backaslash means to treat the next line as part of this line
 			i += 1
-			line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(file_lines[i]))
+			line = fmt.tprintf(
+				"%v %v",
+				strings.trim_space(line[:len(line) - 1]),
+				strings.trim_space(file_lines[i]),
+			)
 		}
 
-		if strings.has_prefix(line, "#define") { // #define macroName keyValue
+		if strings.has_prefix(line, "#define") { 	// #define macroName keyValue
 			l := strings.trim_prefix(line, "#define")
 			l = strings.trim_space(l)
 
@@ -607,13 +633,28 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 			for cbidx >= 0 {
 				cbl := file_lines[cbidx]
 				cbl_trim := strings.trim_space(cbl)
-				
+
 				if strings.has_prefix(cbl_trim, "/*") && cb_block_comment {
+					// TODO: this doesn't account for the case of a multiline block comment that begins at the end of a non-comment line
 					comment_start = cbidx
 					break
+				} else if cb_block_comment {
+					// block comment interior, continue
 				} else if strings.has_suffix(cbl_trim, "*/") {
+					if comment_end == -1 {
+						comment_end = cbidx
+					}
 					cb_block_comment = true
-					comment_end = cbidx
+					if strings.has_prefix(cbl_trim, "/*") {
+						// block comment starts on same line
+						cb_block_comment = false
+						comment_start = cbidx
+						break
+					} else if strings.contains(cbl_trim, "/*") {
+						// this is actually the side comment for another line, discard comment and break
+						cb_block_comment = false
+						break
+					}
 				} else if strings.has_prefix(cbl_trim, "//") {
 					if comment_end == -1 {
 						comment_end = cbidx
@@ -632,7 +673,7 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 			if comment_start != -1 && comment_end != -1 {
 				comment_builder := strings.builder_make()
 
-				for comment_line_idx in comment_start..=comment_end {
+				for comment_line_idx in comment_start ..= comment_end {
 					strings.write_string(&comment_builder, file_lines[comment_line_idx])
 					strings.write_rune(&comment_builder, '\n')
 				}
@@ -641,12 +682,12 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 			}
 
 			defined[name] = File_Macro {
-				macro_name = name,
-				line = line_idx,
-				comment = comment,
-				side_comment = side_comment,
+				macro_name                     = name,
+				line                           = line_idx,
+				comment                        = comment,
+				side_comment                   = side_comment,
 				whitespace_before_side_comment = side_comment_align_whitespace,
-				whitespace_after_name = whitespace_after_name,
+				whitespace_after_name          = whitespace_after_name,
 			}
 		}
 	}
@@ -655,10 +696,8 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 }
 
 // This function runs clangs preprocessor to get all the macros that are defined during compilation
-parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_Token) {
-	command := [dynamic]string {
-		"clang", "-dM", "-E", input,
-	}
+parse_clang_macros :: proc(s: ^Gen_State, input: string) -> map[string]Macro_Token {
+	command := [dynamic]string{"clang", "-dM", "-E", input}
 
 	for include in s.clang_include_paths {
 		append(&command, fmt.tprintf("-I%v", include))
@@ -689,7 +728,7 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)
 	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
-	
+
 	if s.debug_dump_macros {
 		os.write_entire_file(fmt.tprintf("%v-macro_dump.h", output_filename), sout)
 	}
@@ -700,13 +739,17 @@ parse_clang_macros :: proc(s: ^Gen_State, input: string) -> (map[string]Macro_To
 	for i := 0; i < len(macro_lines); i += 1 {
 		line := strings.trim_space(macro_lines[i])
 
-		if len(line) == 0 { // Don't parse empty lines
+		if len(line) == 0 { 	// Don't parse empty lines
 			continue
 		}
 
-		for line[len(line)-1] == '\\' { // Backaslash means to treat the next line as part of this line
+		for line[len(line) - 1] == '\\' { 	// Backaslash means to treat the next line as part of this line
 			i += 1
-			line = fmt.tprintf("%v %v", strings.trim_space(line[:len(line)-1]), strings.trim_space(macro_lines[i]))
+			line = fmt.tprintf(
+				"%v %v",
+				strings.trim_space(line[:len(line) - 1]),
+				strings.trim_space(macro_lines[i]),
+			)
 		}
 
 		if strings.has_prefix(line, "#define") {
@@ -731,12 +774,12 @@ parse_pystring :: proc(s: string, params: []string) -> string {
 			break // No closing brace found. The macro is malformed.
 		}
 		end_brace += start_brace
-		param_index := strconv.atoi(s[start_brace+2:end_brace])
+		param_index := strconv.atoi(s[start_brace + 2:end_brace])
 		if param_index < 0 || param_index >= len(params) {
 			break // Invalid parameter index
 		}
 
-		strings.write_string(&b, s[index:index+i])
+		strings.write_string(&b, s[index:index + i])
 		strings.write_string(&b, params[param_index])
 		index = end_brace + 2
 	}
@@ -750,9 +793,14 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 	defined_from_file := parse_file_macros(s)
 	tokenized_macros := parse_clang_macros(s, input)
 
-	expand_fn_macro :: proc(value: ^string, name_start, name_end: int, macro_token: Macro_Token, macros: ^map[string]Macro_Token) -> string {
+	expand_fn_macro :: proc(
+		value: ^string,
+		name_start, name_end: int,
+		macro_token: Macro_Token,
+		macros: ^map[string]Macro_Token,
+	) -> string {
 		params_start := name_end
-		for ; params_start < len(value); params_start += 1 { // Finds first parenthesis after the macro name
+		for ; params_start < len(value); params_start += 1 { 	// Finds first parenthesis after the macro name
 			if value[params_start] == '(' {
 				break
 			} else if value[params_start] != ' ' {
@@ -797,7 +845,11 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 			}
 		}
 
-		ret := fmt.tprintf("%s%s", value[:name_start], parse_pystring(macro_token.values[0], params))
+		ret := fmt.tprintf(
+			"%s%s",
+			value[:name_start],
+			parse_pystring(macro_token.values[0], params),
+		)
 		if params_end + 1 < len(value) {
 			ret = fmt.tprintf("%s%s", ret, value[params_end + 1:])
 		}
@@ -816,7 +868,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 					break
 				}
 			}
-			
+
 			if _, exists := macros[value[name_start:i]]; exists {
 				return name_start, i
 			}
@@ -824,7 +876,10 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		return -1, -1
 	}
 
-	check_param_for_macro_and_expand :: proc(value: ^string, macros: ^map[string]Macro_Token) -> []string {
+	check_param_for_macro_and_expand :: proc(
+		value: ^string,
+		macros: ^map[string]Macro_Token,
+	) -> []string {
 		name_start, name_end := check_for_macro(value, macros)
 		if name_start == -1 {
 			return nil
@@ -847,7 +902,11 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
 			check_value_for_macro_and_expand(value, macros)
 		} else if macro_token.type == .Multivalue {
-			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
+			tmp := fmt.tprintf(
+				"%s%s",
+				value[:name_start],
+				strings.join(macro_token.values, ", ", context.temp_allocator),
+			)
 			if name_end < len(value) {
 				tmp = fmt.tprintf("%s%s", tmp, value[name_end:])
 			}
@@ -872,18 +931,21 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 			check_value_for_macro_and_expand(&value, &tokenized_macros)
 		}
 
-		append(&s.decls, Declaration {
-			line = file_macro.line,
-			original_idx = len(s.decls),
-			variant = Macro {
-				name = macro.name,
-				val = strings.join(macro.values, " "),
-				comment = file_macro.comment,
-				side_comment = file_macro.side_comment,
-				whitespace_after_name = file_macro.whitespace_after_name,
-				whitespace_before_side_comment = file_macro.whitespace_before_side_comment,
+		append(
+			&s.decls,
+			Declaration {
+				line = file_macro.line,
+				original_idx = len(s.decls),
+				variant = Macro {
+					name = macro.name,
+					val = strings.join(macro.values, " "),
+					comment = file_macro.comment,
+					side_comment = file_macro.side_comment,
+					whitespace_after_name = file_macro.whitespace_after_name,
+					whitespace_before_side_comment = file_macro.whitespace_before_side_comment,
+				},
 			},
-		})
+		)
 	}
 }
 
@@ -899,7 +961,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 	if json_check_bool(decl, "isImplicit") {
 		return
 	}
-	
+
 	kind, kind_ok := json_get_string(decl, "kind")
 
 	if !kind_ok {
@@ -937,10 +999,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				if pkind == "ParmVarDecl" {
 					param_name := json_get_string(p, "name") or_continue
 					param_type := get_parameter_type(s, p) or_continue
-					append(&out_params, Function_Parameter {
-						name = param_name,
-						type = param_type,
-					})
+					append(&out_params, Function_Parameter{name = param_name, type = param_type})
 				} else if pkind == "FullComment" {
 					com, com_line, com_line_ok, comment_ok := get_comment_with_line(p, s)
 
@@ -961,18 +1020,21 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
 
-		append(&s.decls, Declaration {
-			line = line,
-			original_idx = len(s.decls),
-			variant = Function {
-				name = name,
-				parameters = out_params[:],
-				return_type = has_return_type ? return_type : "",
-				comment = comment,
-				comment_before = comment_before,
-				post_comment = side_comment,
+		append(
+			&s.decls,
+			Declaration {
+				line = line,
+				original_idx = len(s.decls),
+				variant = Function {
+					name = name,
+					parameters = out_params[:],
+					return_type = has_return_type ? return_type : "",
+					comment = comment,
+					comment_before = comment_before,
+					post_comment = side_comment,
+				},
 			},
-		})
+		)
 	} else if kind == "RecordDecl" {
 		name, _ := json_get_string(decl, "name")
 
@@ -987,7 +1049,10 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 
 				s.symbol_indices[name] = len(s.decls)
 			}
-			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
+			append(
+				&s.decls,
+				Declaration{line = line, original_idx = len(s.decls), variant = struct_decl},
+			)
 		}
 	} else if kind == "TypedefDecl" {
 		type, type_ok := get_parameter_type(s, decl)
@@ -1006,11 +1071,15 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				inner_kind := json_get_string(i, "kind") or_continue
 
 				if inner_kind == "ElaboratedType" {
-					if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id"); typedeffed_id_ok {
+					if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id");
+					   typedeffed_id_ok {
 						type = typedeffed_id
-					}	
+					}
 				} else if inner_kind == "FullComment" {
-					comment, comment_line, comment_line_ok, comment_ok := get_comment_with_line(i, s)
+					comment, comment_line, comment_line_ok, comment_ok := get_comment_with_line(
+						i,
+						s,
+					)
 
 					if comment_ok {
 						if comment_line_ok && line_ok && comment_line >= line {
@@ -1028,16 +1097,19 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		}
 
 		s.typedefs[type] = name
-		append(&s.decls, Declaration {
-			line = line,
-			original_idx = len(s.decls),
-			variant = Typedef {
-				name = name,
-				type = type,
-				pre_comment = pre_comment,
-				side_comment = side_comment,
+		append(
+			&s.decls,
+			Declaration {
+				line = line,
+				original_idx = len(s.decls),
+				variant = Typedef {
+					name = name,
+					type = type,
+					pre_comment = pre_comment,
+					side_comment = side_comment,
+				},
 			},
-		})
+		)
 	} else if kind == "EnumDecl" {
 		name, _ := json_get_string(decl, "name")
 		comment: string
@@ -1064,7 +1136,10 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 								value := json_get_string(vv, "value") or_continue
 								member_value = strconv.atoi(value)
 							} else if value_kind == "FullComment" {
-								com, com_line, com_line_ok, comment_ok := get_comment_with_line(vv, s)
+								com, com_line, com_line_ok, comment_ok := get_comment_with_line(
+									vv,
+									s,
+								)
 
 								if comment_ok {
 									member_comment = com
@@ -1077,32 +1152,41 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 						}
 					}
 
-					append(&out_members, Enum_Member {
-						name = member_name,
-						value = member_value,
-						comment = member_comment,
-						comment_before = member_comment_before,
-					})
+					append(
+						&out_members,
+						Enum_Member {
+							name = member_name,
+							value = member_value,
+							comment = member_comment,
+							comment_before = member_comment_before,
+						},
+					)
 				} else if inner_kind == "FullComment" {
 					comment, _ = get_comment(m, s)
 				}
 			}
 		}
 
-		append(&s.decls, Declaration {
-			line = line,
-			original_idx = len(s.decls),
-			variant = Enum {
-				name = name,
-				id = id,
-				comment = comment,
-				members = out_members[:],
+		append(
+			&s.decls,
+			Declaration {
+				line = line,
+				original_idx = len(s.decls),
+				variant = Enum{name = name, id = id, comment = comment, members = out_members[:]},
 			},
-		})
+		)
 	}
 }
 
-get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
+get_comment_with_line :: proc(
+	v: json.Value,
+	s: ^Gen_State,
+) -> (
+	comment: string,
+	line: int,
+	line_ok: bool,
+	ok: bool,
+) {
 	comment, ok = get_comment(v, s)
 	if line_i64, line_i64_ok := json_get(v, "loc.line", json.Integer); line_i64_ok {
 		line = int(line_i64)
@@ -1125,7 +1209,7 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 			continue
 		}
 
-		cur := s.source[idx:idx+2]
+		cur := s.source[idx:idx + 2]
 		if cur == "//" {
 			begin = idx
 			double_slash_found = true
@@ -1141,23 +1225,23 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 		}
 	}
 
-	cmt := s.source[begin:end+1]
+	cmt := s.source[begin:end + 1]
 
 	num_block_openings := strings.count(cmt, "/*")
 	num_block_closing := strings.count(cmt, "*/")
 
 	if num_block_openings != num_block_closing {
-		for idx in end..<len(s.source) - 2 {
-			cur := s.source[idx:idx+2]
+		for idx in end ..< len(s.source) - 2 {
+			cur := s.source[idx:idx + 2]
 
 			if cur == "*/" {
-				end = idx+1
+				end = idx + 1
 				break
 			}
 		}
 	}
 
-	return s.source[begin:end+1], true
+	return s.source[begin:end + 1], true
 }
 
 trim_prefix :: proc(s: string, p: string) -> string {
@@ -1174,7 +1258,7 @@ final_name :: proc(s: string, state: Gen_State) -> string {
 
 // Types that would need `import "core:c/libc"`. Please add and send in a Pull Request if you needed
 // to add anything here!
-is_libc_type :: proc(t: string) -> bool{
+is_libc_type :: proc(t: string) -> bool {
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
 
@@ -1188,25 +1272,35 @@ is_libc_type :: proc(t: string) -> bool{
 
 // Types that would need "import 'core:sys/posix'". Please add and send in a Pull Request if you
 // needed to add anything here!
-is_posix_type :: proc(t:string) -> bool {
-	base_type := strings.trim_suffix(t,"*")
+is_posix_type :: proc(t: string) -> bool {
+	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
 	switch t {
-	case "dev_t" : return true
-	case "blkcnt_t": return true
-	case "blksize_t" : return true
-	case "clock_t" : return true
-	case "clockid_t": return true
-	case "fsblkcnt_t" : return true
-	case "off_t" : return true
-	case "gid_t": return true
-	case "pid_t":  return true
-	case "timespec": return true
+	case "dev_t":
+		return true
+	case "blkcnt_t":
+		return true
+	case "blksize_t":
+		return true
+	case "clock_t":
+		return true
+	case "clockid_t":
+		return true
+	case "fsblkcnt_t":
+		return true
+	case "off_t":
+		return true
+	case "gid_t":
+		return true
+	case "pid_t":
+		return true
+	case "timespec":
+		return true
 	}
 	return false
 }
 
-is_c_type :: proc(t: string) -> bool{
+is_c_type :: proc(t: string) -> bool {
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
 	return base_type in c_type_mapping
@@ -1216,31 +1310,31 @@ is_c_type :: proc(t: string) -> bool{
 // from stdint.h etc). Please add and send in a Pull Request if you needed to
 // add anything here!
 c_type_mapping := map[string]string {
-	"ssize_t" = "int",
-	"size_t" = "uint",
-	"float" = "f32",
-	"double" = "f64",
-	"int" = "i32",
-	"char" = "u8",
-	"long long" = "c.longlong",
-	"unsigned short" = "u16",
-	"unsigned char" = "u8",
-	"unsigned int" = "u32",
-	"unsigned long" = "c.ulong",
+	"ssize_t"            = "int",
+	"size_t"             = "uint",
+	"float"              = "f32",
+	"double"             = "f64",
+	"int"                = "i32",
+	"char"               = "u8",
+	"long long"          = "c.longlong",
+	"unsigned short"     = "u16",
+	"unsigned char"      = "u8",
+	"unsigned int"       = "u32",
+	"unsigned long"      = "c.ulong",
 	"unsigned long long" = "c.ulonglong",
-	"Bool" = "bool",
-	"BOOL" = "bool",
-	"long" = "c.long",
-	"uint8_t" = "u8",
-	"int8_t" = "i8",
-	"uint16_t" = "u16",
-	"int16_t" = "i16",
-	"uint32_t" = "u32",
-	"int32_t" = "i32",
-	"uint64_t" = "u64",
-	"int64_t" = "i64",
-	"uintptr_t" = "uintptr",
-	"ptrdiff_t" = "int",
+	"Bool"               = "bool",
+	"BOOL"               = "bool",
+	"long"               = "c.long",
+	"uint8_t"            = "u8",
+	"int8_t"             = "i8",
+	"uint16_t"           = "u16",
+	"int16_t"            = "i16",
+	"uint32_t"           = "u32",
+	"int32_t"            = "i32",
+	"uint64_t"           = "u64",
+	"int64_t"            = "i64",
+	"uintptr_t"          = "uintptr",
+	"ptrdiff_t"          = "int",
 }
 
 // For translating type names in procedure parameters and struct fields.
@@ -1264,7 +1358,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 
 		strings.write_string(&func_builder, `proc "c" (`)
 
-		remainder := t[remainder_start:len(t)-1]
+		remainder := t[remainder_start:len(t) - 1]
 
 		first := true
 
@@ -1314,7 +1408,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 			tok = t[token_start:idx]
 			token_start = idx + utf8.rune_size(s)
 			num_ptrs += 1
-		} else if idx == len(t) - 1{
+		} else if idx == len(t) - 1 {
 			tok = t[token_start:idx + 1]
 		}
 
@@ -1361,7 +1455,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	} else if is_libc_type(t) {
 		t = fmt.tprintf("libc.%v", t)
 	} else if is_posix_type(t) {
-		t = fmt.tprintf("posix.%v",t)
+		t = fmt.tprintf("posix.%v", t)
 	} else if s.force_ada_case_types && t != "void" {
 		// It makes sense, in the case we can't find the type, to just follow our naming rules and
 		// hope the type is defined somewhere else.
@@ -1371,7 +1465,12 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	}
 
 	if array_start != -1 {
-		t = fmt.tprintf("%s%s%s", multi_array != -1 ? "[^]" : "", t_original[array_start:array_end + 1], t)
+		t = fmt.tprintf(
+			"%s%s%s",
+			multi_array != -1 ? "[^]" : "",
+			t_original[array_start:array_end + 1],
+			t,
+		)
 	}
 
 	b := strings.builder_make()
@@ -1391,7 +1490,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		}
 	}
 
-	for _ in 0..<num_ptrs{
+	for _ in 0 ..< num_ptrs {
 		strings.write_string(&b, "^")
 	}
 
@@ -1450,7 +1549,7 @@ vet_name :: proc(s: string) -> string {
 	return s
 }
 
-add_to_set :: proc(s: ^map[$T]struct{}, v: T) {
+add_to_set :: proc(s: ^map[$T]struct {}, v: T) {
 	s[v] = {}
 }
 
@@ -1460,46 +1559,44 @@ fpf :: fmt.fprintf
 fpfln :: fmt.fprintfln
 
 Config :: struct {
-	inputs: []string,
-	ignore_inputs: []string,
-	output_folder: string,
-	package_name: string,
-	required_prefix: string,
-	remove_prefix: string,
-	remove_type_prefix: string,
-	remove_function_prefix: string,
-	remove_macro_prefix: string,
-	import_lib: string,
-	imports_file: string,
-	clang_include_paths: []string,
-	clang_defines: map[string]string,
-	force_ada_case_types: bool,
-	debug_dump_json_ast: bool,
-	debug_dump_macros: bool,
-
-	opaque_types: []string,
-	rename_types: map[string]string,
-	type_overrides: map[string]string,
-	struct_field_overrides: map[string]string,
+	inputs:                   []string,
+	ignore_inputs:            []string,
+	output_folder:            string,
+	package_name:             string,
+	required_prefix:          string,
+	remove_prefix:            string,
+	remove_type_prefix:       string,
+	remove_function_prefix:   string,
+	remove_macro_prefix:      string,
+	import_lib:               string,
+	imports_file:             string,
+	clang_include_paths:      []string,
+	clang_defines:            map[string]string,
+	force_ada_case_types:     bool,
+	debug_dump_json_ast:      bool,
+	debug_dump_macros:        bool,
+	opaque_types:             []string,
+	rename_types:             map[string]string,
+	type_overrides:           map[string]string,
+	struct_field_overrides:   map[string]string,
 	procedure_type_overrides: map[string]string,
-	bit_setify: map[string]string,
-	inject_before: map[string]string,
+	bit_setify:               map[string]string,
+	inject_before:            map[string]string,
 }
 
 Gen_State :: struct {
-	using config: Config,
-
-	source: string,
-	decls: [dynamic]Declaration,
-	defines: map[string]string,
-	symbol_indices: map[string]int,
-	typedefs: map[string]string,
-	created_symbols: map[string]struct{},
-	type_is_proc: map[string]struct{},
-	opaque_type_lookup: map[string]struct{},
-	created_types: map[string]struct{},
-	needs_import_c: bool,
-	needs_import_libc: bool,
+	using config:       Config,
+	source:             string,
+	decls:              [dynamic]Declaration,
+	defines:            map[string]string,
+	symbol_indices:     map[string]int,
+	typedefs:           map[string]string,
+	created_symbols:    map[string]struct {},
+	type_is_proc:       map[string]struct {},
+	opaque_type_lookup: map[string]struct {},
+	created_types:      map[string]struct {},
+	needs_import_c:     bool,
+	needs_import_libc:  bool,
 	needs_import_posix: bool,
 }
 
@@ -1513,7 +1610,7 @@ gen :: proc(input: string, c: Config) {
 	context.temp_allocator = vmem.arena_allocator(&gen_arena)
 
 	s := Gen_State {
-		config = c, 
+		config = c,
 	}
 
 	for ot in c.opaque_types {
@@ -1526,7 +1623,12 @@ gen :: proc(input: string, c: Config) {
 	//
 
 	command := [dynamic]string {
-		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
+		"clang",
+		"-Xclang",
+		"-ast-dump=json",
+		"-fparse-all-comments",
+		"-c",
+		input,
 	}
 
 	for include in c.clang_include_paths {
@@ -1562,7 +1664,7 @@ gen :: proc(input: string, c: Config) {
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)
 	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
-	
+
 	if s.debug_dump_json_ast {
 		os.write_entire_file(fmt.tprintf("%v-debug_dump.json", output_filename), sout)
 	}
@@ -1665,8 +1767,8 @@ gen :: proc(input: string, c: Config) {
 		fpln(f, `import "core:c/libc"`)
 	}
 
-	if(s.needs_import_posix) {
-		fpln(f,`import "core:sys/posix"`)
+	if (s.needs_import_posix) {
+		fpln(f, `import "core:sys/posix"`)
 	}
 
 	fp(f, "\n")
@@ -1678,7 +1780,7 @@ gen :: proc(input: string, c: Config) {
 		fpln(f, "_ :: libc")
 	}
 	if s.needs_import_posix {
-		fpln(f,"_ :: posix")
+		fpln(f, "_ :: posix")
 	}
 
 	fp(f, "\n")
@@ -1708,62 +1810,62 @@ gen :: proc(input: string, c: Config) {
 	for &decl in s.decls {
 		du := &decl.variant
 		switch &d in du {
-			case Struct:
-				name := d.name
+		case Struct:
+			name := d.name
 
-				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-					name = typedef
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-				}
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+			}
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-				d.name = final_name(vet_name(name), s)
-				add_to_set(&s.created_types, d.name)
-			case Function:
-			case Enum:
-				name := d.name
+			d.name = final_name(vet_name(name), s)
+			add_to_set(&s.created_types, d.name)
+		case Function:
+		case Enum:
+			name := d.name
 
-				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-					name = typedef
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-				}
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+			}
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-				d.name = final_name(vet_name(name), s)
-				add_to_set(&s.created_types, d.name)
-			case Typedef:
-				name := d.name
+			d.name = final_name(vet_name(name), s)
+			add_to_set(&s.created_types, d.name)
+		case Typedef:
+			name := d.name
 
-				if is_c_type(name) {
-					continue
-				}
+			if is_c_type(name) {
+				continue
+			}
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-				name = final_name(name, s)
-				d.name = name
-				add_to_set(&s.created_types, d.name)
+			name = final_name(name, s)
+			d.name = name
+			add_to_set(&s.created_types, d.name)
 
-			case Macro:
-				name := d.name
-				name = trim_prefix(name, s.remove_macro_prefix)
-				name = final_name(name, s)
-				d.name = name
-				add_to_set(&s.created_types, d.name)
+		case Macro:
+			name := d.name
+			name = trim_prefix(name, s.remove_macro_prefix)
+			name = final_name(name, s)
+			d.name = name
+			add_to_set(&s.created_types, d.name)
 		}
 	}
 
@@ -1801,7 +1903,12 @@ gen :: proc(input: string, c: Config) {
 				break
 			}
 
-			output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: Maybe(string)) -> string {
+			output_struct :: proc(
+				s: Gen_State,
+				d: Struct,
+				indent: int,
+				n: Maybe(string),
+			) -> string {
 				w := strings.builder_make()
 				ws :: strings.write_string
 				ws(&w, "struct ")
@@ -1827,14 +1934,15 @@ gen :: proc(input: string, c: Config) {
 
 						field_len += len(vet_name(fn))
 					}
-					if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
+					if (field.comment == "" || !field.comment_before) &&
+					   field_len > longest_field_name_with_side_comment {
 						longest_field_name_with_side_comment = field_len
 					}
 				}
 
 				Formatted_Field :: struct {
-					field: string,
-					comment: string,
+					field:          string,
+					comment:        string,
 					comment_before: bool,
 				}
 
@@ -1859,26 +1967,30 @@ gen :: proc(input: string, c: Config) {
 						names_len := strings.builder_len(b)
 
 						if name, name_ok := n.?; name_ok {
-							override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
+							override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))
 						}
 
 						strings.write_string(&b, ": ")
 
 						if !field.comment_before {
 							// Padding between name and =
-							for _ in 0..<longest_field_name_with_side_comment-names_len {
+							for _ in 0 ..< longest_field_name_with_side_comment - names_len {
 								strings.write_rune(&b, ' ')
 							}
 						}
 					}
-					
+
 					field_type := translate_type(s, field.type)
 
 					if override_key != "" {
-						if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
+						if field_type_override, has_field_type_override :=
+							   s.struct_field_overrides[override_key]; has_field_type_override {
 							if field_type_override == "[^]" {
 								// Change first `^` for `[^]`
-								field_type = fmt.tprintf("[^]%v", strings.trim_prefix(field_type, "^"))
+								field_type = fmt.tprintf(
+									"[^]%v",
+									strings.trim_prefix(field_type, "^"),
+								)
 							} else {
 								field_type = field_type_override
 							}
@@ -1899,18 +2011,24 @@ gen :: proc(input: string, c: Config) {
 
 					strings.write_string(&b, field_type)
 
-					append(&fields, Formatted_Field {
-						field = strings.to_string(b),
-						comment = comment,
-						comment_before = comment_before,
-					})
+					append(
+						&fields,
+						Formatted_Field {
+							field = strings.to_string(b),
+							comment = comment,
+							comment_before = comment_before,
+						},
+					)
 				}
 
 				longest_field_with_side_comment: int
 
 				for &field in fields {
 					if field.comment != "" && !field.comment_before {
-						longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
+						longest_field_with_side_comment = max(
+							len(field.field),
+							longest_field_with_side_comment,
+						)
 					}
 				}
 
@@ -1925,7 +2043,7 @@ gen :: proc(input: string, c: Config) {
 
 						ci := field.comment
 						for l in strings.split_lines_iterator(&ci) {
-							for _ in 0..<indent+1 {
+							for _ in 0 ..< indent + 1 {
 								ws(&w, "\t")
 							}
 							ws(&w, strings.trim_space(l))
@@ -1933,7 +2051,7 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					for _ in 0..<indent+1 {
+					for _ in 0 ..< indent + 1 {
 						ws(&w, "\t")
 					}
 					ws(&w, field.field)
@@ -1941,10 +2059,10 @@ gen :: proc(input: string, c: Config) {
 
 					if has_comment && !comment_before {
 						// Padding in front of comment
-						for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
+						for _ in 0 ..< (longest_field_with_side_comment - len(field.field)) {
 							ws(&w, " ")
 						}
-						
+
 						ws(&w, " ")
 						ws(&w, field.comment)
 					}
@@ -1952,7 +2070,7 @@ gen :: proc(input: string, c: Config) {
 					ws(&w, "\n")
 				}
 
-				for _ in 0..<indent {
+				for _ in 0 ..< indent {
 					ws(&w, "\t")
 				}
 				ws(&w, "}")
@@ -1971,7 +2089,10 @@ gen :: proc(input: string, c: Config) {
 				for &m in d.members {
 					mn := m.name
 
-					if strings.has_prefix(strings.to_lower(mn), strings.to_lower(s.remove_type_prefix)) {
+					if strings.has_prefix(
+						strings.to_lower(mn),
+						strings.to_lower(s.remove_type_prefix),
+					) {
 						mn = mn[len(s.remove_type_prefix):]
 
 						if strings.has_prefix(mn, "_") {
@@ -1980,7 +2101,7 @@ gen :: proc(input: string, c: Config) {
 					}
 
 					fpf(f, "%v :: %v\n\n", mn, m.value)
-				}	
+				}
 
 				break
 			}
@@ -2005,8 +2126,9 @@ gen :: proc(input: string, c: Config) {
 					all_has_value = false
 				}
 
-				for idx in 1..<len(d.members) {
-					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) && bit_setify {
+				for idx in 1 ..< len(d.members) {
+					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) &&
+					   bit_setify {
 						continue
 					}
 
@@ -2024,12 +2146,12 @@ gen :: proc(input: string, c: Config) {
 						all_has_value = false
 					}
 				}
-			}	
+			}
 
 			Formatted_Member :: struct {
-				name: string,
-				member: string,
-				comment: string,
+				name:           string,
+				member:         string,
+				comment:        string,
 				comment_before: bool,
 			}
 
@@ -2050,17 +2172,19 @@ gen :: proc(input: string, c: Config) {
 				name_without_overlap := m.name[overlap_length:]
 
 				// First letter is number... Can't have that!
-				if len(name_without_overlap) > 0 && unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
+				if len(name_without_overlap) > 0 &&
+				   unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
 					name_without_overlap = fmt.tprintf("_%v", name_without_overlap)
 				}
 
 				strings.write_string(&b, name_without_overlap)
 
-				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
+				suffix_pad :=
+					all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
 
 				if vv, v_ok := m.value.?; v_ok {
 					if !m.comment_before {
-						for _ in 0..<suffix_pad {
+						for _ in 0 ..< suffix_pad {
 							// Padding between name and `=`
 							strings.write_rune(&b, ' ')
 						}
@@ -2079,22 +2203,27 @@ gen :: proc(input: string, c: Config) {
 					} else {
 						val_string = fmt.tprintf(" = %v", vv)
 					}
-					
+
 					strings.write_string(&b, val_string)
 				}
 
-				append(&members, Formatted_Member {
-					name = name_without_overlap,
-					member = strings.to_string(b),
-					comment = m.comment,
-					comment_before = m.comment_before,
-				})
+				append(
+					&members,
+					Formatted_Member {
+						name = name_without_overlap,
+						member = strings.to_string(b),
+						comment = m.comment,
+						comment_before = m.comment_before,
+					},
+				)
 			}
 
 			longest_member_name_with_side_comment: int
 
 			for &m in members {
-				if m.comment != "" && !m.comment_before && len(m.member) > longest_member_name_with_side_comment {
+				if m.comment != "" &&
+				   !m.comment_before &&
+				   len(m.member) > longest_member_name_with_side_comment {
 					longest_member_name_with_side_comment = len(m.member)
 				}
 			}
@@ -2107,19 +2236,19 @@ gen :: proc(input: string, c: Config) {
 					if m_idx != 0 {
 						fp(f, "\n")
 					}
-					output_comment(f, m.comment, "\t")	
+					output_comment(f, m.comment, "\t")
 				}
 
-				fp(f, "\t")	
+				fp(f, "\t")
 				fp(f, m.member)
 				fp(f, ",")
 
 				if has_comment && !comment_before {
-					for _ in 0..<(longest_member_name_with_side_comment - len(m.member)) {
+					for _ in 0 ..< (longest_member_name_with_side_comment - len(m.member)) {
 						// Padding in front of comment
 						fp(f, " ")
 					}
-					
+
 					fpf(f, " %v", m.comment)
 				}
 
@@ -2137,7 +2266,12 @@ gen :: proc(input: string, c: Config) {
 				// There was a member with value `-1`... That means all bits are
 				// set. Create a bit_set constant with all variants set.
 				if bit_set_all_constant != "" {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_type_prefix)))
+					all_constant := strings.to_screaming_snake_case(
+						trim_prefix(
+							strings.to_lower(bit_set_all_constant),
+							strings.to_lower(s.remove_type_prefix),
+						),
+					)
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
@@ -2154,7 +2288,7 @@ gen :: proc(input: string, c: Config) {
 			}
 
 		case Function:
-			// handled later. This makes all procs end up at bottom, after types.
+		// handled later. This makes all procs end up at bottom, after types.
 
 		case Typedef:
 			n := d.name
@@ -2223,7 +2357,7 @@ gen :: proc(input: string, c: Config) {
 			val := d.val
 
 			comment_out := false
-			
+
 			val = trim_encapsulating_parens(val)
 			b := strings.builder_make()
 			for i := 0; i < len(val); i += 1 {
@@ -2242,15 +2376,24 @@ gen :: proc(input: string, c: Config) {
 						strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
 					} else if type, exists := c_type_mapping[val[start:i]]; exists {
 						strings.write_string(&b, type)
-					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+					} else if _, exists =
+						   s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
 						strings.write_string(&b, val[start:i])
 					} else {
 						comment_out = true
 
 						if s.force_ada_case_types {
-							strings.write_string(&b, strings.to_ada_case(trim_prefix(val[start:i], s.remove_type_prefix)))
+							strings.write_string(
+								&b,
+								strings.to_ada_case(
+									trim_prefix(val[start:i], s.remove_type_prefix),
+								),
+							)
 						} else {
-							strings.write_string(&b, trim_prefix(val[start:i], s.remove_type_prefix))
+							strings.write_string(
+								&b,
+								trim_prefix(val[start:i], s.remove_type_prefix),
+							)
 						}
 					}
 					i -= 1
@@ -2332,7 +2475,7 @@ gen :: proc(input: string, c: Config) {
 
 	Function_Group :: struct {
 		header_comment: string,
-		functions: [dynamic]Function,
+		functions:      [dynamic]Function,
 	}
 
 	groups: [dynamic]Function_Group
@@ -2360,7 +2503,11 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	if len(groups) > 0 {
-		fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_function_prefix)
+		fmt.fprintfln(
+			f,
+			`@(default_calling_convention="c", link_prefix="%v")`,
+			s.remove_function_prefix,
+		)
 		fmt.fprintln(f, "foreign lib {")
 
 		for &g, gidx in groups {
@@ -2381,7 +2528,7 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			Formatted_Function :: struct {
-				function: string,
+				function:     string,
 				post_comment: string,
 			}
 
@@ -2395,7 +2542,7 @@ gen :: proc(input: string, c: Config) {
 				proc_name := trim_prefix(d.name, s.remove_function_prefix)
 				w(&b, proc_name)
 
-				for _ in 0..<longest_function_name-len(d.name) {
+				for _ in 0 ..< longest_function_name - len(d.name) {
 					strings.write_rune(&b, ' ')
 				}
 
@@ -2407,7 +2554,8 @@ gen :: proc(input: string, c: Config) {
 					type := translate_type(s, p.type)
 					type_override_key := fmt.tprintf("%v.%v", proc_name, n)
 
-					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
+					if type_override, type_override_ok :=
+						   s.procedure_type_overrides[type_override_key]; type_override_ok {
 						switch type_override {
 						case "#by_ptr":
 							type = strings.trim_prefix(type, "^")
@@ -2435,10 +2583,14 @@ gen :: proc(input: string, c: Config) {
 
 					return_type := translate_type(s, d.return_type)
 
-					if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
+					if override, override_ok := s.procedure_type_overrides[proc_name];
+					   override_ok {
 						switch override {
 						case "[^]":
-							return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
+							return_type = fmt.tprintf(
+								"[^]%v",
+								strings.trim_prefix(return_type, "^"),
+							)
 						case:
 							return_type = override
 						}
@@ -2449,10 +2601,13 @@ gen :: proc(input: string, c: Config) {
 
 				w(&b, " ---")
 
-				append(&formatted_functions, Formatted_Function {
-					function = strings.to_string(b),
-					post_comment = d.post_comment,
-				})
+				append(
+					&formatted_functions,
+					Formatted_Function {
+						function = strings.to_string(b),
+						post_comment = d.post_comment,
+					},
+				)
 			}
 
 			longest_formatted_function: int
@@ -2468,7 +2623,7 @@ gen :: proc(input: string, c: Config) {
 				fp(f, ff.function)
 
 				if ff.post_comment != "" {
-					for _ in 0..<(longest_formatted_function-len(ff.function)) {
+					for _ in 0 ..< (longest_formatted_function - len(ff.function)) {
 						fp(f, ' ')
 					}
 
@@ -2501,7 +2656,7 @@ main :: proc() {
 	} else if os.is_dir(input_arg) {
 		config_dir = input_arg
 	} else {
-        fmt.panicf("%v is not a directory nor a valid config file", input_arg)
+		fmt.panicf("%v is not a directory nor a valid config file", input_arg)
 	}
 
 	// Config file is optional
@@ -2524,14 +2679,17 @@ main :: proc() {
 	if os.is_file(config_filename) {
 		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
 			config_err := json.unmarshal(config_data, &config, .SJSON)
-			fmt.ensuref(config_err == nil, "Failed parsing config %v: %v", config_filename, config_err)
+			fmt.ensuref(
+				config_err == nil,
+				"Failed parsing config %v: %v",
+				config_filename,
+				config_err,
+			)
 		} else {
 			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
 		}
 	} else {
-		config.inputs = {
-			".",
-		}
+		config.inputs = {"."}
 	}
 
 	if config.output_folder == "" {
@@ -2543,7 +2701,9 @@ main :: proc() {
 	}
 
 	if config.remove_prefix != "" {
-		panic("Error in bindgen.sjson: remove_prefix has been split into remove_function_prefix and remove_type_prefix")
+		panic(
+			"Error in bindgen.sjson: remove_prefix has been split into remove_function_prefix and remove_type_prefix",
+		)
 	}
 
 	input_files: [dynamic]string
@@ -2551,8 +2711,13 @@ main :: proc() {
 	for i in config.inputs {
 		if os.is_dir(i) {
 			input_folder, input_folder_err := os2.open(i)
-			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
-			iter := os2.read_directory_iterator_create(input_folder)	
+			fmt.ensuref(
+				input_folder_err == nil,
+				"Failed opening folder %v: %v",
+				i,
+				input_folder_err,
+			)
+			iter := os2.read_directory_iterator_create(input_folder)
 
 			for f in os2.read_directory_iterator(&iter) {
 				if f.type != .Regular || slice.contains(config.ignore_inputs, f.name) {
@@ -2572,7 +2737,12 @@ main :: proc() {
 
 	if config.output_folder != "" && !os2.exists(config.output_folder) {
 		make_dir_err := os2.make_directory_all(config.output_folder)
-		fmt.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", config.output_folder, make_dir_err)
+		fmt.ensuref(
+			make_dir_err == nil,
+			"Failed creating output directory %v: %v",
+			config.output_folder,
+			make_dir_err,
+		)
 	}
 
 	for i in input_files {
