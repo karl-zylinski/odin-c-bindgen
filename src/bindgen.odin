@@ -1258,8 +1258,10 @@ c_type_mapping := map[string]string {
 	"int32_t" = "i32",
 	"uint64_t" = "u64",
 	"int64_t" = "i64",
+	"intptr_t" = "c.intptr_t",
 	"uintptr_t" = "uintptr",
 	"ptrdiff_t" = "int",
+	"void" = "struct {}"
 }
 
 // For translating type names in procedure parameters and struct fields.
