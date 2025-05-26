@@ -857,9 +857,13 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		if name_start == -1 {
 			return
 		}
-
-		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
+		
+		macro_name := value[name_start:name_end]
+		if macro_token, _ := macros[macro_name]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
+			if value^ == macro_name {
+			  return
+			}
 			check_value_for_macro_and_expand(value, macros)
 		} else if macro_token.type == .Multivalue {
 			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
