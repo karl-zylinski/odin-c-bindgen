@@ -28,6 +28,7 @@
 
 #define ufbx_pack_version(major, minor, patch) ((uint32_t)(major)*1000000u + (uint32_t)(minor)*1000u + (uint32_t)(patch))
 #define UFBX_HEADER_VERSION ufbx_pack_version(0, 18, 0)
+#define FUNC_ALIAS ufbx_pack_version
 
 #define NO_INDEX (uint32_t)0
 
@@ -73,5 +74,9 @@ struct Color {
     int b;
     int a;
 };
+
+typedef int simple_typedef;
+
+typedef void void_typedef;
 
 #pragma GCC pop_options
