@@ -21,6 +21,7 @@ ARRAY_TEST :: {1, 2, 3}
 // TRUE :: !false
 
 UFBX_HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
+// FUNC_ALIAS :: ufbx_pack_version
 
 NO_INDEX :: (u32)0
 
@@ -65,4 +66,8 @@ Color :: struct {
 	b: i32,
 	a: i32,
 }
+
+simple_typedef :: i32
+
+void_typedef :: struct {}
 
