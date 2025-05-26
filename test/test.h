@@ -1,6 +1,9 @@
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
 
+#include <time.h>
+#include <stdbool.h>
+
 #define NEST(x) NEST1(x)
 #define NEST1(x) NEST2(x)
 #define NEST2(x) (x)
@@ -74,6 +77,17 @@ struct Color {
     int b;
     int a;
 };
+
+struct HasBool {
+  bool a;
+};
+
+typedef time_t my_time;
+
+// Should add a bindgen.sjson with `remove_type_prefix = "test_"
+// typedef struct test_time_t {
+//   int seconds;
+// } test_time_t;
 
 typedef int simple_typedef;
 

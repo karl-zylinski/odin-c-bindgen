@@ -1247,6 +1247,7 @@ c_type_mapping := map[string]string {
 	"unsigned int" = "u32",
 	"unsigned long" = "c.ulong",
 	"unsigned long long" = "c.ulonglong",
+	"_Bool" = "bool",
 	"Bool" = "bool",
 	"BOOL" = "bool",
 	"long" = "c.long",
@@ -1261,7 +1262,7 @@ c_type_mapping := map[string]string {
 	"intptr_t" = "c.intptr_t",
 	"uintptr_t" = "uintptr",
 	"ptrdiff_t" = "int",
-	"void" = "struct {}"
+	"void" = "struct {}",
 }
 
 // For translating type names in procedure parameters and struct fields.
@@ -1371,17 +1372,19 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		t = t[:array_start]
 	}
 
+	// check maps against this in case the header has a type which is exactly [prefix][mapped c type]
+	t_prefixed := strings.trim_space(t)
 	if t != s.remove_type_prefix {
 		t = trim_prefix(t, s.remove_type_prefix)
 	}
 
 	t = strings.trim_space(t)
 
-	if is_c_type(t) {
+	if is_c_type(t_prefixed) {
 		t = c_type_mapping[t]
-	} else if is_libc_type(t) {
+	} else if is_libc_type(t_prefixed) {
 		t = fmt.tprintf("libc.%v", t)
-	} else if is_posix_type(t) {
+	} else if is_posix_type(t_prefixed) {
 		t = fmt.tprintf("posix.%v",t)
 	} else if s.force_ada_case_types && t != "void" {
 		// It makes sense, in the case we can't find the type, to just follow our naming rules and

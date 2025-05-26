@@ -1,8 +1,10 @@
 package test
 
 import "core:c"
+import "core:c/libc"
 
 _ :: c
+_ :: libc
 
 
 
@@ -67,6 +69,16 @@ Color :: struct {
 	a: i32,
 }
 
+HasBool :: struct {
+	a: bool,
+}
+
+my_time :: libc.time_t
+
+// Should add a bindgen.sjson with `remove_type_prefix = "test_"
+// typedef struct test_time_t {
+//   int seconds;
+// } test_time_t;
 simple_typedef :: i32
 
 void_typedef :: struct {}
