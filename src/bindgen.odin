@@ -1248,39 +1248,40 @@ c_type_mapping := map[string]string {
 	"unsigned long"      = "c.ulong",
 	"unsigned long long" = "c.ulonglong",
 
-	"bool" = "c.bool",
-	"Bool" = "c.bool", // I don't know why this needs to have a capital B, but it does.
-	"BOOL" = "c.bool", // bool is sometimes a macro for BOOL
+	"bool" = "bool",
+	"Bool" = "bool", // I don't know why this needs to have a capital B, but it does.
+	"BOOL" = "bool", // bool is sometimes a macro for BOOL
 
 	"size_t"  = "c.size_t",
 	"ssize_t" = "c.ssize_t",
 	"wchar_t" = "c.wchar_t",
 
-	"float"          = "c.float",
-	"double"         = "c.double",
+	"float"          = "f32",
+	"double"         = "f64",
 	// I think clang changes this to something else so this might not work.
 	// I tried testing it but I couldn't get the complex type working in C.
-	"float complex"  = "c.complex_float",
-	"double complex" = "c.complex_double",
+	"float complex"  = "complex64",
+	"double complex" = "complex128",
 
-	"int8_t"   = "c.int8_t",
-	"uint8_t"  = "c.uint8_t",
-	"int16_t"  = "c.int16_t",
-	"uint16_t" = "c.uint16_t",
-	"int32_t"  = "c.int32_t",
-	"uint32_t" = "c.uint32_t",
-	"int64_t"  = "c.int64_t",
-	"uint64_t" = "c.uint64_t",
+	"int8_t"   = "i8",
+	"uint8_t"  = "u8",
+	"int16_t"  = "i16",
+	"uint16_t" = "u16",
+	"int32_t"  = "i32",
+	"uint32_t" = "u32",
+	"int64_t"  = "i64",
+	"uint64_t" = "u64",
 
-	"int_least8_t"   = "c.int_least8_t",
-	"uint_least8_t"  = "c.uint_least8_t",
-	"int_least16_t"  = "c.int_least16_t",
-	"uint_least16_t" = "c.uint_least16_t",
-	"int_least32_t"  = "c.int_least32_t",
-	"uint_least32_t" = "c.uint_least32_t",
-	"int_least64_t"  = "c.int_least64_t",
-	"uint_least64_t" = "c.uint_least64_t",
+	"int_least8_t"   = "i8",
+	"uint_least8_t"  = "u8",
+	"int_least16_t"  = "i16",
+	"uint_least16_t" = "u16",
+	"int_least32_t"  = "i32",
+	"uint_least32_t" = "u32",
+	"int_least64_t"  = "i64",
+	"uint_least64_t" = "u64",
 	
+	// These type could change base on the platform.
 	"int_fast8_t"   = "c.int_fast8_t",
 	"uint_fast8_t"  = "c.uint_fast8_t",
 	"int_fast16_t"  = "c.int_fast16_t",
