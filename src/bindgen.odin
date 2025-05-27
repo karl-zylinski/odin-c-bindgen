@@ -55,6 +55,7 @@ Function :: struct {
 	return_type: string,
 	comment: string,
 	comment_before: bool,
+	variadic: bool,
 	post_comment: string,
 }
 
@@ -176,7 +177,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 	for c, i in str {
 		if c == ' ' {
 			spaces_counter += 1
-		} else if c == '/' && i+1 < len(str) && str[i+1] == '/' {
+		} else if c == '/' && i + 1 < len(str) && (str[i + 1] == '/' || str[i + 1] == '*') {
 			return str[i:], spaces_counter
 		} else {
 			spaces_counter = 0
@@ -607,13 +608,28 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 			for cbidx >= 0 {
 				cbl := file_lines[cbidx]
 				cbl_trim := strings.trim_space(cbl)
-				
+
 				if strings.has_prefix(cbl_trim, "/*") && cb_block_comment {
+					// TODO: this doesn't account for the case of a multiline block comment that begins at the end of a non-comment line
 					comment_start = cbidx
 					break
+				} else if cb_block_comment {
+					// block comment interior, continue
 				} else if strings.has_suffix(cbl_trim, "*/") {
+					if comment_end == -1 {
+						comment_end = cbidx
+					}
 					cb_block_comment = true
-					comment_end = cbidx
+					if strings.has_prefix(cbl_trim, "/*") {
+						// block comment starts on same line
+						cb_block_comment = false
+						comment_start = cbidx
+						break
+					} else if strings.contains(cbl_trim, "/*") {
+						// this is actually the side comment for another line, discard comment and break
+						cb_block_comment = false
+						break
+					}
 				} else if strings.has_prefix(cbl_trim, "//") {
 					if comment_end == -1 {
 						comment_end = cbidx
@@ -961,7 +977,6 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
 			side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		}
-
 		append(&s.decls, Declaration {
 			line = line,
 			original_idx = len(s.decls),
@@ -972,24 +987,23 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				comment = comment,
 				comment_before = comment_before,
 				post_comment = side_comment,
+				variadic = json_check_bool(decl, "variadic"),
 			},
 		})
 	} else if kind == "RecordDecl" {
-		name, name_ok := json_get_string(decl, "name")
-
-		if !name_ok {
-			return
-		}
+		name, _ := json_get_string(decl, "name")
 
 		if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 			struct_decl.name = name
 			struct_decl.id = id
-			if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-				s.decls[forward_idx] = {}
+
+			if name != "" {
+				if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
+					s.decls[forward_idx] = {}
+				}
+
+				s.symbol_indices[name] = len(s.decls)
 			}
-
-			s.symbol_indices[name] = len(s.decls)
-
 			append(&s.decls, Declaration { line = line, original_idx = len(s.decls), variant = struct_decl })
 		}
 	} else if kind == "TypedefDecl" {
@@ -1605,7 +1619,7 @@ gen :: proc(input: string, c: Config) {
 				if !strings.has_prefix(name, s.required_prefix) {
 					continue
 				}
-			}		
+			}
 		}
 
 		parse_decl(&s, in_decl, line)
@@ -2113,7 +2127,7 @@ gen :: proc(input: string, c: Config) {
 					output_comment(f, m.comment, "\t")	
 				}
 
-				fp(f, "\t")
+				fp(f, "\t")	
 				fp(f, m.member)
 				fp(f, ",")
 
@@ -2160,13 +2174,13 @@ gen :: proc(input: string, c: Config) {
 			// handled later. This makes all procs end up at bottom, after types.
 
 		case Typedef:
-			t := d.name
+			n := d.name
 
-			if t in s.opaque_type_lookup {
+			if n in s.opaque_type_lookup {
 				if d.pre_comment != "" {
 					output_comment(f, d.pre_comment)
 				}
-				fpf(f, "%v :: struct {{}}", t)
+				fpf(f, "%v :: struct {{}}", n)
 
 				if d.side_comment != "" {
 					fp(f, ' ')
@@ -2177,7 +2191,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if t in s.created_symbols || strings.has_prefix(d.type, "0x") {
+			if n in s.created_symbols || strings.has_prefix(d.type, "0x") {
 				continue
 			}
 
@@ -2185,11 +2199,11 @@ gen :: proc(input: string, c: Config) {
 				output_comment(f, d.pre_comment)
 			}
 
-			fp(f, t)
+			fp(f, n)
 
 			fp(f, " :: ")
 
-			if override, override_ok := s.type_overrides[t]; override_ok {
+			if override, override_ok := s.type_overrides[n]; override_ok {
 				fp(f, override)
 
 				if d.side_comment != "" {
@@ -2210,7 +2224,7 @@ gen :: proc(input: string, c: Config) {
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
 				fp(f, translate_type(s, type))
-				add_to_set(&s.type_is_proc, t)
+				add_to_set(&s.type_is_proc, n)
 			} else {
 				fpf(f, "%v", translate_type(s, type))
 			}
@@ -2284,7 +2298,7 @@ gen :: proc(input: string, c: Config) {
 					}
 					strings.write_string(&b, val[start:i + 1])
 				case .Other:
-					if val[i] == '~' {
+					if val[i] == '~' || val[i] == '#' {
 						comment_out = true
 					}
 
@@ -2432,6 +2446,10 @@ gen :: proc(input: string, c: Config) {
 
 					if i != len(d.parameters) - 1 {
 						w(&b, ", ")
+					} else {
+						if d.variadic {
+						   w(&b,", #c_vararg _: ..any")
+						}
 					}
 				}
 
