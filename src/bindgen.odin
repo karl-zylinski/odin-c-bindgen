@@ -2427,7 +2427,7 @@ gen :: proc(input: string, c: Config) {
 					if i != len(d.parameters) - 1 {
 						w(&b, ", ")
 					} else {
-						if(d.variadic) {
+						if d.variadic {
 						   w(&b,", #c_vararg _: ..any")
 						}
 					}
