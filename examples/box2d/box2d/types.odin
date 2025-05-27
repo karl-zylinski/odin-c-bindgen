@@ -27,7 +27,7 @@ DEFAULT_CATEGORY_BITS :: 0
 /// }
 /// @endcode
 /// @ingroup world
-TaskCallback :: proc "c" (c.int, c.int, c.uint32_t, rawptr)
+TaskCallback :: proc "c" (c.int, c.int, u32, rawptr)
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -49,12 +49,12 @@ FinishTaskCallback :: proc "c" (rawptr, rawptr)
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-FrictionCallback :: proc "c" (c.float, c.int, c.float, c.int) -> c.float
+FrictionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-RestitutionCallback :: proc "c" (c.float, c.int, c.float, c.int) -> c.float
+RestitutionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
 
 /// Result from b2World_RayCastClosest
 /// @ingroup world
@@ -62,10 +62,10 @@ RayResult :: struct {
 	shapeId:    ShapeId,
 	point:      Vec2,
 	normal:     Vec2,
-	fraction:   c.float,
+	fraction:   f32,
 	nodeVisits: c.int,
 	leafVisits: c.int,
-	hit:        c.bool,
+	hit:        bool,
 }
 
 /// World definition used to create a simulation world.
@@ -77,31 +77,31 @@ WorldDef :: struct {
 
 	/// Restitution speed threshold, usually in m/s. Collisions above this
 	/// speed have restitution applied (will bounce).
-	restitutionThreshold: c.float,
+	restitutionThreshold: f32,
 
 	/// Threshold speed for hit events. Usually meters per second.
-	hitEventThreshold: c.float,
+	hitEventThreshold: f32,
 
 	/// Contact stiffness. Cycles per second. Increasing this increases the speed of overlap recovery, but can introduce jitter.
-	contactHertz: c.float,
+	contactHertz: f32,
 
 	/// Contact bounciness. Non-dimensional. You can speed up overlap recovery by decreasing this with
 	/// the trade-off that overlap resolution becomes more energetic.
-	contactDampingRatio: c.float,
+	contactDampingRatio: f32,
 
 	/// This parameter controls how fast overlap is resolved and usually has units of meters per second. This only
 	/// puts a cap on the resolution speed. The resolution speed is increased by increasing the hertz and/or
 	/// decreasing the damping ratio.
-	contactPushMaxSpeed: c.float,
+	contactPushMaxSpeed: f32,
 
 	/// Joint stiffness. Cycles per second.
-	jointHertz: c.float,
+	jointHertz: f32,
 
 	/// Joint bounciness. Non-dimensional.
-	jointDampingRatio: c.float,
+	jointDampingRatio: f32,
 
 	/// Maximum linear speed. Usually meters per second.
-	maximumLinearSpeed: c.float,
+	maximumLinearSpeed: f32,
 
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
 	frictionCallback: FrictionCallback,
@@ -110,10 +110,10 @@ WorldDef :: struct {
 	restitutionCallback: RestitutionCallback,
 
 	/// Can bodies go to sleep to improve performance
-	enableSleep: c.bool,
+	enableSleep: bool,
 
 	/// Enable continuous collision
-	enableContinuous: c.bool,
+	enableContinuous: bool,
 
 	/// Number of workers to use with the provided task system. Box2D performs best when using only
 	/// performance cores and accessing a single L2 cache. Efficiency cores and hyper-threading provide
@@ -178,26 +178,26 @@ BodyDef :: struct {
 	linearVelocity: Vec2,
 
 	/// The initial angular velocity of the body. Radians per second.
-	angularVelocity: c.float,
+	angularVelocity: f32,
 
 	/// Linear damping is used to reduce the linear velocity. The damping parameter
 	/// can be larger than 1 but the damping effect becomes sensitive to the
 	/// time step when the damping parameter is large.
 	/// Generally linear damping is undesirable because it makes objects move slowly
 	/// as if they are floating.
-	linearDamping: c.float,
+	linearDamping: f32,
 
 	/// Angular damping is used to reduce the angular velocity. The damping parameter
 	/// can be larger than 1.0f but the damping effect becomes sensitive to the
 	/// time step when the damping parameter is large.
 	/// Angular damping can be use slow down rotating bodies.
-	angularDamping: c.float,
+	angularDamping: f32,
 
 	/// Scale the gravity applied to this body. Non-dimensional.
-	gravityScale: c.float,
+	gravityScale: f32,
 
 	/// Sleep speed threshold, default is 0.05 meters per second
-	sleepThreshold: c.float,
+	sleepThreshold: f32,
 
 	/// Optional body name for debugging. Up to 31 characters (excluding null termination)
 	name: cstring,
@@ -206,26 +206,26 @@ BodyDef :: struct {
 	userData: rawptr,
 
 	/// Set this flag to false if this body should never fall asleep.
-	enableSleep: c.bool,
+	enableSleep: bool,
 
 	/// Is this body initially awake or sleeping?
-	isAwake: c.bool,
+	isAwake: bool,
 
 	/// Should this body be prevented from rotating? Useful for characters.
-	fixedRotation: c.bool,
+	fixedRotation: bool,
 
 	/// Treat this body as high speed object that performs continuous collision detection
 	/// against dynamic and kinematic bodies, but not other bullet bodies.
 	/// @warning Bullets should be used sparingly. They are not a solution for general dynamic-versus-dynamic
 	/// continuous collision. They may interfere with joint constraints.
-	isBullet: c.bool,
+	isBullet: bool,
 
 	/// Used to disable a body. A disabled body does not move or collide.
-	isEnabled: c.bool,
+	isEnabled: bool,
 
 	/// This allows this body to bypass rotational speed limits. Should only be used
 	/// for circular objects, like wheels.
-	allowFastRotation: c.bool,
+	allowFastRotation: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: c.int,
@@ -238,14 +238,14 @@ Filter :: struct {
 	/// The collision category bits. Normally you would just set one bit. The category bits should
 	/// represent your application object types. For example:
 	/// @code{
-	categoryBits: c.uint64_t,
+	categoryBits: u64,
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
 	/// For example, you may want your player to only collide with static objects
 	/// and other players.
 	/// @code{
-	maskBits: c.uint64_t,
+	maskBits: u64,
 
 	/// Collision groups allow a certain group of objects to never collide (negative)
 	/// or always collide (positive). A group index of zero has no effect. Non-zero group filtering
@@ -262,11 +262,11 @@ Filter :: struct {
 /// @ingroup shape
 QueryFilter :: struct {
 	/// The collision category bits of this query. Normally you would just set one bit.
-	categoryBits: c.uint64_t,
+	categoryBits: u64,
 
 	/// The collision mask bits. This states the shape categories that this
 	/// query would accept for collision.
-	maskBits: c.uint64_t,
+	maskBits: u64,
 }
 
 /// Shape type
@@ -301,54 +301,54 @@ ShapeDef :: struct {
 	userData: rawptr,
 
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
-	friction: c.float,
+	friction: f32,
 
 	/// The coefficient of restitution (bounce) usually in the range [0,1].
 	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
-	restitution: c.float,
+	restitution: f32,
 
 	/// The rolling resistance usually in the range [0,1].
-	rollingResistance: c.float,
+	rollingResistance: f32,
 
 	/// The tangent speed for conveyor belts
-	tangentSpeed: c.float,
+	tangentSpeed: f32,
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
 	material: c.int,
 
 	/// The density, usually in kg/m^2.
-	density: c.float,
+	density: f32,
 
 	/// Collision filtering data.
 	filter: Filter,
 
 	/// Custom debug draw color.
-	customColor: c.uint32_t,
+	customColor: u32,
 
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not collide with other sensors and do not have continuous collision.
 	/// Instead, use a ray or shape cast for those scenarios.
-	isSensor: c.bool,
+	isSensor: bool,
 
 	/// Enable contact events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
-	enableContactEvents: c.bool,
+	enableContactEvents: bool,
 
 	/// Enable hit events for this shape. Only applies to kinematic and dynamic bodies. Ignored for sensors.
-	enableHitEvents: c.bool,
+	enableHitEvents: bool,
 
 	/// Enable pre-solve contact events for this shape. Only applies to dynamic bodies. These are expensive
 	/// and must be carefully handled due to threading. Ignored for sensors.
-	enablePreSolveEvents: c.bool,
+	enablePreSolveEvents: bool,
 
 	/// Normally shapes on static bodies don't invoke contact creation when they are added to the world. This overrides
 	/// that behavior and causes contact creation. This significantly slows down static body creation which can be important
 	/// when there are many static shapes.
 	/// This is implicitly always true for sensors, dynamic bodies, and kinematic bodies.
-	invokeContactCreation: c.bool,
+	invokeContactCreation: bool,
 
 	/// Should the body update the mass properties when this shape is created. Default is true.
-	updateBodyMass: c.bool,
+	updateBodyMass: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: c.int,
@@ -358,24 +358,24 @@ ShapeDef :: struct {
 /// @ingroup shape
 SurfaceMaterial :: struct {
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
-	friction: c.float,
+	friction: f32,
 
 	/// The coefficient of restitution (bounce) usually in the range [0,1].
 	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
-	restitution: c.float,
+	restitution: f32,
 
 	/// The rolling resistance usually in the range [0,1].
-	rollingResistance: c.float,
+	rollingResistance: f32,
 
 	/// The tangent speed for conveyor belts
-	tangentSpeed: c.float,
+	tangentSpeed: f32,
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
 	material: c.int,
 
 	/// Custom debug draw color.
-	customColor: c.uint32_t,
+	customColor: u32,
 }
 
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
@@ -414,7 +414,7 @@ ChainDef :: struct {
 	filter: Filter,
 
 	/// Indicates a closed chain formed by connecting the first and last points
-	isLoop: c.bool,
+	isLoop: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: c.int,
@@ -423,28 +423,28 @@ ChainDef :: struct {
 //! @cond
 /// Profiling data. Times are in milliseconds.
 Profile :: struct {
-	step:                c.float,
-	pairs:               c.float,
-	collide:             c.float,
-	solve:               c.float,
-	mergeIslands:        c.float,
-	prepareStages:       c.float,
-	solveConstraints:    c.float,
-	prepareConstraints:  c.float,
-	integrateVelocities: c.float,
-	warmStart:           c.float,
-	solveImpulses:       c.float,
-	integratePositions:  c.float,
-	relaxImpulses:       c.float,
-	applyRestitution:    c.float,
-	storeImpulses:       c.float,
-	splitIslands:        c.float,
-	transforms:          c.float,
-	hitEvents:           c.float,
-	refit:               c.float,
-	bullets:             c.float,
-	sleepIslands:        c.float,
-	sensors:             c.float,
+	step:                f32,
+	pairs:               f32,
+	collide:             f32,
+	solve:               f32,
+	mergeIslands:        f32,
+	prepareStages:       f32,
+	solveConstraints:    f32,
+	prepareConstraints:  f32,
+	integrateVelocities: f32,
+	warmStart:           f32,
+	solveImpulses:       f32,
+	integratePositions:  f32,
+	relaxImpulses:       f32,
+	applyRestitution:    f32,
+	storeImpulses:       f32,
+	splitIslands:        f32,
+	transforms:          f32,
+	hitEvents:           f32,
+	refit:               f32,
+	bullets:             f32,
+	sleepIslands:        f32,
+	sensors:             f32,
 }
 
 /// Counters that give details of the simulation size.
@@ -499,38 +499,38 @@ DistanceJointDef :: struct {
 	localAnchorB: Vec2,
 
 	/// The rest length of this joint. Clamped to a stable minimum value.
-	length: c.float,
+	length: f32,
 
 	/// Enable the distance constraint to behave like a spring. If false
 	/// then the distance joint will be rigid, overriding the limit and motor.
-	enableSpring: c.bool,
+	enableSpring: bool,
 
 	/// The spring linear stiffness Hertz, cycles per second
-	hertz: c.float,
+	hertz: f32,
 
 	/// The spring linear damping ratio, non-dimensional
-	dampingRatio: c.float,
+	dampingRatio: f32,
 
 	/// Enable/disable the joint limit
-	enableLimit: c.bool,
+	enableLimit: bool,
 
 	/// Minimum length. Clamped to a stable minimum value.
-	minLength: c.float,
+	minLength: f32,
 
 	/// Maximum length. Must be greater than or equal to the minimum length.
-	maxLength: c.float,
+	maxLength: f32,
 
 	/// Enable/disable the joint motor
-	enableMotor: c.bool,
+	enableMotor: bool,
 
 	/// The maximum motor force, usually in newtons
-	maxMotorForce: c.float,
+	maxMotorForce: f32,
 
 	/// The desired motor speed, usually in meters per second
-	motorSpeed: c.float,
+	motorSpeed: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -554,19 +554,19 @@ MotorJointDef :: struct {
 	linearOffset: Vec2,
 
 	/// The bodyB angle minus bodyA angle in radians
-	angularOffset: c.float,
+	angularOffset: f32,
 
 	/// The maximum motor force in newtons
-	maxForce: c.float,
+	maxForce: f32,
 
 	/// The maximum motor torque in newton-meters
-	maxTorque: c.float,
+	maxTorque: f32,
 
 	/// Position correction factor in the range [0,1]
-	correctionFactor: c.float,
+	correctionFactor: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -591,16 +591,16 @@ MouseJointDef :: struct {
 	target: Vec2,
 
 	/// Stiffness in hertz
-	hertz: c.float,
+	hertz: f32,
 
 	/// Damping ratio, non-dimensional
-	dampingRatio: c.float,
+	dampingRatio: f32,
 
 	/// Maximum force, typically in newtons
-	maxForce: c.float,
+	maxForce: f32,
 
 	/// Set this flag to true if the attached bodies should collide.
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -650,37 +650,37 @@ PrismaticJointDef :: struct {
 	localAxisA: Vec2,
 
 	/// The constrained angle between the bodies: bodyB_angle - bodyA_angle
-	referenceAngle: c.float,
+	referenceAngle: f32,
 
 	/// Enable a linear spring along the prismatic joint axis
-	enableSpring: c.bool,
+	enableSpring: bool,
 
 	/// The spring stiffness Hertz, cycles per second
-	hertz: c.float,
+	hertz: f32,
 
 	/// The spring damping ratio, non-dimensional
-	dampingRatio: c.float,
+	dampingRatio: f32,
 
 	/// Enable/disable the joint limit
-	enableLimit: c.bool,
+	enableLimit: bool,
 
 	/// The lower translation limit
-	lowerTranslation: c.float,
+	lowerTranslation: f32,
 
 	/// The upper translation limit
-	upperTranslation: c.float,
+	upperTranslation: f32,
 
 	/// Enable/disable the joint motor
-	enableMotor: c.bool,
+	enableMotor: bool,
 
 	/// The maximum motor force, typically in newtons
-	maxMotorForce: c.float,
+	maxMotorForce: f32,
 
 	/// The desired motor speed, typically in meters per second
-	motorSpeed: c.float,
+	motorSpeed: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -716,40 +716,40 @@ RevoluteJointDef :: struct {
 
 	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	/// This defines the zero angle for the joint limit.
-	referenceAngle: c.float,
+	referenceAngle: f32,
 
 	/// Enable a rotational spring on the revolute hinge axis
-	enableSpring: c.bool,
+	enableSpring: bool,
 
 	/// The spring stiffness Hertz, cycles per second
-	hertz: c.float,
+	hertz: f32,
 
 	/// The spring damping ratio, non-dimensional
-	dampingRatio: c.float,
+	dampingRatio: f32,
 
 	/// A flag to enable joint limits
-	enableLimit: c.bool,
+	enableLimit: bool,
 
 	/// The lower angle for the joint limit in radians
-	lowerAngle: c.float,
+	lowerAngle: f32,
 
 	/// The upper angle for the joint limit in radians
-	upperAngle: c.float,
+	upperAngle: f32,
 
 	/// A flag to enable the joint motor
-	enableMotor: c.bool,
+	enableMotor: bool,
 
 	/// The maximum motor torque, typically in newton-meters
-	maxMotorTorque: c.float,
+	maxMotorTorque: f32,
 
 	/// The desired motor speed in radians per second
-	motorSpeed: c.float,
+	motorSpeed: f32,
 
 	/// Scale the debug draw
-	drawSize: c.float,
+	drawSize: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -778,22 +778,22 @@ WeldJointDef :: struct {
 	localAnchorB: Vec2,
 
 	/// The bodyB angle minus bodyA angle in the reference state (radians)
-	referenceAngle: c.float,
+	referenceAngle: f32,
 
 	/// Linear stiffness expressed as Hertz (cycles per second). Use zero for maximum stiffness.
-	linearHertz: c.float,
+	linearHertz: f32,
 
 	/// Angular stiffness as Hertz (cycles per second). Use zero for maximum stiffness.
-	angularHertz: c.float,
+	angularHertz: f32,
 
 	/// Linear damping ratio, non-dimensional. Use 1 for critical damping.
-	linearDampingRatio: c.float,
+	linearDampingRatio: f32,
 
 	/// Linear damping ratio, non-dimensional. Use 1 for critical damping.
-	angularDampingRatio: c.float,
+	angularDampingRatio: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -826,34 +826,34 @@ WheelJointDef :: struct {
 	localAxisA: Vec2,
 
 	/// Enable a linear spring along the local axis
-	enableSpring: c.bool,
+	enableSpring: bool,
 
 	/// Spring stiffness in Hertz
-	hertz: c.float,
+	hertz: f32,
 
 	/// Spring damping ratio, non-dimensional
-	dampingRatio: c.float,
+	dampingRatio: f32,
 
 	/// Enable/disable the joint linear limit
-	enableLimit: c.bool,
+	enableLimit: bool,
 
 	/// The lower translation limit
-	lowerTranslation: c.float,
+	lowerTranslation: f32,
 
 	/// The upper translation limit
-	upperTranslation: c.float,
+	upperTranslation: f32,
 
 	/// Enable/disable the joint rotational motor
-	enableMotor: c.bool,
+	enableMotor: bool,
 
 	/// The maximum motor torque, typically in newton-meters
-	maxMotorTorque: c.float,
+	maxMotorTorque: f32,
 
 	/// The desired motor speed in radians per second
-	motorSpeed: c.float,
+	motorSpeed: f32,
 
 	/// Set this flag to true if the attached bodies should collide
-	collideConnected: c.bool,
+	collideConnected: bool,
 
 	/// User data pointer
 	userData: rawptr,
@@ -867,21 +867,21 @@ WheelJointDef :: struct {
 /// @ingroup world
 ExplosionDef :: struct {
 	/// Mask bits to filter shapes
-	maskBits: c.uint64_t,
+	maskBits: u64,
 
 	/// The center of the explosion in world space
 	position: Vec2,
 
 	/// The radius of the explosion
-	radius: c.float,
+	radius: f32,
 
 	/// The falloff distance beyond the radius. Impulse is reduced to zero at this distance.
-	falloff: c.float,
+	falloff: f32,
 
 	/// Impulse per unit length. This applies an impulse according to the shape perimeter that
 	/// is facing the explosion. Explosions only apply to circles, capsules, and polygons. This
 	/// may be negative for implosions.
-	impulsePerLength: c.float,
+	impulsePerLength: f32,
 }
 
 /// A begin touch event is generated when a shape starts to overlap a sensor shape.
@@ -970,7 +970,7 @@ ContactHitEvent :: struct {
 	normal: Vec2,
 
 	/// The speed the shapes are approaching. Always positive. Typically in meters per second.
-	approachSpeed: c.float,
+	approachSpeed: f32,
 }
 
 /// Contact events are buffered in the Box2D world and are available
@@ -1010,7 +1010,7 @@ BodyMoveEvent :: struct {
 	transform:  Transform,
 	bodyId:     BodyId,
 	userData:   rawptr,
-	fellAsleep: c.bool,
+	fellAsleep: bool,
 }
 
 /// Body events are buffered in the Box2D world and are available
@@ -1045,7 +1045,7 @@ ContactData :: struct {
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-CustomFilterFcn :: proc "c" (ShapeId, ShapeId, rawptr) -> c.bool
+CustomFilterFcn :: proc "c" (ShapeId, ShapeId, rawptr) -> bool
 
 /// Prototype for a pre-solve callback.
 /// This is called after a contact is updated. This allows you to inspect a
@@ -1060,14 +1060,14 @@ CustomFilterFcn :: proc "c" (ShapeId, ShapeId, rawptr) -> c.bool
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-PreSolveFcn :: proc "c" (ShapeId, ShapeId, ^Manifold, rawptr) -> c.bool
+PreSolveFcn :: proc "c" (ShapeId, ShapeId, ^Manifold, rawptr) -> bool
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
 /// @see b2World_OverlapABB
 /// @return false to terminate the query.
 /// @ingroup world
-OverlapResultFcn :: proc "c" (ShapeId, rawptr) -> c.bool
+OverlapResultFcn :: proc "c" (ShapeId, rawptr) -> bool
 
 /// Prototype callback for ray casts.
 /// Called for each shape found in the query. You control how the ray cast
@@ -1084,7 +1084,7 @@ OverlapResultFcn :: proc "c" (ShapeId, rawptr) -> c.bool
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay
 /// @ingroup world
-CastResultFcn :: proc "c" (ShapeId, Vec2, Vec2, c.float, rawptr) -> c.float
+CastResultFcn :: proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32
 
 /// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html
@@ -1246,16 +1246,16 @@ DebugDraw :: struct {
 	DrawPolygon: proc "c" (^Vec2, c.int, HexColor, rawptr),
 
 	/// Draw a solid closed polygon provided in CCW order.
-	DrawSolidPolygon: proc "c" (Transform, ^Vec2, c.int, c.float, HexColor, rawptr),
+	DrawSolidPolygon: proc "c" (Transform, ^Vec2, c.int, f32, HexColor, rawptr),
 
 	/// Draw a circle.
-	DrawCircle: proc "c" (Vec2, c.float, HexColor, rawptr),
+	DrawCircle: proc "c" (Vec2, f32, HexColor, rawptr),
 
 	/// Draw a solid circle.
-	DrawSolidCircle: proc "c" (Transform, c.float, HexColor, rawptr),
+	DrawSolidCircle: proc "c" (Transform, f32, HexColor, rawptr),
 
 	/// Draw a solid capsule.
-	DrawSolidCapsule: proc "c" (Vec2, Vec2, c.float, HexColor, rawptr),
+	DrawSolidCapsule: proc "c" (Vec2, Vec2, f32, HexColor, rawptr),
 
 	/// Draw a line segment.
 	DrawSegment: proc "c" (Vec2, Vec2, HexColor, rawptr),
@@ -1264,7 +1264,7 @@ DebugDraw :: struct {
 	DrawTransform: proc "c" (Transform, rawptr),
 
 	/// Draw a point.
-	DrawPoint: proc "c" (Vec2, c.float, HexColor, rawptr),
+	DrawPoint: proc "c" (Vec2, f32, HexColor, rawptr),
 
 	/// Draw a string in world space
 	DrawString: proc "c" (Vec2, cstring, HexColor, rawptr),
@@ -1273,40 +1273,40 @@ DebugDraw :: struct {
 	drawingBounds: AABB,
 
 	/// Option to restrict drawing to a rectangular region. May suffer from unstable depth sorting.
-	useDrawingBounds: c.bool,
+	useDrawingBounds: bool,
 
 	/// Option to draw shapes
-	drawShapes: c.bool,
+	drawShapes: bool,
 
 	/// Option to draw joints
-	drawJoints: c.bool,
+	drawJoints: bool,
 
 	/// Option to draw additional information for joints
-	drawJointExtras: c.bool,
+	drawJointExtras: bool,
 
 	/// Option to draw the bounding boxes for shapes
-	drawAABBs: c.bool,
+	drawAABBs: bool,
 
 	/// Option to draw the mass and center of mass of dynamic bodies
-	drawMass: c.bool,
+	drawMass: bool,
 
 	/// Option to draw body names
-	drawBodyNames: c.bool,
+	drawBodyNames: bool,
 
 	/// Option to draw contact points
-	drawContacts: c.bool,
+	drawContacts: bool,
 
 	/// Option to visualize the graph coloring used for contacts and joints
-	drawGraphColors: c.bool,
+	drawGraphColors: bool,
 
 	/// Option to draw contact normals
-	drawContactNormals: c.bool,
+	drawContactNormals: bool,
 
 	/// Option to draw contact normal impulses
-	drawContactImpulses: c.bool,
+	drawContactImpulses: bool,
 
 	/// Option to draw contact friction impulses
-	drawFrictionImpulses: c.bool,
+	drawFrictionImpulses: bool,
 
 	/// User context that is passed as an argument to drawing callback functions
 	_context: rawptr,

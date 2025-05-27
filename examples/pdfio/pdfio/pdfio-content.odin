@@ -33,7 +33,7 @@ linejoin_t :: enum c.int {
 	BEVEL, // Bevel joint
 }
 
-matrix_t :: [3][2]c.double // Transform matrix
+matrix_t :: [3][2]f64 // Transform matrix
 
 textrendering_t :: enum c.int {
 	FILL,            // Fill text
@@ -50,84 +50,84 @@ textrendering_t :: enum c.int {
 foreign lib {
 	// Color array functions...
 	ArrayCreateColorFromICCObj    :: proc(pdf: ^file_t, icc_object: ^obj_t) -> ^array_t ---
-	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: c.double, _matrix: [^][3]c.double, white_point: ^c.double) -> ^array_t ---
+	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [^][3]f64, white_point: ^f64) -> ^array_t ---
 	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: c.size_t, colors: ^c.uchar) -> ^array_t ---
-	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: c.double, wx: c.double, wy: c.double, rx: c.double, ry: c.double, gx: c.double, gy: c.double, bx: c.double, by: c.double) -> ^array_t ---
+	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
 	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: c.size_t, cs: cs_t) -> ^array_t ---
 
 	// PDF content drawing functions...
-	ContentClip                     :: proc(st: ^stream_t, even_odd: c.bool) -> c.bool ---
-	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: c.double, y: c.double, w: c.double, h: c.double) -> c.bool ---
-	ContentFill                     :: proc(st: ^stream_t, even_odd: c.bool) -> c.bool ---
-	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: c.bool) -> c.bool ---
-	ContentMatrixConcat             :: proc(st: ^stream_t, m: [^][2]c.double) -> c.bool ---
-	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: c.double) -> c.bool ---
-	ContentMatrixScale              :: proc(st: ^stream_t, sx: c.double, sy: c.double) -> c.bool ---
-	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: c.double, ty: c.double) -> c.bool ---
-	ContentPathClose                :: proc(st: ^stream_t) -> c.bool ---
-	ContentPathCurve                :: proc(st: ^stream_t, x1: c.double, y1: c.double, x2: c.double, y2: c.double, x3: c.double, y3: c.double) -> c.bool ---
-	ContentPathCurve13              :: proc(st: ^stream_t, x1: c.double, y1: c.double, x3: c.double, y3: c.double) -> c.bool ---
-	ContentPathCurve23              :: proc(st: ^stream_t, x2: c.double, y2: c.double, x3: c.double, y3: c.double) -> c.bool ---
-	ContentPathEnd                  :: proc(st: ^stream_t) -> c.bool ---
-	ContentPathLineTo               :: proc(st: ^stream_t, x: c.double, y: c.double) -> c.bool ---
-	ContentPathMoveTo               :: proc(st: ^stream_t, x: c.double, y: c.double) -> c.bool ---
-	ContentPathRect                 :: proc(st: ^stream_t, x: c.double, y: c.double, width: c.double, height: c.double) -> c.bool ---
-	ContentRestore                  :: proc(st: ^stream_t) -> c.bool ---
-	ContentSave                     :: proc(st: ^stream_t) -> c.bool ---
-	ContentSetDashPattern           :: proc(st: ^stream_t, phase: c.double, on: c.double, off: c.double) -> c.bool ---
-	ContentSetFillColorDeviceCMYK   :: proc(st: ^stream_t, _c: c.double, m: c.double, y: c.double, k: c.double) -> c.bool ---
-	ContentSetFillColorDeviceGray   :: proc(st: ^stream_t, g: c.double) -> c.bool ---
-	ContentSetFillColorDeviceRGB    :: proc(st: ^stream_t, r: c.double, g: c.double, b: c.double) -> c.bool ---
-	ContentSetFillColorGray         :: proc(st: ^stream_t, g: c.double) -> c.bool ---
-	ContentSetFillColorRGB          :: proc(st: ^stream_t, r: c.double, g: c.double, b: c.double) -> c.bool ---
-	ContentSetFillColorSpace        :: proc(st: ^stream_t, name: cstring) -> c.bool ---
-	ContentSetFlatness              :: proc(st: ^stream_t, f: c.double) -> c.bool ---
-	ContentSetLineCap               :: proc(st: ^stream_t, lc: linecap_t) -> c.bool ---
-	ContentSetLineJoin              :: proc(st: ^stream_t, lj: linejoin_t) -> c.bool ---
-	ContentSetLineWidth             :: proc(st: ^stream_t, width: c.double) -> c.bool ---
-	ContentSetMiterLimit            :: proc(st: ^stream_t, limit: c.double) -> c.bool ---
-	ContentSetStrokeColorDeviceCMYK :: proc(st: ^stream_t, _c: c.double, m: c.double, y: c.double, k: c.double) -> c.bool ---
-	ContentSetStrokeColorDeviceGray :: proc(st: ^stream_t, g: c.double) -> c.bool ---
-	ContentSetStrokeColorDeviceRGB  :: proc(st: ^stream_t, r: c.double, g: c.double, b: c.double) -> c.bool ---
-	ContentSetStrokeColorGray       :: proc(st: ^stream_t, g: c.double) -> c.bool ---
-	ContentSetStrokeColorRGB        :: proc(st: ^stream_t, r: c.double, g: c.double, b: c.double) -> c.bool ---
-	ContentSetStrokeColorSpace      :: proc(st: ^stream_t, name: cstring) -> c.bool ---
-	ContentSetTextCharacterSpacing  :: proc(st: ^stream_t, spacing: c.double) -> c.bool ---
-	ContentSetTextFont              :: proc(st: ^stream_t, name: cstring, size: c.double) -> c.bool ---
-	ContentSetTextLeading           :: proc(st: ^stream_t, leading: c.double) -> c.bool ---
-	ContentSetTextMatrix            :: proc(st: ^stream_t, m: [^][2]c.double) -> c.bool ---
-	ContentSetTextRenderingMode     :: proc(st: ^stream_t, mode: textrendering_t) -> c.bool ---
-	ContentSetTextRise              :: proc(st: ^stream_t, rise: c.double) -> c.bool ---
-	ContentSetTextWordSpacing       :: proc(st: ^stream_t, spacing: c.double) -> c.bool ---
-	ContentSetTextXScaling          :: proc(st: ^stream_t, percent: c.double) -> c.bool ---
-	ContentStroke                   :: proc(st: ^stream_t) -> c.bool ---
-	ContentTextBegin                :: proc(st: ^stream_t) -> c.bool ---
-	ContentTextEnd                  :: proc(st: ^stream_t) -> c.bool ---
-	ContentTextMeasure              :: proc(font: ^obj_t, s: cstring, size: c.double) -> c.double ---
-	ContentTextMoveLine             :: proc(st: ^stream_t, tx: c.double, ty: c.double) -> c.bool ---
-	ContentTextMoveTo               :: proc(st: ^stream_t, tx: c.double, ty: c.double) -> c.bool ---
-	ContentTextNewLine              :: proc(st: ^stream_t) -> c.bool ---
-	ContentTextNewLineShow          :: proc(st: ^stream_t, ws: c.double, cs: c.double, unicode: c.bool, s: cstring) -> c.bool ---
-	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: c.double, cs: c.double, unicode: c.bool, format: cstring) -> c.bool ---
-	ContentTextNextLine             :: proc(st: ^stream_t) -> c.bool ---
-	ContentTextShow                 :: proc(st: ^stream_t, unicode: c.bool, s: cstring) -> c.bool ---
-	ContentTextShowf                :: proc(st: ^stream_t, unicode: c.bool, format: cstring) -> c.bool ---
-	ContentTextShowJustified        :: proc(st: ^stream_t, unicode: c.bool, num_fragments: c.size_t, offsets: ^c.double, fragments: [^]cstring) -> c.bool ---
+	ContentClip                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
+	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: f64, y: f64, w: f64, h: f64) -> bool ---
+	ContentFill                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
+	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: bool) -> bool ---
+	ContentMatrixConcat             :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: f64) -> bool ---
+	ContentMatrixScale              :: proc(st: ^stream_t, sx: f64, sy: f64) -> bool ---
+	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
+	ContentPathClose                :: proc(st: ^stream_t) -> bool ---
+	ContentPathCurve                :: proc(st: ^stream_t, x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64) -> bool ---
+	ContentPathCurve13              :: proc(st: ^stream_t, x1: f64, y1: f64, x3: f64, y3: f64) -> bool ---
+	ContentPathCurve23              :: proc(st: ^stream_t, x2: f64, y2: f64, x3: f64, y3: f64) -> bool ---
+	ContentPathEnd                  :: proc(st: ^stream_t) -> bool ---
+	ContentPathLineTo               :: proc(st: ^stream_t, x: f64, y: f64) -> bool ---
+	ContentPathMoveTo               :: proc(st: ^stream_t, x: f64, y: f64) -> bool ---
+	ContentPathRect                 :: proc(st: ^stream_t, x: f64, y: f64, width: f64, height: f64) -> bool ---
+	ContentRestore                  :: proc(st: ^stream_t) -> bool ---
+	ContentSave                     :: proc(st: ^stream_t) -> bool ---
+	ContentSetDashPattern           :: proc(st: ^stream_t, phase: f64, on: f64, off: f64) -> bool ---
+	ContentSetFillColorDeviceCMYK   :: proc(st: ^stream_t, _c: f64, m: f64, y: f64, k: f64) -> bool ---
+	ContentSetFillColorDeviceGray   :: proc(st: ^stream_t, g: f64) -> bool ---
+	ContentSetFillColorDeviceRGB    :: proc(st: ^stream_t, r: f64, g: f64, b: f64) -> bool ---
+	ContentSetFillColorGray         :: proc(st: ^stream_t, g: f64) -> bool ---
+	ContentSetFillColorRGB          :: proc(st: ^stream_t, r: f64, g: f64, b: f64) -> bool ---
+	ContentSetFillColorSpace        :: proc(st: ^stream_t, name: cstring) -> bool ---
+	ContentSetFlatness              :: proc(st: ^stream_t, f: f64) -> bool ---
+	ContentSetLineCap               :: proc(st: ^stream_t, lc: linecap_t) -> bool ---
+	ContentSetLineJoin              :: proc(st: ^stream_t, lj: linejoin_t) -> bool ---
+	ContentSetLineWidth             :: proc(st: ^stream_t, width: f64) -> bool ---
+	ContentSetMiterLimit            :: proc(st: ^stream_t, limit: f64) -> bool ---
+	ContentSetStrokeColorDeviceCMYK :: proc(st: ^stream_t, _c: f64, m: f64, y: f64, k: f64) -> bool ---
+	ContentSetStrokeColorDeviceGray :: proc(st: ^stream_t, g: f64) -> bool ---
+	ContentSetStrokeColorDeviceRGB  :: proc(st: ^stream_t, r: f64, g: f64, b: f64) -> bool ---
+	ContentSetStrokeColorGray       :: proc(st: ^stream_t, g: f64) -> bool ---
+	ContentSetStrokeColorRGB        :: proc(st: ^stream_t, r: f64, g: f64, b: f64) -> bool ---
+	ContentSetStrokeColorSpace      :: proc(st: ^stream_t, name: cstring) -> bool ---
+	ContentSetTextCharacterSpacing  :: proc(st: ^stream_t, spacing: f64) -> bool ---
+	ContentSetTextFont              :: proc(st: ^stream_t, name: cstring, size: f64) -> bool ---
+	ContentSetTextLeading           :: proc(st: ^stream_t, leading: f64) -> bool ---
+	ContentSetTextMatrix            :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentSetTextRenderingMode     :: proc(st: ^stream_t, mode: textrendering_t) -> bool ---
+	ContentSetTextRise              :: proc(st: ^stream_t, rise: f64) -> bool ---
+	ContentSetTextWordSpacing       :: proc(st: ^stream_t, spacing: f64) -> bool ---
+	ContentSetTextXScaling          :: proc(st: ^stream_t, percent: f64) -> bool ---
+	ContentStroke                   :: proc(st: ^stream_t) -> bool ---
+	ContentTextBegin                :: proc(st: ^stream_t) -> bool ---
+	ContentTextEnd                  :: proc(st: ^stream_t) -> bool ---
+	ContentTextMeasure              :: proc(font: ^obj_t, s: cstring, size: f64) -> f64 ---
+	ContentTextMoveLine             :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
+	ContentTextMoveTo               :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
+	ContentTextNewLine              :: proc(st: ^stream_t) -> bool ---
+	ContentTextNewLineShow          :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, s: cstring) -> bool ---
+	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, format: cstring) -> bool ---
+	ContentTextNextLine             :: proc(st: ^stream_t) -> bool ---
+	ContentTextShow                 :: proc(st: ^stream_t, unicode: bool, s: cstring) -> bool ---
+	ContentTextShowf                :: proc(st: ^stream_t, unicode: bool, format: cstring) -> bool ---
+	ContentTextShowJustified        :: proc(st: ^stream_t, unicode: bool, num_fragments: c.size_t, offsets: ^f64, fragments: [^]cstring) -> bool ---
 
 	// Resource helpers...
 	FileCreateFontObjFromBase  :: proc(pdf: ^file_t, name: cstring) -> ^obj_t ---
-	FileCreateFontObjFromFile  :: proc(pdf: ^file_t, filename: cstring, unicode: c.bool) -> ^obj_t ---
+	FileCreateFontObjFromFile  :: proc(pdf: ^file_t, filename: cstring, unicode: bool) -> ^obj_t ---
 	FileCreateICCObjFromFile   :: proc(pdf: ^file_t, filename: cstring, num_colors: c.size_t) -> ^obj_t ---
-	FileCreateImageObjFromData :: proc(pdf: ^file_t, data: ^c.uchar, width: c.size_t, height: c.size_t, num_colors: c.size_t, color_data: ^array_t, alpha: c.bool, interpolate: c.bool) -> ^obj_t ---
-	FileCreateImageObjFromFile :: proc(pdf: ^file_t, filename: cstring, interpolate: c.bool) -> ^obj_t ---
+	FileCreateImageObjFromData :: proc(pdf: ^file_t, data: ^c.uchar, width: c.size_t, height: c.size_t, num_colors: c.size_t, color_data: ^array_t, alpha: bool, interpolate: bool) -> ^obj_t ---
+	FileCreateImageObjFromFile :: proc(pdf: ^file_t, filename: cstring, interpolate: bool) -> ^obj_t ---
 
 	// Image object helpers...
 	ImageGetBytesPerLine :: proc(obj: ^obj_t) -> c.size_t ---
-	ImageGetHeight       :: proc(obj: ^obj_t) -> c.double ---
-	ImageGetWidth        :: proc(obj: ^obj_t) -> c.double ---
+	ImageGetHeight       :: proc(obj: ^obj_t) -> f64 ---
+	ImageGetWidth        :: proc(obj: ^obj_t) -> f64 ---
 
 	// Page dictionary helpers...
-	PageDictAddColorSpace :: proc(dict: ^dict_t, name: cstring, data: ^array_t) -> c.bool ---
-	PageDictAddFont       :: proc(dict: ^dict_t, name: cstring, obj: ^obj_t) -> c.bool ---
-	PageDictAddImage      :: proc(dict: ^dict_t, name: cstring, obj: ^obj_t) -> c.bool ---
+	PageDictAddColorSpace :: proc(dict: ^dict_t, name: cstring, data: ^array_t) -> bool ---
+	PageDictAddFont       :: proc(dict: ^dict_t, name: cstring, obj: ^obj_t) -> bool ---
+	PageDictAddImage      :: proc(dict: ^dict_t, name: cstring, obj: ^obj_t) -> bool ---
 }
