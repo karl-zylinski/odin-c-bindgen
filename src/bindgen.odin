@@ -176,7 +176,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 	for c, i in str {
 		if c == ' ' {
 			spaces_counter += 1
-		} else if c == '/' && i+1 < len(str) && str[i+1] == '/' {
+		} else if c == '/' && i + 1 < len(str) && (str[i + 1] == '/' || str[i + 1] == '*') {
 			return str[i:], spaces_counter
 		} else {
 			spaces_counter = 0
@@ -607,13 +607,28 @@ parse_file_macros :: proc(s: ^Gen_State) -> map[string]File_Macro {
 			for cbidx >= 0 {
 				cbl := file_lines[cbidx]
 				cbl_trim := strings.trim_space(cbl)
-				
+
 				if strings.has_prefix(cbl_trim, "/*") && cb_block_comment {
+					// TODO: this doesn't account for the case of a multiline block comment that begins at the end of a non-comment line
 					comment_start = cbidx
 					break
+				} else if cb_block_comment {
+					// block comment interior, continue
 				} else if strings.has_suffix(cbl_trim, "*/") {
+					if comment_end == -1 {
+						comment_end = cbidx
+					}
 					cb_block_comment = true
-					comment_end = cbidx
+					if strings.has_prefix(cbl_trim, "/*") {
+						// block comment starts on same line
+						cb_block_comment = false
+						comment_start = cbidx
+						break
+					} else if strings.contains(cbl_trim, "/*") {
+						// this is actually the side comment for another line, discard comment and break
+						cb_block_comment = false
+						break
+					}
 				} else if strings.has_prefix(cbl_trim, "//") {
 					if comment_end == -1 {
 						comment_end = cbidx
