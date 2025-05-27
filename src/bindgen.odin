@@ -2417,6 +2417,7 @@ gen :: proc(input: string, c: Config) {
 				w :: strings.write_string
 
 				proc_name := trim_prefix(d.name, s.remove_function_prefix)
+				proc_name = final_name(proc_name, s)
 				w(&b, proc_name)
 
 				for _ in 0..<longest_function_name-len(d.name) {
