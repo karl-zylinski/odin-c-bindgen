@@ -1264,7 +1264,6 @@ c_type_mapping := map[string]string {
 	"intptr_t" = "c.intptr_t",
 	"uintptr_t" = "uintptr",
 	"ptrdiff_t" = "int",
-	"void" = "struct {}",
 }
 
 // For translating type names in procedure parameters and struct fields.
@@ -1319,7 +1318,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		return "cstring"
 	}
 
-	if t == "va_list" {
+	if t == "va_list" || t == "struct __va_list_tag *" {
 		return "^c.va_list"
 	}
 
