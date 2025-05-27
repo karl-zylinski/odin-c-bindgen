@@ -935,7 +935,8 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 				pkind := json_get_string(p, "kind") or_continue
 
 				if pkind == "ParmVarDecl" {
-					param_name := json_get_string(p, "name") or_continue
+					// Empty name is OK. It's an unnamed parameter.
+					param_name, _ := json_get_string(p, "name")
 					param_type := get_parameter_type(s, p) or_continue
 					append(&out_params, Function_Parameter {
 						name = param_name,
@@ -2421,8 +2422,12 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					w(&b, n)
-					w(&b, ": ")
+					// Empty name means unnamed parameter. Drop the colon.
+					if len(n) != 0 {
+						w(&b, n)
+						w(&b, ": ")
+					}
+
 					w(&b, type)
 
 					if i != len(d.parameters) - 1 {
