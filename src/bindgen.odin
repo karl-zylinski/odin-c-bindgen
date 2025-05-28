@@ -2331,7 +2331,12 @@ gen :: proc(input: string, c: Config) {
 					suffix_index := 0
 					start := i
 					for ; i < len(val); i += 1 {
-						if type := char_type(val[i]); type == .Char && suffix_index == 0 {
+						type := char_type(val[i])
+
+						if type == .Char && i == 1 && val[0] == '0' && (val[i] == 'x' || val[i] == 'b') {
+							// 0x or 0b prefix
+							continue
+						} else if type == .Char && suffix_index == 0 {
 							suffix_index = i
 						} else if type != .Num && type != .Char {
 							break
