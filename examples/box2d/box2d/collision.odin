@@ -30,7 +30,7 @@ ShapeCastInput :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 
 	/// The radius around the point cloud
 	radius: f32,
@@ -54,7 +54,7 @@ CastOutput :: struct {
 	fraction: f32,
 
 	/// The number of iterations used
-	iterations: i32,
+	iterations: c.int,
 
 	/// Did the cast hit?
 	hit: bool,
@@ -114,7 +114,7 @@ Polygon :: struct {
 	radius: f32,
 
 	/// The number of polygon vertices
-	count: i32,
+	count: c.int,
 }
 
 /// A line segment with two-sided collision.
@@ -140,7 +140,7 @@ ChainSegment :: struct {
 	ghost2: Vec2,
 
 	/// The owning chain shape index (internal usage only)
-	chainId: i32,
+	chainId: c.int,
 }
 
 /// A convex hull. Used to create convex polygons.
@@ -150,7 +150,7 @@ Hull :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 }
 
 /// Result of computing the distance between two line segments
@@ -177,7 +177,7 @@ ShapeProxy :: struct {
 	points: [8]Vec2,
 
 	/// The number of points
-	count: i32,
+	count: c.int,
 
 	/// The external radius of the point cloud
 	radius: f32,
@@ -218,27 +218,27 @@ DistanceInput :: struct {
 
 /// Output for b2ShapeDistance
 DistanceOutput :: struct {
-	pointA:       Vec2, ///< Closest point on shapeA
-	pointB:       Vec2, ///< Closest point on shapeB
-	distance:     f32,  ///< The final distance, zero if overlapped
-	iterations:   i32,  ///< Number of GJK iterations used
-	simplexCount: i32,  ///< The number of simplexes stored in the simplex array
+	pointA:       Vec2,  ///< Closest point on shapeA
+	pointB:       Vec2,  ///< Closest point on shapeB
+	distance:     f32,   ///< The final distance, zero if overlapped
+	iterations:   c.int, ///< Number of GJK iterations used
+	simplexCount: c.int, ///< The number of simplexes stored in the simplex array
 }
 
 /// Simplex vertex for debugging the GJK algorithm
 SimplexVertex :: struct {
-	wA:     Vec2, ///< support point in proxyA
-	wB:     Vec2, ///< support point in proxyB
-	w:      Vec2, ///< wB - wA
-	a:      f32,  ///< barycentric coordinate for closest point
-	indexA: i32,  ///< wA index
-	indexB: i32,  ///< wB index
+	wA:     Vec2,  ///< support point in proxyA
+	wB:     Vec2,  ///< support point in proxyB
+	w:      Vec2,  ///< wB - wA
+	a:      f32,   ///< barycentric coordinate for closest point
+	indexA: c.int, ///< wA index
+	indexB: c.int, ///< wB index
 }
 
 /// Simplex from the GJK algorithm
 Simplex :: struct {
 	v1, v2, v3: SimplexVertex, ///< vertices
-	count:      i32,           ///< number of valid vertices
+	count:      c.int,         ///< number of valid vertices
 }
 
 /// Input parameters for b2ShapeCast
@@ -341,7 +341,7 @@ Manifold :: struct {
 	points: [2]ManifoldPoint,
 
 	/// The number of contacts points, will be 0, 1, or 2
-	pointCount: i32,
+	pointCount: c.int,
 }
 
 /// The dynamic tree structure. This should be considered private data.
@@ -353,22 +353,22 @@ DynamicTree :: struct {
 	nodes: [^]TreeNode,
 
 	/// The root index
-	root: i32,
+	root: c.int,
 
 	/// The number of nodes
-	nodeCount: i32,
+	nodeCount: c.int,
 
 	/// The allocated node space
-	nodeCapacity: i32,
+	nodeCapacity: c.int,
 
 	/// Node free list
-	freeList: i32,
+	freeList: c.int,
 
 	/// Number of proxies created
-	proxyCount: i32,
+	proxyCount: c.int,
 
 	/// Leaf indices for rebuild
-	leafIndices: ^i32,
+	leafIndices: ^c.int,
 
 	/// Leaf bounding boxes for rebuild
 	leafBoxes: ^AABB,
@@ -377,38 +377,38 @@ DynamicTree :: struct {
 	leafCenters: ^Vec2,
 
 	/// Bins for sorting during rebuild
-	binIndices: ^i32,
+	binIndices: ^c.int,
 
 	/// Allocated space for rebuilding
-	rebuildCapacity: i32,
+	rebuildCapacity: c.int,
 }
 
 /// These are performance results returned by dynamic tree queries.
 TreeStats :: struct {
 	/// Number of internal nodes visited during the query
-	nodeVisits: i32,
+	nodeVisits: c.int,
 
 	/// Number of leaf nodes visited during the query
-	leafVisits: i32,
+	leafVisits: c.int,
 }
 
 /// This function receives proxies found in the AABB query.
 /// @return true if the query should continue
-TreeQueryCallbackFcn :: proc "c" (i32, i32, rawptr) -> bool
+TreeQueryCallbackFcn :: proc "c" (c.int, c.int, rawptr) -> bool
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-TreeRayCastCallbackFcn :: proc "c" (^RayCastInput, i32, i32, rawptr) -> f32
+TreeRayCastCallbackFcn :: proc "c" (^RayCastInput, c.int, c.int, rawptr) -> f32
 
 /// This function receives clipped ray cast input for a proxy. The function
 /// returns the new ray fraction.
 /// - return a value of 0 to terminate the ray cast
 /// - return a value less than input->maxFraction to clip the ray
 /// - return a value of input->maxFraction to continue the ray cast without clipping
-TreeShapeCastCallbackFcn :: proc "c" (^ShapeCastInput, i32, i32, rawptr) -> f32
+TreeShapeCastCallbackFcn :: proc "c" (^ShapeCastInput, c.int, c.int, rawptr) -> f32
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
@@ -523,7 +523,7 @@ foreign lib {
 	/// - more than B2_MAX_POLYGON_VERTICES points
 	/// This welds close points and removes collinear points.
 	/// @warning Do not modify a hull once it has been computed
-	ComputeHull :: proc(points: ^Vec2, count: i32) -> Hull ---
+	ComputeHull :: proc(points: ^Vec2, count: c.int) -> Hull ---
 
 	/// This determines if a hull is valid. Checks for:
 	/// - convexity
@@ -537,13 +537,13 @@ foreign lib {
 	/// Compute the closest points between two shapes represented as point clouds.
 	/// b2SimplexCache cache is input/output. On the first call set b2SimplexCache.count to zero.
 	/// The underlying GJK algorithm may be debugged by passing in debug simplexes and capacity. You may pass in NULL and 0 for these.
-	ShapeDistance :: proc(cache: ^SimplexCache, input: ^DistanceInput, simplexes: ^Simplex, simplexCapacity: i32) -> DistanceOutput ---
+	ShapeDistance :: proc(cache: ^SimplexCache, input: ^DistanceInput, simplexes: ^Simplex, simplexCapacity: c.int) -> DistanceOutput ---
 
 	/// Perform a linear shape cast of shape B moving and shape A fixed. Determines the hit point, normal, and translation fraction.
 	ShapeCast :: proc(input: ^ShapeCastPairInput) -> CastOutput ---
 
 	/// Make a proxy for use in GJK and related functions.
-	MakeProxy :: proc(vertices: ^Vec2, count: i32, radius: f32) -> ShapeProxy ---
+	MakeProxy :: proc(vertices: ^Vec2, count: c.int, radius: f32) -> ShapeProxy ---
 
 	/// Evaluate the transform sweep at a specific time.
 	GetSweepTransform :: proc(sweep: ^Sweep, time: f32) -> Transform ---
@@ -597,16 +597,16 @@ foreign lib {
 	DynamicTree_Destroy :: proc(tree: ^DynamicTree) ---
 
 	/// Create a proxy. Provide an AABB and a userData value.
-	DynamicTree_CreateProxy :: proc(tree: ^DynamicTree, aabb: AABB, categoryBits: u64, userData: i32) -> i32 ---
+	DynamicTree_CreateProxy :: proc(tree: ^DynamicTree, aabb: AABB, categoryBits: u64, userData: c.int) -> c.int ---
 
 	/// Destroy a proxy. This asserts if the id is invalid.
-	DynamicTree_DestroyProxy :: proc(tree: ^DynamicTree, proxyId: i32) ---
+	DynamicTree_DestroyProxy :: proc(tree: ^DynamicTree, proxyId: c.int) ---
 
 	/// Move a proxy to a new AABB by removing and reinserting into the tree.
-	DynamicTree_MoveProxy :: proc(tree: ^DynamicTree, proxyId: i32, aabb: AABB) ---
+	DynamicTree_MoveProxy :: proc(tree: ^DynamicTree, proxyId: c.int, aabb: AABB) ---
 
 	/// Enlarge a proxy and enlarge ancestors as necessary.
-	DynamicTree_EnlargeProxy :: proc(tree: ^DynamicTree, proxyId: i32, aabb: AABB) ---
+	DynamicTree_EnlargeProxy :: proc(tree: ^DynamicTree, proxyId: c.int, aabb: AABB) ---
 
 	/// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 	///	@return performance data
@@ -641,25 +641,25 @@ foreign lib {
 	DynamicTree_ShapeCast :: proc(tree: ^DynamicTree, input: ^ShapeCastInput, maskBits: u64, callback: TreeShapeCastCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Get the height of the binary tree.
-	DynamicTree_GetHeight :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetHeight :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Get the ratio of the sum of the node areas to the root area.
 	DynamicTree_GetAreaRatio :: proc(tree: ^DynamicTree) -> f32 ---
 
 	/// Get the number of proxies created
-	DynamicTree_GetProxyCount :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetProxyCount :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Rebuild the tree while retaining subtrees that haven't changed. Returns the number of boxes sorted.
-	DynamicTree_Rebuild :: proc(tree: ^DynamicTree, fullBuild: bool) -> i32 ---
+	DynamicTree_Rebuild :: proc(tree: ^DynamicTree, fullBuild: bool) -> c.int ---
 
 	/// Get the number of bytes used by this tree
-	DynamicTree_GetByteCount :: proc(tree: ^DynamicTree) -> i32 ---
+	DynamicTree_GetByteCount :: proc(tree: ^DynamicTree) -> c.int ---
 
 	/// Get proxy user data
-	DynamicTree_GetUserData :: proc(tree: ^DynamicTree, proxyId: i32) -> i32 ---
+	DynamicTree_GetUserData :: proc(tree: ^DynamicTree, proxyId: c.int) -> c.int ---
 
 	/// Get the AABB of a proxy
-	DynamicTree_GetAABB :: proc(tree: ^DynamicTree, proxyId: i32) -> AABB ---
+	DynamicTree_GetAABB :: proc(tree: ^DynamicTree, proxyId: c.int) -> AABB ---
 
 	/// Validate this tree. For testing.
 	DynamicTree_Validate :: proc(tree: ^DynamicTree) ---
