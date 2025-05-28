@@ -866,9 +866,13 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		if name_start == -1 {
 			return
 		}
-
-		if macro_token, _ := macros[value[name_start:name_end]]; macro_token.type == .Function {
+		
+		macro_name := value[name_start:name_end]
+		if macro_token, _ := macros[macro_name]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
+			if value^ == macro_name {
+				return
+			}
 			check_value_for_macro_and_expand(value, macros)
 		} else if macro_token.type == .Multivalue {
 			tmp := fmt.tprintf("%s%s", value[:name_start], strings.join(macro_token.values, ", ", context.temp_allocator))
@@ -1268,6 +1272,7 @@ c_type_mapping := map[string]string {
 	"bool" = "bool",
 	"Bool" = "bool", // I don't know why this needs to have a capital B, but it does.
 	"BOOL" = "bool", // bool is sometimes a macro for BOOL
+	"_Bool" = "bool",
 
 	"size_t"  = "c.size_t",
 	"ssize_t" = "c.ssize_t",
@@ -1368,7 +1373,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		return "cstring"
 	}
 
-	if t == "va_list" {
+	if t == "va_list" || t == "struct __va_list_tag *" {
 		return "^c.va_list"
 	}
 
@@ -1423,17 +1428,19 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		t = t[:array_start]
 	}
 
+	// check maps against this in case the header has a type which is exactly [prefix][mapped c type]
+	t_prefixed := strings.trim_space(t)
 	if t != s.remove_type_prefix {
 		t = trim_prefix(t, s.remove_type_prefix)
 	}
 
 	t = strings.trim_space(t)
 
-	if is_c_type(t) {
+	if is_c_type(t_prefixed) {
 		t = c_type_mapping[t]
-	} else if is_libc_type(t) {
+	} else if is_libc_type(t_prefixed) {
 		t = fmt.tprintf("libc.%v", t)
-	} else if is_posix_type(t) {
+	} else if is_posix_type(t_prefixed) {
 		t = fmt.tprintf("posix.%v",t)
 	} else if s.force_ada_case_types && t != "void" {
 		// It makes sense, in the case we can't find the type, to just follow our naming rules and
@@ -1599,7 +1606,7 @@ gen :: proc(input: string, c: Config) {
 	//
 
 	command := [dynamic]string {
-		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
+		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c", input,
 	}
 
 	for include in c.clang_include_paths {
@@ -2471,6 +2478,7 @@ gen :: proc(input: string, c: Config) {
 				w :: strings.write_string
 
 				proc_name := trim_prefix(d.name, s.remove_function_prefix)
+				proc_name = final_name(proc_name, s)
 				w(&b, proc_name)
 
 				for _ in 0..<longest_function_name-len(d.name) {
@@ -2509,7 +2517,7 @@ gen :: proc(input: string, c: Config) {
 						w(&b, ", ")
 					} else {
 						if d.variadic {
-						   w(&b,", #c_vararg _: ..any")
+						  w(&b,", #c_vararg _: ..any")
 						}
 					}
 				}
@@ -2587,7 +2595,7 @@ main :: proc() {
 	} else if os.is_dir(input_arg) {
 		config_dir = input_arg
 	} else {
-        fmt.panicf("%v is not a directory nor a valid config file", input_arg)
+		fmt.panicf("%v is not a directory nor a valid config file", input_arg)
 	}
 
 	// Config file is optional
