@@ -154,7 +154,7 @@ foreign lib {
 	DictSetObj          :: proc(dict: ^dict_t, key: cstring, value: ^obj_t) -> bool ---
 	DictSetRect         :: proc(dict: ^dict_t, key: cstring, value: ^rect_t) -> bool ---
 	DictSetString       :: proc(dict: ^dict_t, key: cstring, value: cstring) -> bool ---
-	DictSetStringf      :: proc(dict: ^dict_t, key: cstring, format: cstring) -> bool ---
+	DictSetStringf      :: proc(dict: ^dict_t, key: cstring, format: cstring, #c_vararg _: ..any) -> bool ---
 	FileClose           :: proc(pdf: ^file_t) -> bool ---
 	FileCreate          :: proc(filename: cstring, version: cstring, media_box: ^rect_t, crop_box: ^rect_t, error_cb: error_cb_t, error_data: rawptr) -> ^file_t ---
 	FileCreateArrayObj  :: proc(pdf: ^file_t, array: ^array_t) -> ^obj_t ---
@@ -211,11 +211,11 @@ foreign lib {
 	StreamConsume       :: proc(st: ^stream_t, bytes: c.size_t) -> bool ---
 	StreamGetToken      :: proc(st: ^stream_t, buffer: [^]cstring, bufsize: c.size_t) -> bool ---
 	StreamPeek          :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> c.ssize_t ---
-	StreamPrintf        :: proc(st: ^stream_t, format: cstring) -> bool ---
+	StreamPrintf        :: proc(st: ^stream_t, format: cstring, #c_vararg _: ..any) -> bool ---
 	StreamPutChar       :: proc(st: ^stream_t, ch: c.int) -> bool ---
 	StreamPuts          :: proc(st: ^stream_t, s: cstring) -> bool ---
 	StreamRead          :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> c.ssize_t ---
 	StreamWrite         :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> bool ---
 	StringCreate        :: proc(pdf: ^file_t, s: cstring) -> cstring ---
-	StringCreatef       :: proc(pdf: ^file_t, format: cstring) -> cstring ---
+	StringCreatef       :: proc(pdf: ^file_t, format: cstring, #c_vararg _: ..any) -> cstring ---
 }

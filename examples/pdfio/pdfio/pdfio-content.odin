@@ -108,10 +108,10 @@ foreign lib {
 	ContentTextMoveTo               :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
 	ContentTextNewLine              :: proc(st: ^stream_t) -> bool ---
 	ContentTextNewLineShow          :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, s: cstring) -> bool ---
-	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, format: cstring) -> bool ---
+	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, format: cstring, #c_vararg _: ..any) -> bool ---
 	ContentTextNextLine             :: proc(st: ^stream_t) -> bool ---
 	ContentTextShow                 :: proc(st: ^stream_t, unicode: bool, s: cstring) -> bool ---
-	ContentTextShowf                :: proc(st: ^stream_t, unicode: bool, format: cstring) -> bool ---
+	ContentTextShowf                :: proc(st: ^stream_t, unicode: bool, format: cstring, #c_vararg _: ..any) -> bool ---
 	ContentTextShowJustified        :: proc(st: ^stream_t, unicode: bool, num_fragments: c.size_t, offsets: ^f64, fragments: [^]cstring) -> bool ---
 
 	// Resource helpers...

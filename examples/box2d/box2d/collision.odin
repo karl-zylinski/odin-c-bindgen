@@ -8,6 +8,16 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+/**
+ * @defgroup geometry Geometry
+ * @brief Geometry types and algorithms
+ *
+ * Definitions of circles, capsules, segments, and polygons. Various algorithms to compute hulls, mass properties, and so on.
+ * @{
+ */
+
+/// The maximum number of vertices on a convex polygon. Changing this affects performance even if you
+/// don't use more vertices.
 MAX_POLYGON_VERTICES :: 8
 
 /// Low level ray cast input data
