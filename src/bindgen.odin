@@ -871,7 +871,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 		if macro_token, _ := macros[macro_name]; macro_token.type == .Function {
 			value^ = expand_fn_macro(value, name_start, name_end, macro_token, macros)
 			if value^ == macro_name {
-			  return
+				return
 			}
 			check_value_for_macro_and_expand(value, macros)
 		} else if macro_token.type == .Multivalue {
@@ -1606,7 +1606,7 @@ gen :: proc(input: string, c: Config) {
 	//
 
 	command := [dynamic]string {
-		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c",  input,
+		"clang", "-Xclang", "-ast-dump=json", "-fparse-all-comments", "-c", input,
 	}
 
 	for include in c.clang_include_paths {
@@ -2517,7 +2517,7 @@ gen :: proc(input: string, c: Config) {
 						w(&b, ", ")
 					} else {
 						if d.variadic {
-						   w(&b,", #c_vararg _: ..any")
+						  w(&b,", #c_vararg _: ..any")
 						}
 					}
 				}
@@ -2595,7 +2595,7 @@ main :: proc() {
 	} else if os.is_dir(input_arg) {
 		config_dir = input_arg
 	} else {
-        fmt.panicf("%v is not a directory nor a valid config file", input_arg)
+		fmt.panicf("%v is not a directory nor a valid config file", input_arg)
 	}
 
 	// Config file is optional
