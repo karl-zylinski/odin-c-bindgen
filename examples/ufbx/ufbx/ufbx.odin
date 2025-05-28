@@ -51,13 +51,13 @@ Real :: f32
 // Null-terminated UTF-8 encoded string within an FBX file
 String :: struct {
 	data:   cstring,
-	length: uint,
+	length: c.size_t,
 }
 
 // Opaque byte buffer blob
 Blob :: struct {
 	data: rawptr,
-	size: uint,
+	size: c.size_t,
 }
 
 // 2D vector
@@ -114,42 +114,42 @@ Matrix :: struct {
 
 Void_List :: struct {
 	data:  rawptr,
-	count: uint,
+	count: c.size_t,
 }
 
 Bool_List :: struct {
 	data:  ^bool,
-	count: uint,
+	count: c.size_t,
 }
 
 Uint32_List :: struct {
 	data:  [^]u32,
-	count: uint,
+	count: c.size_t,
 }
 
 Real_List :: struct {
 	data:  ^Real,
-	count: uint,
+	count: c.size_t,
 }
 
 Vec2_List :: struct {
 	data:  [^]Vec2,
-	count: uint,
+	count: c.size_t,
 }
 
 Vec3_List :: struct {
 	data:  [^]Vec3,
-	count: uint,
+	count: c.size_t,
 }
 
 Vec4_List :: struct {
 	data:  [^]Vec4,
-	count: uint,
+	count: c.size_t,
 }
 
 String_List :: struct {
 	data:  ^String,
-	count: uint,
+	count: c.size_t,
 }
 
 // Sentinel value used to represent a missing index.
@@ -181,12 +181,12 @@ Dom_Value :: struct {
 
 Dom_Node_List :: struct {
 	data:  ^^Dom_Node,
-	count: uint,
+	count: c.size_t,
 }
 
 Dom_Value_List :: struct {
 	data:  ^Dom_Value,
-	count: uint,
+	count: c.size_t,
 }
 
 Dom_Node :: struct {
@@ -341,7 +341,7 @@ Prop :: struct {
 
 Prop_List :: struct {
 	data:  ^Prop,
-	count: uint,
+	count: c.size_t,
 }
 
 // List of alphabetically sorted properties with potential defaults.
@@ -349,223 +349,223 @@ Prop_List :: struct {
 // only has the animated properties, the originals are stored under `defaults`.
 Props :: struct {
 	props:        Prop_List,
-	num_animated: uint,
+	num_animated: c.size_t,
 	defaults:     ^Props,
 }
 
 Element_List :: struct {
 	data:  ^^Element,
-	count: uint,
+	count: c.size_t,
 }
 
 Unknown_List :: struct {
 	data:  ^^Unknown,
-	count: uint,
+	count: c.size_t,
 }
 
 Node_List :: struct {
 	data:  [^]^Node,
-	count: uint,
+	count: c.size_t,
 }
 
 Mesh_List :: struct {
 	data:  ^^Mesh,
-	count: uint,
+	count: c.size_t,
 }
 
 Light_List :: struct {
 	data:  ^^Light,
-	count: uint,
+	count: c.size_t,
 }
 
 Camera_List :: struct {
 	data:  ^^Camera,
-	count: uint,
+	count: c.size_t,
 }
 
 Bone_List :: struct {
 	data:  ^^Bone,
-	count: uint,
+	count: c.size_t,
 }
 
 Empty_List :: struct {
 	data:  ^^Empty,
-	count: uint,
+	count: c.size_t,
 }
 
 Line_Curve_List :: struct {
 	data:  ^^Line_Curve,
-	count: uint,
+	count: c.size_t,
 }
 
 Nurbs_Curve_List :: struct {
 	data:  ^^Nurbs_Curve,
-	count: uint,
+	count: c.size_t,
 }
 
 Nurbs_Surface_List :: struct {
 	data:  ^^Nurbs_Surface,
-	count: uint,
+	count: c.size_t,
 }
 
 Nurbs_Trim_Surface_List :: struct {
 	data:  ^^Nurbs_Trim_Surface,
-	count: uint,
+	count: c.size_t,
 }
 
 Nurbs_Trim_Boundary_List :: struct {
 	data:  ^^Nurbs_Trim_Boundary,
-	count: uint,
+	count: c.size_t,
 }
 
 Procedural_Geometry_List :: struct {
 	data:  ^^Procedural_Geometry,
-	count: uint,
+	count: c.size_t,
 }
 
 Stereo_Camera_List :: struct {
 	data:  ^^Stereo_Camera,
-	count: uint,
+	count: c.size_t,
 }
 
 Camera_Switcher_List :: struct {
 	data:  ^^Camera_Switcher,
-	count: uint,
+	count: c.size_t,
 }
 
 Marker_List :: struct {
 	data:  ^^Marker,
-	count: uint,
+	count: c.size_t,
 }
 
 Lod_Group_List :: struct {
 	data:  ^^Lod_Group,
-	count: uint,
+	count: c.size_t,
 }
 
 Skin_Deformer_List :: struct {
 	data:  ^^Skin_Deformer,
-	count: uint,
+	count: c.size_t,
 }
 
 Skin_Cluster_List :: struct {
 	data:  ^^Skin_Cluster,
-	count: uint,
+	count: c.size_t,
 }
 
 Blend_Deformer_List :: struct {
 	data:  ^^Blend_Deformer,
-	count: uint,
+	count: c.size_t,
 }
 
 Blend_Channel_List :: struct {
 	data:  ^^Blend_Channel,
-	count: uint,
+	count: c.size_t,
 }
 
 Blend_Shape_List :: struct {
 	data:  ^^Blend_Shape,
-	count: uint,
+	count: c.size_t,
 }
 
 Cache_Deformer_List :: struct {
 	data:  ^^Cache_Deformer,
-	count: uint,
+	count: c.size_t,
 }
 
 Cache_File_List :: struct {
 	data:  ^^Cache_File,
-	count: uint,
+	count: c.size_t,
 }
 
 Material_List :: struct {
 	data:  ^^Material,
-	count: uint,
+	count: c.size_t,
 }
 
 Texture_List :: struct {
 	data:  ^^Texture,
-	count: uint,
+	count: c.size_t,
 }
 
 Video_List :: struct {
 	data:  ^^Video,
-	count: uint,
+	count: c.size_t,
 }
 
 Shader_List :: struct {
 	data:  ^^Shader,
-	count: uint,
+	count: c.size_t,
 }
 
 Shader_Binding_List :: struct {
 	data:  ^^Shader_Binding,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Stack_List :: struct {
 	data:  ^^Anim_Stack,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Layer_List :: struct {
 	data:  ^^Anim_Layer,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Value_List :: struct {
 	data:  ^^Anim_Value,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Curve_List :: struct {
 	data:  ^^Anim_Curve,
-	count: uint,
+	count: c.size_t,
 }
 
 Display_Layer_List :: struct {
 	data:  ^^Display_Layer,
-	count: uint,
+	count: c.size_t,
 }
 
 Selection_Set_List :: struct {
 	data:  ^^Selection_Set,
-	count: uint,
+	count: c.size_t,
 }
 
 Selection_Node_List :: struct {
 	data:  ^^Selection_Node,
-	count: uint,
+	count: c.size_t,
 }
 
 Character_List :: struct {
 	data:  ^^Character,
-	count: uint,
+	count: c.size_t,
 }
 
 Constraint_List :: struct {
 	data:  ^^Constraint,
-	count: uint,
+	count: c.size_t,
 }
 
 Audio_Layer_List :: struct {
 	data:  ^^Audio_Layer,
-	count: uint,
+	count: c.size_t,
 }
 
 Audio_Clip_List :: struct {
 	data:  ^^Audio_Clip,
-	count: uint,
+	count: c.size_t,
 }
 
 Pose_List :: struct {
 	data:  ^^Pose,
-	count: uint,
+	count: c.size_t,
 }
 
 Metadata_Object_List :: struct {
 	data:  ^^Metadata_Object,
-	count: uint,
+	count: c.size_t,
 }
 
 Element_Type :: enum c.int {
@@ -630,7 +630,7 @@ Connection :: struct {
 
 Connection_List :: struct {
 	data:  ^Connection,
-	count: uint,
+	count: c.size_t,
 }
 
 // Element "base-class" common to each element.
@@ -886,7 +886,7 @@ Vertex_Attrib :: struct {
 	indices: Uint32_List,
 
 	// Number of `ufbx_real` entries per value.
-	value_reals: uint,
+	value_reals: c.size_t,
 
 	// `true` if this attribute is defined per vertex, instead of per index.
 	unique_per_vertex: bool,
@@ -905,7 +905,7 @@ Vertex_Real :: struct {
 	exists:            bool,
 	values:            Real_List,
 	indices:           Uint32_List,
-	value_reals:       uint,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
@@ -915,7 +915,7 @@ Vertex_Vec2 :: struct {
 	exists:            bool,
 	values:            Vec2_List,
 	indices:           Uint32_List,
-	value_reals:       uint,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
@@ -925,7 +925,7 @@ Vertex_Vec3 :: struct {
 	exists:            bool,
 	values:            Vec3_List,
 	indices:           Uint32_List,
-	value_reals:       uint,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
@@ -935,7 +935,7 @@ Vertex_Vec4 :: struct {
 	exists:            bool,
 	values:            Vec4_List,
 	indices:           Uint32_List,
-	value_reals:       uint,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
@@ -958,12 +958,12 @@ Color_Set :: struct {
 
 Uv_Set_List :: struct {
 	data:  ^Uv_Set,
-	count: uint,
+	count: c.size_t,
 }
 
 Color_Set_List :: struct {
 	data:  ^Color_Set,
-	count: uint,
+	count: c.size_t,
 }
 
 // Edge between two _indices_ in a mesh
@@ -978,7 +978,7 @@ Edge :: struct {
 
 Edge_List :: struct {
 	data:  ^Edge,
-	count: uint,
+	count: c.size_t,
 }
 
 // Polygonal face with arbitrary number vertices, a single face contains a
@@ -993,18 +993,18 @@ Face :: struct {
 
 Face_List :: struct {
 	data:  [^]Face,
-	count: uint,
+	count: c.size_t,
 }
 
 // Subset of mesh faces used by a single material or group.
 Mesh_Part :: struct {
 	// Index of the mesh part.
 	index: u32,
-	num_faces:       uint, // < Number of faces (polygons)
-	num_triangles:   uint, // < Number of triangles if triangulated
-	num_empty_faces: uint, // < Number of faces with zero vertices
-	num_point_faces: uint, // < Number of faces with a single vertex
-	num_line_faces:  uint, // < Number of faces with two vertices
+	num_faces:       c.size_t, // < Number of faces (polygons)
+	num_triangles:   c.size_t, // < Number of triangles if triangulated
+	num_empty_faces: c.size_t, // < Number of faces with zero vertices
+	num_point_faces: c.size_t, // < Number of faces with a single vertex
+	num_line_faces:  c.size_t, // < Number of faces with two vertices
 
 	// Indices to `ufbx_mesh.faces[]`.
 	// Always contains `num_faces` elements.
@@ -1013,7 +1013,7 @@ Mesh_Part :: struct {
 
 Mesh_Part_List :: struct {
 	data:  ^Mesh_Part,
-	count: uint,
+	count: c.size_t,
 }
 
 Face_Group :: struct {
@@ -1023,7 +1023,7 @@ Face_Group :: struct {
 
 Face_Group_List :: struct {
 	data:  ^Face_Group,
-	count: uint,
+	count: c.size_t,
 }
 
 Subdivision_Weight_Range :: struct {
@@ -1033,7 +1033,7 @@ Subdivision_Weight_Range :: struct {
 
 Subdivision_Weight_Range_List :: struct {
 	data:  ^Subdivision_Weight_Range,
-	count: uint,
+	count: c.size_t,
 }
 
 Subdivision_Weight :: struct {
@@ -1043,14 +1043,14 @@ Subdivision_Weight :: struct {
 
 Subdivision_Weight_List :: struct {
 	data:  ^Subdivision_Weight,
-	count: uint,
+	count: c.size_t,
 }
 
 Subdivision_Result :: struct {
-	result_memory_used:    uint,
-	temp_memory_used:      uint,
-	result_allocs:         uint,
-	temp_allocs:           uint,
+	result_memory_used:    c.size_t,
+	temp_memory_used:      c.size_t,
+	result_allocs:         c.size_t,
+	temp_allocs:           c.size_t,
 
 	// Weights of vertices in the source model.
 	// Defined if `ufbx_subdivide_opts.evaluate_source_vertices` is set.
@@ -1151,18 +1151,18 @@ Mesh :: struct {
 			instances:  Node_List,
 		},
 	},
-	num_vertices:              uint,        // < Number of logical "vertex" points
-	num_indices:               uint,        // < Number of combiend vertex/attribute tuples
-	num_faces:                 uint,        // < Number of faces (polygons) in the mesh
-	num_triangles:             uint,        // < Number of triangles if triangulated
+	num_vertices:              c.size_t,    // < Number of logical "vertex" points
+	num_indices:               c.size_t,    // < Number of combiend vertex/attribute tuples
+	num_faces:                 c.size_t,    // < Number of faces (polygons) in the mesh
+	num_triangles:             c.size_t,    // < Number of triangles if triangulated
 
 	// Number of edges in the mesh.
 	// NOTE: May be zero in valid meshes if the file doesn't contain edge adjacency data!
-	num_edges: uint,
-	max_face_triangles:        uint,        // < Maximum number of triangles in a  face in this mesh
-	num_empty_faces:           uint,        // < Number of faces with zero vertices
-	num_point_faces:           uint,        // < Number of faces with a single vertex
-	num_line_faces:            uint,        // < Number of faces with two vertices
+	num_edges: c.size_t,
+	max_face_triangles:        c.size_t,    // < Maximum number of triangles in a  face in this mesh
+	num_empty_faces:           c.size_t,    // < Number of faces with zero vertices
+	num_point_faces:           c.size_t,    // < Number of faces with a single vertex
+	num_line_faces:            c.size_t,    // < Number of faces with two vertices
 	faces:                     Face_List,   // < Face index range
 	face_smoothing:            Bool_List,   // < Should the face have soft normals
 	face_material:             Uint32_List, // < Indices to `ufbx_mesh.materials[]` and `ufbx_node.materials[]`
@@ -1562,7 +1562,7 @@ Line_Segment :: struct {
 
 Line_Segment_List :: struct {
 	data:  ^Line_Segment,
-	count: uint,
+	count: c.size_t,
 }
 
 Line_Curve :: struct {
@@ -1627,7 +1627,7 @@ Nurbs_Basis :: struct {
 	// the first 3 control points after the end.
 	// HINT: You don't need to worry about this if you use ufbx functions
 	// like `ufbx_evaluate_nurbs_curve()` as they handle this internally.
-	num_wrap_control_points: uint,
+	num_wrap_control_points: c.size_t,
 
 	// `true` if the parametrization is well defined.
 	valid: bool,
@@ -1671,8 +1671,8 @@ Nurbs_Surface :: struct {
 	basis_v:              Nurbs_Basis,
 
 	// Number of control points for the U/V axes
-	num_control_points_u: uint,
-	num_control_points_v: uint,
+	num_control_points_u: c.size_t,
+	num_control_points_v: c.size_t,
 
 	// 2D array of control points.
 	// Memory layout: `V * num_control_points_u + U`
@@ -1812,7 +1812,7 @@ Lod_Level :: struct {
 
 Lod_Level_List :: struct {
 	data:  ^Lod_Level,
-	count: uint,
+	count: c.size_t,
 }
 
 // Group of LOD (Level of Detail) levels for an object.
@@ -1879,7 +1879,7 @@ Skin_Vertex :: struct {
 
 Skin_Vertex_List :: struct {
 	data:  ^Skin_Vertex,
-	count: uint,
+	count: c.size_t,
 }
 
 // Single per-vertex per-cluster weight, see `ufbx_skin_vertex`
@@ -1890,7 +1890,7 @@ Skin_Weight :: struct {
 
 Skin_Weight_List :: struct {
 	data:  ^Skin_Weight,
-	count: uint,
+	count: c.size_t,
 }
 
 // Skin deformer specifies a binding between a logical set of bones (a skeleton)
@@ -1916,12 +1916,12 @@ Skin_Deformer :: struct {
 	weights:         Skin_Weight_List,
 
 	// Largest amount of weights a single vertex can have
-	max_weights_per_vertex: uint,
+	max_weights_per_vertex: c.size_t,
 
 	// Blend weights between Linear Blend Skinning (0.0) and Dual Quaternion (1.0).
 	// HINT: You probably want to use `vertices` and `ufbx_skin_vertex.dq_weight` instead!
 	// NOTE: These may be out-of-bounds for a given mesh, `vertices` is always safe.
-	num_dq_weights: uint,
+	num_dq_weights: c.size_t,
 	dq_vertices:     Uint32_List,
 	dq_weights:      Real_List,
 }
@@ -1958,7 +1958,7 @@ Skin_Cluster :: struct {
 	// ie. `ufbx_matrix_mul(&cluster->bone->node_to_world, &cluster->geometry_to_bone)`
 	geometry_to_world: Matrix,
 	geometry_to_world_transform: Transform,
-	num_weights:                 uint,        // < Number of vertices in the cluster
+	num_weights:                 c.size_t,    // < Number of vertices in the cluster
 	vertices:                    Uint32_List, // < Vertex indices in `ufbx_mesh.vertices[]`
 	weights:                     Real_List,   // < Per-vertex weight values
 }
@@ -1994,7 +1994,7 @@ Blend_Keyframe :: struct {
 
 Blend_Keyframe_List :: struct {
 	data:  ^Blend_Keyframe,
-	count: uint,
+	count: c.size_t,
 }
 
 // Blend channel consists of multiple morph-key targets that are interpolated.
@@ -2032,7 +2032,7 @@ Blend_Shape :: struct {
 			typed_id:   u32,
 		},
 	},
-	num_offsets:      uint,        // < Number of vertex offsets in the following arrays
+	num_offsets:      c.size_t,    // < Number of vertex offsets in the following arrays
 	offset_vertices:  Uint32_List, // < Indices to `ufbx_mesh.vertices[]`
 	position_offsets: Vec3_List,   // < Always specified per-vertex offsets
 	normal_offsets:   Vec3_List,   // < Empty if not specified
@@ -2116,7 +2116,7 @@ Cache_Frame :: struct {
 
 Cache_Frame_List :: struct {
 	data:  ^Cache_Frame,
-	count: uint,
+	count: c.size_t,
 }
 
 Cache_Channel :: struct {
@@ -2143,7 +2143,7 @@ Cache_Channel :: struct {
 
 Cache_Channel_List :: struct {
 	data:  ^Cache_Channel,
-	count: uint,
+	count: c.size_t,
 }
 
 Geometry_Cache :: struct {
@@ -2265,7 +2265,7 @@ Material_Texture :: struct {
 
 Material_Texture_List :: struct {
 	data:  ^Material_Texture,
-	count: uint,
+	count: c.size_t,
 }
 
 // Shading model type
@@ -2682,7 +2682,7 @@ Texture_Layer :: struct {
 
 Texture_Layer_List :: struct {
 	data:  ^Texture_Layer,
-	count: uint,
+	count: c.size_t,
 }
 
 Shader_Texture_Type :: enum c.int {
@@ -2740,7 +2740,7 @@ Shader_Texture_Input :: struct {
 
 Shader_Texture_Input_List :: struct {
 	data:  ^Shader_Texture_Input,
-	count: uint,
+	count: c.size_t,
 }
 
 // Texture that emulates a shader graph node.
@@ -2816,7 +2816,7 @@ Texture_File :: struct {
 
 Texture_File_List :: struct {
 	data:  ^Texture_File,
-	count: uint,
+	count: c.size_t,
 }
 
 // Texture that controls material appearance
@@ -2963,7 +2963,7 @@ Shader_Prop_Binding :: struct {
 
 Shader_Prop_Binding_List :: struct {
 	data:  ^Shader_Prop_Binding,
-	count: uint,
+	count: c.size_t,
 }
 
 // Shader binding table
@@ -2992,7 +2992,7 @@ Prop_Override :: struct {
 
 Prop_Override_List :: struct {
 	data:  ^Prop_Override,
-	count: uint,
+	count: c.size_t,
 }
 
 Transform_Override :: struct {
@@ -3002,7 +3002,7 @@ Transform_Override :: struct {
 
 Transform_Override_List :: struct {
 	data:  ^Transform_Override,
-	count: uint,
+	count: c.size_t,
 }
 
 // Animation descriptor used for evaluating animation.
@@ -3060,7 +3060,7 @@ Anim_Prop :: struct {
 
 Anim_Prop_List :: struct {
 	data:  ^Anim_Prop,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Layer :: struct {
@@ -3159,7 +3159,7 @@ Keyframe :: struct {
 
 Keyframe_List :: struct {
 	data:  ^Keyframe,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Curve :: struct {
@@ -3287,7 +3287,7 @@ Constraint_Target :: struct {
 
 Constraint_Target_List :: struct {
 	data:  ^Constraint_Target,
-	count: uint,
+	count: c.size_t,
 }
 
 // Method to determine the up vector in aim constraints
@@ -3427,7 +3427,7 @@ Bone_Pose :: struct {
 
 Bone_Pose_List :: struct {
 	data:  ^Bone_Pose,
-	count: uint,
+	count: c.size_t,
 }
 
 Pose :: struct {
@@ -3471,7 +3471,7 @@ Name_Element :: struct {
 
 Name_Element_List :: struct {
 	data:  ^Name_Element,
-	count: uint,
+	count: c.size_t,
 }
 
 // Scene is the root object loaded by ufbx that everything is accessed from.
@@ -3577,12 +3577,12 @@ Warning :: struct {
 	element_id: u32,
 
 	// Number of times this warning was encountered.
-	count: uint,
+	count: c.size_t,
 }
 
 Warning_List :: struct {
 	data:  ^Warning,
-	count: uint,
+	count: c.size_t,
 }
 
 Thumbnail_Format :: enum c.int {
@@ -3685,13 +3685,13 @@ Metadata :: struct {
 	geometry_ignored:               bool,
 	animation_ignored:              bool,
 	embedded_ignored:               bool,
-	max_face_triangles:             uint,
-	result_memory_used:             uint,
-	temp_memory_used:               uint,
-	result_allocs:                  uint,
-	temp_allocs:                    uint,
-	element_buffer_size:            uint,
-	num_shader_textures:            uint,
+	max_face_triangles:             c.size_t,
+	result_memory_used:             c.size_t,
+	temp_memory_used:               c.size_t,
+	result_allocs:                  c.size_t,
+	temp_allocs:                    c.size_t,
+	element_buffer_size:            c.size_t,
+	num_shader_textures:            c.size_t,
 	bone_prop_size_unit:            Real,
 	bone_prop_limb_length_relative: bool,
 	ortho_size_unit:                Real,
@@ -3916,22 +3916,22 @@ Topo_Edge :: struct {
 // NOTE: `ufbx_generate_indices()` compares the vertices using `memcmp()`, so
 // any padding should be cleared to zero.
 Vertex_Stream :: struct {
-	data:         rawptr, // < Data pointer of shape `char[vertex_count][vertex_size]`.
-	vertex_count: uint,   // < Number of vertices in this stream, for sanity checking.
-	vertex_size:  uint,   // < Size of a vertex in bytes.
+	data:         rawptr,   // < Data pointer of shape `char[vertex_count][vertex_size]`.
+	vertex_count: c.size_t, // < Number of vertices in this stream, for sanity checking.
+	vertex_size:  c.size_t, // < Size of a vertex in bytes.
 }
 
 // Allocate `size` bytes, must be at least 8 byte aligned
-Alloc_Fn :: proc "c" (rawptr, uint) -> rawptr
+Alloc_Fn :: proc "c" (rawptr, c.size_t) -> rawptr
 
 // Reallocate `old_ptr` from `old_size` to `new_size`
 // NOTE: If omit `alloc_fn` and `free_fn` they will be translated to:
 //   `alloc(size)` -> `realloc_fn(user, NULL, 0, size)`
 //   `free_fn(ptr, size)` ->  `realloc_fn(user, ptr, size, 0)`
-Realloc_Fn :: proc "c" (rawptr, rawptr, uint, uint) -> rawptr
+Realloc_Fn :: proc "c" (rawptr, rawptr, c.size_t, c.size_t) -> rawptr
 
 // Free pointer `ptr` (of `size` bytes) returned by `alloc_fn` or `realloc_fn`
-Free_Fn :: proc "c" (rawptr, rawptr, uint)
+Free_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 // Free the allocator itself
 Free_Allocator_Fn :: proc "c" (rawptr)
@@ -3954,16 +3954,16 @@ Allocator_Opts :: struct {
 	allocator: Allocator,
 
 	// Maximum number of bytes to allocate before failing
-	memory_limit: uint,
+	memory_limit: c.size_t,
 
 	// Maximum number of allocations to attempt before failing
-	allocation_limit: uint,
+	allocation_limit: c.size_t,
 
 	// Threshold to swap from batched allocations to individual ones
 	// Defaults to 1MB if set to zero
 	// NOTE: If set to `1` ufbx will allocate everything in the smallest
 	// possible chunks which may be useful for debugging (eg. ASAN)
-	huge_threshold: uint,
+	huge_threshold: c.size_t,
 
 	// Maximum size of a single allocation containing sub-allocations.
 	// Defaults to 16MB if set to zero
@@ -3975,15 +3975,15 @@ Allocator_Opts :: struct {
 	// slightly as the chunks start out at 4kB and double in size each time,
 	// meaning that the maximum fixed overhead (up to 32MB with defaults) is
 	// at most ~30% of the total allocation size.
-	max_chunk_size: uint,
+	max_chunk_size: c.size_t,
 }
 
 // Try to read up to `size` bytes to `data`, return the amount of read bytes.
 // Return `SIZE_MAX` to indicate an IO error.
-Read_Fn :: proc "c" (rawptr, rawptr, uint) -> uint
+Read_Fn :: proc "c" (rawptr, rawptr, c.size_t) -> c.size_t
 
 // Skip `size` bytes in the file.
-Skip_Fn :: proc "c" (rawptr, uint) -> bool
+Skip_Fn :: proc "c" (rawptr, c.size_t) -> bool
 
 // Get the size of the file.
 // Return `0` if unknown, `UINT64_MAX` if error.
@@ -4011,7 +4011,7 @@ Open_File_Type :: enum c.int {
 
 OPEN_FILE_TYPE_COUNT :: 3
 
-Open_File_Context :: uintptr
+Open_File_Context :: c.uintptr_t
 
 Open_File_Info :: struct {
 	// Context that can be passed to the following functions to use a shared allocator:
@@ -4028,7 +4028,7 @@ Open_File_Info :: struct {
 }
 
 // Callback for opening an external file from the filesystem
-Open_File_Fn :: proc "c" (rawptr, ^Stream, cstring, uint, ^Open_File_Info) -> bool
+Open_File_Fn :: proc "c" (rawptr, ^Stream, cstring, c.size_t, ^Open_File_Info) -> bool
 
 Open_File_Cb :: struct {
 	fn:   Open_File_Fn,
@@ -4048,7 +4048,7 @@ Open_File_Opts :: struct {
 }
 
 // Memory stream options
-Close_Memory_Fn :: proc "c" (rawptr, rawptr, uint)
+Close_Memory_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 Close_Memory_Cb :: struct {
 	fn:   Close_Memory_Fn,
@@ -4189,8 +4189,8 @@ Error :: struct {
 
 	// Additional error information, such as missing file filename.
 	// `info` is a NULL-terminated UTF-8 string containing `info_length` bytes, excluding the trailing `'\0'`.
-	info_length: uint,
-	info:  [256]u8,
+	info_length: c.size_t,
+	info:  [256]c.char,
 }
 
 // Loading progress information.
@@ -4222,15 +4222,15 @@ Progress_Cb :: struct {
 // Source data/stream to decompress with `ufbx_inflate()`
 Inflate_Input :: struct {
 	// Total size of the data in bytes
-	total_size: uint,
+	total_size: c.size_t,
 
 	// (optional) Initial or complete data chunk
 	data: rawptr,
-	data_size:              uint,
+	data_size:              c.size_t,
 
 	// (optional) Temporary buffer, defaults to 256b stack buffer
 	buffer: rawptr,
-	buffer_size:            uint,
+	buffer_size:            c.size_t,
 
 	// (optional) Streaming read function, concatenated after `data`
 	read_fn: Read_Fn,
@@ -4251,7 +4251,7 @@ Inflate_Input :: struct {
 	no_checksum: bool,
 
 	// (optional) Force internal fast lookup bit amount
-	internal_fast_bits: uint,
+	internal_fast_bits: c.size_t,
 }
 
 // Persistent data between `ufbx_inflate()` calls
@@ -4431,7 +4431,7 @@ Baked_Vec3 :: struct {
 
 Baked_Vec3_List :: struct {
 	data:  ^Baked_Vec3,
-	count: uint,
+	count: c.size_t,
 }
 
 Baked_Quat :: struct {
@@ -4442,7 +4442,7 @@ Baked_Quat :: struct {
 
 Baked_Quat_List :: struct {
 	data:  ^Baked_Quat,
-	count: uint,
+	count: c.size_t,
 }
 
 // Baked transform animation for a single node.
@@ -4474,7 +4474,7 @@ Baked_Node :: struct {
 
 Baked_Node_List :: struct {
 	data:  ^Baked_Node,
-	count: uint,
+	count: c.size_t,
 }
 
 // Baked property animation.
@@ -4491,7 +4491,7 @@ Baked_Prop :: struct {
 
 Baked_Prop_List :: struct {
 	data:  ^Baked_Prop,
-	count: uint,
+	count: c.size_t,
 }
 
 // Baked property animation for a single element.
@@ -4505,15 +4505,15 @@ Baked_Element :: struct {
 
 Baked_Element_List :: struct {
 	data:  ^Baked_Element,
-	count: uint,
+	count: c.size_t,
 }
 
 Baked_Anim_Metadata :: struct {
 	// Memory statistics
-	result_memory_used: uint,
-	temp_memory_used: uint,
-	result_allocs:    uint,
-	temp_allocs:      uint,
+	result_memory_used: c.size_t,
+	temp_memory_used: c.size_t,
+	result_allocs:    c.size_t,
+	temp_allocs:      c.size_t,
 }
 
 // Animation baked into linearly interpolated keyframes.
@@ -4544,7 +4544,7 @@ Baked_Anim :: struct {
 // Internal thread pool handle.
 // Passed to `ufbx_thread_pool_run_task()` from an user thread to run ufbx tasks.
 // HINT: This context can store a user pointer via `ufbx_thread_pool_set_user_ptr()`.
-Thread_Pool_Context :: uintptr
+Thread_Pool_Context :: c.uintptr_t
 
 // Thread pool creation information from ufbx.
 Thread_Pool_Info :: struct {
@@ -4595,13 +4595,13 @@ Thread_Opts :: struct {
 
 	// Maximum of tasks to have in-flight.
 	// Default: 2048
-	num_tasks: uint,
+	num_tasks: c.size_t,
 
 	// Maximum amount of memory to use for batched threaded processing.
 	// Default: 32MB
 	// NOTE: The actual used memory usage might be higher, if there are individual tasks
 	// that rqeuire a high amount of memory.
-	memory_limit: uint,
+	memory_limit: c.size_t,
 }
 
 // Flags to control nanimation evaluation functions.
@@ -4698,7 +4698,7 @@ Load_Opts :: struct {
 	open_main_file_with_default: bool,
 
 	// Path separator character, defaults to '\' on Windows and '/' otherwise.
-	path_separator: u8,
+	path_separator: c.char,
 
 	// Maximum depth of the node hirerachy.
 	// Will fail with `UFBX_ERROR_NODE_DEPTH_LIMIT` if a node is deeper than this limit.
@@ -4710,7 +4710,7 @@ Load_Opts :: struct {
 	file_size_estimate: u64,
 
 	// Buffer size in bytes to use for reading from files or IO callbacks
-	read_buffer_size: uint,
+	read_buffer_size: c.size_t,
 
 	// Filename to use as a base for relative file paths if not specified using
 	// `ufbx_load_file()`. Use `length = SIZE_MAX` for NULL-terminated strings.
@@ -4809,7 +4809,7 @@ Load_Opts :: struct {
 
 	// How far to read into the file to determine the file format.
 	// Default: 16kB
-	file_format_lookahead: uint,
+	file_format_lookahead: c.size_t,
 
 	// Do not attempt to detect file format from file content.
 	no_format_from_content: bool,
@@ -4878,12 +4878,12 @@ Evaluate_Opts :: struct {
 
 Const_Uint32_List :: struct {
 	data:  ^u32,
-	count: uint,
+	count: c.size_t,
 }
 
 Const_Real_List :: struct {
 	data:  ^Real,
-	count: uint,
+	count: c.size_t,
 }
 
 Prop_Override_Desc :: struct {
@@ -4902,12 +4902,12 @@ Prop_Override_Desc :: struct {
 
 Const_Prop_Override_Desc_List :: struct {
 	data:  ^Prop_Override_Desc,
-	count: uint,
+	count: c.size_t,
 }
 
 Const_Transform_Override_List :: struct {
 	data:  ^Transform_Override,
-	count: uint,
+	count: c.size_t,
 }
 
 Anim_Opts :: struct {
@@ -5003,7 +5003,7 @@ Bake_Opts :: struct {
 
 	// Maximum number of segments to generate from one keyframe.
 	// Default: 32
-	max_keyframe_segments: uint,
+	max_keyframe_segments: c.size_t,
 
 	// How to handle stepped tangents.
 	step_handling: Bake_Step_Handling,
@@ -5034,7 +5034,7 @@ Bake_Opts :: struct {
 	// Maximum passes over the keys to reduce.
 	// Every pass can potentially halve the the amount of keys.
 	// Default: `4`
-	key_reduction_passes: uint,
+	key_reduction_passes: c.size_t,
 	_end_zero:        u32,
 }
 
@@ -5046,7 +5046,7 @@ Tessellate_Curve_Opts :: struct {
 	result_allocator: Allocator_Opts, // < Allocator used for the final line curve
 
 	// How many segments tessellate each span in `ufbx_nurbs_basis.spans`.
-	span_subdivision: uint,
+	span_subdivision: c.size_t,
 	_end_zero:        u32,
 }
 
@@ -5062,8 +5062,8 @@ Tessellate_Surface_Opts :: struct {
 	// would make it easy to create an FBX file with an absurdly high subdivision
 	// rate (similar to mesh subdivision). Please enforce copy the value yourself
 	// enforcing whatever limits you deem reasonable.
-	span_subdivision_u: uint,
-	span_subdivision_v: uint,
+	span_subdivision_u: c.size_t,
+	span_subdivision_v: c.size_t,
 
 	// Skip computing `ufbx_mesh.material_parts[]`
 	skip_mesh_parts: bool,
@@ -5094,17 +5094,17 @@ Subdivide_Opts :: struct {
 	evaluate_source_vertices: bool,
 
 	// Limit source vertices per subdivided vertex.
-	max_source_vertices: uint,
+	max_source_vertices: c.size_t,
 
 	// Calculate bone influences over subdivided vertices (if applicable).
 	// NOTE: May be O(n^2) if `max_skin_weights` is not specified!
 	evaluate_skin_weights: bool,
 
 	// Limit bone influences per subdivided vertex.
-	max_skin_weights: uint,
+	max_skin_weights: c.size_t,
 
 	// Index of the skin deformer to use for `evaluate_skin_weights`.
-	skin_deformer_index: uint,
+	skin_deformer_index: c.size_t,
 	_end_zero:        u32,
 }
 
@@ -5150,8 +5150,8 @@ Geometry_Cache_Data_Opts :: struct {
 
 Panic :: struct {
 	did_panic:      bool,
-	message_length: uint,
-	message:        [128]u8,
+	message_length: c.size_t,
+	message:        [128]c.char,
 }
 
 // Flags to control `ufbx_evaluate_transform_flags()`.
@@ -5264,11 +5264,11 @@ foreign lib {
 	is_thread_safe :: proc() -> bool ---
 
 	// Load a scene from a `size` byte memory buffer at `data`
-	load_memory :: proc(data: rawptr, data_size: uint, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
+	load_memory :: proc(data: rawptr, data_size: c.size_t, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
 
 	// Load a scene by opening a file named `filename`
 	load_file     :: proc(filename: cstring, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
-	load_file_len :: proc(filename: cstring, filename_len: uint, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
+	load_file_len :: proc(filename: cstring, filename_len: c.size_t, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
 
 	// Load a scene by reading from an `FILE *file` stream
 	// NOTE: `file` is passed as a `void` pointer to avoid including <stdio.h>
@@ -5276,13 +5276,13 @@ foreign lib {
 
 	// Load a scene by reading from an `FILE *file` stream with a prefix
 	// NOTE: `file` is passed as a `void` pointer to avoid including <stdio.h>
-	load_stdio_prefix :: proc(file: rawptr, prefix: rawptr, prefix_size: uint, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
+	load_stdio_prefix :: proc(file: rawptr, prefix: rawptr, prefix_size: c.size_t, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
 
 	// Load a scene from a user-specified stream
 	load_stream :: proc(stream: ^Stream, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
 
 	// Load a scene from a user-specified stream with a prefix
-	load_stream_prefix :: proc(stream: ^Stream, prefix: rawptr, prefix_size: uint, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
+	load_stream_prefix :: proc(stream: ^Stream, prefix: rawptr, prefix_size: c.size_t, opts: ^Load_Opts, error: ^Error) -> ^Scene ---
 
 	// Free a previously loaded or evaluated scene
 	free_scene :: proc(scene: ^Scene) ---
@@ -5293,60 +5293,60 @@ foreign lib {
 	// Format a textual description of `error`.
 	// Always produces a NULL-terminated string to `char dst[dst_size]`, truncating if
 	// necessary. Returns the number of characters written not including the NULL terminator.
-	format_error :: proc(dst: cstring, dst_size: uint, error: ^Error) -> uint ---
+	format_error :: proc(dst: cstring, dst_size: c.size_t, error: ^Error) -> c.size_t ---
 
 	// Find a property `name` from `props`, returns `NULL` if not found.
 	// Searches through `ufbx_props.defaults` as well.
-	find_prop_len :: proc(props: ^Props, name: cstring, name_len: uint) -> ^Prop ---
+	find_prop_len :: proc(props: ^Props, name: cstring, name_len: c.size_t) -> ^Prop ---
 	find_prop     :: proc(props: ^Props, name: cstring) -> ^Prop ---
 
 	// Utility functions for finding the value of a property, returns `def` if not found.
 	// NOTE: For `ufbx_string` you need to ensure the lifetime of the default is
 	// sufficient as no copy is made.
-	find_real_len   :: proc(props: ^Props, name: cstring, name_len: uint, def: Real) -> Real ---
+	find_real_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Real) -> Real ---
 	find_real       :: proc(props: ^Props, name: cstring, def: Real) -> Real ---
-	find_vec3_len   :: proc(props: ^Props, name: cstring, name_len: uint, def: Vec3) -> Vec3 ---
+	find_vec3_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Vec3) -> Vec3 ---
 	find_vec3       :: proc(props: ^Props, name: cstring, def: Vec3) -> Vec3 ---
-	find_int_len    :: proc(props: ^Props, name: cstring, name_len: uint, def: i64) -> i64 ---
+	find_int_len    :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: i64) -> i64 ---
 	find_int        :: proc(props: ^Props, name: cstring, def: i64) -> i64 ---
-	find_bool_len   :: proc(props: ^Props, name: cstring, name_len: uint, def: bool) -> bool ---
+	find_bool_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: bool) -> bool ---
 	find_bool       :: proc(props: ^Props, name: cstring, def: bool) -> bool ---
-	find_string_len :: proc(props: ^Props, name: cstring, name_len: uint, def: String) -> String ---
+	find_string_len :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: String) -> String ---
 	find_string     :: proc(props: ^Props, name: cstring, def: String) -> String ---
-	find_blob_len   :: proc(props: ^Props, name: cstring, name_len: uint, def: Blob) -> Blob ---
+	find_blob_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Blob) -> Blob ---
 	find_blob       :: proc(props: ^Props, name: cstring, def: Blob) -> Blob ---
 
 	// Find property in `props` with concatenated `parts[num_parts]`.
-	find_prop_concat :: proc(props: ^Props, parts: ^String, num_parts: uint) -> ^Prop ---
+	find_prop_concat :: proc(props: ^Props, parts: ^String, num_parts: c.size_t) -> ^Prop ---
 
 	// Get an element connected to a property.
 	get_prop_element :: proc(element: ^Element, prop: ^Prop, type: Element_Type) -> ^Element ---
 
 	// Find an element connected to a property by name.
-	find_prop_element_len :: proc(element: ^Element, name: cstring, name_len: uint, type: Element_Type) -> ^Element ---
+	find_prop_element_len :: proc(element: ^Element, name: cstring, name_len: c.size_t, type: Element_Type) -> ^Element ---
 	find_prop_element     :: proc(element: ^Element, name: cstring, type: Element_Type) -> ^Element ---
 
 	// Find any element of type `type` in `scene` by `name`.
 	// For example if you want to find `ufbx_material` named `Mat`:
 	//   (ufbx_material*)ufbx_find_element(scene, UFBX_ELEMENT_MATERIAL, "Mat");
-	find_element_len :: proc(scene: ^Scene, type: Element_Type, name: cstring, name_len: uint) -> ^Element ---
+	find_element_len :: proc(scene: ^Scene, type: Element_Type, name: cstring, name_len: c.size_t) -> ^Element ---
 	find_element     :: proc(scene: ^Scene, type: Element_Type, name: cstring) -> ^Element ---
 
 	// Find node in `scene` by `name` (shorthand for `ufbx_find_element(UFBX_ELEMENT_NODE)`).
-	find_node_len :: proc(scene: ^Scene, name: cstring, name_len: uint) -> ^Node ---
+	find_node_len :: proc(scene: ^Scene, name: cstring, name_len: c.size_t) -> ^Node ---
 	find_node     :: proc(scene: ^Scene, name: cstring) -> ^Node ---
 
 	// Find an animation stack in `scene` by `name` (shorthand for `ufbx_find_element(UFBX_ELEMENT_ANIM_STACK)`)
-	find_anim_stack_len :: proc(scene: ^Scene, name: cstring, name_len: uint) -> ^Anim_Stack ---
+	find_anim_stack_len :: proc(scene: ^Scene, name: cstring, name_len: c.size_t) -> ^Anim_Stack ---
 	find_anim_stack     :: proc(scene: ^Scene, name: cstring) -> ^Anim_Stack ---
 
 	// Find a material in `scene` by `name` (shorthand for `ufbx_find_element(UFBX_ELEMENT_MATERIAL)`).
-	find_material_len :: proc(scene: ^Scene, name: cstring, name_len: uint) -> ^Material ---
+	find_material_len :: proc(scene: ^Scene, name: cstring, name_len: c.size_t) -> ^Material ---
 	find_material     :: proc(scene: ^Scene, name: cstring) -> ^Material ---
 
 	// Find a single animated property `prop` of `element` in `layer`.
 	// Returns `NULL` if not found.
-	find_anim_prop_len :: proc(layer: ^Anim_Layer, element: ^Element, prop: cstring, prop_len: uint) -> ^Anim_Prop ---
+	find_anim_prop_len :: proc(layer: ^Anim_Layer, element: ^Element, prop: cstring, prop_len: c.size_t) -> ^Anim_Prop ---
 	find_anim_prop     :: proc(layer: ^Anim_Layer, element: ^Element, prop: cstring) -> ^Anim_Prop ---
 
 	// Find all animated properties of `element` in `layer`.
@@ -5362,20 +5362,20 @@ foreign lib {
 	// Returns the decompressed size or a negative error code (see source for details).
 	// NOTE: You must supply a valid `retain` with `ufbx_inflate_retain.initialized == false`
 	// but the rest can be uninitialized.
-	inflate :: proc(dst: rawptr, dst_size: uint, input: ^Inflate_Input, retain: ^Inflate_Retain) -> int ---
+	inflate :: proc(dst: rawptr, dst_size: c.size_t, input: ^Inflate_Input, retain: ^Inflate_Retain) -> c.ptrdiff_t ---
 
 	// Same as `ufbx_open_file()` but compatible with the callback in `ufbx_open_file_fn`.
 	// The `user` parameter is actually not used here.
-	default_open_file :: proc(user: rawptr, stream: ^Stream, path: cstring, path_len: uint, info: ^Open_File_Info) -> bool ---
+	default_open_file :: proc(user: rawptr, stream: ^Stream, path: cstring, path_len: c.size_t, info: ^Open_File_Info) -> bool ---
 
 	// Open a `ufbx_stream` from a file.
 	// Use `path_len == SIZE_MAX` for NULL terminated string.
-	open_file     :: proc(stream: ^Stream, path: cstring, path_len: uint, opts: ^Open_File_Opts, error: ^Error) -> bool ---
-	open_file_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, path: cstring, path_len: uint, opts: ^Open_File_Opts, error: ^Error) -> bool ---
+	open_file     :: proc(stream: ^Stream, path: cstring, path_len: c.size_t, opts: ^Open_File_Opts, error: ^Error) -> bool ---
+	open_file_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, path: cstring, path_len: c.size_t, opts: ^Open_File_Opts, error: ^Error) -> bool ---
 
 	// NOTE: Uses the default ufbx allocator!
-	open_memory     :: proc(stream: ^Stream, data: rawptr, data_size: uint, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
-	open_memory_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, data: rawptr, data_size: uint, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
+	open_memory     :: proc(stream: ^Stream, data: rawptr, data_size: c.size_t, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
+	open_memory_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, data: rawptr, data_size: c.size_t, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
 
 	// Evaluate a single animation `curve` at a `time`.
 	// Returns `default_value` only if `curve == NULL` or it has no keyframes.
@@ -5390,16 +5390,16 @@ foreign lib {
 
 	// Evaluate an animated property `name` from `element` at `time`.
 	// NOTE: If the property is not found it will have the flag `UFBX_PROP_FLAG_NOT_FOUND`.
-	evaluate_prop_len       :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: uint, time: f64) -> Prop ---
+	evaluate_prop_len       :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: c.size_t, time: f64) -> Prop ---
 	evaluate_prop           :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64) -> Prop ---
-	evaluate_prop_len_flags :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: uint, time: f64, flags: u32) -> Prop ---
+	evaluate_prop_len_flags :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: c.size_t, time: f64, flags: u32) -> Prop ---
 	evaluate_prop_flags     :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64, flags: u32) -> Prop ---
 
 	// Evaluate all _animated_ properties of `element`.
 	// HINT: This function returns an `ufbx_props` structure with the original properties as
 	// `ufbx_props.defaults`. This lets you use `ufbx_find_prop/value()` for the results.
-	evaluate_props       :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: uint) -> Props ---
-	evaluate_props_flags :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: uint, flags: u32) -> Props ---
+	evaluate_props       :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: c.size_t) -> Props ---
+	evaluate_props_flags :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: c.size_t, flags: u32) -> Props ---
 
 	// Evaluate the animated transform of a node given a time.
 	// The returned transform is the local transform of the node (ie. relative to the parent),
@@ -5458,19 +5458,19 @@ foreign lib {
 	get_bone_pose :: proc(pose: ^Pose, node: ^Node) -> ^Bone_Pose ---
 
 	// Find a texture for a given material FBX property.
-	find_prop_texture_len :: proc(material: ^Material, name: cstring, name_len: uint) -> ^Texture ---
+	find_prop_texture_len :: proc(material: ^Material, name: cstring, name_len: c.size_t) -> ^Texture ---
 	find_prop_texture     :: proc(material: ^Material, name: cstring) -> ^Texture ---
 
 	// Find a texture for a given shader property.
-	find_shader_prop_len :: proc(shader: ^Shader, name: cstring, name_len: uint) -> String ---
+	find_shader_prop_len :: proc(shader: ^Shader, name: cstring, name_len: c.size_t) -> String ---
 	find_shader_prop     :: proc(shader: ^Shader, name: cstring) -> String ---
 
 	// Map from a shader property to material property.
-	find_shader_prop_bindings_len :: proc(shader: ^Shader, name: cstring, name_len: uint) -> Shader_Prop_Binding_List ---
+	find_shader_prop_bindings_len :: proc(shader: ^Shader, name: cstring, name_len: c.size_t) -> Shader_Prop_Binding_List ---
 	find_shader_prop_bindings     :: proc(shader: ^Shader, name: cstring) -> Shader_Prop_Binding_List ---
 
 	// Find an input in a shader texture.
-	find_shader_texture_input_len :: proc(shader: ^Shader_Texture, name: cstring, name_len: uint) -> ^Shader_Texture_Input ---
+	find_shader_texture_input_len :: proc(shader: ^Shader_Texture, name: cstring, name_len: c.size_t) -> ^Shader_Texture_Input ---
 	find_shader_texture_input     :: proc(shader: ^Shader_Texture, name: cstring) -> ^Shader_Texture_Input ---
 
 	// Returns `true` if `axes` forms a valid coordinate space.
@@ -5510,30 +5510,30 @@ foreign lib {
 
 	// Get a matrix representing the deformation for a single vertex.
 	// Returns `fallback` if the vertex is not skinned.
-	catch_get_skin_vertex_matrix :: proc(panic: ^Panic, skin: ^Skin_Deformer, vertex: uint, fallback: ^Matrix) -> Matrix ---
-	get_skin_vertex_matrix       :: proc(skin: ^Skin_Deformer, vertex: uint, fallback: ^Matrix) -> Matrix ---
+	catch_get_skin_vertex_matrix :: proc(panic: ^Panic, skin: ^Skin_Deformer, vertex: c.size_t, fallback: ^Matrix) -> Matrix ---
+	get_skin_vertex_matrix       :: proc(skin: ^Skin_Deformer, vertex: c.size_t, fallback: ^Matrix) -> Matrix ---
 
 	// Resolve the index into `ufbx_blend_shape.position_offsets[]` given a vertex.
 	// Returns `UFBX_NO_INDEX` if the vertex is not included in the blend shape.
-	get_blend_shape_offset_index :: proc(shape: ^Blend_Shape, vertex: uint) -> u32 ---
+	get_blend_shape_offset_index :: proc(shape: ^Blend_Shape, vertex: c.size_t) -> u32 ---
 
 	// Get the offset for a given vertex in the blend shape.
 	// Returns `ufbx_zero_vec3` if the vertex is not a included in the blend shape.
-	get_blend_shape_vertex_offset :: proc(shape: ^Blend_Shape, vertex: uint) -> Vec3 ---
+	get_blend_shape_vertex_offset :: proc(shape: ^Blend_Shape, vertex: c.size_t) -> Vec3 ---
 
 	// Get the _current_ blend offset given a blend deformer.
 	// NOTE: This depends on the current animated blend weight of the deformer.
-	get_blend_vertex_offset :: proc(blend: ^Blend_Deformer, vertex: uint) -> Vec3 ---
+	get_blend_vertex_offset :: proc(blend: ^Blend_Deformer, vertex: c.size_t) -> Vec3 ---
 
 	// Apply the blend shape with `weight` to given vertices.
-	add_blend_shape_vertex_offsets :: proc(shape: ^Blend_Shape, vertices: ^Vec3, num_vertices: uint, weight: Real) ---
+	add_blend_shape_vertex_offsets :: proc(shape: ^Blend_Shape, vertices: ^Vec3, num_vertices: c.size_t, weight: Real) ---
 
 	// Apply the blend deformer with `weight` to given vertices.
 	// NOTE: This depends on the current animated blend weight of the deformer.
-	add_blend_vertex_offsets :: proc(blend: ^Blend_Deformer, vertices: ^Vec3, num_vertices: uint, weight: Real) ---
+	add_blend_vertex_offsets :: proc(blend: ^Blend_Deformer, vertices: ^Vec3, num_vertices: c.size_t, weight: Real) ---
 
 	// Low-level utility to evaluate NURBS the basis functions.
-	evaluate_nurbs_basis :: proc(basis: ^Nurbs_Basis, u: Real, weights: ^Real, num_weights: uint, derivatives: ^Real, num_derivatives: uint) -> uint ---
+	evaluate_nurbs_basis :: proc(basis: ^Nurbs_Basis, u: Real, weights: ^Real, num_weights: c.size_t, derivatives: ^Real, num_derivatives: c.size_t) -> c.size_t ---
 
 	// Evaluate a point on a NURBS curve given the parameter `u`.
 	evaluate_nurbs_curve :: proc(curve: ^Nurbs_Curve, u: Real) -> Curve_Point ---
@@ -5555,25 +5555,25 @@ foreign lib {
 
 	// Find the face that contains a given `index`.
 	// Returns `UFBX_NO_INDEX` if out of bounds.
-	find_face_index :: proc(mesh: ^Mesh, index: uint) -> u32 ---
+	find_face_index :: proc(mesh: ^Mesh, index: c.size_t) -> u32 ---
 
 	// Triangulate a mesh face, returning the number of triangles.
 	// NOTE: You need to space for `(face.num_indices - 2) * 3 - 1` indices!
 	// HINT: Using `ufbx_mesh.max_face_triangles * 3` is always safe.
-	catch_triangulate_face :: proc(panic: ^Panic, indices: ^u32, num_indices: uint, mesh: ^Mesh, face: Face) -> u32 ---
-	triangulate_face       :: proc(indices: ^u32, num_indices: uint, mesh: ^Mesh, face: Face) -> u32 ---
+	catch_triangulate_face :: proc(panic: ^Panic, indices: ^u32, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> u32 ---
+	triangulate_face       :: proc(indices: ^u32, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> u32 ---
 
 	// Generate the half-edge representation of `mesh` to `topo[mesh->num_indices]`
-	catch_compute_topology :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: uint) ---
-	compute_topology       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: uint) ---
+	catch_compute_topology :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t) ---
+	compute_topology       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t) ---
 
 	// Get the next half-edge in `topo`.
-	catch_topo_next_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: uint, index: u32) -> u32 ---
-	topo_next_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: uint, index: u32) -> u32 ---
+	catch_topo_next_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
+	topo_next_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
 
 	// Get the previous half-edge in `topo`.
-	catch_topo_prev_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: uint, index: u32) -> u32 ---
-	topo_prev_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: uint, index: u32) -> u32 ---
+	catch_topo_prev_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
+	topo_prev_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
 
 	// Calculate a normal for a given face.
 	// The returned normal is weighted by face area.
@@ -5582,16 +5582,16 @@ foreign lib {
 
 	// Generate indices for normals from the topology.
 	// Respects smoothing groups.
-	catch_generate_normal_mapping :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: uint, normal_indices: ^u32, num_normal_indices: uint, assume_smooth: bool) -> uint ---
-	generate_normal_mapping       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: uint, normal_indices: ^u32, num_normal_indices: uint, assume_smooth: bool) -> uint ---
+	catch_generate_normal_mapping :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^u32, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
+	generate_normal_mapping       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^u32, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
 
 	// Compute normals given normal indices.
 	// You can use `ufbx_generate_normal_mapping()` to generate the normal indices.
-	catch_compute_normals :: proc(panic: ^Panic, mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: uint, normals: ^Vec3, num_normals: uint) ---
-	compute_normals       :: proc(mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: uint, normals: ^Vec3, num_normals: uint) ---
+	catch_compute_normals :: proc(panic: ^Panic, mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
+	compute_normals       :: proc(mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
 
 	// Subdivide a mesh using the Catmull-Clark subdivision `level` times.
-	subdivide_mesh :: proc(mesh: ^Mesh, level: uint, opts: ^Subdivide_Opts, error: ^Error) -> ^Mesh ---
+	subdivide_mesh :: proc(mesh: ^Mesh, level: c.size_t, opts: ^Subdivide_Opts, error: ^Error) -> ^Mesh ---
 
 	// Free a mesh returned from `ufbx_subdivide_mesh()` or `ufbx_tessellate_nurbs_surface()`.
 	free_mesh :: proc(mesh: ^Mesh) ---
@@ -5603,7 +5603,7 @@ foreign lib {
 	// As geometry caches can be massive, this does not actually read the data, but
 	// only seeks through the files to form the metadata.
 	load_geometry_cache     :: proc(filename: cstring, opts: ^Geometry_Cache_Opts, error: ^Error) -> ^Geometry_Cache ---
-	load_geometry_cache_len :: proc(filename: cstring, filename_len: uint, opts: ^Geometry_Cache_Opts, error: ^Error) -> ^Geometry_Cache ---
+	load_geometry_cache_len :: proc(filename: cstring, filename_len: c.size_t, opts: ^Geometry_Cache_Opts, error: ^Error) -> ^Geometry_Cache ---
 
 	// Free a geometry cache returned from `ufbx_load_geometry_cache()`.
 	free_geometry_cache :: proc(cache: ^Geometry_Cache) ---
@@ -5612,21 +5612,21 @@ foreign lib {
 	retain_geometry_cache :: proc(cache: ^Geometry_Cache) ---
 
 	// Read a frame from a geometry cache.
-	read_geometry_cache_real :: proc(frame: ^Cache_Frame, data: ^Real, num_data: uint, opts: ^Geometry_Cache_Data_Opts) -> uint ---
-	read_geometry_cache_vec3 :: proc(frame: ^Cache_Frame, data: ^Vec3, num_data: uint, opts: ^Geometry_Cache_Data_Opts) -> uint ---
+	read_geometry_cache_real :: proc(frame: ^Cache_Frame, data: ^Real, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
+	read_geometry_cache_vec3 :: proc(frame: ^Cache_Frame, data: ^Vec3, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 
 	// Sample the a geometry cache channel, linearly blending between adjacent frames.
-	sample_geometry_cache_real :: proc(channel: ^Cache_Channel, time: f64, data: ^Real, num_data: uint, opts: ^Geometry_Cache_Data_Opts) -> uint ---
-	sample_geometry_cache_vec3 :: proc(channel: ^Cache_Channel, time: f64, data: ^Vec3, num_data: uint, opts: ^Geometry_Cache_Data_Opts) -> uint ---
+	sample_geometry_cache_real :: proc(channel: ^Cache_Channel, time: f64, data: ^Real, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
+	sample_geometry_cache_vec3 :: proc(channel: ^Cache_Channel, time: f64, data: ^Vec3, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 
 	// Find a DOM node given a name.
-	dom_find_len :: proc(parent: ^Dom_Node, name: cstring, name_len: uint) -> ^Dom_Node ---
+	dom_find_len :: proc(parent: ^Dom_Node, name: cstring, name_len: c.size_t) -> ^Dom_Node ---
 	dom_find     :: proc(parent: ^Dom_Node, name: cstring) -> ^Dom_Node ---
 
 	// Generate an index buffer for a flat vertex buffer.
 	// `streams` specifies one or more vertex data arrays, each stream must contain `num_indices` vertices.
 	// This function compacts the data within `streams` in-place, writing the deduplicated indices to `indices`.
-	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: uint, indices: ^u32, num_indices: uint, allocator: ^Allocator_Opts, error: ^Error) -> uint ---
+	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: c.size_t, indices: ^u32, num_indices: c.size_t, allocator: ^Allocator_Opts, error: ^Error) -> c.size_t ---
 
 	// Run a single thread pool task.
 	// See `ufbx_thread_pool_run_fn` for more information.
@@ -5638,18 +5638,18 @@ foreign lib {
 	thread_pool_get_user_ptr :: proc(ctx: Thread_Pool_Context) -> rawptr ---
 
 	// Utility functions for reading geometry data for a single index.
-	catch_get_vertex_real :: proc(panic: ^Panic, v: ^Vertex_Real, index: uint) -> Real ---
-	catch_get_vertex_vec2 :: proc(panic: ^Panic, v: ^Vertex_Vec2, index: uint) -> Vec2 ---
-	catch_get_vertex_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: uint) -> Vec3 ---
-	catch_get_vertex_vec4 :: proc(panic: ^Panic, v: ^Vertex_Vec4, index: uint) -> Vec4 ---
+	catch_get_vertex_real :: proc(panic: ^Panic, v: ^Vertex_Real, index: c.size_t) -> Real ---
+	catch_get_vertex_vec2 :: proc(panic: ^Panic, v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
+	catch_get_vertex_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
+	catch_get_vertex_vec4 :: proc(panic: ^Panic, v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
 
 	// Utility functions for reading geometry data for a single index.
-	get_vertex_real         :: proc(v: ^Vertex_Real, index: uint) -> Real ---
-	get_vertex_vec2         :: proc(v: ^Vertex_Vec2, index: uint) -> Vec2 ---
-	get_vertex_vec3         :: proc(v: ^Vertex_Vec3, index: uint) -> Vec3 ---
-	get_vertex_vec4         :: proc(v: ^Vertex_Vec4, index: uint) -> Vec4 ---
-	catch_get_vertex_w_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: uint) -> Real ---
-	get_vertex_w_vec3       :: proc(v: ^Vertex_Vec3, index: uint) -> Real ---
+	get_vertex_real         :: proc(v: ^Vertex_Real, index: c.size_t) -> Real ---
+	get_vertex_vec2         :: proc(v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
+	get_vertex_vec3         :: proc(v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
+	get_vertex_vec4         :: proc(v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
+	catch_get_vertex_w_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Real ---
+	get_vertex_w_vec3       :: proc(v: ^Vertex_Vec3, index: c.size_t) -> Real ---
 
 	// Functions for converting an untyped `ufbx_element` to a concrete type.
 	// Returns `NULL` if the element is not that type.

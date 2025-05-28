@@ -50,10 +50,10 @@ textrendering_t :: enum c.int {
 foreign lib {
 	// Color array functions...
 	ArrayCreateColorFromICCObj    :: proc(pdf: ^file_t, icc_object: ^obj_t) -> ^array_t ---
-	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: uint, gamma: f64, _matrix: [^][3]f64, white_point: ^f64) -> ^array_t ---
-	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: uint, colors: ^u8) -> ^array_t ---
-	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: uint, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
-	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: uint, cs: cs_t) -> ^array_t ---
+	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [^][3]f64, white_point: ^f64) -> ^array_t ---
+	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: c.size_t, colors: ^c.uchar) -> ^array_t ---
+	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
+	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: c.size_t, cs: cs_t) -> ^array_t ---
 
 	// PDF content drawing functions...
 	ContentClip                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
@@ -108,21 +108,21 @@ foreign lib {
 	ContentTextMoveTo               :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
 	ContentTextNewLine              :: proc(st: ^stream_t) -> bool ---
 	ContentTextNewLineShow          :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, s: cstring) -> bool ---
-	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, format: cstring) -> bool ---
+	ContentTextNewLineShowf         :: proc(st: ^stream_t, ws: f64, cs: f64, unicode: bool, format: cstring, #c_vararg _: ..any) -> bool ---
 	ContentTextNextLine             :: proc(st: ^stream_t) -> bool ---
 	ContentTextShow                 :: proc(st: ^stream_t, unicode: bool, s: cstring) -> bool ---
-	ContentTextShowf                :: proc(st: ^stream_t, unicode: bool, format: cstring) -> bool ---
-	ContentTextShowJustified        :: proc(st: ^stream_t, unicode: bool, num_fragments: uint, offsets: ^f64, fragments: [^]cstring) -> bool ---
+	ContentTextShowf                :: proc(st: ^stream_t, unicode: bool, format: cstring, #c_vararg _: ..any) -> bool ---
+	ContentTextShowJustified        :: proc(st: ^stream_t, unicode: bool, num_fragments: c.size_t, offsets: ^f64, fragments: [^]cstring) -> bool ---
 
 	// Resource helpers...
 	FileCreateFontObjFromBase  :: proc(pdf: ^file_t, name: cstring) -> ^obj_t ---
 	FileCreateFontObjFromFile  :: proc(pdf: ^file_t, filename: cstring, unicode: bool) -> ^obj_t ---
-	FileCreateICCObjFromFile   :: proc(pdf: ^file_t, filename: cstring, num_colors: uint) -> ^obj_t ---
-	FileCreateImageObjFromData :: proc(pdf: ^file_t, data: ^u8, width: uint, height: uint, num_colors: uint, color_data: ^array_t, alpha: bool, interpolate: bool) -> ^obj_t ---
+	FileCreateICCObjFromFile   :: proc(pdf: ^file_t, filename: cstring, num_colors: c.size_t) -> ^obj_t ---
+	FileCreateImageObjFromData :: proc(pdf: ^file_t, data: ^c.uchar, width: c.size_t, height: c.size_t, num_colors: c.size_t, color_data: ^array_t, alpha: bool, interpolate: bool) -> ^obj_t ---
 	FileCreateImageObjFromFile :: proc(pdf: ^file_t, filename: cstring, interpolate: bool) -> ^obj_t ---
 
 	// Image object helpers...
-	ImageGetBytesPerLine :: proc(obj: ^obj_t) -> uint ---
+	ImageGetBytesPerLine :: proc(obj: ^obj_t) -> c.size_t ---
 	ImageGetHeight       :: proc(obj: ^obj_t) -> f64 ---
 	ImageGetWidth        :: proc(obj: ^obj_t) -> f64 ---
 
