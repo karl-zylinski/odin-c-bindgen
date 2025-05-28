@@ -55,7 +55,7 @@ filter_t :: enum c.int {
 
 obj_t :: struct {} // Numbered object in PDF file
 
-output_cb_t :: proc "c" (rawptr, rawptr, uint) -> int
+output_cb_t :: proc "c" (rawptr, rawptr, c.size_t) -> c.ssize_t
 
 // Output callback for pdfioFileCreateOutput
 password_cb_t :: proc "c" (rawptr, cstring) -> cstring
@@ -104,7 +104,7 @@ valtype_t :: enum c.int {
 foreign lib {
 	// Functions...
 	ArrayAppendArray    :: proc(a: ^array_t, value: ^array_t) -> bool ---
-	ArrayAppendBinary   :: proc(a: ^array_t, value: [^]u8, valuelen: uint) -> bool ---
+	ArrayAppendBinary   :: proc(a: ^array_t, value: [^]c.uchar, valuelen: c.size_t) -> bool ---
 	ArrayAppendBoolean  :: proc(a: ^array_t, value: bool) -> bool ---
 	ArrayAppendDate     :: proc(a: ^array_t, value: libc.time_t) -> bool ---
 	ArrayAppendDict     :: proc(a: ^array_t, value: ^dict_t) -> bool ---
@@ -114,29 +114,29 @@ foreign lib {
 	ArrayAppendString   :: proc(a: ^array_t, value: cstring) -> bool ---
 	ArrayCopy           :: proc(pdf: ^file_t, a: ^array_t) -> ^array_t ---
 	ArrayCreate         :: proc(pdf: ^file_t) -> ^array_t ---
-	ArrayGetArray       :: proc(a: ^array_t, n: uint) -> ^array_t ---
-	ArrayGetBinary      :: proc(a: ^array_t, n: uint, length: ^uint) -> [^]u8 ---
-	ArrayGetBoolean     :: proc(a: ^array_t, n: uint) -> bool ---
-	ArrayGetDate        :: proc(a: ^array_t, n: uint) -> libc.time_t ---
-	ArrayGetDict        :: proc(a: ^array_t, n: uint) -> ^dict_t ---
-	ArrayGetName        :: proc(a: ^array_t, n: uint) -> cstring ---
-	ArrayGetNumber      :: proc(a: ^array_t, n: uint) -> f64 ---
-	ArrayGetObj         :: proc(a: ^array_t, n: uint) -> ^obj_t ---
-	ArrayGetSize        :: proc(a: ^array_t) -> uint ---
-	ArrayGetString      :: proc(a: ^array_t, n: uint) -> cstring ---
-	ArrayGetType        :: proc(a: ^array_t, n: uint) -> valtype_t ---
-	ArrayRemove         :: proc(a: ^array_t, n: uint) -> bool ---
+	ArrayGetArray       :: proc(a: ^array_t, n: c.size_t) -> ^array_t ---
+	ArrayGetBinary      :: proc(a: ^array_t, n: c.size_t, length: ^c.size_t) -> [^]c.uchar ---
+	ArrayGetBoolean     :: proc(a: ^array_t, n: c.size_t) -> bool ---
+	ArrayGetDate        :: proc(a: ^array_t, n: c.size_t) -> libc.time_t ---
+	ArrayGetDict        :: proc(a: ^array_t, n: c.size_t) -> ^dict_t ---
+	ArrayGetName        :: proc(a: ^array_t, n: c.size_t) -> cstring ---
+	ArrayGetNumber      :: proc(a: ^array_t, n: c.size_t) -> f64 ---
+	ArrayGetObj         :: proc(a: ^array_t, n: c.size_t) -> ^obj_t ---
+	ArrayGetSize        :: proc(a: ^array_t) -> c.size_t ---
+	ArrayGetString      :: proc(a: ^array_t, n: c.size_t) -> cstring ---
+	ArrayGetType        :: proc(a: ^array_t, n: c.size_t) -> valtype_t ---
+	ArrayRemove         :: proc(a: ^array_t, n: c.size_t) -> bool ---
 	DictClear           :: proc(dict: ^dict_t, key: cstring) -> bool ---
 	DictCopy            :: proc(pdf: ^file_t, dict: ^dict_t) -> ^dict_t ---
 	DictCreate          :: proc(pdf: ^file_t) -> ^dict_t ---
 	DictGetArray        :: proc(dict: ^dict_t, key: cstring) -> ^array_t ---
-	DictGetBinary       :: proc(dict: ^dict_t, key: cstring, length: ^uint) -> ^u8 ---
+	DictGetBinary       :: proc(dict: ^dict_t, key: cstring, length: ^c.size_t) -> ^c.uchar ---
 	DictGetBoolean      :: proc(dict: ^dict_t, key: cstring) -> bool ---
 	DictGetDate         :: proc(dict: ^dict_t, key: cstring) -> libc.time_t ---
 	DictGetDict         :: proc(dict: ^dict_t, key: cstring) -> ^dict_t ---
-	DictGetKey          :: proc(dict: ^dict_t, n: uint) -> cstring ---
+	DictGetKey          :: proc(dict: ^dict_t, n: c.size_t) -> cstring ---
 	DictGetName         :: proc(dict: ^dict_t, key: cstring) -> cstring ---
-	DictGetNumPairs     :: proc(dict: ^dict_t) -> uint ---
+	DictGetNumPairs     :: proc(dict: ^dict_t) -> c.size_t ---
 	DictGetNumber       :: proc(dict: ^dict_t, key: cstring) -> f64 ---
 	DictGetObj          :: proc(dict: ^dict_t, key: cstring) -> ^obj_t ---
 	DictGetRect         :: proc(dict: ^dict_t, key: cstring, rect: ^rect_t) -> ^rect_t ---
@@ -144,7 +144,7 @@ foreign lib {
 	DictGetType         :: proc(dict: ^dict_t, key: cstring) -> valtype_t ---
 	DictIterateKeys     :: proc(dict: ^dict_t, cb: dict_cb_t, cb_data: rawptr) ---
 	DictSetArray        :: proc(dict: ^dict_t, key: cstring, value: ^array_t) -> bool ---
-	DictSetBinary       :: proc(dict: ^dict_t, key: cstring, value: ^u8, valuelen: uint) -> bool ---
+	DictSetBinary       :: proc(dict: ^dict_t, key: cstring, value: ^c.uchar, valuelen: c.size_t) -> bool ---
 	DictSetBoolean      :: proc(dict: ^dict_t, key: cstring, value: bool) -> bool ---
 	DictSetDate         :: proc(dict: ^dict_t, key: cstring, value: libc.time_t) -> bool ---
 	DictSetDict         :: proc(dict: ^dict_t, key: cstring, value: ^dict_t) -> bool ---
@@ -166,8 +166,8 @@ foreign lib {
 	// TODO: Add number, array, string, etc. versions of pdfioFileCreateObject?
 	FileCreatePage      :: proc(pdf: ^file_t, dict: ^dict_t) -> ^stream_t ---
 	FileCreateStringObj :: proc(pdf: ^file_t, s: cstring) -> ^obj_t ---
-	FileCreateTemporary :: proc(buffer: [^]cstring, bufsize: uint, version: cstring, media_box: ^rect_t, crop_box: ^rect_t, error_cb: error_cb_t, error_data: rawptr) -> ^file_t ---
-	FileFindObj         :: proc(pdf: ^file_t, number: uint) -> ^obj_t ---
+	FileCreateTemporary :: proc(buffer: [^]cstring, bufsize: c.size_t, version: cstring, media_box: ^rect_t, crop_box: ^rect_t, error_cb: error_cb_t, error_data: rawptr) -> ^file_t ---
+	FileFindObj         :: proc(pdf: ^file_t, number: c.size_t) -> ^obj_t ---
 	FileGetAuthor       :: proc(pdf: ^file_t) -> cstring ---
 	FileGetCatalog      :: proc(pdf: ^file_t) -> ^dict_t ---
 	FileGetCreationDate :: proc(pdf: ^file_t) -> libc.time_t ---
@@ -175,10 +175,10 @@ foreign lib {
 	FileGetID           :: proc(pdf: ^file_t) -> ^array_t ---
 	FileGetKeywords     :: proc(pdf: ^file_t) -> cstring ---
 	FileGetName         :: proc(pdf: ^file_t) -> cstring ---
-	FileGetNumObjs      :: proc(pdf: ^file_t) -> uint ---
-	FileGetNumPages     :: proc(pdf: ^file_t) -> uint ---
-	FileGetObj          :: proc(pdf: ^file_t, n: uint) -> ^obj_t ---
-	FileGetPage         :: proc(pdf: ^file_t, n: uint) -> ^obj_t ---
+	FileGetNumObjs      :: proc(pdf: ^file_t) -> c.size_t ---
+	FileGetNumPages     :: proc(pdf: ^file_t) -> c.size_t ---
+	FileGetObj          :: proc(pdf: ^file_t, n: c.size_t) -> ^obj_t ---
+	FileGetPage         :: proc(pdf: ^file_t, n: c.size_t) -> ^obj_t ---
 	FileGetPermissions  :: proc(pdf: ^file_t, encryption: ^encryption_t) -> permission_t ---
 	FileGetProducer     :: proc(pdf: ^file_t) -> cstring ---
 	FileGetSubject      :: proc(pdf: ^file_t) -> cstring ---
@@ -197,25 +197,25 @@ foreign lib {
 	ObjCreateStream     :: proc(obj: ^obj_t, compression: filter_t) -> ^stream_t ---
 	ObjGetArray         :: proc(obj: ^obj_t) -> ^array_t ---
 	ObjGetDict          :: proc(obj: ^obj_t) -> ^dict_t ---
-	ObjGetGeneration    :: proc(obj: ^obj_t) -> u16 ---
-	ObjGetLength        :: proc(obj: ^obj_t) -> uint ---
+	ObjGetGeneration    :: proc(obj: ^obj_t) -> c.ushort ---
+	ObjGetLength        :: proc(obj: ^obj_t) -> c.size_t ---
 	ObjGetName          :: proc(obj: ^obj_t) -> cstring ---
-	ObjGetNumber        :: proc(obj: ^obj_t) -> uint ---
+	ObjGetNumber        :: proc(obj: ^obj_t) -> c.size_t ---
 	ObjGetSubtype       :: proc(obj: ^obj_t) -> cstring ---
 	ObjGetType          :: proc(obj: ^obj_t) -> cstring ---
 	ObjOpenStream       :: proc(obj: ^obj_t, decode: bool) -> ^stream_t ---
 	PageCopy            :: proc(pdf: ^file_t, srcpage: ^obj_t) -> bool ---
-	PageGetNumStreams   :: proc(page: ^obj_t) -> uint ---
-	PageOpenStream      :: proc(page: ^obj_t, n: uint, decode: bool) -> ^stream_t ---
+	PageGetNumStreams   :: proc(page: ^obj_t) -> c.size_t ---
+	PageOpenStream      :: proc(page: ^obj_t, n: c.size_t, decode: bool) -> ^stream_t ---
 	StreamClose         :: proc(st: ^stream_t) -> bool ---
-	StreamConsume       :: proc(st: ^stream_t, bytes: uint) -> bool ---
-	StreamGetToken      :: proc(st: ^stream_t, buffer: [^]cstring, bufsize: uint) -> bool ---
-	StreamPeek          :: proc(st: ^stream_t, buffer: rawptr, bytes: uint) -> int ---
+	StreamConsume       :: proc(st: ^stream_t, bytes: c.size_t) -> bool ---
+	StreamGetToken      :: proc(st: ^stream_t, buffer: [^]cstring, bufsize: c.size_t) -> bool ---
+	StreamPeek          :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> c.ssize_t ---
 	StreamPrintf        :: proc(st: ^stream_t, format: cstring) -> bool ---
-	StreamPutChar       :: proc(st: ^stream_t, ch: i32) -> bool ---
+	StreamPutChar       :: proc(st: ^stream_t, ch: c.int) -> bool ---
 	StreamPuts          :: proc(st: ^stream_t, s: cstring) -> bool ---
-	StreamRead          :: proc(st: ^stream_t, buffer: rawptr, bytes: uint) -> int ---
-	StreamWrite         :: proc(st: ^stream_t, buffer: rawptr, bytes: uint) -> bool ---
+	StreamRead          :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> c.ssize_t ---
+	StreamWrite         :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> bool ---
 	StringCreate        :: proc(pdf: ^file_t, s: cstring) -> cstring ---
 	StringCreatef       :: proc(pdf: ^file_t, format: cstring) -> cstring ---
 }

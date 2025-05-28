@@ -53,16 +53,16 @@ PI :: 3.14159265359
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
 	/// @return the minimum of two integers
-	MinInt :: proc(a: i32, b: i32) -> i32 ---
+	MinInt :: proc(a: c.int, b: c.int) -> c.int ---
 
 	/// @return the maximum of two integers
-	MaxInt :: proc(a: i32, b: i32) -> i32 ---
+	MaxInt :: proc(a: c.int, b: c.int) -> c.int ---
 
 	/// @return the absolute value of an integer
-	AbsInt :: proc(a: i32) -> i32 ---
+	AbsInt :: proc(a: c.int) -> c.int ---
 
 	/// @return an integer clamped between a lower and upper bound
-	ClampInt :: proc(a: i32, lower: i32, upper: i32) -> i32 ---
+	ClampInt :: proc(a: c.int, lower: c.int, upper: c.int) -> c.int ---
 
 	/// @return the minimum of two floats
 	MinFloat :: proc(a: f32, b: f32) -> f32 ---
