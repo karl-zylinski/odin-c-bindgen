@@ -8,7 +8,7 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
-DEFAULT_CATEGORY_BITS :: 0
+DEFAULT_CATEGORY_BITS :: 0x0001
 // DEFAULT_MASK_BITS :: UINT64_MAX
 
 /// Task interface

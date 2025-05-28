@@ -48,6 +48,12 @@ AABB :: struct {
 	upperBound: Vec2,
 }
 
+/**
+ * @addtogroup math
+ * @{
+ */
+
+/// https://en.wikipedia.org/wiki/Pi
 PI :: 3.14159265359
 
 @(default_calling_convention="c", link_prefix="b2")

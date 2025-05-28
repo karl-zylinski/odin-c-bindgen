@@ -987,11 +987,11 @@ foreign lib {
 
 	// NOTE: Following functions implemented in module [utils]
 	//------------------------------------------------------------------
-	TraceLog         :: proc(logLevel: c.int, text: cstring) ---      // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
-	SetTraceLogLevel :: proc(logLevel: c.int) ---                     // Set the current threshold (minimum) log level
-	MemAlloc         :: proc(size: c.uint) -> rawptr ---              // Internal memory allocator
-	MemRealloc       :: proc(ptr: rawptr, size: c.uint) -> rawptr --- // Internal memory reallocator
-	MemFree          :: proc(ptr: rawptr) ---                         // Internal memory free
+	TraceLog         :: proc(logLevel: c.int, text: cstring, #c_vararg _: ..any) --- // Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
+	SetTraceLogLevel :: proc(logLevel: c.int) ---                                    // Set the current threshold (minimum) log level
+	MemAlloc         :: proc(size: c.uint) -> rawptr ---                             // Internal memory allocator
+	MemRealloc       :: proc(ptr: rawptr, size: c.uint) -> rawptr ---                // Internal memory reallocator
+	MemFree          :: proc(ptr: rawptr) ---                                        // Internal memory free
 
 	// Set custom callbacks
 	// WARNING: Callbacks setup is intended for advanced users
@@ -1379,7 +1379,7 @@ foreign lib {
 	TextCopy      :: proc(dst: cstring, src: cstring) -> c.int ---                         // Copy one string to another, returns bytes copied
 	TextIsEqual   :: proc(text1: cstring, text2: cstring) -> bool ---                      // Check if two text string are equal
 	TextLength    :: proc(text: cstring) -> c.uint ---                                     // Get text length, checks for '\0' ending
-	TextFormat    :: proc(text: cstring) -> cstring ---                                    // Text formatting with variables (sprintf() style)
+	TextFormat    :: proc(text: cstring, #c_vararg _: ..any) -> cstring ---                // Text formatting with variables (sprintf() style)
 	TextSubtext   :: proc(text: cstring, position: c.int, length: c.int) -> cstring ---    // Get a piece of a text string
 	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---     // Replace text string (WARNING: memory must be freed!)
 	TextInsert    :: proc(text: cstring, insert: cstring, position: c.int) -> cstring ---  // Insert text in a position (WARNING: memory must be freed!)
