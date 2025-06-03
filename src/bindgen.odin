@@ -1881,7 +1881,7 @@ gen :: proc(input: string, c: Config) {
 				break
 			}
 
-			output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: Maybe(string)) -> string {
+			output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: string) -> string {
 				w := strings.builder_make()
 				ws :: strings.write_string
 				ws(&w, "struct ")
@@ -1937,11 +1937,7 @@ gen :: proc(input: string, c: Config) {
 						}
 
 						names_len := strings.builder_len(b)
-
-						if name, name_ok := n.?; name_ok {
-							override_key = fmt.tprintf("%s.%s", name, strings.to_string(b))	
-						}
-
+						override_key = fmt.tprintf("%s.%s", n, strings.to_string(b))
 						strings.write_string(&b, ": ")
 
 						if !field.comment_before {
@@ -1974,7 +1970,7 @@ gen :: proc(input: string, c: Config) {
 							comment_before = true
 						}
 
-						field_type = output_struct(s, anon_struct, indent + 1, nil)
+						field_type = output_struct(s, anon_struct, indent + 1, n)
 					}
 
 					strings.write_string(&b, field_type)
