@@ -2464,17 +2464,29 @@ gen :: proc(input: string, c: Config) {
 			Formatted_Function :: struct {
 				function: string,
 				post_comment: string,
+				attributes: string,
 			}
 
 			formatted_functions: [dynamic]Formatted_Function
 
 			for &d in g.functions {
 				b := strings.builder_make()
+				attrs_list := make([dynamic]string)
 
 				w :: strings.write_string
 
 				proc_name := trim_prefix(d.name, s.remove_function_prefix)
-				proc_name = final_name(proc_name, s)
+				if replacement, has_replacement := s.rename_types[proc_name]; has_replacement {
+					link_name := fmt.tprintf("link_name=\"%s\"", d.name)
+					append(&attrs_list, link_name)
+					proc_name = replacement
+				}
+				
+				attributes := ""
+				if len(attrs_list) > 0 {
+					attributes = fmt.tprintf("@(%s)", strings.join(attrs_list[:], ", "))
+				}
+				
 				w(&b, proc_name)
 
 				for _ in 0..<longest_function_name-len(d.name) {
@@ -2542,6 +2554,7 @@ gen :: proc(input: string, c: Config) {
 				append(&formatted_functions, Formatted_Function {
 					function = strings.to_string(b),
 					post_comment = d.post_comment,
+					attributes = attributes
 				})
 			}
 
@@ -2554,6 +2567,11 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			for &ff in formatted_functions {
+				if ff.attributes != "" {
+					fp(f, "\t")
+					fp(f, ff.attributes)
+					fp(f, "\n")
+				}
 				fp(f, "\t")
 				fp(f, ff.function)
 
