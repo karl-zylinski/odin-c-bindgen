@@ -2554,7 +2554,7 @@ gen :: proc(input: string, c: Config) {
 				append(&formatted_functions, Formatted_Function {
 					function = strings.to_string(b),
 					post_comment = d.post_comment,
-					attributes = attributes
+					attributes = attributes,
 				})
 			}
 
