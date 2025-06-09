@@ -2254,6 +2254,10 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
+			if translate_type(s, d.type) == d.name {
+				continue
+			}
+
 			if d.pre_comment != "" {
 				output_comment(f, d.pre_comment)
 			}
