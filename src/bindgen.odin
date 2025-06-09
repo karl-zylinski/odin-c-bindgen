@@ -1799,70 +1799,71 @@ gen :: proc(input: string, c: Config) {
 	for &decl in s.decls {
 		du := &decl.variant
 		switch &d in du {
-			case Struct:
-				name := d.name
+		case Struct:
+			name := d.name
 
-				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-					name = typedef
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-				}
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+			}
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-				d.name = final_name(vet_name(name), s)
-				add_to_set(&s.created_types, d.name)
-			case Function:
-				name := trim_prefix(d.name, s.remove_function_prefix)
+      d.name = final_name(vet_name(name), s)
+      add_to_set(&s.created_types, d.name)
+    case Function:
+      name := trim_prefix(d.name, s.remove_function_prefix)
 
-				if replacement, has_replacement := s.rename[name]; has_replacement {
-					d.link_name = d.name
-					name = replacement
-				}
+      if replacement, has_replacement := s.rename[name]; has_replacement {
+        d.link_name = d.name
+        name = replacement
+      }
 
-				d.name = name
-			case Enum:
-				name := d.name
+      d.name = name
+    case Enum:
+      name := d.name
 
-				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-					name = typedef
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-				}
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+			}
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				d.name = final_name(vet_name(name), s)
-				add_to_set(&s.created_types, d.name)
-			case Typedef:
-				name := d.name
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-				if is_c_type(name) {
-					continue
-				}
+			d.name = final_name(vet_name(name), s)
+			add_to_set(&s.created_types, d.name)
+		case Typedef:
+			name := d.name
 
-				name = trim_prefix(name, s.remove_type_prefix)
+			if is_c_type(name) {
+				continue
+			}
 
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
+			name = trim_prefix(name, s.remove_type_prefix)
 
-				name = final_name(name, s)
-				d.name = name
-				add_to_set(&s.created_types, d.name)
+			if s.force_ada_case_types {
+				name = strings.to_ada_case(name)
+			}
 
-			case Macro:
-				name := d.name
-				name = trim_prefix(name, s.remove_macro_prefix)
-				name = final_name(name, s)
-				d.name = name
-				add_to_set(&s.created_types, d.name)
+			name = final_name(name, s)
+			d.name = name
+			add_to_set(&s.created_types, d.name)
+
+		case Macro:
+			name := d.name
+			name = trim_prefix(name, s.remove_macro_prefix)
+			name = final_name(name, s)
+			d.name = name
+			add_to_set(&s.created_types, d.name)
 		}
 	}
 
@@ -2270,6 +2271,10 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			if n in s.created_symbols || strings.has_prefix(d.type, "0x") {
+				continue
+			}
+
+			if translate_type(s, d.type) == d.name {
 				continue
 			}
 
