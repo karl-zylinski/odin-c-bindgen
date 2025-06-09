@@ -72,7 +72,7 @@ imports_file = ""
 package_name = "my_lib"
 
 // "Old_Name" = "New_Name",
-rename_types = {
+rename = {
 }
 
 // Turns an enum into a bit_set. Converts the values of the enum into
@@ -102,7 +102,7 @@ procedure_type_overrides = {
 	// "GetKeyPressed"        = "KeyboardKey"
 }
 
-// Inject a new type before another type. Use `rename_types` to just rename
+// Inject a new type before another type. Use `rename` to just rename
 // a pre-existing type.
 inject_before = {
 	// "Some_Type" = "New_Type :: distinct int"
