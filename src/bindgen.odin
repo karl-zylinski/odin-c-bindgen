@@ -2366,19 +2366,21 @@ gen :: proc(input: string, c: Config) {
 					}
 
 					if is_prefixed {
+						suffix_index := 0
 						start := i
-
 						i += 2
 
 						for ; i < len(val); i += 1 {
 							type := char_type(val[i])
 
-							if type != .Num && type != .Char {
+							if type == .Char && suffix_index == 0 && ((val[i] > 'f' && val[i] < 'z') || (val[i] > 'F' && val[i] <= 'Z')) {
+								suffix_index = i
+							} else if type != .Num && type != .Char {
 								break
 							}
 						}
 
-						strings.write_string(&b, val[start:i])
+						strings.write_string(&b, val[start:suffix_index > 0 ? suffix_index : i])
 					} else {
 						suffix_index := 0
 						start := i
@@ -2391,10 +2393,7 @@ gen :: proc(input: string, c: Config) {
 								break
 							}
 						}
-						if suffix_index == 0 {
-							suffix_index = i
-						}
-						strings.write_string(&b, val[start:suffix_index])
+						strings.write_string(&b, val[start:suffix_index > 0 ? suffix_index : i])
 					}
 					i -= 1
 				case .Quote:
