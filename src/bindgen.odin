@@ -2355,6 +2355,8 @@ gen :: proc(input: string, c: Config) {
 					}
 					i -= 1
 				case .Num:
+					suffix_index := 0
+					start := i
 					is_prefixed := false
 
 					if i + 1 < len(val) {
@@ -2362,14 +2364,13 @@ gen :: proc(input: string, c: Config) {
 
 						if prefix == "0x" || prefix == "0b" {
 							is_prefixed = true
+							i += 2
 						}
 					}
 
 					if is_prefixed {
-						suffix_index := 0
-						start := i
-						i += 2
-
+						// 0x0ULL and 0xFFFF both need to work. This branch makes sure that only things which contain letter above `f` are
+						// treated as suffixes, which I think is true for 0x and 0b constants.
 						for ; i < len(val); i += 1 {
 							type := char_type(val[i])
 
@@ -2379,11 +2380,8 @@ gen :: proc(input: string, c: Config) {
 								break
 							}
 						}
-
-						strings.write_string(&b, val[start:suffix_index > 0 ? suffix_index : i])
 					} else {
-						suffix_index := 0
-						start := i
+						// Make 0.3f become 0.3
 						for ; i < len(val); i += 1 {
 							type := char_type(val[i])
 
@@ -2393,8 +2391,9 @@ gen :: proc(input: string, c: Config) {
 								break
 							}
 						}
-						strings.write_string(&b, val[start:suffix_index > 0 ? suffix_index : i])
 					}
+
+					strings.write_string(&b, val[start:suffix_index > 0 ? suffix_index : i])
 					i -= 1
 				case .Quote:
 					start := i
