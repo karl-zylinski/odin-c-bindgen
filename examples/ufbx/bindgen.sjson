@@ -38,7 +38,7 @@ procedure_type_overrides = {
     "generate_indices.streams" = "[^]"
 }
 
-rename_types = {
+rename = {
     "Prop_Flags" = "Prop_Flag"
     "Transform_Flags" = "Transform_Flag"
     "Baked_Key_Flags" = "Baked_Key_Flag"
