@@ -2355,24 +2355,47 @@ gen :: proc(input: string, c: Config) {
 					}
 					i -= 1
 				case .Num:
-					suffix_index := 0
-					start := i
-					for ; i < len(val); i += 1 {
-						type := char_type(val[i])
+					is_prefixed := false
 
-						if type == .Char && i == 1 && val[0] == '0' && (val[i] == 'x' || val[i] == 'b') {
-							// 0x or 0b prefix
-							continue
-						} else if type == .Char && suffix_index == 0 {
-							suffix_index = i
-						} else if type != .Num && type != .Char {
-							break
+					if i + 1 < len(val) {
+						prefix := val[i:i+2]
+
+						if prefix == "0x" || prefix == "0b" {
+							is_prefixed = true
 						}
 					}
-					if suffix_index == 0 {
-						suffix_index = i
+
+					if is_prefixed {
+						start := i
+
+						i += 2
+
+						for ; i < len(val); i += 1 {
+							type := char_type(val[i])
+
+							if type != .Num && type != .Char {
+								break
+							}
+						}
+
+						strings.write_string(&b, val[start:i])
+					} else {
+						suffix_index := 0
+						start := i
+						for ; i < len(val); i += 1 {
+							type := char_type(val[i])
+
+							if type == .Char && suffix_index == 0 {
+								suffix_index = i
+							} else if type != .Num && type != .Char {
+								break
+							}
+						}
+						if suffix_index == 0 {
+							suffix_index = i
+						}
+						strings.write_string(&b, val[start:suffix_index])
 					}
-					strings.write_string(&b, val[start:suffix_index])
 					i -= 1
 				case .Quote:
 					start := i
