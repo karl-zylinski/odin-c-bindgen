@@ -1813,19 +1813,19 @@ gen :: proc(input: string, c: Config) {
 				name = strings.to_ada_case(name)
 			}
 
-      d.name = final_name(vet_name(name), s)
-      add_to_set(&s.created_types, d.name)
-    case Function:
-      name := trim_prefix(d.name, s.remove_function_prefix)
+		d.name = final_name(vet_name(name), s)
+		add_to_set(&s.created_types, d.name)
+	case Function:
+		name := trim_prefix(d.name, s.remove_function_prefix)
 
-      if replacement, has_replacement := s.rename[name]; has_replacement {
-        d.link_name = d.name
-        name = replacement
-      }
+		if replacement, has_replacement := s.rename[name]; has_replacement {
+		d.link_name = d.name
+		name = replacement
+		}
 
-      d.name = name
-    case Enum:
-      name := d.name
+		d.name = name
+	case Enum:
+		name := d.name
 
 
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
