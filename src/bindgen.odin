@@ -51,6 +51,10 @@ Function_Parameter :: struct {
 
 Function :: struct {
 	name: string,
+
+	// if non-empty, then use this will be the link name used in bindings
+	link_name: string,
+
 	parameters: []Function_Parameter,
 	return_type: string,
 	comment: string,
@@ -1204,7 +1208,7 @@ trim_prefix :: proc(s: string, p: string) -> string {
 }
 
 final_name :: proc(s: string, state: Gen_State) -> string {
-	if replacement, has_replacement := state.rename_types[s]; has_replacement {
+	if replacement, has_replacement := state.rename[s]; has_replacement {
 		return replacement
 	}
 
@@ -1545,7 +1549,10 @@ Config :: struct {
 	output_folder: string,
 	package_name: string,
 	required_prefix: string,
+
+	// deprecated: use remove_xxx_prefix
 	remove_prefix: string,
+
 	remove_type_prefix: string,
 	remove_function_prefix: string,
 	remove_macro_prefix: string,
@@ -1558,7 +1565,11 @@ Config :: struct {
 	debug_dump_macros: bool,
 
 	opaque_types: []string,
+	rename: map[string]string,
+
+	// deprecated: use rename
 	rename_types: map[string]string,
+
 	type_overrides: map[string]string,
 	struct_field_overrides: map[string]string,
 	procedure_type_overrides: map[string]string,
@@ -1805,6 +1816,14 @@ gen :: proc(input: string, c: Config) {
 				d.name = final_name(vet_name(name), s)
 				add_to_set(&s.created_types, d.name)
 			case Function:
+				name := trim_prefix(d.name, s.remove_function_prefix)
+
+				if replacement, has_replacement := s.rename[name]; has_replacement {
+					d.link_name = d.name
+					name = replacement
+				}
+
+				d.name = name
 			case Enum:
 				name := d.name
 
@@ -2318,7 +2337,7 @@ gen :: proc(input: string, c: Config) {
 						strings.write_string(&b, trim_prefix(val[start:i], s.remove_macro_prefix))
 					} else if type, exists := c_type_mapping[val[start:i]]; exists {
 						strings.write_string(&b, type)
-					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_prefix)]; exists {
+					} else if _, exists = s.created_types[trim_prefix(val[start:i], s.remove_type_prefix)]; exists {
 						strings.write_string(&b, val[start:i])
 					} else {
 						comment_out = true
@@ -2464,30 +2483,22 @@ gen :: proc(input: string, c: Config) {
 			Formatted_Function :: struct {
 				function: string,
 				post_comment: string,
-				attributes: string,
+				attributes: []string,
 			}
 
 			formatted_functions: [dynamic]Formatted_Function
 
 			for &d in g.functions {
 				b := strings.builder_make()
-				attrs_list := make([dynamic]string)
+				attributes := make([dynamic]string)
 
 				w :: strings.write_string
 
-				proc_name := trim_prefix(d.name, s.remove_function_prefix)
-				if replacement, has_replacement := s.rename_types[proc_name]; has_replacement {
-					link_name := fmt.tprintf("link_name=\"%s\"", d.name)
-					append(&attrs_list, link_name)
-					proc_name = replacement
+				if d.link_name != "" {
+					append(&attributes, fmt.tprintf("link_name=\"%s\"", d.link_name))
 				}
 				
-				attributes := ""
-				if len(attrs_list) > 0 {
-					attributes = fmt.tprintf("@(%s)", strings.join(attrs_list[:], ", "))
-				}
-				
-				w(&b, proc_name)
+				w(&b, d.name)
 
 				for _ in 0..<longest_function_name-len(d.name) {
 					strings.write_rune(&b, ' ')
@@ -2499,7 +2510,7 @@ gen :: proc(input: string, c: Config) {
 					n := vet_name(p.name)
 
 					type := translate_type(s, p.type)
-					type_override_key := fmt.tprintf("%v.%v", proc_name, n)
+					type_override_key := fmt.tprintf("%v.%v", d.name, n)
 
 					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
 						switch type_override {
@@ -2537,7 +2548,7 @@ gen :: proc(input: string, c: Config) {
 
 					return_type := translate_type(s, d.return_type)
 
-					if override, override_ok := s.procedure_type_overrides[proc_name]; override_ok {
+					if override, override_ok := s.procedure_type_overrides[d.name]; override_ok {
 						switch override {
 						case "[^]":
 							return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
@@ -2554,7 +2565,7 @@ gen :: proc(input: string, c: Config) {
 				append(&formatted_functions, Formatted_Function {
 					function = strings.to_string(b),
 					post_comment = d.post_comment,
-					attributes = attributes,
+					attributes = attributes[:],
 				})
 			}
 
@@ -2567,9 +2578,9 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			for &ff in formatted_functions {
-				if ff.attributes != "" {
+				if len(ff.attributes) > 0 {
 					fp(f, "\t")
-					fp(f, ff.attributes)
+					fp(f, fmt.tprintf("@(%s)", strings.join(ff.attributes[:], ", ")))
 					fp(f, "\n")
 				}
 				fp(f, "\t")
@@ -2652,6 +2663,10 @@ main :: proc() {
 
 	if config.remove_prefix != "" {
 		panic("Error in bindgen.sjson: remove_prefix has been split into remove_function_prefix and remove_type_prefix")
+	}
+
+	if len(config.rename_types) > 0 {
+		panic("Error in bindgen.sjson: rename_types has been renamed to rename")
 	}
 
 	input_files: [dynamic]string
