@@ -1207,14 +1207,6 @@ trim_prefix :: proc(s: string, p: string) -> string {
 	return strings.trim_prefix(strings.trim_prefix(s, p), "_")
 }
 
-final_name :: proc(s: string, state: Gen_State) -> string {
-	if replacement, has_replacement := state.rename[s]; has_replacement {
-		return replacement
-	}
-
-	return s
-}
-
 // Types that would need `import "core:c/libc"`. Please add and send in a Pull Request if you needed
 // to add anything here!
 is_libc_type :: proc(t: string) -> bool{
@@ -1446,12 +1438,14 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		t = fmt.tprintf("libc.%v", t)
 	} else if is_posix_type(t_prefixed) {
 		t = fmt.tprintf("posix.%v",t)
+	} else if rename, exists := s.rename[t_prefixed]; exists {
+		t = rename
 	} else if s.force_ada_case_types && t != "void" {
 		// It makes sense, in the case we can't find the type, to just follow our naming rules and
 		// hope the type is defined somewhere else.
-		t = final_name(vet_name(strings.to_ada_case(t)), s)
+		t = vet_name(strings.to_ada_case(t))
 	} else {
-		t = final_name(vet_name(t), s)
+		t = vet_name(t)
 	}
 
 	if array_start != -1 {
@@ -1804,42 +1798,56 @@ gen :: proc(input: string, c: Config) {
 
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				if replacement, has_replacement := s.rename[name]; has_replacement {
+					name = replacement
+					add_to_set(&s.created_symbols, name)
+				} else {
+					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				}
 			}
-
-			name = trim_prefix(name, s.remove_type_prefix)
-
-			if s.force_ada_case_types {
-				name = strings.to_ada_case(name)
-			}
-
-			d.name = final_name(vet_name(name), s)
-			add_to_set(&s.created_types, d.name)
-		case Function:
-			name := trim_prefix(d.name, s.remove_function_prefix)
 
 			if replacement, has_replacement := s.rename[name]; has_replacement {
-			d.link_name = d.name
-			name = replacement
+				name = replacement
+			} else {
+				name = trim_prefix(name, s.remove_type_prefix)
+
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
 			}
 
-			d.name = name
+			d.name = vet_name(name)
+			add_to_set(&s.created_types, d.name)
+		case Function:
+			name := d.name
+			
+			if replacement, has_replacement := s.rename[name]; has_replacement {
+				d.link_name = d.name
+				name = replacement
+			} else {
+				name = trim_prefix(name, s.remove_function_prefix)
+			}
+
+			d.name = vet_name(name)
 		case Enum:
 			name := d.name
 
+			if replacement, has_replacement := s.rename[name]; has_replacement {
+				name = replacement
+			} else {
+				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+					name = typedef
+					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				}
 
-			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-				name = typedef
-				add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+				name = trim_prefix(name, s.remove_type_prefix)
+
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
 			}
 
-			name = trim_prefix(name, s.remove_type_prefix)
-
-			if s.force_ada_case_types {
-				name = strings.to_ada_case(name)
-			}
-
-			d.name = final_name(vet_name(name), s)
+			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		case Typedef:
 			name := d.name
@@ -1848,21 +1856,22 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			name = trim_prefix(name, s.remove_type_prefix)
+			if replacement, has_replacement := s.rename[name]; has_replacement {
+				name = replacement
+			} else {
+				name = trim_prefix(name, s.remove_type_prefix)
 
-			if s.force_ada_case_types {
-				name = strings.to_ada_case(name)
+				if s.force_ada_case_types {
+					name = strings.to_ada_case(name)
+				}
 			}
 
-			name = final_name(name, s)
-			d.name = name
+			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
-
 		case Macro:
 			name := d.name
 			name = trim_prefix(name, s.remove_macro_prefix)
-			name = final_name(name, s)
-			d.name = name
+			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		}
 	}
