@@ -2554,6 +2554,8 @@ gen :: proc(input: string, c: Config) {
 					if len(n) != 0 {
 						w(&b, n)
 						w(&b, ": ")
+					} else {
+						w(&b, "_: ")
 					}
 
 					w(&b, type)
