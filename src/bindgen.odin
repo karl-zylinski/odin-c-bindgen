@@ -1803,6 +1803,7 @@ gen :: proc(input: string, c: Config) {
 
 			// This is really ugly, if you can simplify this, please do.
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				d.original_name = typedef
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
@@ -1841,6 +1842,7 @@ gen :: proc(input: string, c: Config) {
 			name := d.original_name
 
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				d.original_name = typedef
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
