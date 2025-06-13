@@ -13,24 +13,24 @@ import_lib = "box2d.lib"
 package_name = "box2d"
 
 struct_field_overrides = {
-	"DynamicTree.nodes"  = "[^]"
-	"ChainDef.points"    = "[^]"
-	"ChainDef.materials" = "[^]"
+	"b2DynamicTree.nodes"  = "[^]"
+	"b2ChainDef.points"    = "[^]"
+	"b2ChainDef.materials" = "[^]"
 	
 	// This is not a complete override list, it's just an example.
 }
 
 procedure_type_overrides = {
-	"CreateWorld.def" = "#by_ptr"
-	"CreateBody.def" = "#by_ptr"
-	"CreatePolygonShape.def" = "#by_ptr"
-	"CreatePolygonShape.polygon" = "#by_ptr"
-	"CreateCircleShape.def" = "#by_ptr"
-	"CreateCircleShape.circle" = "#by_ptr"
+	"b2CreateWorld.def" = "#by_ptr"
+	"b2CreateBody.def" = "#by_ptr"
+	"b2CreatePolygonShape.def" = "#by_ptr"
+	"b2CreatePolygonShape.polygon" = "#by_ptr"
+	"b2CreateCircleShape.def" = "#by_ptr"
+	"b2CreateCircleShape.circle" = "#by_ptr"
 
 	// This is not a complete override list, it's just an example.
 }
 
 inject_before = {
-	"DynamicTree" = "TreeNode :: struct {}"
+	"b2DynamicTree" = "TreeNode :: struct {}"
 }

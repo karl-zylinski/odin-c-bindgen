@@ -30,7 +30,9 @@ Features:
 
 Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed into `bindgen`. Below is an example. See the [examples folder](https://github.com/karl-zylinski/odin-c-bindgen/tree/main/examples) for more advanced examples.
 
-```
+> NOTE: Config uses the function/type names as found in header files.
+
+```sjson
 // Inputs can be folders or files. It will look for header (.h) files inside
 // any folder. The bindings will be based on those headers. Also, any .lib,
 // .odin, .dll etc will be copied to the output folder.
