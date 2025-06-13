@@ -36,6 +36,7 @@ Struct_Field :: struct {
 }
 
 Struct :: struct {
+	original_name: string,
 	name: string,
 	id: string,
 	fields: []Struct_Field,
@@ -50,6 +51,7 @@ Function_Parameter :: struct {
 }
 
 Function :: struct {
+	original_name: string,
 	name: string,
 
 	// if non-empty, then use this will be the link name used in bindings
@@ -71,6 +73,7 @@ Enum_Member :: struct {
 }
 
 Enum :: struct {
+	original_name: string,
 	name: string,
 	id: string,
 	members: []Enum_Member,
@@ -78,6 +81,7 @@ Enum :: struct {
 }
 
 Typedef :: struct {
+	original_name: string,
 	name: string,
 	type: string,
 	pre_comment: string,
@@ -85,6 +89,7 @@ Typedef :: struct {
 }
 
 Macro :: struct {
+	original_name: string,
 	name: string,
 	val: string,
 	comment: string,
@@ -908,7 +913,7 @@ parse_macros :: proc(s: ^Gen_State, input: string) {
 			line = file_macro.line,
 			original_idx = len(s.decls),
 			variant = Macro {
-				name = macro.name,
+				original_name = macro.name,
 				val = strings.join(macro.values, " "),
 				comment = file_macro.comment,
 				side_comment = file_macro.side_comment,
@@ -1007,7 +1012,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			line = line,
 			original_idx = len(s.decls),
 			variant = Function {
-				name = name,
+				original_name = name,
 				parameters = out_params[:],
 				return_type = has_return_type ? return_type : "",
 				comment = comment,
@@ -1020,7 +1025,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 		name, _ := json_get_string(decl, "name")
 
 		if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
-			struct_decl.name = name
+			struct_decl.original_name = name
 			struct_decl.id = id
 
 			if name != "" {
@@ -1075,7 +1080,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			line = line,
 			original_idx = len(s.decls),
 			variant = Typedef {
-				name = name,
+				original_name = name,
 				type = type,
 				pre_comment = pre_comment,
 				side_comment = side_comment,
@@ -1136,7 +1141,7 @@ parse_decl :: proc(s: ^Gen_State, decl: json.Value, line: int) {
 			line = line,
 			original_idx = len(s.decls),
 			variant = Enum {
-				name = name,
+				original_name = name,
 				id = id,
 				comment = comment,
 				members = out_members[:],
@@ -1794,19 +1799,22 @@ gen :: proc(input: string, c: Config) {
 		du := &decl.variant
 		switch &d in du {
 		case Struct:
-			name := d.name
+			name := d.original_name
 
+			// This is really ugly, if you can simplify this, please do.
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
 					add_to_set(&s.created_symbols, name)
 				} else {
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
+					name = trim_prefix(name, s.remove_type_prefix)
+					if s.force_ada_case_types {
+						name = strings.to_ada_case(name)
+					}
+					add_to_set(&s.created_symbols, name)
 				}
-			}
-
-			if replacement, has_replacement := s.rename[name]; has_replacement {
+			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
 				name = trim_prefix(name, s.remove_type_prefix)
@@ -1819,7 +1827,7 @@ gen :: proc(input: string, c: Config) {
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		case Function:
-			name := d.name
+			name := d.original_name
 			
 			if replacement, has_replacement := s.rename[name]; has_replacement {
 				d.link_name = d.name
@@ -1830,16 +1838,23 @@ gen :: proc(input: string, c: Config) {
 
 			d.name = vet_name(name)
 		case Enum:
-			name := d.name
+			name := d.original_name
 
-			if replacement, has_replacement := s.rename[name]; has_replacement {
+			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
+				name = typedef
+				if replacement, has_replacement := s.rename[name]; has_replacement {
+					name = replacement
+					add_to_set(&s.created_symbols, name)
+				} else {
+					name = trim_prefix(name, s.remove_type_prefix)
+					if s.force_ada_case_types {
+						name = strings.to_ada_case(name)
+					}
+					add_to_set(&s.created_symbols, name)
+				}
+			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
-				if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
-					name = typedef
-					add_to_set(&s.created_symbols, trim_prefix(name, s.remove_type_prefix))
-				}
-
 				name = trim_prefix(name, s.remove_type_prefix)
 
 				if s.force_ada_case_types {
@@ -1850,7 +1865,7 @@ gen :: proc(input: string, c: Config) {
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		case Typedef:
-			name := d.name
+			name := d.original_name
 
 			if is_c_type(name) {
 				continue
@@ -1869,8 +1884,14 @@ gen :: proc(input: string, c: Config) {
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		case Macro:
-			name := d.name
-			name = trim_prefix(name, s.remove_macro_prefix)
+			name := d.original_name
+
+			if replacement, has_replacement := s.rename[name]; has_replacement {
+				name = replacement
+			} else {
+				name = trim_prefix(name, s.remove_macro_prefix)
+			}
+
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		}
@@ -1887,7 +1908,7 @@ gen :: proc(input: string, c: Config) {
 			n := d.name
 
 			if d.is_forward_declare {
-				if n in s.opaque_type_lookup && d.id not_in s.typedefs {
+				if d.original_name in s.opaque_type_lookup && d.id not_in s.typedefs {
 					output_comment(f, d.comment)
 					fpf(f, "%v :: struct {{}}\n\n", n)
 				}
@@ -1897,14 +1918,14 @@ gen :: proc(input: string, c: Config) {
 
 			output_comment(f, d.comment)
 
-			if inject, has_injection := s.inject_before[n]; has_injection {
+			if inject, has_injection := s.inject_before[d.original_name]; has_injection {
 				fpf(f, "%v\n\n", inject)
 			}
 
 			fp(f, n)
 			fp(f, " :: ")
 
-			if override, override_ok := s.type_overrides[n]; override_ok {
+			if override, override_ok := s.type_overrides[d.original_name]; override_ok {
 				fp(f, override)
 				fp(f, "\n\n")
 				break
@@ -1966,7 +1987,7 @@ gen :: proc(input: string, c: Config) {
 						}
 
 						names_len := strings.builder_len(b)
-						override_key = fmt.tprintf("%s.%s", n, strings.to_string(b))
+						override_key = fmt.tprintf("%s.%s", d.original_name, strings.to_string(b))
 						strings.write_string(&b, ": ")
 
 						if !field.comment_before {
@@ -2093,7 +2114,7 @@ gen :: proc(input: string, c: Config) {
 			fp(f, name)
 			fp(f, " :: enum c.int {\n")
 
-			bit_set_name, bit_setify := s.bit_setify[name]
+			bit_set_name, bit_setify := s.bit_setify[d.original_name]
 			bit_set_all_constant: string
 
 			overlap_length := 0
@@ -2153,6 +2174,8 @@ gen :: proc(input: string, c: Config) {
 				b := strings.builder_make()
 
 				name_without_overlap := m.name[overlap_length:]
+
+				for ; name_without_overlap[0] == '_'; name_without_overlap = name_without_overlap[1:] {} 
 
 				// First letter is number... Can't have that!
 				if len(name_without_overlap) > 0 && unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
@@ -2264,7 +2287,7 @@ gen :: proc(input: string, c: Config) {
 		case Typedef:
 			n := d.name
 
-			if n in s.opaque_type_lookup {
+			if d.original_name in s.opaque_type_lookup {
 				if d.pre_comment != "" {
 					output_comment(f, d.pre_comment)
 				}
@@ -2295,7 +2318,7 @@ gen :: proc(input: string, c: Config) {
 
 			fp(f, " :: ")
 
-			if override, override_ok := s.type_overrides[n]; override_ok {
+			if override, override_ok := s.type_overrides[d.original_name]; override_ok {
 				fp(f, override)
 
 				if d.side_comment != "" {
@@ -2545,7 +2568,7 @@ gen :: proc(input: string, c: Config) {
 					n := vet_name(p.name)
 
 					type := translate_type(s, p.type)
-					type_override_key := fmt.tprintf("%v.%v", d.name, n)
+					type_override_key := fmt.tprintf("%v.%v", d.original_name, n)
 
 					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
 						switch type_override {
@@ -2585,7 +2608,7 @@ gen :: proc(input: string, c: Config) {
 
 					return_type := translate_type(s, d.return_type)
 
-					if override, override_ok := s.procedure_type_overrides[d.name]; override_ok {
+					if override, override_ok := s.procedure_type_overrides[d.original_name]; override_ok {
 						switch override {
 						case "[^]":
 							return_type = fmt.tprintf("[^]%v", strings.trim_prefix(return_type, "^"))
