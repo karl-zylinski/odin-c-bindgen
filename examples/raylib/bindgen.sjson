@@ -9,7 +9,7 @@ imports_file = "imports.odin"
 package_name = "raylib"
 
 // "Old_Name" = "New_Name"
-// We rename ConfigFlags to ConfigFlag so we can introduce a bit_set with the naem ConfigFlags.
+// We rename ConfigFlags to ConfigFlag so we can introduce a bit_set with the name ConfigFlags.
 rename = {
 	"ConfigFlags" = "ConfigFlag"
 }

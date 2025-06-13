@@ -225,101 +225,100 @@ PROP_TYPE_COUNT :: 16
 Prop_Flag :: enum c.int {
 	// Supports animation.
 	// NOTE: ufbx ignores this and allows animations on non-animatable properties.
-	ANIMATABLE = 0,
+	ANIMATABLE = 1,
 
 	// User defined (custom) property.
-	USER_DEFINED = 1,
+	USER_DEFINED = 2,
 
 	// Hidden in UI.
-	HIDDEN = 2,
+	HIDDEN = 4,
 
 	// Disallow modification from UI for components.
-	LOCK_X = 4,
+	LOCK_X = 16,
 
 	// Disallow modification from UI for components.
-	LOCK_Y = 5,
+	LOCK_Y = 32,
 
 	// Disallow modification from UI for components.
-	LOCK_Z = 6,
+	LOCK_Z = 64,
 
 	// Disallow modification from UI for components.
-	LOCK_W = 7,
+	LOCK_W = 128,
 
 	// Disable animation from components.
-	MUTE_X = 8,
+	MUTE_X = 256,
 
 	// Disable animation from components.
-	MUTE_Y = 9,
+	MUTE_Y = 512,
 
 	// Disable animation from components.
-	MUTE_Z = 10,
+	MUTE_Z = 1024,
 
 	// Disable animation from components.
-	MUTE_W = 11,
+	MUTE_W = 2048,
 
 	// Property created by ufbx when an element has a connected `ufbx_anim_prop`
 	// but doesn't contain the `ufbx_prop` it's referring to.
 	// NOTE: The property may have been found in the templated defaults.
-	SYNTHETIC = 12,
+	SYNTHETIC = 4096,
 
 	// The property has at least one `ufbx_anim_prop` in some layer.
-	ANIMATED = 13,
+	ANIMATED = 8192,
 
 	// Used by `ufbx_evaluate_prop()` to indicate the the property was not found.
-	NOT_FOUND = 14,
+	NOT_FOUND = 16384,
 
 	// The property is connected to another one.
 	// This use case is relatively rare so `ufbx_prop` does not track connections
 	// directly. You can find connections from `ufbx_element.connections_dst` where
 	// `ufbx_connection.dst_prop` is this property and `ufbx_connection.src_prop` is defined.
-	CONNECTED = 15,
+	CONNECTED = 32768,
 
 	// The value of this property is undefined (represented as zero).
-	NO_VALUE = 16,
+	NO_VALUE = 65536,
 
 	// This property has been overridden by the user.
 	// See `ufbx_anim.prop_overrides` for more information.
-	OVERRIDDEN = 17,
+	OVERRIDDEN = 131072,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_REAL = 20,
+	VALUE_REAL = 1048576,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_VEC2 = 21,
+	VALUE_VEC2 = 2097152,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_VEC3 = 22,
+	VALUE_VEC3 = 4194304,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_VEC4 = 23,
+	VALUE_VEC4 = 8388608,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_INT = 24,
+	VALUE_INT = 16777216,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_STR = 25,
+	VALUE_STR = 33554432,
 
 	// Value type.
 	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
 	// in some rare cases where the string defines the unit for the vector.
-	VALUE_BLOB = 26,
+	VALUE_BLOB = 67108864,
+	S_FORCE_32BIT = 2147483647, // Value type.
+	// `REAL/VEC2/VEC3/VEC4` are mutually exclusive but may coexist with eg. `STRING`
+	// in some rare cases where the string defines the unit for the vector.
 }
-
-Prop_Flags :: distinct bit_set[Prop_Flag; c.int]
-
-PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOCK_X, .LOCK_Y, .LOCK_Z, .LOCK_W, .MUTE_X, .MUTE_Y, .MUTE_Z, .MUTE_W, .SYNTHETIC, .ANIMATED, .NOT_FOUND, .CONNECTED, .NO_VALUE, .OVERRIDDEN, .VALUE_REAL, .VALUE_VEC2, .VALUE_VEC3, .VALUE_VEC4, .VALUE_INT, .VALUE_STR, .VALUE_BLOB }
 
 // Single property with name/type/value.
 Prop :: struct {
@@ -4402,26 +4401,24 @@ PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum c.int {
 	// This keyframe represents a constant step from the left side
-	STEP_LEFT = 0,
+	STEP_LEFT = 1,
 
 	// This keyframe represents a constant step from the right side
-	STEP_RIGHT = 1,
+	STEP_RIGHT = 2,
 
 	// This keyframe is the main part of a step
 	// Bordering either `UFBX_BAKED_KEY_STEP_LEFT` or `UFBX_BAKED_KEY_STEP_RIGHT`.
-	STEP_KEY = 2,
+	STEP_KEY = 4,
 
 	// This keyframe is a real keyframe in the source animation
-	KEYFRAME = 3,
+	KEYFRAME = 8,
 
 	// This keyframe has been reduced by maximum sample rate.
 	// See `ufbx_bake_opts.maximum_sample_rate`.
-	REDUCED = 4,
+	REDUCED = 16,
+	FORCE_32BIT = 2147483647, // This keyframe has been reduced by maximum sample rate.
+	// See `ufbx_bake_opts.maximum_sample_rate`.
 }
-
-Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
-
-BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
 Baked_Vec3 :: struct {
 	time:  f64,            // < Time of the keyframe, in seconds
@@ -5157,33 +5154,31 @@ Panic :: struct {
 // Flags to control `ufbx_evaluate_transform_flags()`.
 Transform_Flag :: enum c.int {
 	// Ignore parent scale helper.
-	IGNORE_SCALE_HELPER = 0,
+	IGNORE_SCALE_HELPER = 1,
 
 	// Ignore componentwise scale.
 	// Note that if you don't specify this, ufbx will have to potentially
 	// evaluate the entire parent chain in the worst case.
-	IGNORE_COMPONENTWISE_SCALE = 1,
+	IGNORE_COMPONENTWISE_SCALE = 2,
 
 	// Require explicit components
-	EXPLICIT_INCLUDES = 2,
+	EXPLICIT_INCLUDES = 4,
 
 	// If `UFBX_TRANSFORM_FLAG_EXPLICIT_INCLUDES`: Evaluate `ufbx_transform.translation`.
-	INCLUDE_TRANSLATION = 4,
+	INCLUDE_TRANSLATION = 16,
 
 	// If `UFBX_TRANSFORM_FLAG_EXPLICIT_INCLUDES`: Evaluate `ufbx_transform.rotation`.
-	INCLUDE_ROTATION = 5,
+	INCLUDE_ROTATION = 32,
 
 	// If `UFBX_TRANSFORM_FLAG_EXPLICIT_INCLUDES`: Evaluate `ufbx_transform.scale`.
-	INCLUDE_SCALE = 6,
+	INCLUDE_SCALE = 64,
 
 	// Do not extrapolate keyframes.
 	// See `UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION`.
-	NO_EXTRAPOLATION = 7,
+	NO_EXTRAPOLATION = 128,
+	S_FORCE_32BIT               = 2147483647, // Do not extrapolate keyframes.
+	// See `UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION`.
 }
-
-Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
-
-TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
 // bindgen-enable
 

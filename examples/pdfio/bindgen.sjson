@@ -5,7 +5,7 @@ inputs = [
 ]
 
 output_folder = "pdfio"
-remove_type_prefix = "pdfio"
+remove_type_prefix = "pdfio_"
 remove_function_prefix = "pdfio"
 required_prefix = "pdfio"
 import_lib = "pdfio1.lib"
@@ -13,22 +13,22 @@ package_name = "pdfio"
 
 // "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
 bit_setify = {
-	"permission_e" = "permission_t"
+	"pdfio_permission_e" = "permission_t"
 }
 
 procedure_type_overrides = {
-	"ArrayAppendBinary.value"    = "[^]"
-	"ArrayGetBinary"             = "[^]"
-	"FileCreateTemporary.buffer" = "[^]"
-	"StreamGetToken.buffer"      = "[^]"
+	"pdfioArrayAppendBinary.value"    = "[^]"
+	"pdfioArrayGetBinary"             = "[^]"
+	"pdfioFileCreateTemporary.buffer" = "[^]"
+	"pdfioStreamGetToken.buffer"      = "[^]"
 
 	// This is not a complete override list, it's just an example.
 }
 
 opaque_types = [
-	"dict_t"
-	"file_t"
-	"array_t"
-	"stream_t"
-	"obj_t"
+	"pdfio_dict_t"
+	"pdfio_file_t"
+	"pdfio_array_t"
+	"pdfio_stream_t"
+	"pdfio_obj_t"
 ]
