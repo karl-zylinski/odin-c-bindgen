@@ -45,7 +45,7 @@ rename = {
 }
 
 bit_setify = {
-    "ufbx_prop_flag" = "Prop_Flags"
-    "ufbx_transform_flag" = "Transform_Flags"
-    "ufbx_baked_key_flag" = "Baked_Key_Flags"
+    "ufbx_prop_flags" = "Prop_Flags"
+    "ufbx_transform_flags" = "Transform_Flags"
+    "ufbx_baked_key_flags" = "Baked_Key_Flags"
 }
