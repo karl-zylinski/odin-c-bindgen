@@ -19,8 +19,8 @@ bit_setify = {
 procedure_type_overrides = {
 	"ArrayAppendBinary.value"    = "[^]"
 	"ArrayGetBinary"             = "[^]"
-	"FileCreateTemporary.buffer" = "[^]"
-	"StreamGetToken.buffer"      = "[^]"
+	"FileCreateTemporary.buffer" = "[^]c.char"
+	"StreamGetToken.buffer"      = "[^]c.char"
 
 	// This is not a complete override list, it's just an example.
 }
