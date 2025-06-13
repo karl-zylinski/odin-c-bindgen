@@ -1444,7 +1444,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	} else if is_posix_type(t_prefixed) {
 		t = fmt.tprintf("posix.%v",t)
 	} else if rename, exists := s.rename[t_prefixed]; exists {
-		t = rename
+		t = vet_name(rename)
 	} else if s.force_ada_case_types && t != "void" {
 		// It makes sense, in the case we can't find the type, to just follow our naming rules and
 		// hope the type is defined somewhere else.
@@ -2177,6 +2177,7 @@ gen :: proc(input: string, c: Config) {
 
 				name_without_overlap := m.name[overlap_length:]
 
+				// Remove any leading underscores.
 				for ; name_without_overlap[0] == '_'; name_without_overlap = name_without_overlap[1:] {} 
 
 				// First letter is number... Can't have that!
