@@ -427,25 +427,23 @@ AutomationEventList :: struct {
 // NOTE: Every bit registers one state (use it with bit masks)
 // By default all flags are set to 0
 ConfigFlag :: enum c.int {
-	VSYNC_HINT               = 6,  // Set to try enabling V-Sync on GPU
-	FULLSCREEN_MODE          = 1,  // Set to run program in fullscreen
-	WINDOW_RESIZABLE         = 2,  // Set to allow resizable window
-	WINDOW_UNDECORATED       = 3,  // Set to disable window decoration (frame and buttons)
-	WINDOW_HIDDEN            = 7,  // Set to hide window
-	WINDOW_MINIMIZED         = 9,  // Set to minimize window (iconify)
-	WINDOW_MAXIMIZED         = 10, // Set to maximize window (expanded to monitor)
-	WINDOW_UNFOCUSED         = 11, // Set to window non focused
-	WINDOW_TOPMOST           = 12, // Set to window always on top
-	WINDOW_ALWAYS_RUN        = 8,  // Set to allow windows running while minimized
-	WINDOW_TRANSPARENT       = 4,  // Set to allow transparent framebuffer
-	WINDOW_HIGHDPI           = 13, // Set to support HighDPI
-	WINDOW_MOUSE_PASSTHROUGH = 14, // Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
-	BORDERLESS_WINDOWED_MODE = 15, // Set to run program in borderless windowed mode
-	MSAA_4X_HINT             = 5,  // Set to try enabling MSAA 4X
-	INTERLACED_HINT          = 16, // Set to try enabling interlaced video format (for V3D)
+	VSYNC_HINT               = 64,    // Set to try enabling V-Sync on GPU
+	FULLSCREEN_MODE          = 2,     // Set to run program in fullscreen
+	WINDOW_RESIZABLE         = 4,     // Set to allow resizable window
+	WINDOW_UNDECORATED       = 8,     // Set to disable window decoration (frame and buttons)
+	WINDOW_HIDDEN            = 128,   // Set to hide window
+	WINDOW_MINIMIZED         = 512,   // Set to minimize window (iconify)
+	WINDOW_MAXIMIZED         = 1024,  // Set to maximize window (expanded to monitor)
+	WINDOW_UNFOCUSED         = 2048,  // Set to window non focused
+	WINDOW_TOPMOST           = 4096,  // Set to window always on top
+	WINDOW_ALWAYS_RUN        = 256,   // Set to allow windows running while minimized
+	WINDOW_TRANSPARENT       = 16,    // Set to allow transparent framebuffer
+	WINDOW_HIGHDPI           = 8192,  // Set to support HighDPI
+	WINDOW_MOUSE_PASSTHROUGH = 16384, // Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
+	BORDERLESS_WINDOWED_MODE = 32768, // Set to run program in borderless windowed mode
+	MSAA_4X_HINT             = 32,    // Set to try enabling MSAA 4X
+	INTERLACED_HINT          = 65536, // Set to try enabling interlaced video format (for V3D)
 }
-
-ConfigFlags :: distinct bit_set[ConfigFlag; c.int]
 
 // Trace log level
 // NOTE: Organized by priority level
@@ -799,19 +797,18 @@ BlendMode :: enum c.int {
 // Gesture
 // NOTE: Provided as bit-wise flags to enable only desired gestures
 Gesture :: enum c.int {
-	TAP         = 0, // Tap gesture
-	DOUBLETAP   = 1, // Double tap gesture
-	HOLD        = 2, // Hold gesture
-	DRAG        = 3, // Drag gesture
-	SWIPE_RIGHT = 4, // Swipe right gesture
-	SWIPE_LEFT  = 5, // Swipe left gesture
-	SWIPE_UP    = 6, // Swipe up gesture
-	SWIPE_DOWN  = 7, // Swipe down gesture
-	PINCH_IN    = 8, // Pinch in gesture
-	PINCH_OUT   = 9, // Pinch out gesture
+	NONE        = 0,   // No gesture
+	TAP         = 1,   // Tap gesture
+	DOUBLETAP   = 2,   // Double tap gesture
+	HOLD        = 4,   // Hold gesture
+	DRAG        = 8,   // Drag gesture
+	SWIPE_RIGHT = 16,  // Swipe right gesture
+	SWIPE_LEFT  = 32,  // Swipe left gesture
+	SWIPE_UP    = 64,  // Swipe up gesture
+	SWIPE_DOWN  = 128, // Swipe down gesture
+	PINCH_IN    = 256, // Pinch in gesture
+	PINCH_OUT   = 512, // Pinch out gesture
 }
-
-Gestures :: distinct bit_set[Gesture; c.int]
 
 // Camera system modes
 CameraMode :: enum c.int {
