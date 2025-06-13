@@ -26,12 +26,16 @@ clang_defines = {
 }
 
 struct_field_overrides = {
-    "Node_List.data" = "[^]"
     "Face_List.data" = "[^]"
     "Uint32_List.data" = "[^]"
     "Vec2_List.data" = "[^]"
     "Vec3_List.data" = "[^]"
     "Vec4_List.data" = "[^]"
+    "Void_List.data" = "[^]rawptr"
+    "Bool_List.data" = "[^]"
+    "Real_List.data" = "[^]"
+    "String_List.data" = "[^]"
+    "Dom_Value_List.data" = "[^]"
 }
 
 procedure_type_overrides = {
