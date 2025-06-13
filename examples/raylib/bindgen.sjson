@@ -17,7 +17,7 @@ rename = {
 // "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
 bit_setify = {
 	"Gesture" = "Gestures"
-	"ConfigFlag" = "ConfigFlags"
+	"ConfigFlags" = "ConfigFlags"
 }
 
 type_overrides = {
