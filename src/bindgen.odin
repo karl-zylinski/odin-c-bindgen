@@ -1343,7 +1343,29 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 
 		strings.write_string(&func_builder, `proc "c" (`)
 
-		remainder := t[remainder_start:len(t)-1]
+		// We find the closing parenthesis for the function parameters.
+		// We assume anything after the closing parenthesis is a compiler
+		// attribute or something else that we don't care about.
+		paren_count := 1
+		remainder_end := remainder_start
+		for i := remainder_start; i < len(t); i += 1 {
+			if t[i] == '(' {
+				paren_count += 1
+			} else if t[i] == ')' {
+				paren_count -= 1
+			}
+
+			if paren_count == 0 {
+				remainder_end = i
+				break
+			}
+		}
+
+		if paren_count != 0 {
+			fmt.panicf("Unmatched parentheses in type: %v", t)
+		}
+
+		remainder := t[remainder_start:remainder_end]
 
 		first := true
 
