@@ -113,12 +113,12 @@ Matrix :: struct {
 }
 
 Void_List :: struct {
-	data:  rawptr,
+	data:  [^]rawptr,
 	count: c.size_t,
 }
 
 Bool_List :: struct {
-	data:  ^bool,
+	data:  [^]bool,
 	count: c.size_t,
 }
 
@@ -128,7 +128,7 @@ Uint32_List :: struct {
 }
 
 Real_List :: struct {
-	data:  ^Real,
+	data:  [^]Real,
 	count: c.size_t,
 }
 
@@ -148,7 +148,7 @@ Vec4_List :: struct {
 }
 
 String_List :: struct {
-	data:  ^String,
+	data:  [^]String,
 	count: c.size_t,
 }
 
@@ -185,7 +185,7 @@ Dom_Node_List :: struct {
 }
 
 Dom_Value_List :: struct {
-	data:  ^Dom_Value,
+	data:  [^]Dom_Value,
 	count: c.size_t,
 }
 
@@ -3098,7 +3098,7 @@ Anim_Value :: struct {
 		},
 	},
 	default_value: Vec3,
-	curves:        ^[3]Anim_Curve,
+	curves:        [3]^Anim_Curve,
 }
 
 // Animation curve segment interpolation mode between two keyframes

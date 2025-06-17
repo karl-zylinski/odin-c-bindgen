@@ -401,9 +401,9 @@ VrStereoConfig :: struct {
 
 // File path list
 FilePathList :: struct {
-	capacity: c.uint,   // Filepaths max entries
-	count:    c.uint,   // Filepaths entries count
-	paths:    ^^c.char, // Filepaths entries
+	capacity: c.uint,     // Filepaths max entries
+	count:    c.uint,     // Filepaths entries count
+	paths:    [^]cstring, // Filepaths entries
 }
 
 // Automation event
@@ -1376,24 +1376,24 @@ foreign lib {
 	// Text strings management functions (no UTF-8 strings, only byte chars)
 	// WARNING 1: Most of these functions use internal static buffers, it's recommended to store returned data on user-side for re-use
 	// WARNING 2: Some strings allocate memory internally for the returned strings, those strings must be free by user using MemFree()
-	TextCopy      :: proc(dst: cstring, src: cstring) -> c.int ---                         // Copy one string to another, returns bytes copied
-	TextIsEqual   :: proc(text1: cstring, text2: cstring) -> bool ---                      // Check if two text string are equal
-	TextLength    :: proc(text: cstring) -> c.uint ---                                     // Get text length, checks for '\0' ending
-	TextFormat    :: proc(text: cstring, #c_vararg _: ..any) -> cstring ---                // Text formatting with variables (sprintf() style)
-	TextSubtext   :: proc(text: cstring, position: c.int, length: c.int) -> cstring ---    // Get a piece of a text string
-	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---     // Replace text string (WARNING: memory must be freed!)
-	TextInsert    :: proc(text: cstring, insert: cstring, position: c.int) -> cstring ---  // Insert text in a position (WARNING: memory must be freed!)
-	TextJoin      :: proc(textList: ^^c.char, count: c.int, delimiter: cstring) -> cstring --- // Join text strings with delimiter
-	TextSplit     :: proc(text: cstring, delimiter: c.char, count: ^c.int) -> ^^c.char --- // Split text into multiple strings
-	TextAppend    :: proc(text: cstring, append: cstring, position: ^c.int) ---            // Append text at specific position and move cursor!
-	TextFindIndex :: proc(text: cstring, find: cstring) -> c.int ---                       // Find first text occurrence within a string
-	TextToUpper   :: proc(text: cstring) -> cstring ---                                    // Get upper case version of provided string
-	TextToLower   :: proc(text: cstring) -> cstring ---                                    // Get lower case version of provided string
-	TextToPascal  :: proc(text: cstring) -> cstring ---                                    // Get Pascal case notation version of provided string
-	TextToSnake   :: proc(text: cstring) -> cstring ---                                    // Get Snake case notation version of provided string
-	TextToCamel   :: proc(text: cstring) -> cstring ---                                    // Get Camel case notation version of provided string
-	TextToInteger :: proc(text: cstring) -> c.int ---                                      // Get integer value from text
-	TextToFloat   :: proc(text: cstring) -> f32 ---                                        // Get float value from text
+	TextCopy      :: proc(dst: cstring, src: cstring) -> c.int ---                           // Copy one string to another, returns bytes copied
+	TextIsEqual   :: proc(text1: cstring, text2: cstring) -> bool ---                        // Check if two text string are equal
+	TextLength    :: proc(text: cstring) -> c.uint ---                                       // Get text length, checks for '\0' ending
+	TextFormat    :: proc(text: cstring, #c_vararg _: ..any) -> cstring ---                  // Text formatting with variables (sprintf() style)
+	TextSubtext   :: proc(text: cstring, position: c.int, length: c.int) -> cstring ---      // Get a piece of a text string
+	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---       // Replace text string (WARNING: memory must be freed!)
+	TextInsert    :: proc(text: cstring, insert: cstring, position: c.int) -> cstring ---    // Insert text in a position (WARNING: memory must be freed!)
+	TextJoin      :: proc(textList: [^]cstring, count: c.int, delimiter: cstring) -> cstring --- // Join text strings with delimiter
+	TextSplit     :: proc(text: cstring, delimiter: c.char, count: ^c.int) -> [^]cstring --- // Split text into multiple strings
+	TextAppend    :: proc(text: cstring, append: cstring, position: ^c.int) ---              // Append text at specific position and move cursor!
+	TextFindIndex :: proc(text: cstring, find: cstring) -> c.int ---                         // Find first text occurrence within a string
+	TextToUpper   :: proc(text: cstring) -> cstring ---                                      // Get upper case version of provided string
+	TextToLower   :: proc(text: cstring) -> cstring ---                                      // Get lower case version of provided string
+	TextToPascal  :: proc(text: cstring) -> cstring ---                                      // Get Pascal case notation version of provided string
+	TextToSnake   :: proc(text: cstring) -> cstring ---                                      // Get Snake case notation version of provided string
+	TextToCamel   :: proc(text: cstring) -> cstring ---                                      // Get Camel case notation version of provided string
+	TextToInteger :: proc(text: cstring) -> c.int ---                                        // Get integer value from text
+	TextToFloat   :: proc(text: cstring) -> f32 ---                                          // Get float value from text
 
 	// Basic geometric 3D shapes drawing functions
 	DrawLine3D          :: proc(startPos: Vector3, endPos: Vector3, color: Color) ---    // Draw a line in 3D world space

@@ -19,8 +19,8 @@ bit_setify = {
 procedure_type_overrides = {
 	"pdfioArrayAppendBinary.value"    = "[^]"
 	"pdfioArrayGetBinary"             = "[^]"
-	"pdfioFileCreateTemporary.buffer" = "[^]"
-	"pdfioStreamGetToken.buffer"      = "[^]"
+	"pdfioFileCreateTemporary.buffer" = "[^]c.char"
+	"pdfioStreamGetToken.buffer"      = "[^]c.char"
 
 	// This is not a complete override list, it's just an example.
 }
