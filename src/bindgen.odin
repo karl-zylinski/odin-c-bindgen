@@ -1816,14 +1816,13 @@ gen :: proc(input: string, c: Config) {
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
-					add_to_set(&s.created_symbols, name)
 				} else {
 					name = trim_prefix(name, s.remove_type_prefix)
 					if s.force_ada_case_types {
 						name = strings.to_ada_case(name)
 					}
-					add_to_set(&s.created_symbols, name)
 				}
+				add_to_set(&s.created_symbols, name)
 			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
@@ -1840,7 +1839,7 @@ gen :: proc(input: string, c: Config) {
 			name := d.original_name
 			
 			if replacement, has_replacement := s.rename[name]; has_replacement {
-				d.link_name = d.name
+				d.link_name = d.original_name
 				name = replacement
 			} else {
 				name = trim_prefix(name, s.remove_function_prefix)
@@ -1855,14 +1854,13 @@ gen :: proc(input: string, c: Config) {
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
-					add_to_set(&s.created_symbols, name)
 				} else {
 					name = trim_prefix(name, s.remove_type_prefix)
 					if s.force_ada_case_types {
 						name = strings.to_ada_case(name)
 					}
-					add_to_set(&s.created_symbols, name)
 				}
+				add_to_set(&s.created_symbols, name)
 			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
