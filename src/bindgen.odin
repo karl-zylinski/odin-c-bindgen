@@ -1477,16 +1477,13 @@ translate_type :: proc(s: Gen_State, t: string, override: bool) -> string {
 		}
 	}
 
-	// Can we assume that if we have multiple pointers it's a pointer to an array of pointers as aposed to a pointer to a pointer?
-	// I'm going to say yes but this could be wrong sometimes.
-	// If wrong I think you can still use the data by `variable[0]` which will function the same as a pointer to a pointer
-	// or you can override the type to the corrected type (e.g. ^^int).
+	if num_ptrs > 0 && override {
+		strings.write_string(&b, "[^]")
+		num_ptrs -= 1
+	}
+
 	for num_ptrs > 0 {
-		if num_ptrs > 1 || override {
-			strings.write_string(&b, "[^]")
-		} else {
-			strings.write_string(&b, "^")
-		}
+		strings.write_string(&b, "^")
 		num_ptrs -= 1
 	}
 
