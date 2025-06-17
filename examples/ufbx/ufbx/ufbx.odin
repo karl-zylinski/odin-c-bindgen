@@ -180,7 +180,7 @@ Dom_Value :: struct {
 }
 
 Dom_Node_List :: struct {
-	data:  [^]^Dom_Node,
+	data:  ^^Dom_Node,
 	count: c.size_t,
 }
 
@@ -354,12 +354,12 @@ Props :: struct {
 }
 
 Element_List :: struct {
-	data:  [^]^Element,
+	data:  ^^Element,
 	count: c.size_t,
 }
 
 Unknown_List :: struct {
-	data:  [^]^Unknown,
+	data:  ^^Unknown,
 	count: c.size_t,
 }
 
@@ -369,202 +369,202 @@ Node_List :: struct {
 }
 
 Mesh_List :: struct {
-	data:  [^]^Mesh,
+	data:  ^^Mesh,
 	count: c.size_t,
 }
 
 Light_List :: struct {
-	data:  [^]^Light,
+	data:  ^^Light,
 	count: c.size_t,
 }
 
 Camera_List :: struct {
-	data:  [^]^Camera,
+	data:  ^^Camera,
 	count: c.size_t,
 }
 
 Bone_List :: struct {
-	data:  [^]^Bone,
+	data:  ^^Bone,
 	count: c.size_t,
 }
 
 Empty_List :: struct {
-	data:  [^]^Empty,
+	data:  ^^Empty,
 	count: c.size_t,
 }
 
 Line_Curve_List :: struct {
-	data:  [^]^Line_Curve,
+	data:  ^^Line_Curve,
 	count: c.size_t,
 }
 
 Nurbs_Curve_List :: struct {
-	data:  [^]^Nurbs_Curve,
+	data:  ^^Nurbs_Curve,
 	count: c.size_t,
 }
 
 Nurbs_Surface_List :: struct {
-	data:  [^]^Nurbs_Surface,
+	data:  ^^Nurbs_Surface,
 	count: c.size_t,
 }
 
 Nurbs_Trim_Surface_List :: struct {
-	data:  [^]^Nurbs_Trim_Surface,
+	data:  ^^Nurbs_Trim_Surface,
 	count: c.size_t,
 }
 
 Nurbs_Trim_Boundary_List :: struct {
-	data:  [^]^Nurbs_Trim_Boundary,
+	data:  ^^Nurbs_Trim_Boundary,
 	count: c.size_t,
 }
 
 Procedural_Geometry_List :: struct {
-	data:  [^]^Procedural_Geometry,
+	data:  ^^Procedural_Geometry,
 	count: c.size_t,
 }
 
 Stereo_Camera_List :: struct {
-	data:  [^]^Stereo_Camera,
+	data:  ^^Stereo_Camera,
 	count: c.size_t,
 }
 
 Camera_Switcher_List :: struct {
-	data:  [^]^Camera_Switcher,
+	data:  ^^Camera_Switcher,
 	count: c.size_t,
 }
 
 Marker_List :: struct {
-	data:  [^]^Marker,
+	data:  ^^Marker,
 	count: c.size_t,
 }
 
 Lod_Group_List :: struct {
-	data:  [^]^Lod_Group,
+	data:  ^^Lod_Group,
 	count: c.size_t,
 }
 
 Skin_Deformer_List :: struct {
-	data:  [^]^Skin_Deformer,
+	data:  ^^Skin_Deformer,
 	count: c.size_t,
 }
 
 Skin_Cluster_List :: struct {
-	data:  [^]^Skin_Cluster,
+	data:  ^^Skin_Cluster,
 	count: c.size_t,
 }
 
 Blend_Deformer_List :: struct {
-	data:  [^]^Blend_Deformer,
+	data:  ^^Blend_Deformer,
 	count: c.size_t,
 }
 
 Blend_Channel_List :: struct {
-	data:  [^]^Blend_Channel,
+	data:  ^^Blend_Channel,
 	count: c.size_t,
 }
 
 Blend_Shape_List :: struct {
-	data:  [^]^Blend_Shape,
+	data:  ^^Blend_Shape,
 	count: c.size_t,
 }
 
 Cache_Deformer_List :: struct {
-	data:  [^]^Cache_Deformer,
+	data:  ^^Cache_Deformer,
 	count: c.size_t,
 }
 
 Cache_File_List :: struct {
-	data:  [^]^Cache_File,
+	data:  ^^Cache_File,
 	count: c.size_t,
 }
 
 Material_List :: struct {
-	data:  [^]^Material,
+	data:  ^^Material,
 	count: c.size_t,
 }
 
 Texture_List :: struct {
-	data:  [^]^Texture,
+	data:  ^^Texture,
 	count: c.size_t,
 }
 
 Video_List :: struct {
-	data:  [^]^Video,
+	data:  ^^Video,
 	count: c.size_t,
 }
 
 Shader_List :: struct {
-	data:  [^]^Shader,
+	data:  ^^Shader,
 	count: c.size_t,
 }
 
 Shader_Binding_List :: struct {
-	data:  [^]^Shader_Binding,
+	data:  ^^Shader_Binding,
 	count: c.size_t,
 }
 
 Anim_Stack_List :: struct {
-	data:  [^]^Anim_Stack,
+	data:  ^^Anim_Stack,
 	count: c.size_t,
 }
 
 Anim_Layer_List :: struct {
-	data:  [^]^Anim_Layer,
+	data:  ^^Anim_Layer,
 	count: c.size_t,
 }
 
 Anim_Value_List :: struct {
-	data:  [^]^Anim_Value,
+	data:  ^^Anim_Value,
 	count: c.size_t,
 }
 
 Anim_Curve_List :: struct {
-	data:  [^]^Anim_Curve,
+	data:  ^^Anim_Curve,
 	count: c.size_t,
 }
 
 Display_Layer_List :: struct {
-	data:  [^]^Display_Layer,
+	data:  ^^Display_Layer,
 	count: c.size_t,
 }
 
 Selection_Set_List :: struct {
-	data:  [^]^Selection_Set,
+	data:  ^^Selection_Set,
 	count: c.size_t,
 }
 
 Selection_Node_List :: struct {
-	data:  [^]^Selection_Node,
+	data:  ^^Selection_Node,
 	count: c.size_t,
 }
 
 Character_List :: struct {
-	data:  [^]^Character,
+	data:  ^^Character,
 	count: c.size_t,
 }
 
 Constraint_List :: struct {
-	data:  [^]^Constraint,
+	data:  ^^Constraint,
 	count: c.size_t,
 }
 
 Audio_Layer_List :: struct {
-	data:  [^]^Audio_Layer,
+	data:  ^^Audio_Layer,
 	count: c.size_t,
 }
 
 Audio_Clip_List :: struct {
-	data:  [^]^Audio_Clip,
+	data:  ^^Audio_Clip,
 	count: c.size_t,
 }
 
 Pose_List :: struct {
-	data:  [^]^Pose,
+	data:  ^^Pose,
 	count: c.size_t,
 }
 
 Metadata_Object_List :: struct {
-	data:  [^]^Metadata_Object,
+	data:  ^^Metadata_Object,
 	count: c.size_t,
 }
 

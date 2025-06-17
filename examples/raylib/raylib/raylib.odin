@@ -1341,7 +1341,7 @@ foreign lib {
 	LoadFontFromMemory :: proc(fileType: cstring, fileData: ^c.uchar, dataSize: c.int, fontSize: c.int, codepoints: ^c.int, codepointCount: c.int) -> Font --- // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
 	IsFontValid        :: proc(font: Font) -> bool ---                                 // Check if a font is valid (font data loaded, WARNING: GPU texture not checked)
 	LoadFontData       :: proc(fileData: ^c.uchar, dataSize: c.int, fontSize: c.int, codepoints: ^c.int, codepointCount: c.int, type: c.int) -> ^GlyphInfo --- // Load font data for further use
-	GenImageFontAtlas  :: proc(glyphs: ^GlyphInfo, glyphRecs: [^]^Rectangle, glyphCount: c.int, fontSize: c.int, padding: c.int, packMethod: c.int) -> Image --- // Generate image font atlas using chars info
+	GenImageFontAtlas  :: proc(glyphs: ^GlyphInfo, glyphRecs: ^^Rectangle, glyphCount: c.int, fontSize: c.int, padding: c.int, packMethod: c.int) -> Image --- // Generate image font atlas using chars info
 	UnloadFontData     :: proc(glyphs: ^GlyphInfo, glyphCount: c.int) ---              // Unload font chars info data (RAM)
 	UnloadFont         :: proc(font: Font) ---                                         // Unload font from GPU memory (VRAM)
 	ExportFontAsCode   :: proc(font: Font, fileName: cstring) -> bool ---              // Export font as code file, returns true on success
