@@ -32,6 +32,11 @@ struct_field_overrides = {
     "ufbx_vec2_list.data" = "[^]"
     "ufbx_vec3_list.data" = "[^]"
     "ufbx_vec4_list.data" = "[^]"
+    "ufbx_void_list.data" = "[^]rawptr"
+    "ufbx_bool_list.data" = "[^]"
+    "ufbx_real_list.data" = "[^]"
+    "ufbx_string_list.data" = "[^]"
+    "ufbx_dom_value_list.data" = "[^]"
 }
 
 procedure_type_overrides = {
