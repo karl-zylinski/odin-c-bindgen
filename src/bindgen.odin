@@ -2289,17 +2289,14 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
-				append(
-					data.out_members,
-					Enum_Member {
-						name           = clang_string_to_string(clang.getCursorSpelling(cursor)),
-						value          = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
-						comment        = clang_string_to_string(
-							clang.Cursor_getRawCommentText(cursor),
-						),
-						comment_before = false, // Don't know how to get this yet
-					},
-				)
+				append(data.out_members, Enum_Member {
+					name           = clang_string_to_string(clang.getCursorSpelling(cursor)),
+					value          = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
+					comment        = clang_string_to_string(
+						clang.Cursor_getRawCommentText(cursor),
+					),
+					comment_before = false, // Don't know how to get this yet
+				})
 			// append(
 			// 	&out_members,
 			// 	Enum_Member {
@@ -2863,7 +2860,7 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			fp(f, name)
-			fpf(f, " :: enum %s {{\n", translate_type(s, d.backing_type))
+			fpf(f, " :: enum %s {{\n", translate_type(s, d.backing_type, false))
 
 			bit_set_name, bit_setify := s.bit_setify[d.original_name]
 			bit_set_all_constant: string
