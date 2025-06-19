@@ -16,12 +16,6 @@ import "core:c"
 
 _ :: c
 
-when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
-} else {
-    foreign import lib "system:clang"
-}
-
 /**
 * Error codes returned by libclang routines.
 *

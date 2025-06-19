@@ -1863,7 +1863,6 @@ gen :: proc(input: string, c: Config) {
 	parse_record_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Struct {
 		// name, _ := json_get_string(decl, "name")
 
-		out_fileds: [dynamic]Struct_Field
 		// parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: bool) {
 		// out_fields: [dynamic]Struct_Field
 		// comment: string
