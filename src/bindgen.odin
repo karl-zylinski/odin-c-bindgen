@@ -1353,7 +1353,7 @@ c_type_mapping := map[string]string {
 }
 
 // For translating type names in procedure parameters and struct fields.
-translate_type :: proc(s: Gen_State, t: string) -> string {
+translate_type :: proc(s: Gen_State, t: string, override: bool) -> string {
 	t := t
 	t = strings.trim_space(t)
 
@@ -1367,7 +1367,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 			remainder_start = delimiter + 1
 		}
 
-		return_type := translate_type(s, t[:delimiter])
+		return_type := translate_type(s, t[:delimiter], false)
 
 		func_builder := strings.builder_make()
 
@@ -1405,7 +1405,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 			} else {
 				strings.write_string(&func_builder, ", ")
 			}
-			strings.write_string(&func_builder, translate_type(s, strings.trim_space(param_type)))
+			strings.write_string(&func_builder, translate_type(s, strings.trim_space(param_type), false))
 		}
 
 		if return_type == "void" {
@@ -1418,7 +1418,7 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 	}
 
 	// This type usually means "an array of strings"
-	if t == "const char *const *" {
+	if t == "const char *const *" || t == "char *const *" || t == "const char **" || t == "char **" {
 		return "[^]cstring"
 	}
 
@@ -1505,16 +1505,14 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		t = vet_name(t)
 	}
 
-	if array_start != -1 {
-		t = fmt.tprintf(
-			"%s%s%s",
-			multi_array != -1 ? "[^]" : "",
-			t_original[array_start:array_end + 1],
-			t,
-		)
-	}
-
 	b := strings.builder_make()
+
+	if array_start != -1 {
+		if multi_array != -1 {
+			strings.write_string(&b, "[^]")
+		}
+		strings.write_string(&b, t_original[array_start:array_end + 1])
+	}
 
 	if num_ptrs > 0 {
 		if t == "void" {
@@ -1531,8 +1529,14 @@ translate_type :: proc(s: Gen_State, t: string) -> string {
 		}
 	}
 
-	for _ in 0 ..< num_ptrs {
+	if num_ptrs > 0 && override {
+		strings.write_string(&b, "[^]")
+		num_ptrs -= 1
+	}
+
+	for num_ptrs > 0 {
 		strings.write_string(&b, "^")
+		num_ptrs -= 1
 	}
 
 	strings.write_string(&b, t)
@@ -2551,14 +2555,13 @@ gen :: proc(input: string, c: Config) {
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
-					add_to_set(&s.created_symbols, name)
 				} else {
 					name = trim_prefix(name, s.remove_type_prefix)
 					if s.force_ada_case_types {
 						name = strings.to_ada_case(name)
 					}
-					add_to_set(&s.created_symbols, name)
 				}
+				add_to_set(&s.created_symbols, name)
 			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
@@ -2575,7 +2578,7 @@ gen :: proc(input: string, c: Config) {
 			name := d.original_name
 
 			if replacement, has_replacement := s.rename[name]; has_replacement {
-				d.link_name = d.name
+				d.link_name = d.original_name
 				name = replacement
 			} else {
 				name = trim_prefix(name, s.remove_function_prefix)
@@ -2590,14 +2593,13 @@ gen :: proc(input: string, c: Config) {
 				name = typedef
 				if replacement, has_replacement := s.rename[name]; has_replacement {
 					name = replacement
-					add_to_set(&s.created_symbols, name)
 				} else {
 					name = trim_prefix(name, s.remove_type_prefix)
 					if s.force_ada_case_types {
 						name = strings.to_ada_case(name)
 					}
-					add_to_set(&s.created_symbols, name)
 				}
+				add_to_set(&s.created_symbols, name)
 			} else if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
 			} else {
@@ -2744,20 +2746,17 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					field_type := translate_type(s, field.type)
-
-					if override_key != "" {
-						if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; has_field_type_override {
-							if field_type_override == "[^]" {
-								// Change first `^` for `[^]`
-								field_type = fmt.tprintf(
-									"[^]%v",
-									strings.trim_prefix(field_type, "^"),
-								)
-							} else {
-								field_type = field_type_override
-							}
+					field_type: string
+					
+					if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; override_key != "" && has_field_type_override {
+						if field_type_override == "[^]" {
+							// Change first `^` for `[^]`
+							field_type = translate_type(s, field.type, true)
+						} else {
+							field_type = field_type_override
 						}
+					} else {
+						field_type = translate_type(s, field.type, false)
 					}
 
 					comment := field.comment
@@ -3066,7 +3065,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if translate_type(s, d.type) == d.name {
+			if translate_type(s, d.type, false) == d.name {
 				continue
 			}
 
@@ -3098,10 +3097,10 @@ gen :: proc(input: string, c: Config) {
 				fp(f, "struct {}")
 			} else if strings.contains(type, "(") && strings.contains(type, ")") {
 				// function pointer typedef
-				fp(f, translate_type(s, type))
+				fp(f, translate_type(s, type, false))
 				add_to_set(&s.type_is_proc, n)
 			} else {
-				fpf(f, "%v", translate_type(s, type))
+				fpf(f, "%v", translate_type(s, type, false))
 			}
 
 			if d.side_comment != "" {
@@ -3347,19 +3346,21 @@ gen :: proc(input: string, c: Config) {
 				for &p, i in d.parameters {
 					n := vet_name(p.name)
 
-					type := translate_type(s, p.type)
+					type: string
 					type_override_key := fmt.tprintf("%v.%v", d.original_name, n)
 
 					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
 						switch type_override {
 						case "#by_ptr":
-							type = strings.trim_prefix(type, "^")
+							type = strings.trim_prefix(translate_type(s, p.type, false), "^")
 							w(&b, "#by_ptr ")
 						case "[^]":
-							type = fmt.tprintf("[^]%v", strings.trim_prefix(type, "^"))
+							type = translate_type(s, p.type, true)
 						case:
 							type = type_override
 						}
+					} else {
+						type = translate_type(s, p.type, false)
 					}
 
 					// Empty name means unnamed parameter. Drop the colon.
@@ -3386,18 +3387,17 @@ gen :: proc(input: string, c: Config) {
 				if d.return_type != "" {
 					w(&b, " -> ")
 
-					return_type := translate_type(s, d.return_type)
+					return_type: string
 
 					if override, override_ok := s.procedure_type_overrides[d.original_name]; override_ok {
 						switch override {
 						case "[^]":
-							return_type = fmt.tprintf(
-								"[^]%v",
-								strings.trim_prefix(return_type, "^"),
-							)
+							return_type = translate_type(s, d.return_type, true)
 						case:
 							return_type = override
 						}
+					} else {
+						return_type = translate_type(s, d.return_type, false)
 					}
 
 					w(&b, return_type)

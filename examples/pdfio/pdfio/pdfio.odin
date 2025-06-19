@@ -169,7 +169,7 @@ foreign lib {
 	// TODO: Add number, array, string, etc. versions of pdfioFileCreateObject?
 	FileCreatePage      :: proc(pdf: ^file_t, dict: ^dict_t) -> ^stream_t ---
 	FileCreateStringObj :: proc(pdf: ^file_t, s: cstring) -> ^obj_t ---
-	FileCreateTemporary :: proc(buffer: [^]cstring, bufsize: c.size_t, version: cstring, media_box: ^rect_t, crop_box: ^rect_t, error_cb: error_cb_t, error_data: rawptr) -> ^file_t ---
+	FileCreateTemporary :: proc(buffer: [^]c.char, bufsize: c.size_t, version: cstring, media_box: ^rect_t, crop_box: ^rect_t, error_cb: error_cb_t, error_data: rawptr) -> ^file_t ---
 	FileFindObj         :: proc(pdf: ^file_t, number: c.size_t) -> ^obj_t ---
 	FileGetAuthor       :: proc(pdf: ^file_t) -> cstring ---
 	FileGetCatalog      :: proc(pdf: ^file_t) -> ^dict_t ---
@@ -212,7 +212,7 @@ foreign lib {
 	PageOpenStream      :: proc(page: ^obj_t, n: c.size_t, decode: bool) -> ^stream_t ---
 	StreamClose         :: proc(st: ^stream_t) -> bool ---
 	StreamConsume       :: proc(st: ^stream_t, bytes: c.size_t) -> bool ---
-	StreamGetToken      :: proc(st: ^stream_t, buffer: [^]cstring, bufsize: c.size_t) -> bool ---
+	StreamGetToken      :: proc(st: ^stream_t, buffer: [^]c.char, bufsize: c.size_t) -> bool ---
 	StreamPeek          :: proc(st: ^stream_t, buffer: rawptr, bytes: c.size_t) -> c.ssize_t ---
 	StreamPrintf        :: proc(st: ^stream_t, format: cstring, #c_vararg _: ..any) -> bool ---
 	StreamPutChar       :: proc(st: ^stream_t, ch: c.int) -> bool ---
