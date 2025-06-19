@@ -2146,77 +2146,87 @@ gen :: proc(input: string, c: Config) {
 			fp(f, " :: enum c.int {\n")
 
 			bit_set_name, bit_setify := s.bit_setify[d.original_name]
-			bit_set_all_constant: string
-
-			overlap_length := 0
-			longest_name := 0
+			bit_set_all_constant: ^Enum_Member = nil
 
 			all_has_value := true
+			overlap: string
+			longest_name := 0
 
-			if len(d.members) > 1 {
-				overlap_length_source := d.members[0].name
-				overlap_length = len(overlap_length_source)
-				longest_name = overlap_length
+			Inner_Member :: struct {
+				using wrapped: Enum_Member, // Just copy out the original type I'm lazy.
+				trimmed_name: string, // Trimmed C name.
+				printed: string, // Odin-ified string.
+			}
+			inner_members: [dynamic]Inner_Member
+			reserve(&inner_members, len(d.members))
 
-				if d.members[0].value == nil {
-					all_has_value = false
+			// Collect values we're keeping inside the Odin enum.
+			for &m in d.members {
+				// Filter special "All" value if a bitset.
+				if bit_setify && (m.value == -1 || m.value == 2147483647) {
+					assert(bit_set_all_constant == nil, "enum has multiple All (~0) values")
+					bit_set_all_constant = &m
+					continue
+				}
+				// Filter special "None" value if a bitset.
+				if bit_setify && m.value == 0 {
+					continue
 				}
 
-				for idx in 1..<len(d.members) {
-					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) && bit_setify {
-						continue
-					}
+				overlap = m.name
+				all_has_value &&= (m.value != nil)
 
-					mn := d.members[idx].name
-					length := strings.prefix_length(mn, overlap_length_source)
-
-					if length < overlap_length {
-						overlap_length = length
-						overlap_length_source = mn
-					}
-
-					longest_name = max(len(mn), longest_name)
-
-					if d.members[idx].value == nil {
-						all_has_value = false
-					}
-				}
-			}	
-
-			Formatted_Member :: struct {
-				name: string,
-				member: string,
-				comment: string,
-				comment_before: bool,
+				append(&inner_members, Inner_Member{wrapped = m})
 			}
 
-			members: [dynamic]Formatted_Member
+			// Search for a common prefix that wont't erase any enum values.
+			for m in inner_members {
+				length := strings.prefix_length(m.name, overlap)
 
-			for &m in d.members {
-				if (m.value == -1 || m.value == 2147483647) && bit_setify {
-					bit_set_all_constant = m.name
-					continue
+				// If the overlap erases the entire word, back off.
+				// Search for a distinct word in the enum; being "fooBar" or "foo_bar".
+				if length == len(m.name) {
+					for length > 0 {
+						length -= 1
+
+						rune0 := utf8.rune_at_pos(overlap, length)
+						rune1 := utf8.rune_at_pos(overlap, length+1)
+
+						// Underscore/lowercase char should be moved to the overlap.
+						if rune0 == '_' || unicode.is_lower(rune0) && unicode.is_upper(rune1) {
+							break
+						}
+					}
 				}
 
-				if m.value == 0 && bit_setify {
-					continue
-				}
+				overlap = overlap[:length]
+			}
 
-				b := strings.builder_make()
-
-				name_without_overlap := m.name[overlap_length:]
+			// Bake names upfront so we can extract the longest name.
+			for &m in inner_members {
+				value_name := m.name[len(overlap):]
+				assert(len(value_name) > 0, "common overlap prefix ereases an enum value")
 
 				// Remove any leading underscores.
-				for ; name_without_overlap[0] == '_'; name_without_overlap = name_without_overlap[1:] {} 
-
+				value_name = strings.trim_left(value_name, "_")
 				// First letter is number... Can't have that!
-				if len(name_without_overlap) > 0 && unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
-					name_without_overlap = fmt.tprintf("_%v", name_without_overlap)
+				// Or, the name has been trimmed to nothing, which isn't valid in Odin.
+				// We can have multiple "_" values, so go with that.
+				if len(value_name) == 0 || unicode.is_number(utf8.rune_at(value_name, 0)) {
+					value_name = strings.concatenate({"_", value_name}, context.temp_allocator)
 				}
 
-				strings.write_string(&b, name_without_overlap)
+				m.trimmed_name = value_name
+				longest_name = max(longest_name, len(value_name))
+			}
 
-				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
+			// Print enum "inner" values.
+			for &m in inner_members {
+				b := strings.builder_make()
+				defer m.printed = strings.to_string(b)
+
+				suffix_pad := all_has_value ? longest_name - len(m.trimmed_name) : 0
+				strings.write_string(&b, m.trimmed_name)
 
 				if vv, v_ok := m.value.?; v_ok {
 					if !m.comment_before {
@@ -2226,40 +2236,29 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					val_string: string
-
+					// Append value as " = %v".
+					strings.write_string(&b, " = ")
 					if bit_setify {
 						v := u32(vv)
 						assert(v != 0)
 
 						// Note the `log2`... This turns a value such as `64`
 						// into `6`, which is what it should be for a bit_set.
-						val_string = fmt.tprintf(" = %v", bits.log2(v))
-
+						strings.write_u64(&b, cast(u64)bits.log2(v))
 					} else {
-						val_string = fmt.tprintf(" = %v", vv)
+						strings.write_int(&b, vv)
 					}
-					
-					strings.write_string(&b, val_string)
 				}
-
-				append(&members, Formatted_Member {
-					name = name_without_overlap,
-					member = strings.to_string(b),
-					comment = m.comment,
-					comment_before = m.comment_before,
-				})
 			}
 
 			longest_member_name_with_side_comment: int
-
-			for &m in members {
-				if m.comment != "" && !m.comment_before && len(m.member) > longest_member_name_with_side_comment {
-					longest_member_name_with_side_comment = len(m.member)
+			for m in inner_members {
+				if m.comment != "" && !m.comment_before {
+					longest_member_name_with_side_comment = max(longest_member_name_with_side_comment, len(m.printed))
 				}
 			}
 
-			for &m, m_idx in members {
+			for &m, m_idx in inner_members {
 				has_comment := m.comment != ""
 				comment_before := m.comment_before
 
@@ -2271,11 +2270,11 @@ gen :: proc(input: string, c: Config) {
 				}
 
 				fp(f, "\t")	
-				fp(f, m.member)
+				fp(f, m.printed)
 				fp(f, ",")
 
 				if has_comment && !comment_before {
-					for _ in 0..<(longest_member_name_with_side_comment - len(m.member)) {
+					for _ in 0..<(longest_member_name_with_side_comment - len(m.printed)) {
 						// Padding in front of comment
 						fp(f, " ")
 					}
@@ -2296,15 +2295,15 @@ gen :: proc(input: string, c: Config) {
 
 				// There was a member with value `-1`... That means all bits are
 				// set. Create a bit_set constant with all variants set.
-				if bit_set_all_constant != "" {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_type_prefix)))
+				if bit_set_all_constant != nil {
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant.name), strings.to_lower(s.remove_type_prefix)))
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
-					for &m, i in members {
-						fpf(f, ".%v", m.name)
+					for &m, i in inner_members {
+						fpf(f, ".%v", m.trimmed_name)
 
-						if i != len(members) - 1 {
+						if i != len(inner_members) - 1 {
 							fp(f, ", ")
 						}
 					}
