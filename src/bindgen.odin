@@ -2146,7 +2146,7 @@ gen :: proc(input: string, c: Config) {
 			fp(f, " :: enum c.int {\n")
 
 			bit_set_name, bit_setify := s.bit_setify[d.original_name]
-			bit_set_all_constant: Maybe(int)
+			bit_set_all_constant: ^Enum_Member = nil
 
 			all_has_value := true
 			overlap: string
@@ -2160,17 +2160,15 @@ gen :: proc(input: string, c: Config) {
 			inner_members: [dynamic]Inner_Member
 			reserve(&inner_members, len(d.members))
 
-			for m, i in d.members {
-				// Identify the All value in this bitset.
+			// Collect values we're keeping inside the Odin enum.
+			for &m in d.members {
+				// Filter special "All" value if a bitset.
 				if bit_setify && (m.value == -1 || m.value == 2147483647) {
-					assert(bit_set_all_constant == nil, "enum has multiple None (~0) values")
-					bit_set_all_constant = i
+					assert(bit_set_all_constant == nil, "enum has multiple All (~0) values")
+					bit_set_all_constant = &m
 					continue
 				}
-
-				// Filter out the bitset None value when considering prefixes etc.
-				// It could have a weird non-standard name.
-				// We'll get better results deriving from valid members.
+				// Filter special "None" value if a bitset.
 				if bit_setify && m.value == 0 {
 					continue
 				}
@@ -2182,7 +2180,7 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			// Search for a common prefix that wont't erase any enum values.
-			for m, i in inner_members {
+			for m in inner_members {
 				length := strings.prefix_length(m.name, overlap)
 
 				// If the overlap erases the entire word, back off.
@@ -2206,32 +2204,30 @@ gen :: proc(input: string, c: Config) {
 
 			// Bake names upfront so we can extract the longest name.
 			for &m in inner_members {
-				// Fetch original untrimmed name.
-				name := m.name
-				defer m.trimmed_name = name
-				defer longest_name = max(longest_name, len(name))
+				value_name := m.name[len(overlap):]
+				assert(len(value_name) > 0, "common overlap prefix ereases an enum value")
 
-				name = name[len(overlap):]
-				assert(len(name) > 0, "common overlap prefix ereases an enum value")
 				// Remove any leading underscores.
-				name = strings.trim_left(name, "_")
+				value_name = strings.trim_left(value_name, "_")
 				// First letter is number... Can't have that!
 				// Or, the name has been trimmed to nothing, which isn't valid in Odin.
 				// We can have multiple "_" values, so go with that.
-				if len(name) == 0 || unicode.is_number(utf8.rune_at(name, 0)) {
-					name = strings.concatenate({"_", name}, context.temp_allocator)
+				if len(value_name) == 0 || unicode.is_number(utf8.rune_at(value_name, 0)) {
+					value_name = strings.concatenate({"_", value_name}, context.temp_allocator)
 				}
+
+				m.trimmed_name = value_name
+				longest_name = max(longest_name, len(value_name))
 			}
 
-			// Print enum "inner" values (excludes None value if present).
+			// Print enum "inner" values.
 			for &m in inner_members {
 				b := strings.builder_make()
 				defer m.printed = strings.to_string(b)
 
-				name := m.trimmed_name
-				suffix_pad := all_has_value ? longest_name - len(name) : 0
+				suffix_pad := all_has_value ? longest_name - len(m.trimmed_name) : 0
+				strings.write_string(&b, m.trimmed_name)
 
-				strings.write_string(&b, name)
 				if vv, v_ok := m.value.?; v_ok {
 					if !m.comment_before {
 						for _ in 0..<suffix_pad {
@@ -2299,8 +2295,8 @@ gen :: proc(input: string, c: Config) {
 
 				// There was a member with value `-1`... That means all bits are
 				// set. Create a bit_set constant with all variants set.
-				if bit_set_all_constant, ok := bit_set_all_constant.?; ok {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(d.members[bit_set_all_constant].name), strings.to_lower(s.remove_type_prefix)))
+				if bit_set_all_constant != nil {
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant.name), strings.to_lower(s.remove_type_prefix)))
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
