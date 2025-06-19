@@ -22,7 +22,6 @@ import "core:os"
 import "core:os/os2"
 import "core:path/filepath"
 import "core:slice"
-import "core:strconv"
 import "core:strings"
 import "core:unicode"
 import "core:unicode/utf8"
@@ -1729,24 +1728,6 @@ gen :: proc(input: string, c: Config) {
 		return clang_string_to_string(clang.getTypeSpelling(clang.getCursorType(cursor)))
 	}
 
-	// This isn't doing what i want so it can probably be removed.
-	evaluate_cursor :: proc(cursor: clang.Cursor) -> string {
-		eval := clang.Cursor_Evaluate(cursor)
-		defer clang.EvalResult_dispose(eval)
-
-		#partial switch kind := clang.EvalResult_getKind(eval); kind {
-		case .Int:
-			// IDK how large this buffer should be. What's the char count of 64-bit integer max?
-			buf: [1000]byte
-			return strconv.itoa(buf[:], int(clang.EvalResult_getAsInt(eval)))
-		case .Float:
-			buf: [1000]byte
-			return strconv.ftoa(buf[:], clang.EvalResult_getAsDouble(eval), 'f', 100, 64)
-		case:
-			return strings.clone_from_cstring(clang.EvalResult_getAsStr(eval))
-		}
-	}
-
 	vet_type :: proc(s: ^Gen_State, t: string) {
 		if is_c_type(t) {
 			s.needs_import_c = true
@@ -1758,7 +1739,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	// We can probably inline these functions.
-	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Function {
+	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor, line: u32) -> Function {
 		// name, name_ok := json_get_string(decl, "name")
 
 		// if !name_ok {
@@ -1802,7 +1783,10 @@ gen :: proc(input: string, c: Config) {
 				param_name := clang_string_to_string(clang.getCursorSpelling(param_cursor))
 				param_type := get_cursor_type_string(param_cursor)
 				vet_type(state, param_type)
-				append(&out_params, Function_Parameter{name = param_name, type = param_type})
+				append(&out_params, Function_Parameter {
+					name = param_name,
+					type = param_type
+				})
 			case:
 				// For debugging purposes.
 				fmt.printf("Unexpected cursor kind for parameter: %v\n", param_kind)
@@ -1837,13 +1821,16 @@ gen :: proc(input: string, c: Config) {
 		// 	side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		// }
 
-		return {
+		cline: u32
+		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+
+		return Function {
 			original_name  = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			parameters     = out_params[:],
 			return_type    = return_type == "void" ? "" : return_type,
 			comment        = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			comment_before = false, // Don't know how to check this.
-			post_comment   = "", // Not sure how to do this with libclang yet.
+			comment_before = cline != line,
+			post_comment   = "", // What is this?
 			variadic       = clang.Cursor_isVariadic(cursor) != 0,
 		}
 		// append(
@@ -1897,6 +1884,12 @@ gen :: proc(input: string, c: Config) {
 			// 		prev_line = lline
 			// 	}
 			// }
+
+			cline: u32
+			clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+
+			comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
+			comment_before := cline != line
 
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .FieldDecl:
@@ -2007,17 +2000,10 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
-				comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
-				comment_before := false // Don't know how to get this yet
-
 				// The first two are the important checks. The comment checks are for formatting but don't work corrently yet.
 				// I need to figure out how to handle comment_before for this check to make sense.
-				if prev_idx := len(data.out_fields);
-				   prev_idx != 0 &&
-				   data.out_fields[prev_idx - 1].type == type &&
-				   !comment_before &&
-				   !data.out_fields[prev_idx - 1].comment_before &&
-				   data.out_fields[prev_idx - 1].comment != "" {
+				if prev_idx := len(data.out_fields); prev_idx != 0 && data.out_fields[prev_idx - 1].type == type &&
+					comment == "" && data.out_fields[prev_idx - 1].comment == "" {
 					append(
 						&data.out_fields[prev_idx - 1].names,
 						clang_string_to_string(clang.getCursorSpelling(cursor)),
@@ -2041,19 +2027,16 @@ gen :: proc(input: string, c: Config) {
 					// 	append(&prev.names, field_name)
 				} else {
 					// } else {
-					append(
-						&data.out_fields,
-						Struct_Field {
-							names          = [dynamic]string {
-								clang_string_to_string(clang.getCursorSpelling(cursor)),
-							},
-							type           = type,
-							anon_using     = false,
-							comment        = comment,
-							comment_before = comment_before, // Don't know how to get this yet
-							original_line  = int(line),
+					append(&data.out_fields, Struct_Field {
+						names          = [dynamic]string {
+							clang_string_to_string(clang.getCursorSpelling(cursor)),
 						},
-					)
+						type           = type,
+						anon_using     = false,
+						comment        = comment,
+						comment_before = comment_before, // Don't know how to get this yet
+						original_line  = int(line),
+					})
 					// f := Struct_Field {
 					// 	type             = field_type,
 					// 	anon_struct_type = field_anon_struct_type,
@@ -2080,22 +2063,15 @@ gen :: proc(input: string, c: Config) {
 				}
 			// }
 			case .StructDecl, .UnionDecl:
-				append(
-					&data.out_fields,
-					Struct_Field {
-						names            = [dynamic]string {
-							clang_string_to_string(clang.getCursorSpelling(cursor)),
-						},
-						type             = get_cursor_type_string(cursor),
-						anon_struct_type = parse_record_decl(data.state, cursor),
-						anon_using       = true,
-						comment          = clang_string_to_string(
-							clang.Cursor_getRawCommentText(cursor),
-						),
-						comment_before   = false, // Don't know how to check this yet
-						original_line    = int(line),
-					},
-				)
+				append(&data.out_fields, Struct_Field {
+					names            = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
+					type             = get_cursor_type_string(cursor),
+					anon_struct_type = parse_record_decl(data.state, cursor),
+					anon_using       = true,
+					comment          = comment,
+					comment_before   = comment_before,
+					original_line    = int(line),
+				})
 			case:
 				// For debugging purposes.
 				fmt.printf(
@@ -2136,13 +2112,15 @@ gen :: proc(input: string, c: Config) {
 		// }
 		// if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 
+		cline: u32
+		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+
 		return {
 			original_name      = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			id                 = clang_string_to_string(clang.getCursorUSR(cursor)),
 			fields             = data.out_fields[:],
 			comment            = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			is_union           = clang.getCursorKind(cursor) == .UnionDecl,
-			is_forward_declare = false, // How do I check this?
 		}
 		// 	struct_decl.original_name = name
 		// 	struct_decl.id = id
@@ -2209,12 +2187,9 @@ gen :: proc(input: string, c: Config) {
 
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			// Not sure if getTypedefDeclUnderlyingType is the right way to get the type.
-			type          = clang_string_to_string(
-				clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor)),
-			),
+			type          = clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor))),
 			pre_comment   = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			side_comment  = "", // Don't know how to get this yet
+			side_comment  = "",
 		}
 		// s.typedefs[type] = name
 		// append(
@@ -2232,7 +2207,7 @@ gen :: proc(input: string, c: Config) {
 		// )
 	}
 
-	parse_enum_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Enum {
+	parse_enum_decl :: proc(state: ^Gen_State, cursor: clang.Cursor, line: u32) -> Enum {
 		// name, _ := json_get_string(decl, "name")
 
 		out_members: [dynamic]Enum_Member
@@ -2289,13 +2264,16 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
+				cline: u32
+				clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+
 				append(data.out_members, Enum_Member {
 					name           = clang_string_to_string(clang.getCursorSpelling(cursor)),
 					value          = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
 					comment        = clang_string_to_string(
 						clang.Cursor_getRawCommentText(cursor),
 					),
-					comment_before = false, // Don't know how to get this yet
+					comment_before = cline != data.line,
 				})
 			// append(
 			// 	&out_members,
@@ -2323,6 +2301,7 @@ gen :: proc(input: string, c: Config) {
 		Data :: struct {
 			is_unsigned_type: bool,
 			out_members:      ^[dynamic]Enum_Member,
+			line:             u32,
 		}
 
 		clang.visitChildren(
@@ -2331,6 +2310,7 @@ gen :: proc(input: string, c: Config) {
 			&Data {
 				is_unsigned_type = backing_type.kind >= .Char_U && backing_type.kind <= .UInt128,
 				out_members = &out_members,
+				line = line,
 			},
 		)
 
@@ -2359,9 +2339,9 @@ gen :: proc(input: string, c: Config) {
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			val           = evaluate_cursor(cursor),
+			val           = "",
 			comment       = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			side_comment  = "", // Don't know how to get this yet
+			side_comment  = "", // ??
 		}
 	}
 
@@ -2382,9 +2362,9 @@ gen :: proc(input: string, c: Config) {
 		// Need to figure out how to get macro expansion values out and not parse certain macro definitions.
 		// We can't just check the file origin of the macro expansion unfortunatly as it doesn't stop us from pulling weird shit (e.g. _STDC_VERSION__).
 		#partial switch kind {
-		// case .MacroExpansion:
-		// 	if clang.Cursor_isMacroFunctionLike(cursor) != 0 || clang.Cursor_isMacroBuiltin(cursor) != 0 {
-		// 		return .Continue // Skip macro function-like definitions.
+		// case .MacroDefinition:
+		// 	if clang.Cursor_isMacroFunctionLike(cursor) + clang.Cursor_isMacroBuiltin(cursor) != 0 {
+		// 		return .Continue
 		// 	}
 
 		// 	append(&state.decls, Declaration {
@@ -2394,15 +2374,17 @@ gen :: proc(input: string, c: Config) {
 		// 	})
 		// 	return .Continue
 		case .FunctionDecl:
+			// Don't output inlined functions.
+			if clang.Cursor_isFunctionInlined(cursor) != 0 {
+				return .Continue
+			}
+
 			// We have to check for funtions before checking if it's a def.
-			append(
-				&state.decls,
-				Declaration {
-					line = int(line),
-					original_idx = len(state.decls),
-					variant = parse_function_decl(state, cursor),
-				},
-			)
+			append(&state.decls, Declaration {
+				line = int(line),
+				original_idx = len(state.decls),
+				variant = parse_function_decl(state, cursor, line),
+			})
 			return .Continue
 		}
 
@@ -2418,7 +2400,7 @@ gen :: proc(input: string, c: Config) {
 		case .TypedefDecl:
 			def = parse_typedef_decl(state, cursor)
 		case .EnumDecl:
-			def = parse_enum_decl(state, cursor)
+			def = parse_enum_decl(state, cursor, line)
 		case .VarDecl:
 			// Should we output variables as constants?
 			return .Continue
@@ -2428,10 +2410,11 @@ gen :: proc(input: string, c: Config) {
 			return .Continue
 		}
 
-		append(
-			&state.decls,
-			Declaration{line = int(line), original_idx = len(state.decls), variant = def},
-		)
+		append(&state.decls, Declaration {
+			line = int(line),
+			original_idx = len(state.decls),
+			variant = def,
+		})
 
 		return .Continue
 	}
@@ -3042,6 +3025,11 @@ gen :: proc(input: string, c: Config) {
 
 		case Typedef:
 			n := d.name
+
+			if n == "" {
+				// The name was a C type, so we don't need to output it.
+				continue
+			}
 
 			if d.original_name in s.opaque_type_lookup {
 				if d.pre_comment != "" {
