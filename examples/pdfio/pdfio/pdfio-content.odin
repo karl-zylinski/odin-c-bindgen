@@ -10,9 +10,14 @@ foreign import lib "pdfio1.lib"
 // Types and constants...
 //
 cs_e :: enum c.int {
-	ADOBE  = 0, // AdobeRGB 1998
-	P3_D65 = 1, // Display P3
-	SRGB   = 2, // sRGB
+	// AdobeRGB 1998
+	ADOBE = 0,
+
+	// Display P3
+	P3_D65 = 1,
+
+	// sRGB
+	SRGB = 2,
 }
 
 //
@@ -21,17 +26,27 @@ cs_e :: enum c.int {
 cs_t :: cs_e
 
 linecap_e :: enum c.int {
-	BUTT   = 0, // Butt ends
-	ROUND  = 1, // Round ends
-	SQUARE = 2, // Square ends
+	// Butt ends
+	BUTT = 0,
+
+	// Round ends
+	ROUND = 1,
+
+	// Square ends
+	SQUARE = 2,
 }
 
 linecap_t :: linecap_e
 
 linejoin_e :: enum c.int {
-	MITER = 0, // Miter joint
-	ROUND = 1, // Round joint
-	BEVEL = 2, // Bevel joint
+	// Miter joint
+	MITER = 0,
+
+	// Round joint
+	ROUND = 1,
+
+	// Bevel joint
+	BEVEL = 2,
 }
 
 linejoin_t :: linejoin_e
@@ -39,14 +54,27 @@ linejoin_t :: linejoin_e
 matrix_t :: [3][2]f64
 
 textrendering_e :: enum c.int {
-	FILL                 = 0, // Fill text
-	STROKE               = 1, // Stroke text
-	FILL_AND_STROKE      = 2, // Fill then stroke text
-	INVISIBLE            = 3, // Don't fill or stroke (invisible)
-	FILL_PATH            = 4, // Fill text and add to path
-	STROKE_PATH          = 5, // Stroke text and add to path
+	// Fill text
+	FILL = 0,
+
+	// Stroke text
+	STROKE = 1,
+
+	// Fill then stroke text
+	FILL_AND_STROKE = 2,
+
+	// Don't fill or stroke (invisible)
+	INVISIBLE = 3,
+
+	// Fill text and add to path
+	FILL_PATH = 4,
+
+	// Stroke text and add to path
+	STROKE_PATH = 5,
 	FILL_AND_STROKE_PATH = 6,
-	TEXT_PATH            = 7, // Add text to path (invisible)
+
+	// Add text to path (invisible)
+	TEXT_PATH = 7,
 }
 
 textrendering_t :: textrendering_e

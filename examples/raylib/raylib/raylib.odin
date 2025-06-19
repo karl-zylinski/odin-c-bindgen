@@ -33,19 +33,28 @@ Color :: distinct [4]u8
 
 // Rectangle, 4 components
 Rectangle :: struct {
-	x, y, width, height: f32, // Rectangle top-left corner position x
+	x:      f32, // Rectangle top-left corner position x
+	y:      f32, // Rectangle top-left corner position y
+	width:  f32, // Rectangle width
+	height: f32, // Rectangle height
 }
 
 // Image, pixel data stored in CPU memory (RAM)
 Image :: struct {
-	data:                           rawptr, // Image raw data
-	width, height, mipmaps, format: c.int,  // Image base width
+	data:    rawptr,      // Image raw data
+	width:   c.int,       // Image base width
+	height:  c.int,       // Image base height
+	mipmaps: c.int,       // Mipmap levels, 1 by default
+	format:  PixelFormat, // Data format (PixelFormat type)
 }
 
 // Texture, tex data stored in GPU memory (VRAM)
 Texture :: struct {
-	id:                             c.uint, // OpenGL texture id
-	width, height, mipmaps, format: c.int,  // Texture base width
+	id:      c.uint,      // OpenGL texture id
+	width:   c.int,       // Texture base width
+	height:  c.int,       // Texture base height
+	mipmaps: c.int,       // Mipmap levels, 1 by default
+	format:  PixelFormat, // Data format (PixelFormat type)
 }
 
 // Texture2D, same as Texture
@@ -56,8 +65,9 @@ TextureCubemap :: Texture
 
 // RenderTexture, fbo for texture rendering
 RenderTexture :: struct {
-	id:             c.uint,  // OpenGL framebuffer object id
-	texture, depth: Texture, // Color buffer attachment texture
+	id:      c.uint,  // OpenGL framebuffer object id
+	texture: Texture, // Color buffer attachment texture
+	depth:   Texture, // Depth buffer attachment texture
 }
 
 // RenderTexture2D, same as RenderTexture
@@ -65,52 +75,71 @@ RenderTexture2D :: RenderTexture
 
 // NPatchInfo, n-patch layout info
 NPatchInfo :: struct {
-	source:                           Rectangle, // Texture source rectangle
-	left, top, right, bottom, layout: c.int,     // Left border offset
+	source: Rectangle,    // Texture source rectangle
+	left:   c.int,        // Left border offset
+	top:    c.int,        // Top border offset
+	right:  c.int,        // Right border offset
+	bottom: c.int,        // Bottom border offset
+	layout: NPatchLayout, // Layout of the n-patch: 3x3, 1x3 or 3x1
 }
 
 // GlyphInfo, font characters glyphs info
 GlyphInfo :: struct {
-	value, offsetX, offsetY, advanceX: c.int, // Character value (Unicode)
-	image:                             Image, // Character image data
+	value:    rune,  // Character value (Unicode)
+	offsetX:  c.int, // Character offset X when drawing
+	offsetY:  c.int, // Character offset Y when drawing
+	advanceX: c.int, // Character advance position X
+	image:    Image, // Character image data
 }
 
 // Font, font texture and GlyphInfo array data
 Font :: struct {
-	baseSize, glyphCount, glyphPadding: c.int,      // Base size (default chars height)
-	texture:                            Texture2D,  // Texture atlas containing the glyphs
-	recs:                               ^Rectangle, // Rectangles in texture for the glyphs
-	glyphs:                             ^GlyphInfo, // Glyphs info data
+	baseSize:     c.int,      // Base size (default chars height)
+	glyphCount:   c.int,      // Number of glyph characters
+	glyphPadding: c.int,      // Padding around the glyph characters
+	texture:      Texture2D,  // Texture atlas containing the glyphs
+	recs:         ^Rectangle, // Rectangles in texture for the glyphs
+	glyphs:       ^GlyphInfo, // Glyphs info data
 }
 
 // Camera, defines position/orientation in 3d space
 Camera3D :: struct {
-	position, target, up: Vector3, // Camera position
-	fovy:                 f32,     // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
-	projection:           c.int,   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
+	position:   Vector3, // Camera position
+	target:     Vector3, // Camera target it looks-at
+	up:         Vector3, // Camera up vector (rotation over its axis)
+	fovy:       f32,     // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
+	projection: c.int,   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 }
 
 Camera :: Camera3D
 
 // Camera2D, defines position/orientation in 2d space
 Camera2D :: struct {
-	offset, target: Vector2, // Camera offset (displacement from target)
-	rotation, zoom: f32,     // Camera rotation in degrees
+	offset:   Vector2, // Camera offset (displacement from target)
+	target:   Vector2, // Camera target (rotation and zoom origin)
+	rotation: f32,     // Camera rotation in degrees
+	zoom:     f32,     // Camera zoom (scaling), should be 1.0f by default
 }
 
 // Mesh, vertex data and vao/vbo
 Mesh :: struct {
-	vertexCount, triangleCount:                         c.int,       // Number of vertices stored in arrays
-	vertices, texcoords, texcoords2, normals, tangents: ^f32,        // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-	colors:                                             [^]c.uchar,  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-	indices:                                            [^]c.ushort, // Vertex indices (in case vertex data comes indexed)
-	animVertices, animNormals:                          ^f32,        // Animated vertex positions (after bones transformations)
-	boneIds:                                            [^]c.uchar,  // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
-	boneWeights:                                        [^]f32,      // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
-	boneMatrices:                                       [^]Matrix,   // Bones animated transformation matrices
-	boneCount:                                          c.int,       // Number of bones
-	vaoId:                                              c.uint,      // OpenGL Vertex Array Object id
-	vboId:                                              [^]c.uint,   // OpenGL Vertex Buffer Objects id (default vertex data)
+	vertexCount:   c.int,       // Number of vertices stored in arrays
+	triangleCount: c.int,       // Number of triangles stored (indexed or not)
+	vertices:      [^]f32,      // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+	texcoords:     [^]f32,      // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+	texcoords2:    [^]f32,      // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
+	normals:       [^]f32,      // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+	tangents:      [^]f32,      // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+	colors:        [^]c.uchar,  // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+	indices:       [^]c.ushort, // Vertex indices (in case vertex data comes indexed)
+	animVertices:  [^]f32,      // Animated vertex positions (after bones transformations)
+	animNormals:   [^]f32,      // Animated normals (after bones transformations)
+	boneIds:       [^]c.uchar,  // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
+	boneWeights:   [^]f32,      // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+	boneMatrices:  [^]Matrix,   // Bones animated transformation matrices
+	boneCount:     c.int,       // Number of bones
+	vaoId:         c.uint,      // OpenGL Vertex Array Object id
+	vboId:         [^]c.uint,   // OpenGL Vertex Buffer Objects id (default vertex data)
 }
 
 // Shader
@@ -148,52 +177,62 @@ BoneInfo :: struct {
 
 // Model, meshes, materials and animation data
 Model :: struct {
-	transform:                Matrix,       // Local transform matrix
-	meshCount, materialCount: c.int,        // Number of meshes
-	meshes:                   [^]Mesh,      // Meshes array
-	materials:                [^]Material,  // Materials array
-	meshMaterial:             ^c.int,       // Mesh material number
-	boneCount:                c.int,        // Number of bones
-	bones:                    [^]BoneInfo,  // Bones information (skeleton)
-	bindPose:                 [^]Transform, // Bones base transformation (pose)
+	transform:     Matrix,       // Local transform matrix
+	meshCount:     c.int,        // Number of meshes
+	materialCount: c.int,        // Number of materials
+	meshes:        [^]Mesh,      // Meshes array
+	materials:     [^]Material,  // Materials array
+	meshMaterial:  ^c.int,       // Mesh material number
+	boneCount:     c.int,        // Number of bones
+	bones:         [^]BoneInfo,  // Bones information (skeleton)
+	bindPose:      [^]Transform, // Bones base transformation (pose)
 }
 
 // ModelAnimation
 ModelAnimation :: struct {
-	boneCount, frameCount: c.int,           // Number of bones
-	bones:                 [^]BoneInfo,     // Bones information (skeleton)
-	framePoses:            [^][^]Transform, // Poses array by frame
-	name:                  [32]c.char,      // Animation name
+	boneCount:  c.int,           // Number of bones
+	frameCount: c.int,           // Number of animation frames
+	bones:      [^]BoneInfo,     // Bones information (skeleton)
+	framePoses: [^][^]Transform, // Poses array by frame
+	name:       [32]c.char,      // Animation name
 }
 
 // Ray, ray for raycasting
 Ray :: struct {
-	position, direction: Vector3, // Ray position (origin)
+	position:  Vector3, // Ray position (origin)
+	direction: Vector3, // Ray direction (normalized)
 }
 
 // RayCollision, ray hit information
 RayCollision :: struct {
-	hit:           bool,    // Did the ray hit something?
-	distance:      f32,     // Distance to the nearest hit
-	point, normal: Vector3, // Point of the nearest hit
+	hit:      bool,    // Did the ray hit something?
+	distance: f32,     // Distance to the nearest hit
+	point:    Vector3, // Point of the nearest hit
+	normal:   Vector3, // Surface normal of hit
 }
 
 // BoundingBox
 BoundingBox :: struct {
-	min, max: Vector3, // Minimum vertex box-corner
+	min: Vector3, // Minimum vertex box-corner
+	max: Vector3, // Maximum vertex box-corner
 }
 
 // Wave, audio wave data
 Wave :: struct {
-	frameCount, sampleRate, sampleSize, channels: c.uint, // Total number of frames (considering channels)
-	data:                                         rawptr, // Buffer data pointer
+	frameCount: c.uint, // Total number of frames (considering channels)
+	sampleRate: c.uint, // Frequency (samples per second)
+	sampleSize: c.uint, // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+	channels:   c.uint, // Number of channels (1-mono, 2-stereo, ...)
+	data:       rawptr, // Buffer data pointer
 }
 
 // AudioStream, custom audio stream
 AudioStream :: struct {
-	buffer:                           rawptr, // Pointer to internal data used by the audio system
-	processor:                        rawptr, // Pointer to internal data processor, useful for audio effects
-	sampleRate, sampleSize, channels: c.uint, // Frequency (samples per second)
+	buffer:     rawptr, // Pointer to internal data used by the audio system
+	processor:  rawptr, // Pointer to internal data processor, useful for audio effects
+	sampleRate: c.uint, // Frequency (samples per second)
+	sampleSize: c.uint, // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+	channels:   c.uint, // Number of channels (1-mono, 2-stereo, ...)
 }
 
 // Sound
@@ -213,33 +252,48 @@ Music :: struct {
 
 // VrDeviceInfo, Head-Mounted-Display device parameters
 VrDeviceInfo :: struct {
-	hResolution, vResolution:                                                                      c.int,  // Horizontal resolution in pixels
-	hScreenSize, vScreenSize, eyeToScreenDistance, lensSeparationDistance, interpupillaryDistance: f32,    // Horizontal size in meters
-	lensDistortionValues, chromaAbCorrection:                                                      [4]f32, // Lens distortion constant parameters
+	hResolution:            c.int,  // Horizontal resolution in pixels
+	vResolution:            c.int,  // Vertical resolution in pixels
+	hScreenSize:            f32,    // Horizontal size in meters
+	vScreenSize:            f32,    // Vertical size in meters
+	eyeToScreenDistance:    f32,    // Distance between eye and display in meters
+	lensSeparationDistance: f32,    // Lens separation distance in meters
+	interpupillaryDistance: f32,    // IPD (distance between pupils) in meters
+	lensDistortionValues:   [4]f32, // Lens distortion constant parameters
+	chromaAbCorrection:     [4]f32, // Chromatic aberration correction parameters
 }
 
 // VrStereoConfig, VR stereo rendering configuration for simulator
 VrStereoConfig :: struct {
-	projection, viewOffset:                                                               [2]Matrix, // VR projection matrices (per eye)
-	leftLensCenter, rightLensCenter, leftScreenCenter, rightScreenCenter, scale, scaleIn: [2]f32,    // VR left lens center
+	projection:        [2]Matrix, // VR projection matrices (per eye)
+	viewOffset:        [2]Matrix, // VR view offset matrices (per eye)
+	leftLensCenter:    [2]f32,    // VR left lens center
+	rightLensCenter:   [2]f32,    // VR right lens center
+	leftScreenCenter:  [2]f32,    // VR left screen center
+	rightScreenCenter: [2]f32,    // VR right screen center
+	scale:             [2]f32,    // VR distortion scale
+	scaleIn:           [2]f32,    // VR distortion scale in
 }
 
 // File path list
 FilePathList :: struct {
-	capacity, count: c.uint,   // Filepaths max entries
-	paths:           ^^c.char, // Filepaths entries
+	capacity: c.uint,     // Filepaths max entries
+	count:    c.uint,     // Filepaths entries count
+	paths:    [^]cstring, // Filepaths entries
 }
 
 // Automation event
 AutomationEvent :: struct {
-	frame, type: c.uint,   // Event frame
-	params:      [4]c.int, // Event parameters (if required)
+	frame:  c.uint,   // Event frame
+	type:   c.uint,   // Event type (AutomationEventType)
+	params: [4]c.int, // Event parameters (if required)
 }
 
 // Automation event list
 AutomationEventList :: struct {
-	capacity, count: c.uint,           // Events max entries (MAX_AUTOMATION_EVENTS)
-	events:          ^AutomationEvent, // Events entries
+	capacity: c.uint,           // Events max entries (MAX_AUTOMATION_EVENTS)
+	count:    c.uint,           // Events entries count
+	events:   ^AutomationEvent, // Events entries
 }
 
 //----------------------------------------------------------------------------------
@@ -249,22 +303,53 @@ AutomationEventList :: struct {
 // NOTE: Every bit registers one state (use it with bit masks)
 // By default all flags are set to 0
 ConfigFlag :: enum c.int {
-	VSYNC_HINT               = 6,  // Set to try enabling V-Sync on GPU
-	FULLSCREEN_MODE          = 1,  // Set to run program in fullscreen
-	WINDOW_RESIZABLE         = 2,  // Set to allow resizable window
-	WINDOW_UNDECORATED       = 3,  // Set to disable window decoration (frame and buttons)
-	WINDOW_HIDDEN            = 7,  // Set to hide window
-	WINDOW_MINIMIZED         = 9,  // Set to minimize window (iconify)
-	WINDOW_MAXIMIZED         = 10, // Set to maximize window (expanded to monitor)
-	WINDOW_UNFOCUSED         = 11, // Set to window non focused
-	WINDOW_TOPMOST           = 12, // Set to window always on top
-	WINDOW_ALWAYS_RUN        = 8,  // Set to allow windows running while minimized
-	WINDOW_TRANSPARENT       = 4,  // Set to allow transparent framebuffer
-	WINDOW_HIGHDPI           = 13, // Set to support HighDPI
-	WINDOW_MOUSE_PASSTHROUGH = 14, // Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
-	BORDERLESS_WINDOWED_MODE = 15, // Set to run program in borderless windowed mode
-	MSAA_4X_HINT             = 5,  // Set to try enabling MSAA 4X
-	INTERLACED_HINT          = 16, // Set to try enabling interlaced video format (for V3D)
+	// Set to try enabling V-Sync on GPU
+	VSYNC_HINT = 6,
+
+	// Set to run program in fullscreen
+	FULLSCREEN_MODE = 1,
+
+	// Set to allow resizable window
+	WINDOW_RESIZABLE = 2,
+
+	// Set to disable window decoration (frame and buttons)
+	WINDOW_UNDECORATED = 3,
+
+	// Set to hide window
+	WINDOW_HIDDEN = 7,
+
+	// Set to minimize window (iconify)
+	WINDOW_MINIMIZED = 9,
+
+	// Set to maximize window (expanded to monitor)
+	WINDOW_MAXIMIZED = 10,
+
+	// Set to window non focused
+	WINDOW_UNFOCUSED = 11,
+
+	// Set to window always on top
+	WINDOW_TOPMOST = 12,
+
+	// Set to allow windows running while minimized
+	WINDOW_ALWAYS_RUN = 8,
+
+	// Set to allow transparent framebuffer
+	WINDOW_TRANSPARENT = 4,
+
+	// Set to support HighDPI
+	WINDOW_HIGHDPI = 13,
+
+	// Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
+	WINDOW_MOUSE_PASSTHROUGH = 14,
+
+	// Set to run program in borderless windowed mode
+	BORDERLESS_WINDOWED_MODE = 15,
+
+	// Set to try enabling MSAA 4X
+	MSAA_4X_HINT = 5,
+
+	// Set to try enabling interlaced video format (for V3D)
+	INTERLACED_HINT = 16,
 }
 
 ConfigFlags :: distinct bit_set[ConfigFlag; c.int]
@@ -272,378 +357,934 @@ ConfigFlags :: distinct bit_set[ConfigFlag; c.int]
 // Trace log level
 // NOTE: Organized by priority level
 TraceLogLevel :: enum c.int {
-	ALL     = 0, // Display all logs
-	TRACE   = 1, // Trace logging, intended for internal use only
-	DEBUG   = 2, // Debug logging, used for internal debugging, it should be disabled on release builds
-	INFO    = 3, // Info logging, used for program execution info
-	WARNING = 4, // Warning logging, used on recoverable failures
-	ERROR   = 5, // Error logging, used on unrecoverable failures
-	FATAL   = 6, // Fatal logging, used to abort program: exit(EXIT_FAILURE)
-	NONE    = 7, // Disable logging
+	// Display all logs
+	ALL = 0,
+
+	// Trace logging, intended for internal use only
+	TRACE = 1,
+
+	// Debug logging, used for internal debugging, it should be disabled on release builds
+	DEBUG = 2,
+
+	// Info logging, used for program execution info
+	INFO = 3,
+
+	// Warning logging, used on recoverable failures
+	WARNING = 4,
+
+	// Error logging, used on unrecoverable failures
+	ERROR = 5,
+
+	// Fatal logging, used to abort program: exit(EXIT_FAILURE)
+	FATAL = 6,
+
+	// Disable logging
+	NONE = 7,
 }
 
 // Keyboard keys (US keyboard layout)
 // NOTE: Use GetKeyPressed() to allow redefining
 // required keys for alternative layouts
 KeyboardKey :: enum c.int {
-	NULL          = 0,   // Key: NULL, used for no key pressed
-	APOSTROPHE    = 39,  // Key: '
-	COMMA         = 44,  // Key: ,
-	MINUS         = 45,  // Key: -
-	PERIOD        = 46,  // Key: .
-	SLASH         = 47,  // Key: /
-	ZERO          = 48,  // Key: 0
-	ONE           = 49,  // Key: 1
-	TWO           = 50,  // Key: 2
-	THREE         = 51,  // Key: 3
-	FOUR          = 52,  // Key: 4
-	FIVE          = 53,  // Key: 5
-	SIX           = 54,  // Key: 6
-	SEVEN         = 55,  // Key: 7
-	EIGHT         = 56,  // Key: 8
-	NINE          = 57,  // Key: 9
-	SEMICOLON     = 59,  // Key: ;
-	EQUAL         = 61,  // Key: =
-	A             = 65,  // Key: A | a
-	B             = 66,  // Key: B | b
-	C             = 67,  // Key: C | c
-	D             = 68,  // Key: D | d
-	E             = 69,  // Key: E | e
-	F             = 70,  // Key: F | f
-	G             = 71,  // Key: G | g
-	H             = 72,  // Key: H | h
-	I             = 73,  // Key: I | i
-	J             = 74,  // Key: J | j
-	K             = 75,  // Key: K | k
-	L             = 76,  // Key: L | l
-	M             = 77,  // Key: M | m
-	N             = 78,  // Key: N | n
-	O             = 79,  // Key: O | o
-	P             = 80,  // Key: P | p
-	Q             = 81,  // Key: Q | q
-	R             = 82,  // Key: R | r
-	S             = 83,  // Key: S | s
-	T             = 84,  // Key: T | t
-	U             = 85,  // Key: U | u
-	V             = 86,  // Key: V | v
-	W             = 87,  // Key: W | w
-	X             = 88,  // Key: X | x
-	Y             = 89,  // Key: Y | y
-	Z             = 90,  // Key: Z | z
-	LEFT_BRACKET  = 91,  // Key: [
-	BACKSLASH     = 92,  // Key: '\'
-	RIGHT_BRACKET = 93,  // Key: ]
-	GRAVE         = 96,  // Key: `
-	SPACE         = 32,  // Key: Space
-	ESCAPE        = 256, // Key: Esc
-	ENTER         = 257, // Key: Enter
-	TAB           = 258, // Key: Tab
-	BACKSPACE     = 259, // Key: Backspace
-	INSERT        = 260, // Key: Ins
-	DELETE        = 261, // Key: Del
-	RIGHT         = 262, // Key: Cursor right
-	LEFT          = 263, // Key: Cursor left
-	DOWN          = 264, // Key: Cursor down
-	UP            = 265, // Key: Cursor up
-	PAGE_UP       = 266, // Key: Page up
-	PAGE_DOWN     = 267, // Key: Page down
-	HOME          = 268, // Key: Home
-	END           = 269, // Key: End
-	CAPS_LOCK     = 280, // Key: Caps lock
-	SCROLL_LOCK   = 281, // Key: Scroll down
-	NUM_LOCK      = 282, // Key: Num lock
-	PRINT_SCREEN  = 283, // Key: Print screen
-	PAUSE         = 284, // Key: Pause
-	F1            = 290, // Key: F1
-	F2            = 291, // Key: F2
-	F3            = 292, // Key: F3
-	F4            = 293, // Key: F4
-	F5            = 294, // Key: F5
-	F6            = 295, // Key: F6
-	F7            = 296, // Key: F7
-	F8            = 297, // Key: F8
-	F9            = 298, // Key: F9
-	F10           = 299, // Key: F10
-	F11           = 300, // Key: F11
-	F12           = 301, // Key: F12
-	LEFT_SHIFT    = 340, // Key: Shift left
-	LEFT_CONTROL  = 341, // Key: Control left
-	LEFT_ALT      = 342, // Key: Alt left
-	LEFT_SUPER    = 343, // Key: Super left
-	RIGHT_SHIFT   = 344, // Key: Shift right
-	RIGHT_CONTROL = 345, // Key: Control right
-	RIGHT_ALT     = 346, // Key: Alt right
-	RIGHT_SUPER   = 347, // Key: Super right
-	KB_MENU       = 348, // Key: KB menu
-	KP_0          = 320, // Key: Keypad 0
-	KP_1          = 321, // Key: Keypad 1
-	KP_2          = 322, // Key: Keypad 2
-	KP_3          = 323, // Key: Keypad 3
-	KP_4          = 324, // Key: Keypad 4
-	KP_5          = 325, // Key: Keypad 5
-	KP_6          = 326, // Key: Keypad 6
-	KP_7          = 327, // Key: Keypad 7
-	KP_8          = 328, // Key: Keypad 8
-	KP_9          = 329, // Key: Keypad 9
-	KP_DECIMAL    = 330, // Key: Keypad .
-	KP_DIVIDE     = 331, // Key: Keypad /
-	KP_MULTIPLY   = 332, // Key: Keypad *
-	KP_SUBTRACT   = 333, // Key: Keypad -
-	KP_ADD        = 334, // Key: Keypad +
-	KP_ENTER      = 335, // Key: Keypad Enter
-	KP_EQUAL      = 336, // Key: Keypad =
-	BACK          = 4,   // Key: Android back button
-	MENU          = 5,   // Key: Android menu button
-	VOLUME_UP     = 24,  // Key: Android volume up button
-	VOLUME_DOWN   = 25,  // Key: Android volume down button
+	// Key: NULL, used for no key pressed
+	NULL = 0,
+
+	// Key: '
+	APOSTROPHE = 39,
+
+	// Key: ,
+	COMMA = 44,
+
+	// Key: -
+	MINUS = 45,
+
+	// Key: .
+	PERIOD = 46,
+
+	// Key: /
+	SLASH = 47,
+
+	// Key: 0
+	ZERO = 48,
+
+	// Key: 1
+	ONE = 49,
+
+	// Key: 2
+	TWO = 50,
+
+	// Key: 3
+	THREE = 51,
+
+	// Key: 4
+	FOUR = 52,
+
+	// Key: 5
+	FIVE = 53,
+
+	// Key: 6
+	SIX = 54,
+
+	// Key: 7
+	SEVEN = 55,
+
+	// Key: 8
+	EIGHT = 56,
+
+	// Key: 9
+	NINE = 57,
+
+	// Key: ;
+	SEMICOLON = 59,
+
+	// Key: =
+	EQUAL = 61,
+
+	// Key: A | a
+	A = 65,
+
+	// Key: B | b
+	B = 66,
+
+	// Key: C | c
+	C = 67,
+
+	// Key: D | d
+	D = 68,
+
+	// Key: E | e
+	E = 69,
+
+	// Key: F | f
+	F = 70,
+
+	// Key: G | g
+	G = 71,
+
+	// Key: H | h
+	H = 72,
+
+	// Key: I | i
+	I = 73,
+
+	// Key: J | j
+	J = 74,
+
+	// Key: K | k
+	K = 75,
+
+	// Key: L | l
+	L = 76,
+
+	// Key: M | m
+	M = 77,
+
+	// Key: N | n
+	N = 78,
+
+	// Key: O | o
+	O = 79,
+
+	// Key: P | p
+	P = 80,
+
+	// Key: Q | q
+	Q = 81,
+
+	// Key: R | r
+	R = 82,
+
+	// Key: S | s
+	S = 83,
+
+	// Key: T | t
+	T = 84,
+
+	// Key: U | u
+	U = 85,
+
+	// Key: V | v
+	V = 86,
+
+	// Key: W | w
+	W = 87,
+
+	// Key: X | x
+	X = 88,
+
+	// Key: Y | y
+	Y = 89,
+
+	// Key: Z | z
+	Z = 90,
+
+	// Key: [
+	LEFT_BRACKET = 91,
+
+	// Key: '\'
+	BACKSLASH = 92,
+
+	// Key: ]
+	RIGHT_BRACKET = 93,
+
+	// Key: `
+	GRAVE = 96,
+
+	// Key: Space
+	SPACE = 32,
+
+	// Key: Esc
+	ESCAPE = 256,
+
+	// Key: Enter
+	ENTER = 257,
+
+	// Key: Tab
+	TAB = 258,
+
+	// Key: Backspace
+	BACKSPACE = 259,
+
+	// Key: Ins
+	INSERT = 260,
+
+	// Key: Del
+	DELETE = 261,
+
+	// Key: Cursor right
+	RIGHT = 262,
+
+	// Key: Cursor left
+	LEFT = 263,
+
+	// Key: Cursor down
+	DOWN = 264,
+
+	// Key: Cursor up
+	UP = 265,
+
+	// Key: Page up
+	PAGE_UP = 266,
+
+	// Key: Page down
+	PAGE_DOWN = 267,
+
+	// Key: Home
+	HOME = 268,
+
+	// Key: End
+	END = 269,
+
+	// Key: Caps lock
+	CAPS_LOCK = 280,
+
+	// Key: Scroll down
+	SCROLL_LOCK = 281,
+
+	// Key: Num lock
+	NUM_LOCK = 282,
+
+	// Key: Print screen
+	PRINT_SCREEN = 283,
+
+	// Key: Pause
+	PAUSE = 284,
+
+	// Key: F1
+	F1 = 290,
+
+	// Key: F2
+	F2 = 291,
+
+	// Key: F3
+	F3 = 292,
+
+	// Key: F4
+	F4 = 293,
+
+	// Key: F5
+	F5 = 294,
+
+	// Key: F6
+	F6 = 295,
+
+	// Key: F7
+	F7 = 296,
+
+	// Key: F8
+	F8 = 297,
+
+	// Key: F9
+	F9 = 298,
+
+	// Key: F10
+	F10 = 299,
+
+	// Key: F11
+	F11 = 300,
+
+	// Key: F12
+	F12 = 301,
+
+	// Key: Shift left
+	LEFT_SHIFT = 340,
+
+	// Key: Control left
+	LEFT_CONTROL = 341,
+
+	// Key: Alt left
+	LEFT_ALT = 342,
+
+	// Key: Super left
+	LEFT_SUPER = 343,
+
+	// Key: Shift right
+	RIGHT_SHIFT = 344,
+
+	// Key: Control right
+	RIGHT_CONTROL = 345,
+
+	// Key: Alt right
+	RIGHT_ALT = 346,
+
+	// Key: Super right
+	RIGHT_SUPER = 347,
+
+	// Key: KB menu
+	KB_MENU = 348,
+
+	// Key: Keypad 0
+	KP_0 = 320,
+
+	// Key: Keypad 1
+	KP_1 = 321,
+
+	// Key: Keypad 2
+	KP_2 = 322,
+
+	// Key: Keypad 3
+	KP_3 = 323,
+
+	// Key: Keypad 4
+	KP_4 = 324,
+
+	// Key: Keypad 5
+	KP_5 = 325,
+
+	// Key: Keypad 6
+	KP_6 = 326,
+
+	// Key: Keypad 7
+	KP_7 = 327,
+
+	// Key: Keypad 8
+	KP_8 = 328,
+
+	// Key: Keypad 9
+	KP_9 = 329,
+
+	// Key: Keypad .
+	KP_DECIMAL = 330,
+
+	// Key: Keypad /
+	KP_DIVIDE = 331,
+
+	// Key: Keypad *
+	KP_MULTIPLY = 332,
+
+	// Key: Keypad -
+	KP_SUBTRACT = 333,
+
+	// Key: Keypad +
+	KP_ADD = 334,
+
+	// Key: Keypad Enter
+	KP_ENTER = 335,
+
+	// Key: Keypad =
+	KP_EQUAL = 336,
+
+	// Key: Android back button
+	BACK = 4,
+
+	// Key: Android menu button
+	MENU = 5,
+
+	// Key: Android volume up button
+	VOLUME_UP = 24,
+
+	// Key: Android volume down button
+	VOLUME_DOWN = 25,
 }
 
 // Mouse buttons
 MouseButton :: enum c.int {
-	LEFT    = 0, // Mouse button left
-	RIGHT   = 1, // Mouse button right
-	MIDDLE  = 2, // Mouse button middle (pressed wheel)
-	SIDE    = 3, // Mouse button side (advanced mouse device)
-	EXTRA   = 4, // Mouse button extra (advanced mouse device)
-	FORWARD = 5, // Mouse button forward (advanced mouse device)
-	BACK    = 6, // Mouse button back (advanced mouse device)
+	// Mouse button left
+	LEFT = 0,
+
+	// Mouse button right
+	RIGHT = 1,
+
+	// Mouse button middle (pressed wheel)
+	MIDDLE = 2,
+
+	// Mouse button side (advanced mouse device)
+	SIDE = 3,
+
+	// Mouse button extra (advanced mouse device)
+	EXTRA = 4,
+
+	// Mouse button forward (advanced mouse device)
+	FORWARD = 5,
+
+	// Mouse button back (advanced mouse device)
+	BACK = 6,
 }
 
 // Mouse cursor
 MouseCursor :: enum c.int {
-	DEFAULT       = 0,  // Default pointer shape
-	ARROW         = 1,  // Arrow shape
-	IBEAM         = 2,  // Text writing cursor shape
-	CROSSHAIR     = 3,  // Cross shape
-	POINTING_HAND = 4,  // Pointing hand cursor
-	RESIZE_EW     = 5,  // Horizontal resize/move arrow shape
-	RESIZE_NS     = 6,  // Vertical resize/move arrow shape
-	RESIZE_NWSE   = 7,  // Top-left to bottom-right diagonal resize/move arrow shape
-	RESIZE_NESW   = 8,  // The top-right to bottom-left diagonal resize/move arrow shape
-	RESIZE_ALL    = 9,  // The omnidirectional resize/move cursor shape
-	NOT_ALLOWED   = 10, // The operation-not-allowed shape
+	// Default pointer shape
+	DEFAULT = 0,
+
+	// Arrow shape
+	ARROW = 1,
+
+	// Text writing cursor shape
+	IBEAM = 2,
+
+	// Cross shape
+	CROSSHAIR = 3,
+
+	// Pointing hand cursor
+	POINTING_HAND = 4,
+
+	// Horizontal resize/move arrow shape
+	RESIZE_EW = 5,
+
+	// Vertical resize/move arrow shape
+	RESIZE_NS = 6,
+
+	// Top-left to bottom-right diagonal resize/move arrow shape
+	RESIZE_NWSE = 7,
+
+	// The top-right to bottom-left diagonal resize/move arrow shape
+	RESIZE_NESW = 8,
+
+	// The omnidirectional resize/move cursor shape
+	RESIZE_ALL = 9,
+
+	// The operation-not-allowed shape
+	NOT_ALLOWED = 10,
 }
 
 // Gamepad buttons
 GamepadButton :: enum c.int {
-	UNKNOWN          = 0,  // Unknown button, just for error checking
-	LEFT_FACE_UP     = 1,  // Gamepad left DPAD up button
-	LEFT_FACE_RIGHT  = 2,  // Gamepad left DPAD right button
-	LEFT_FACE_DOWN   = 3,  // Gamepad left DPAD down button
-	LEFT_FACE_LEFT   = 4,  // Gamepad left DPAD left button
-	RIGHT_FACE_UP    = 5,  // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
-	RIGHT_FACE_RIGHT = 6,  // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
-	RIGHT_FACE_DOWN  = 7,  // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
-	RIGHT_FACE_LEFT  = 8,  // Gamepad right button left (i.e. PS3: Square, Xbox: X)
-	LEFT_TRIGGER_1   = 9,  // Gamepad top/back trigger left (first), it could be a trailing button
-	LEFT_TRIGGER_2   = 10, // Gamepad top/back trigger left (second), it could be a trailing button
-	RIGHT_TRIGGER_1  = 11, // Gamepad top/back trigger right (first), it could be a trailing button
-	RIGHT_TRIGGER_2  = 12, // Gamepad top/back trigger right (second), it could be a trailing button
-	MIDDLE_LEFT      = 13, // Gamepad center buttons, left one (i.e. PS3: Select)
-	MIDDLE           = 14, // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
-	MIDDLE_RIGHT     = 15, // Gamepad center buttons, right one (i.e. PS3: Start)
-	LEFT_THUMB       = 16, // Gamepad joystick pressed button left
-	RIGHT_THUMB      = 17, // Gamepad joystick pressed button right
+	// Unknown button, just for error checking
+	UNKNOWN = 0,
+
+	// Gamepad left DPAD up button
+	LEFT_FACE_UP = 1,
+
+	// Gamepad left DPAD right button
+	LEFT_FACE_RIGHT = 2,
+
+	// Gamepad left DPAD down button
+	LEFT_FACE_DOWN = 3,
+
+	// Gamepad left DPAD left button
+	LEFT_FACE_LEFT = 4,
+
+	// Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+	RIGHT_FACE_UP = 5,
+
+	// Gamepad right button right (i.e. PS3: Circle, Xbox: B)
+	RIGHT_FACE_RIGHT = 6,
+
+	// Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+	RIGHT_FACE_DOWN = 7,
+
+	// Gamepad right button left (i.e. PS3: Square, Xbox: X)
+	RIGHT_FACE_LEFT = 8,
+
+	// Gamepad top/back trigger left (first), it could be a trailing button
+	LEFT_TRIGGER_1 = 9,
+
+	// Gamepad top/back trigger left (second), it could be a trailing button
+	LEFT_TRIGGER_2 = 10,
+
+	// Gamepad top/back trigger right (first), it could be a trailing button
+	RIGHT_TRIGGER_1 = 11,
+
+	// Gamepad top/back trigger right (second), it could be a trailing button
+	RIGHT_TRIGGER_2 = 12,
+
+	// Gamepad center buttons, left one (i.e. PS3: Select)
+	MIDDLE_LEFT = 13,
+
+	// Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+	MIDDLE = 14,
+
+	// Gamepad center buttons, right one (i.e. PS3: Start)
+	MIDDLE_RIGHT = 15,
+
+	// Gamepad joystick pressed button left
+	LEFT_THUMB = 16,
+
+	// Gamepad joystick pressed button right
+	RIGHT_THUMB = 17,
 }
 
 // Gamepad axis
 GamepadAxis :: enum c.int {
-	LEFT_X        = 0, // Gamepad left stick X axis
-	LEFT_Y        = 1, // Gamepad left stick Y axis
-	RIGHT_X       = 2, // Gamepad right stick X axis
-	RIGHT_Y       = 3, // Gamepad right stick Y axis
-	LEFT_TRIGGER  = 4, // Gamepad back trigger left, pressure level: [1..-1]
-	RIGHT_TRIGGER = 5, // Gamepad back trigger right, pressure level: [1..-1]
+	// Gamepad left stick X axis
+	LEFT_X = 0,
+
+	// Gamepad left stick Y axis
+	LEFT_Y = 1,
+
+	// Gamepad right stick X axis
+	RIGHT_X = 2,
+
+	// Gamepad right stick Y axis
+	RIGHT_Y = 3,
+
+	// Gamepad back trigger left, pressure level: [1..-1]
+	LEFT_TRIGGER = 4,
+
+	// Gamepad back trigger right, pressure level: [1..-1]
+	RIGHT_TRIGGER = 5,
 }
 
 // Material map index
 MaterialMapIndex :: enum c.int {
-	ALBEDO     = 0,  // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
-	METALNESS  = 1,  // Metalness material (same as: MATERIAL_MAP_SPECULAR)
-	NORMAL     = 2,  // Normal material
-	ROUGHNESS  = 3,  // Roughness material
-	OCCLUSION  = 4,  // Ambient occlusion material
-	EMISSION   = 5,  // Emission material
-	HEIGHT     = 6,  // Heightmap material
-	CUBEMAP    = 7,  // Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	IRRADIANCE = 8,  // Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	PREFILTER  = 9,  // Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	BRDF       = 10, // Brdf material
+	// Albedo material (same as: MATERIAL_MAP_DIFFUSE)
+	ALBEDO = 0,
+
+	// Metalness material (same as: MATERIAL_MAP_SPECULAR)
+	METALNESS = 1,
+
+	// Normal material
+	NORMAL = 2,
+
+	// Roughness material
+	ROUGHNESS = 3,
+
+	// Ambient occlusion material
+	OCCLUSION = 4,
+
+	// Emission material
+	EMISSION = 5,
+
+	// Heightmap material
+	HEIGHT = 6,
+
+	// Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	CUBEMAP = 7,
+
+	// Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	IRRADIANCE = 8,
+
+	// Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	PREFILTER = 9,
+
+	// Brdf material
+	BRDF = 10,
 }
 
 // Shader location index
 ShaderLocationIndex :: enum c.int {
-	VERTEX_POSITION    = 0,  // Shader location: vertex attribute: position
-	VERTEX_TEXCOORD01  = 1,  // Shader location: vertex attribute: texcoord01
-	VERTEX_TEXCOORD02  = 2,  // Shader location: vertex attribute: texcoord02
-	VERTEX_NORMAL      = 3,  // Shader location: vertex attribute: normal
-	VERTEX_TANGENT     = 4,  // Shader location: vertex attribute: tangent
-	VERTEX_COLOR       = 5,  // Shader location: vertex attribute: color
-	MATRIX_MVP         = 6,  // Shader location: matrix uniform: model-view-projection
-	MATRIX_VIEW        = 7,  // Shader location: matrix uniform: view (camera transform)
-	MATRIX_PROJECTION  = 8,  // Shader location: matrix uniform: projection
-	MATRIX_MODEL       = 9,  // Shader location: matrix uniform: model (transform)
-	MATRIX_NORMAL      = 10, // Shader location: matrix uniform: normal
-	VECTOR_VIEW        = 11, // Shader location: vector uniform: view
-	COLOR_DIFFUSE      = 12, // Shader location: vector uniform: diffuse color
-	COLOR_SPECULAR     = 13, // Shader location: vector uniform: specular color
-	COLOR_AMBIENT      = 14, // Shader location: vector uniform: ambient color
-	MAP_ALBEDO         = 15, // Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
-	MAP_METALNESS      = 16, // Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
-	MAP_NORMAL         = 17, // Shader location: sampler2d texture: normal
-	MAP_ROUGHNESS      = 18, // Shader location: sampler2d texture: roughness
-	MAP_OCCLUSION      = 19, // Shader location: sampler2d texture: occlusion
-	MAP_EMISSION       = 20, // Shader location: sampler2d texture: emission
-	MAP_HEIGHT         = 21, // Shader location: sampler2d texture: height
-	MAP_CUBEMAP        = 22, // Shader location: samplerCube texture: cubemap
-	MAP_IRRADIANCE     = 23, // Shader location: samplerCube texture: irradiance
-	MAP_PREFILTER      = 24, // Shader location: samplerCube texture: prefilter
-	MAP_BRDF           = 25, // Shader location: sampler2d texture: brdf
-	VERTEX_BONEIDS     = 26, // Shader location: vertex attribute: boneIds
-	VERTEX_BONEWEIGHTS = 27, // Shader location: vertex attribute: boneWeights
-	BONE_MATRICES      = 28, // Shader location: array of matrices uniform: boneMatrices
-	VERTEX_INSTANCE_TX = 29, // Shader location: vertex attribute: instanceTransform
+	// Shader location: vertex attribute: position
+	VERTEX_POSITION = 0,
+
+	// Shader location: vertex attribute: texcoord01
+	VERTEX_TEXCOORD01 = 1,
+
+	// Shader location: vertex attribute: texcoord02
+	VERTEX_TEXCOORD02 = 2,
+
+	// Shader location: vertex attribute: normal
+	VERTEX_NORMAL = 3,
+
+	// Shader location: vertex attribute: tangent
+	VERTEX_TANGENT = 4,
+
+	// Shader location: vertex attribute: color
+	VERTEX_COLOR = 5,
+
+	// Shader location: matrix uniform: model-view-projection
+	MATRIX_MVP = 6,
+
+	// Shader location: matrix uniform: view (camera transform)
+	MATRIX_VIEW = 7,
+
+	// Shader location: matrix uniform: projection
+	MATRIX_PROJECTION = 8,
+
+	// Shader location: matrix uniform: model (transform)
+	MATRIX_MODEL = 9,
+
+	// Shader location: matrix uniform: normal
+	MATRIX_NORMAL = 10,
+
+	// Shader location: vector uniform: view
+	VECTOR_VIEW = 11,
+
+	// Shader location: vector uniform: diffuse color
+	COLOR_DIFFUSE = 12,
+
+	// Shader location: vector uniform: specular color
+	COLOR_SPECULAR = 13,
+
+	// Shader location: vector uniform: ambient color
+	COLOR_AMBIENT = 14,
+
+	// Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
+	MAP_ALBEDO = 15,
+
+	// Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
+	MAP_METALNESS = 16,
+
+	// Shader location: sampler2d texture: normal
+	MAP_NORMAL = 17,
+
+	// Shader location: sampler2d texture: roughness
+	MAP_ROUGHNESS = 18,
+
+	// Shader location: sampler2d texture: occlusion
+	MAP_OCCLUSION = 19,
+
+	// Shader location: sampler2d texture: emission
+	MAP_EMISSION = 20,
+
+	// Shader location: sampler2d texture: height
+	MAP_HEIGHT = 21,
+
+	// Shader location: samplerCube texture: cubemap
+	MAP_CUBEMAP = 22,
+
+	// Shader location: samplerCube texture: irradiance
+	MAP_IRRADIANCE = 23,
+
+	// Shader location: samplerCube texture: prefilter
+	MAP_PREFILTER = 24,
+
+	// Shader location: sampler2d texture: brdf
+	MAP_BRDF = 25,
+
+	// Shader location: vertex attribute: boneIds
+	VERTEX_BONEIDS = 26,
+
+	// Shader location: vertex attribute: boneWeights
+	VERTEX_BONEWEIGHTS = 27,
+
+	// Shader location: array of matrices uniform: boneMatrices
+	BONE_MATRICES = 28,
+
+	// Shader location: vertex attribute: instanceTransform
+	VERTEX_INSTANCE_TX = 29,
 }
 
 // Shader uniform data type
 ShaderUniformDataType :: enum c.int {
-	FLOAT     = 0,  // Shader uniform type: float
-	VEC2      = 1,  // Shader uniform type: vec2 (2 float)
-	VEC3      = 2,  // Shader uniform type: vec3 (3 float)
-	VEC4      = 3,  // Shader uniform type: vec4 (4 float)
-	INT       = 4,  // Shader uniform type: int
-	IVEC2     = 5,  // Shader uniform type: ivec2 (2 int)
-	IVEC3     = 6,  // Shader uniform type: ivec3 (3 int)
-	IVEC4     = 7,  // Shader uniform type: ivec4 (4 int)
-	UINT      = 8,  // Shader uniform type: unsigned int
-	UIVEC2    = 9,  // Shader uniform type: uivec2 (2 unsigned int)
-	UIVEC3    = 10, // Shader uniform type: uivec3 (3 unsigned int)
-	UIVEC4    = 11, // Shader uniform type: uivec4 (4 unsigned int)
-	SAMPLER2D = 12, // Shader uniform type: sampler2d
+	// Shader uniform type: float
+	FLOAT = 0,
+
+	// Shader uniform type: vec2 (2 float)
+	VEC2 = 1,
+
+	// Shader uniform type: vec3 (3 float)
+	VEC3 = 2,
+
+	// Shader uniform type: vec4 (4 float)
+	VEC4 = 3,
+
+	// Shader uniform type: int
+	INT = 4,
+
+	// Shader uniform type: ivec2 (2 int)
+	IVEC2 = 5,
+
+	// Shader uniform type: ivec3 (3 int)
+	IVEC3 = 6,
+
+	// Shader uniform type: ivec4 (4 int)
+	IVEC4 = 7,
+
+	// Shader uniform type: unsigned int
+	UINT = 8,
+
+	// Shader uniform type: uivec2 (2 unsigned int)
+	UIVEC2 = 9,
+
+	// Shader uniform type: uivec3 (3 unsigned int)
+	UIVEC3 = 10,
+
+	// Shader uniform type: uivec4 (4 unsigned int)
+	UIVEC4 = 11,
+
+	// Shader uniform type: sampler2d
+	SAMPLER2D = 12,
 }
 
 // Shader attribute data types
 ShaderAttributeDataType :: enum c.int {
-	FLOAT = 0, // Shader attribute type: float
-	VEC2  = 1, // Shader attribute type: vec2 (2 float)
-	VEC3  = 2, // Shader attribute type: vec3 (3 float)
-	VEC4  = 3, // Shader attribute type: vec4 (4 float)
+	// Shader attribute type: float
+	FLOAT = 0,
+
+	// Shader attribute type: vec2 (2 float)
+	VEC2 = 1,
+
+	// Shader attribute type: vec3 (3 float)
+	VEC3 = 2,
+
+	// Shader attribute type: vec4 (4 float)
+	VEC4 = 3,
 }
 
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
 PixelFormat :: enum c.int {
-	UNCOMPRESSED_GRAYSCALE    = 1,  // 8 bit per pixel (no alpha)
-	UNCOMPRESSED_GRAY_ALPHA   = 2,  // 8*2 bpp (2 channels)
-	UNCOMPRESSED_R5G6B5       = 3,  // 16 bpp
-	UNCOMPRESSED_R8G8B8       = 4,  // 24 bpp
-	UNCOMPRESSED_R5G5B5A1     = 5,  // 16 bpp (1 bit alpha)
-	UNCOMPRESSED_R4G4B4A4     = 6,  // 16 bpp (4 bit alpha)
-	UNCOMPRESSED_R8G8B8A8     = 7,  // 32 bpp
-	UNCOMPRESSED_R32          = 8,  // 32 bpp (1 channel - float)
-	UNCOMPRESSED_R32G32B32    = 9,  // 32*3 bpp (3 channels - float)
-	UNCOMPRESSED_R32G32B32A32 = 10, // 32*4 bpp (4 channels - float)
-	UNCOMPRESSED_R16          = 11, // 16 bpp (1 channel - half float)
-	UNCOMPRESSED_R16G16B16    = 12, // 16*3 bpp (3 channels - half float)
-	UNCOMPRESSED_R16G16B16A16 = 13, // 16*4 bpp (4 channels - half float)
-	COMPRESSED_DXT1_RGB       = 14, // 4 bpp (no alpha)
-	COMPRESSED_DXT1_RGBA      = 15, // 4 bpp (1 bit alpha)
-	COMPRESSED_DXT3_RGBA      = 16, // 8 bpp
-	COMPRESSED_DXT5_RGBA      = 17, // 8 bpp
-	COMPRESSED_ETC1_RGB       = 18, // 4 bpp
-	COMPRESSED_ETC2_RGB       = 19, // 4 bpp
-	COMPRESSED_ETC2_EAC_RGBA  = 20, // 8 bpp
-	COMPRESSED_PVRT_RGB       = 21, // 4 bpp
-	COMPRESSED_PVRT_RGBA      = 22, // 4 bpp
-	COMPRESSED_ASTC_4x4_RGBA  = 23, // 8 bpp
-	COMPRESSED_ASTC_8x8_RGBA  = 24, // 2 bpp
+	// 8 bit per pixel (no alpha)
+	UNCOMPRESSED_GRAYSCALE = 1,
+
+	// 8*2 bpp (2 channels)
+	UNCOMPRESSED_GRAY_ALPHA = 2,
+
+	// 16 bpp
+	UNCOMPRESSED_R5G6B5 = 3,
+
+	// 24 bpp
+	UNCOMPRESSED_R8G8B8 = 4,
+
+	// 16 bpp (1 bit alpha)
+	UNCOMPRESSED_R5G5B5A1 = 5,
+
+	// 16 bpp (4 bit alpha)
+	UNCOMPRESSED_R4G4B4A4 = 6,
+
+	// 32 bpp
+	UNCOMPRESSED_R8G8B8A8 = 7,
+
+	// 32 bpp (1 channel - float)
+	UNCOMPRESSED_R32 = 8,
+
+	// 32*3 bpp (3 channels - float)
+	UNCOMPRESSED_R32G32B32 = 9,
+
+	// 32*4 bpp (4 channels - float)
+	UNCOMPRESSED_R32G32B32A32 = 10,
+
+	// 16 bpp (1 channel - half float)
+	UNCOMPRESSED_R16 = 11,
+
+	// 16*3 bpp (3 channels - half float)
+	UNCOMPRESSED_R16G16B16 = 12,
+
+	// 16*4 bpp (4 channels - half float)
+	UNCOMPRESSED_R16G16B16A16 = 13,
+
+	// 4 bpp (no alpha)
+	COMPRESSED_DXT1_RGB = 14,
+
+	// 4 bpp (1 bit alpha)
+	COMPRESSED_DXT1_RGBA = 15,
+
+	// 8 bpp
+	COMPRESSED_DXT3_RGBA = 16,
+
+	// 8 bpp
+	COMPRESSED_DXT5_RGBA = 17,
+
+	// 4 bpp
+	COMPRESSED_ETC1_RGB = 18,
+
+	// 4 bpp
+	COMPRESSED_ETC2_RGB = 19,
+
+	// 8 bpp
+	COMPRESSED_ETC2_EAC_RGBA = 20,
+
+	// 4 bpp
+	COMPRESSED_PVRT_RGB = 21,
+
+	// 4 bpp
+	COMPRESSED_PVRT_RGBA = 22,
+
+	// 8 bpp
+	COMPRESSED_ASTC_4x4_RGBA = 23,
+
+	// 2 bpp
+	COMPRESSED_ASTC_8x8_RGBA = 24,
 }
 
 // Texture parameters: filter mode
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 TextureFilter :: enum c.int {
-	POINT           = 0, // No filter, just pixel approximation
-	BILINEAR        = 1, // Linear filtering
-	TRILINEAR       = 2, // Trilinear filtering (linear with mipmaps)
-	ANISOTROPIC_4X  = 3, // Anisotropic filtering 4x
-	ANISOTROPIC_8X  = 4, // Anisotropic filtering 8x
-	ANISOTROPIC_16X = 5, // Anisotropic filtering 16x
+	// No filter, just pixel approximation
+	POINT = 0,
+
+	// Linear filtering
+	BILINEAR = 1,
+
+	// Trilinear filtering (linear with mipmaps)
+	TRILINEAR = 2,
+
+	// Anisotropic filtering 4x
+	ANISOTROPIC_4X = 3,
+
+	// Anisotropic filtering 8x
+	ANISOTROPIC_8X = 4,
+
+	// Anisotropic filtering 16x
+	ANISOTROPIC_16X = 5,
 }
 
 // Texture parameters: wrap mode
 TextureWrap :: enum c.int {
-	REPEAT        = 0, // Repeats texture in tiled mode
-	CLAMP         = 1, // Clamps texture to edge pixel in tiled mode
-	MIRROR_REPEAT = 2, // Mirrors and repeats the texture in tiled mode
-	MIRROR_CLAMP  = 3, // Mirrors and clamps to border the texture in tiled mode
+	// Repeats texture in tiled mode
+	REPEAT = 0,
+
+	// Clamps texture to edge pixel in tiled mode
+	CLAMP = 1,
+
+	// Mirrors and repeats the texture in tiled mode
+	MIRROR_REPEAT = 2,
+
+	// Mirrors and clamps to border the texture in tiled mode
+	MIRROR_CLAMP = 3,
 }
 
 // Cubemap layouts
 CubemapLayout :: enum c.int {
-	AUTO_DETECT         = 0, // Automatically detect layout type
-	LINE_VERTICAL       = 1, // Layout is defined by a vertical line with faces
-	LINE_HORIZONTAL     = 2, // Layout is defined by a horizontal line with faces
-	CROSS_THREE_BY_FOUR = 3, // Layout is defined by a 3x4 cross with cubemap faces
-	CROSS_FOUR_BY_THREE = 4, // Layout is defined by a 4x3 cross with cubemap faces
+	// Automatically detect layout type
+	AUTO_DETECT = 0,
+
+	// Layout is defined by a vertical line with faces
+	LINE_VERTICAL = 1,
+
+	// Layout is defined by a horizontal line with faces
+	LINE_HORIZONTAL = 2,
+
+	// Layout is defined by a 3x4 cross with cubemap faces
+	CROSS_THREE_BY_FOUR = 3,
+
+	// Layout is defined by a 4x3 cross with cubemap faces
+	CROSS_FOUR_BY_THREE = 4,
 }
 
 // Font type, defines generation method
 FontType :: enum c.int {
-	DEFAULT = 0, // Default font generation, anti-aliased
-	BITMAP  = 1, // Bitmap font generation, no anti-aliasing
-	SDF     = 2, // SDF font generation, requires external shader
+	// Default font generation, anti-aliased
+	DEFAULT = 0,
+
+	// Bitmap font generation, no anti-aliasing
+	BITMAP = 1,
+
+	// SDF font generation, requires external shader
+	SDF = 2,
 }
 
 // Color blending modes (pre-defined)
 BlendMode :: enum c.int {
-	ALPHA             = 0, // Blend textures considering alpha (default)
-	ADDITIVE          = 1, // Blend textures adding colors
-	MULTIPLIED        = 2, // Blend textures multiplying colors
-	ADD_COLORS        = 3, // Blend textures adding colors (alternative)
-	SUBTRACT_COLORS   = 4, // Blend textures subtracting colors (alternative)
-	ALPHA_PREMULTIPLY = 5, // Blend premultiplied textures considering alpha
-	CUSTOM            = 6, // Blend textures using custom src/dst factors (use rlSetBlendFactors())
-	CUSTOM_SEPARATE   = 7, // Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
+	// Blend textures considering alpha (default)
+	ALPHA = 0,
+
+	// Blend textures adding colors
+	ADDITIVE = 1,
+
+	// Blend textures multiplying colors
+	MULTIPLIED = 2,
+
+	// Blend textures adding colors (alternative)
+	ADD_COLORS = 3,
+
+	// Blend textures subtracting colors (alternative)
+	SUBTRACT_COLORS = 4,
+
+	// Blend premultiplied textures considering alpha
+	ALPHA_PREMULTIPLY = 5,
+
+	// Blend textures using custom src/dst factors (use rlSetBlendFactors())
+	CUSTOM = 6,
+
+	// Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
+	CUSTOM_SEPARATE = 7,
 }
 
 // Gesture
 // NOTE: Provided as bit-wise flags to enable only desired gestures
 Gesture :: enum c.int {
-	TAP         = 0, // Tap gesture
-	DOUBLETAP   = 1, // Double tap gesture
-	HOLD        = 2, // Hold gesture
-	DRAG        = 3, // Drag gesture
-	SWIPE_RIGHT = 4, // Swipe right gesture
-	SWIPE_LEFT  = 5, // Swipe left gesture
-	SWIPE_UP    = 6, // Swipe up gesture
-	SWIPE_DOWN  = 7, // Swipe down gesture
-	PINCH_IN    = 8, // Pinch in gesture
-	PINCH_OUT   = 9, // Pinch out gesture
+	// Tap gesture
+	TAP = 0,
+
+	// Double tap gesture
+	DOUBLETAP = 1,
+
+	// Hold gesture
+	HOLD = 2,
+
+	// Drag gesture
+	DRAG = 3,
+
+	// Swipe right gesture
+	SWIPE_RIGHT = 4,
+
+	// Swipe left gesture
+	SWIPE_LEFT = 5,
+
+	// Swipe up gesture
+	SWIPE_UP = 6,
+
+	// Swipe down gesture
+	SWIPE_DOWN = 7,
+
+	// Pinch in gesture
+	PINCH_IN = 8,
+
+	// Pinch out gesture
+	PINCH_OUT = 9,
 }
 
 Gestures :: distinct bit_set[Gesture; c.int]
 
 // Camera system modes
 CameraMode :: enum c.int {
-	CUSTOM       = 0, // Camera custom, controlled by user (UpdateCamera() does nothing)
-	FREE         = 1, // Camera free mode
-	ORBITAL      = 2, // Camera orbital, around target, zoom supported
-	FIRST_PERSON = 3, // Camera first person
-	THIRD_PERSON = 4, // Camera third person
+	// Camera custom, controlled by user (UpdateCamera() does nothing)
+	CUSTOM = 0,
+
+	// Camera free mode
+	FREE = 1,
+
+	// Camera orbital, around target, zoom supported
+	ORBITAL = 2,
+
+	// Camera first person
+	FIRST_PERSON = 3,
+
+	// Camera third person
+	THIRD_PERSON = 4,
 }
 
 // Camera projection
 CameraProjection :: enum c.int {
-	PERSPECTIVE  = 0, // Perspective projection
-	ORTHOGRAPHIC = 1, // Orthographic projection
+	// Perspective projection
+	PERSPECTIVE = 0,
+
+	// Orthographic projection
+	ORTHOGRAPHIC = 1,
 }
 
 // N-patch layout
 NPatchLayout :: enum c.int {
-	NINE_PATCH             = 0, // Npatch layout: 3x3 tiles
-	THREE_PATCH_VERTICAL   = 1, // Npatch layout: 1x3 tiles
-	THREE_PATCH_HORIZONTAL = 2, // Npatch layout: 3x1 tiles
+	// Npatch layout: 3x3 tiles
+	NINE_PATCH = 0,
+
+	// Npatch layout: 1x3 tiles
+	THREE_PATCH_VERTICAL = 1,
+
+	// Npatch layout: 3x1 tiles
+	THREE_PATCH_HORIZONTAL = 2,
 }
 
 // Callbacks to hook some internal functions
@@ -1191,8 +1832,8 @@ foreign lib {
 	TextSubtext   :: proc(text: cstring, position: c.int, length: c.int) -> cstring ---
 	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---
 	TextInsert    :: proc(text: cstring, insert: cstring, position: c.int) -> cstring ---
-	TextJoin      :: proc(textList: ^^c.char, count: c.int, delimiter: cstring) -> cstring ---
-	TextSplit     :: proc(text: cstring, delimiter: c.char, count: ^c.int) -> ^^c.char ---
+	TextJoin      :: proc(textList: [^]cstring, count: c.int, delimiter: cstring) -> cstring ---
+	TextSplit     :: proc(text: cstring, delimiter: c.char, count: ^c.int) -> [^]cstring ---
 	TextAppend    :: proc(text: cstring, append: cstring, position: ^c.int) ---
 	TextFindIndex :: proc(text: cstring, find: cstring) -> c.int ---
 	TextToUpper   :: proc(text: cstring) -> cstring ---

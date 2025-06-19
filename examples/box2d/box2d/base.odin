@@ -21,7 +21,14 @@ AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
 /// Version numbering scheme.
 /// See https://semver.org/
 Version :: struct {
-	major, minor, revision: c.int, /// Significant changes
+	/// Significant changes
+	major: c.int,
+
+	/// Incremental changes
+	minor: c.int,
+
+	/// Bug fixes
+	revision: c.int,
 }
 
 @(default_calling_convention="c", link_prefix="b2")
