@@ -1,11 +1,3 @@
-//
-// Public content header file for PDFio.
-//
-// Copyright © 2021-2023 by Michael R Sweet.
-//
-// Licensed under Apache License v2.0.  See the file "LICENSE" for more
-// information.
-//
 package pdfio
 
 import "core:c"
@@ -14,43 +6,56 @@ _ :: c
 
 foreign import lib "pdfio1.lib"
 
+//
 // Types and constants...
-cs_t :: enum c.int {
-	ADOBE,  // AdobeRGB 1998
-	P3_D65, // Display P3
-	SRGB,   // sRGB
+//
+cs_e :: enum c.int {
+	ADOBE  = 0, // AdobeRGB 1998
+	P3_D65 = 1, // Display P3
+	SRGB   = 2, // sRGB
 }
 
-linecap_t :: enum c.int {
-	BUTT,   // Butt ends
-	ROUND,  // Round ends
-	SQUARE, // Square ends
+//
+// Types and constants...
+//
+cs_t :: cs_e
+
+linecap_e :: enum c.int {
+	BUTT   = 0, // Butt ends
+	ROUND  = 1, // Round ends
+	SQUARE = 2, // Square ends
 }
 
-linejoin_t :: enum c.int {
-	MITER, // Miter joint
-	ROUND, // Round joint
-	BEVEL, // Bevel joint
+linecap_t :: linecap_e
+
+linejoin_e :: enum c.int {
+	MITER = 0, // Miter joint
+	ROUND = 1, // Round joint
+	BEVEL = 2, // Bevel joint
 }
 
-matrix_t :: [3][2]f64 // Transform matrix
+linejoin_t :: linejoin_e
 
-textrendering_t :: enum c.int {
-	FILL,            // Fill text
-	STROKE,          // Stroke text
-	FILL_AND_STROKE, // Fill then stroke text
-	INVISIBLE,       // Don't fill or stroke (invisible)
-	FILL_PATH,       // Fill text and add to path
-	STROKE_PATH,     // Stroke text and add to path
-	FILL_AND_STROKE_PATH,
-	TEXT_PATH,       // Add text to path (invisible)
+matrix_t :: [3][2]f64
+
+textrendering_e :: enum c.int {
+	FILL                 = 0, // Fill text
+	STROKE               = 1, // Stroke text
+	FILL_AND_STROKE      = 2, // Fill then stroke text
+	INVISIBLE            = 3, // Don't fill or stroke (invisible)
+	FILL_PATH            = 4, // Fill text and add to path
+	STROKE_PATH          = 5, // Stroke text and add to path
+	FILL_AND_STROKE_PATH = 6,
+	TEXT_PATH            = 7, // Add text to path (invisible)
 }
+
+textrendering_t :: textrendering_e
 
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {
 	// Color array functions...
 	ArrayCreateColorFromICCObj    :: proc(pdf: ^file_t, icc_object: ^obj_t) -> ^array_t ---
-	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [^][3]f64, white_point: ^f64) -> ^array_t ---
+	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [3][3]f64, white_point: [3]f64) -> ^array_t ---
 	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: c.size_t, colors: ^c.uchar) -> ^array_t ---
 	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
 	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: c.size_t, cs: cs_t) -> ^array_t ---
@@ -60,7 +65,7 @@ foreign lib {
 	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: f64, y: f64, w: f64, h: f64) -> bool ---
 	ContentFill                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
 	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: bool) -> bool ---
-	ContentMatrixConcat             :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentMatrixConcat             :: proc(st: ^stream_t, m: matrix_t) -> bool ---
 	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: f64) -> bool ---
 	ContentMatrixScale              :: proc(st: ^stream_t, sx: f64, sy: f64) -> bool ---
 	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
@@ -95,7 +100,7 @@ foreign lib {
 	ContentSetTextCharacterSpacing  :: proc(st: ^stream_t, spacing: f64) -> bool ---
 	ContentSetTextFont              :: proc(st: ^stream_t, name: cstring, size: f64) -> bool ---
 	ContentSetTextLeading           :: proc(st: ^stream_t, leading: f64) -> bool ---
-	ContentSetTextMatrix            :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentSetTextMatrix            :: proc(st: ^stream_t, m: matrix_t) -> bool ---
 	ContentSetTextRenderingMode     :: proc(st: ^stream_t, mode: textrendering_t) -> bool ---
 	ContentSetTextRise              :: proc(st: ^stream_t, rise: f64) -> bool ---
 	ContentSetTextWordSpacing       :: proc(st: ^stream_t, spacing: f64) -> bool ---

@@ -1,11 +1,3 @@
-//
-// Public header file for PDFio.
-//
-// Copyright © 2021-2025 by Michael R Sweet.
-//
-// Licensed under Apache License v2.0.  See the file "LICENSE" for more
-// information.
-//
 package pdfio
 
 import "core:c"
@@ -15,6 +7,8 @@ _ :: c
 _ :: libc
 
 foreign import lib "pdfio1.lib"
+
+ :: c.longlong
 
 array_t :: struct {}
 
@@ -31,29 +25,34 @@ file_t :: struct {}
 error_cb_t :: proc "c" (^file_t, cstring, rawptr) -> bool
 
 // Error callback
-encryption_t :: enum c.int {
-	NONE = 0, // No encryption
-	RC4_40,   // 40-bit RC4 encryption (PDF 1.3)
-	RC4_128,  // 128-bit RC4 encryption (PDF 1.4)
-	AES_128,  // 128-bit AES encryption (PDF 1.6)
-	AES_256,  // 256-bit AES encryption (PDF 2.0) @exclude all@
+encryption_e :: enum c.int {
+	NONE    = 0, // No encryption
+	RC4_40  = 1, // 40-bit RC4 encryption (PDF 1.3)
+	RC4_128 = 2, // 128-bit RC4 encryption (PDF 1.4)
+	AES_128 = 3, // 128-bit AES encryption (PDF 1.6)
+	AES_256 = 4, // 256-bit AES encryption (PDF 2.0) @exclude all@
 }
 
-filter_t :: enum c.int {
-	NONE,      // No filter
-	ASCIIHEX,  // ASCIIHexDecode filter (reading only)
-	ASCII85,   // ASCII85Decode filter (reading only)
-	CCITTFAX,  // CCITTFaxDecode filter
-	CRYPT,     // Encryption filter
-	DCT,       // DCTDecode (JPEG) filter
-	FLATE,     // FlateDecode filter
-	JBIG2,     // JBIG2Decode filter
-	JPX,       // JPXDecode filter (reading only)
-	LZW,       // LZWDecode filter (reading only)
-	RUNLENGTH, // RunLengthDecode filter (reading only)
+// Error callback
+encryption_t :: encryption_e
+
+filter_e :: enum c.int {
+	NONE      = 0,  // No filter
+	ASCIIHEX  = 1,  // ASCIIHexDecode filter (reading only)
+	ASCII85   = 2,  // ASCII85Decode filter (reading only)
+	CCITTFAX  = 3,  // CCITTFaxDecode filter
+	CRYPT     = 4,  // Encryption filter
+	DCT       = 5,  // DCTDecode (JPEG) filter
+	FLATE     = 6,  // FlateDecode filter
+	JBIG2     = 7,  // JBIG2Decode filter
+	JPX       = 8,  // JPXDecode filter (reading only)
+	LZW       = 9,  // LZWDecode filter (reading only)
+	RUNLENGTH = 10, // RunLengthDecode filter (reading only)
 }
 
-obj_t :: struct {} // Numbered object in PDF file
+filter_t :: filter_e
+
+obj_t :: struct {}
 
 output_cb_t :: proc "c" (rawptr, rawptr, c.size_t) -> c.ssize_t
 
@@ -76,33 +75,37 @@ permission_t :: distinct bit_set[permission_e; c.int]
 
 PERMISSION_ALL :: permission_t { .PRINT, .MODIFY, .COPY, .ANNOTATE, .FORMS, .READING, .ASSEMBLE, .PRINT_HIGH }
 
-rect_t :: struct {
-	x1: f64, // Lower-left X coordinate
-	y1: f64, // Lower-left Y coordinate
-	x2: f64, // Upper-right X coordinate
-	y2: f64, // Upper-right Y coordinate
+rect_s :: struct {
+	x1, y1, x2, y2: f64, // Lower-left X coordinate
 }
+
+rect_t :: struct {}
 
 stream_t :: struct {}
 
 // Object data stream in PDF file
-valtype_t :: enum c.int {
-	NONE,     // No value, not set
-	ARRAY,    // Array
-	BINARY,   // Binary data
-	BOOLEAN,  // Boolean
-	DATE,     // Date/time
-	DICT,     // Dictionary
-	INDIRECT, // Indirect object (N G obj)
-	NAME,     // Name
-	NULL,     // Null object
-	NUMBER,   // Number (integer or real)
-	STRING,   // String
+valtype_e :: enum c.int {
+	NONE     = 0,  // No value, not set
+	ARRAY    = 1,  // Array
+	BINARY   = 2,  // Binary data
+	BOOLEAN  = 3,  // Boolean
+	DATE     = 4,  // Date/time
+	DICT     = 5,  // Dictionary
+	INDIRECT = 6,  // Indirect object (N G obj)
+	NAME     = 7,  // Name
+	NULL     = 8,  // Null object
+	NUMBER   = 9,  // Number (integer or real)
+	STRING   = 10, // String
 }
+
+// Object data stream in PDF file
+valtype_t :: valtype_e
 
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {
+	//
 	// Functions...
+	//
 	ArrayAppendArray    :: proc(a: ^array_t, value: ^array_t) -> bool ---
 	ArrayAppendBinary   :: proc(a: ^array_t, value: [^]c.uchar, valuelen: c.size_t) -> bool ---
 	ArrayAppendBoolean  :: proc(a: ^array_t, value: bool) -> bool ---

@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
-// SPDX-License-Identifier: MIT
 package box2d
 
 import "core:c"
@@ -8,100 +6,49 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
-/**
- * @defgroup geometry Geometry
- * @brief Geometry types and algorithms
- *
- * Definitions of circles, capsules, segments, and polygons. Various algorithms to compute hulls, mass properties, and so on.
- * @{
- */
-
-/// The maximum number of vertices on a convex polygon. Changing this affects performance even if you
-/// don't use more vertices.
-MAX_POLYGON_VERTICES :: 8
-
 /// Low level ray cast input data
 RayCastInput :: struct {
-	/// Start point of the ray cast
-	origin: Vec2,
-
-	/// Translation of the ray cast
-	translation: Vec2,
-
-	/// The maximum fraction of the translation to consider, typically 1
-	maxFraction: f32,
+	origin, translation: Vec2, /// Start point of the ray cast
+	maxFraction:         f32,  /// The maximum fraction of the translation to consider, typically 1
 }
 
 /// Low level shape cast input in generic form. This allows casting an arbitrary point
 /// cloud wrap with a radius. For example, a circle is a single point with a non-zero radius.
 /// A capsule is two points with a non-zero radius. A box is four points with a zero radius.
 ShapeCastInput :: struct {
-	/// A point cloud to cast
-	points: [8]Vec2,
-
-	/// The number of points
-	count: c.int,
-
-	/// The radius around the point cloud
-	radius: f32,
-
-	/// The translation of the shape cast
-	translation: Vec2,
-
-	/// The maximum fraction of the translation to consider, typically 1
-	maxFraction: f32,
+	points:      [8]Vec2, /// A point cloud to cast
+	count:       c.int,   /// The number of points
+	radius:      f32,     /// The radius around the point cloud
+	translation: Vec2,    /// The translation of the shape cast
+	maxFraction: f32,     /// The maximum fraction of the translation to consider, typically 1
 }
 
 /// Low level ray cast or shape-cast output data
 CastOutput :: struct {
-	/// The surface normal at the hit point
-	normal: Vec2,
-
-	/// The surface hit point
-	point: Vec2,
-
-	/// The fraction of the input translation at collision
-	fraction: f32,
-
-	/// The number of iterations used
-	iterations: c.int,
-
-	/// Did the cast hit?
-	hit: bool,
+	normal, point: Vec2,  /// The surface normal at the hit point
+	fraction:      f32,   /// The fraction of the input translation at collision
+	iterations:    c.int, /// The number of iterations used
+	hit:           bool,  /// Did the cast hit?
 }
 
 /// This holds the mass data computed for a shape.
 MassData :: struct {
-	/// The mass of the shape, usually in kilograms.
-	mass: f32,
-
-	/// The position of the shape's centroid relative to the shape's origin.
-	center: Vec2,
-
-	/// The rotational inertia of the shape about the local origin.
-	rotationalInertia: f32,
+	mass:              f32,  /// The mass of the shape, usually in kilograms.
+	center:            Vec2, /// The position of the shape's centroid relative to the shape's origin.
+	rotationalInertia: f32,  /// The rotational inertia of the shape about the local origin.
 }
 
 /// A solid circle
 Circle :: struct {
-	/// The local center
-	center: Vec2,
-
-	/// The radius
-	radius: f32,
+	center: Vec2, /// The local center
+	radius: f32,  /// The radius
 }
 
 /// A solid capsule can be viewed as two semicircles connected
 /// by a rectangle.
 Capsule :: struct {
-	/// Local center of the first semicircle
-	center1: Vec2,
-
-	/// Local center of the second semicircle
-	center2: Vec2,
-
-	/// The radius of the semicircles
-	radius: f32,
+	center1, center2: Vec2, /// Local center of the first semicircle
+	radius:           f32,  /// The radius of the semicircles
 }
 
 /// A solid convex polygon. It is assumed that the interior of the polygon is to
@@ -111,86 +58,45 @@ Capsule :: struct {
 /// @warning DO NOT fill this out manually, instead use a helper function like
 /// b2MakePolygon or b2MakeBox.
 Polygon :: struct {
-	/// The polygon vertices
-	vertices: [8]Vec2,
-
-	/// The outward normal vectors of the polygon sides
-	normals: [8]Vec2,
-
-	/// The centroid of the polygon
-	centroid: Vec2,
-
-	/// The external radius for rounded polygons
-	radius: f32,
-
-	/// The number of polygon vertices
-	count: c.int,
+	vertices, normals: [8]Vec2, /// The polygon vertices
+	centroid:          Vec2,    /// The centroid of the polygon
+	radius:            f32,     /// The external radius for rounded polygons
+	count:             c.int,   /// The number of polygon vertices
 }
 
 /// A line segment with two-sided collision.
 Segment :: struct {
-	/// The first point
-	point1: Vec2,
-
-	/// The second point
-	point2: Vec2,
+	point1, point2: Vec2, /// The first point
 }
 
 /// A line segment with one-sided collision. Only collides on the right side.
 /// Several of these are generated for a chain shape.
 /// ghost1 -> point1 -> point2 -> ghost2
 ChainSegment :: struct {
-	/// The tail ghost vertex
-	ghost1: Vec2,
-
-	/// The line segment
-	segment: Segment,
-
-	/// The head ghost vertex
-	ghost2: Vec2,
-
-	/// The owning chain shape index (internal usage only)
-	chainId: c.int,
+	ghost1:  Vec2,    /// The tail ghost vertex
+	segment: Segment, /// The line segment
+	ghost2:  Vec2,    /// The head ghost vertex
+	chainId: c.int,   /// The owning chain shape index (internal usage only)
 }
 
 /// A convex hull. Used to create convex polygons.
 /// @warning Do not modify these values directly, instead use b2ComputeHull()
 Hull :: struct {
-	/// The final points of the hull
-	points: [8]Vec2,
-
-	/// The number of points
-	count: c.int,
+	points: [8]Vec2, /// The final points of the hull
+	count:  c.int,   /// The number of points
 }
 
 /// Result of computing the distance between two line segments
 SegmentDistanceResult :: struct {
-	/// The closest point on the first segment
-	closest1: Vec2,
-
-	/// The closest point on the second segment
-	closest2: Vec2,
-
-	/// The barycentric coordinate on the first segment
-	fraction1: f32,
-
-	/// The barycentric coordinate on the second segment
-	fraction2: f32,
-
-	/// The squared distance between the closest points
-	distanceSquared: f32,
+	closest1, closest2:                    Vec2, /// The closest point on the first segment
+	fraction1, fraction2, distanceSquared: f32,  /// The barycentric coordinate on the first segment
 }
 
 /// A distance proxy is used by the GJK algorithm. It encapsulates any shape.
 ShapeProxy :: struct {
-	/// The point cloud
-	points: [8]Vec2,
-
-	/// The number of points
-	count: c.int,
-
-	/// The external radius of the point cloud
-	radius: f32,
+	points: [8]Vec2, /// The point cloud
+	count:  c.int,   /// The number of points
+	radius: f32,     /// The external radius of the point cloud
 }
 
 /// Used to warm start the GJK simplex. If you call this function multiple times with nearby
@@ -198,51 +104,29 @@ ShapeProxy :: struct {
 /// The distance cache must be initialized to zero on the first call.
 /// Users should generally just zero initialize this structure for each call.
 SimplexCache :: struct {
-	/// The number of stored simplex points
-	count: u16,
-
-	/// The cached simplex indices on shape A
-	indexA: [3]u8,
-
-	/// The cached simplex indices on shape B
-	indexB: [3]u8,
+	count:          u16,   /// The number of stored simplex points
+	indexA, indexB: [3]u8, /// The cached simplex indices on shape A
 }
 
 /// Input for b2ShapeDistance
 DistanceInput :: struct {
-	/// The proxy for shape A
-	proxyA: ShapeProxy,
-
-	/// The proxy for shape B
-	proxyB: ShapeProxy,
-
-	/// The world transform for shape A
-	transformA: Transform,
-
-	/// The world transform for shape B
-	transformB: Transform,
-
-	/// Should the proxy radius be considered?
-	useRadii: bool,
+	proxyA, proxyB:         ShapeProxy, /// The proxy for shape A
+	transformA, transformB: Transform,  /// The world transform for shape A
+	useRadii:               bool,       /// Should the proxy radius be considered?
 }
 
 /// Output for b2ShapeDistance
 DistanceOutput :: struct {
-	pointA:       Vec2,  ///< Closest point on shapeA
-	pointB:       Vec2,  ///< Closest point on shapeB
-	distance:     f32,   ///< The final distance, zero if overlapped
-	iterations:   c.int, ///< Number of GJK iterations used
-	simplexCount: c.int, ///< The number of simplexes stored in the simplex array
+	pointA, pointB:           Vec2,  ///< Closest point on shapeA
+	distance:                 f32,   ///< The final distance, zero if overlapped
+	iterations, simplexCount: c.int, ///< Number of GJK iterations used
 }
 
 /// Simplex vertex for debugging the GJK algorithm
 SimplexVertex :: struct {
-	wA:     Vec2,  ///< support point in proxyA
-	wB:     Vec2,  ///< support point in proxyB
-	w:      Vec2,  ///< wB - wA
-	a:      f32,   ///< barycentric coordinate for closest point
-	indexA: c.int, ///< wA index
-	indexB: c.int, ///< wB index
+	wA, wB, w:      Vec2,  ///< support point in proxyA
+	a:              f32,   ///< barycentric coordinate for closest point
+	indexA, indexB: c.int, ///< wA index
 }
 
 /// Simplex from the GJK algorithm
@@ -253,41 +137,34 @@ Simplex :: struct {
 
 /// Input parameters for b2ShapeCast
 ShapeCastPairInput :: struct {
-	proxyA:       ShapeProxy, ///< The proxy for shape A
-	proxyB:       ShapeProxy, ///< The proxy for shape B
-	transformA:   Transform,  ///< The world transform for shape A
-	transformB:   Transform,  ///< The world transform for shape B
-	translationB: Vec2,       ///< The translation of shape B
-	maxFraction:  f32,        ///< The fraction of the translation to consider, typically 1
+	proxyA, proxyB:         ShapeProxy, ///< The proxy for shape A
+	transformA, transformB: Transform,  ///< The world transform for shape A
+	translationB:           Vec2,       ///< The translation of shape B
+	maxFraction:            f32,        ///< The fraction of the translation to consider, typically 1
 }
 
 /// This describes the motion of a body/shape for TOI computation. Shapes are defined with respect to the body origin,
 /// which may not coincide with the center of mass. However, to support dynamics we must interpolate the center of mass
 /// position.
 Sweep :: struct {
-	localCenter: Vec2, ///< Local center of mass position
-	c1:          Vec2, ///< Starting center of mass world position
-	c2:          Vec2, ///< Ending center of mass world position
-	q1:          Rot,  ///< Starting world rotation
-	q2:          Rot,  ///< Ending world rotation
+	localCenter, c1, c2: Vec2, ///< Local center of mass position
+	q1, q2:              Rot,  ///< Starting world rotation
 }
 
 /// Input parameters for b2TimeOfImpact
 TOIInput :: struct {
-	proxyA:      ShapeProxy, ///< The proxy for shape A
-	proxyB:      ShapeProxy, ///< The proxy for shape B
-	sweepA:      Sweep,      ///< The movement of shape A
-	sweepB:      Sweep,      ///< The movement of shape B
-	maxFraction: f32,        ///< Defines the sweep interval [0, maxFraction]
+	proxyA, proxyB: ShapeProxy, ///< The proxy for shape A
+	sweepA, sweepB: Sweep,      ///< The movement of shape A
+	maxFraction:    f32,        ///< Defines the sweep interval [0, maxFraction]
 }
 
 /// Describes the TOI output
 TOIState :: enum c.int {
-	Unknown,
-	Failed,
-	Overlapped,
-	Hit,
-	Separated,
+	Unknown    = 0,
+	Failed     = 1,
+	Overlapped = 2,
+	Hit        = 3,
+	Separated  = 4,
 }
 
 /// Output parameters for b2TimeOfImpact.
@@ -302,56 +179,20 @@ TOIOutput :: struct {
 /// You may use the maxNormalImpulse to determine if there was an interaction during
 /// the time step.
 ManifoldPoint :: struct {
-	/// Location of the contact point in world space. Subject to precision loss at large coordinates.
+	point, anchorA, anchorB:                                                     Vec2, /// Location of the contact point in world space. Subject to precision loss at large coordinates.
 	/// @note Should only be used for debugging.
-	point: Vec2,
-
-	/// Location of the contact point relative to shapeA's origin in world space
-	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
-	anchorA: Vec2,
-
-	/// Location of the contact point relative to shapeB's origin in world space
-	/// @note When used internally to the Box2D solver, this is relative to the body center of mass.
-	anchorB: Vec2,
-
-	/// The separation of the contact point, negative if penetrating
-	separation: f32,
-
-	/// The impulse along the manifold normal vector.
-	normalImpulse: f32,
-
-	/// The friction impulse
-	tangentImpulse: f32,
-
-	/// The maximum normal impulse applied during sub-stepping. This is important
-	/// to identify speculative contact points that had an interaction in the time step.
-	maxNormalImpulse: f32,
-
-	/// Relative normal velocity pre-solve. Used for hit events. If the normal impulse is
-	/// zero then there was no hit. Negative means shapes are approaching.
-	normalVelocity: f32,
-
-	/// Uniquely identifies a contact point between two shapes
-	id: u16,
-
-	/// Did this contact point exist the previous step?
-	persisted: bool,
+	separation, normalImpulse, tangentImpulse, maxNormalImpulse, normalVelocity: f32,  /// The separation of the contact point, negative if penetrating
+	id:                                                                          u16,  /// Uniquely identifies a contact point between two shapes
+	persisted:                                                                   bool, /// Did this contact point exist the previous step?
 }
 
 /// A contact manifold describes the contact points between colliding shapes.
 /// @note Box2D uses speculative collision so some contact points may be separated.
 Manifold :: struct {
-	/// The unit normal vector in world space, points from shape A to bodyB
-	normal: Vec2,
-
-	/// Angular impulse applied for rolling resistance. N * m * s = kg * m^2 / s
-	rollingImpulse: f32,
-
-	/// The manifold points, up to two are possible in 2D
-	points: [2]ManifoldPoint,
-
-	/// The number of contacts points, will be 0, 1, or 2
-	pointCount: c.int,
+	normal:         Vec2,             /// The unit normal vector in world space, points from shape A to bodyB
+	rollingImpulse: f32,              /// Angular impulse applied for rolling resistance. N * m * s = kg * m^2 / s
+	points:         [2]ManifoldPoint, /// The manifold points, up to two are possible in 2D
+	pointCount:     c.int,            /// The number of contacts points, will be 0, 1, or 2
 }
 
 /// The dynamic tree structure. This should be considered private data.
@@ -359,47 +200,20 @@ Manifold :: struct {
 TreeNode :: struct {}
 
 DynamicTree :: struct {
-	/// The tree nodes
-	nodes: [^]TreeNode,
-
-	/// The root index
-	root: c.int,
-
-	/// The number of nodes
-	nodeCount: c.int,
-
-	/// The allocated node space
-	nodeCapacity: c.int,
-
-	/// Node free list
-	freeList: c.int,
-
-	/// Number of proxies created
-	proxyCount: c.int,
-
-	/// Leaf indices for rebuild
-	leafIndices: ^c.int,
-
-	/// Leaf bounding boxes for rebuild
-	leafBoxes: ^AABB,
-
-	/// Leaf bounding box centers for rebuild
-	leafCenters: ^Vec2,
-
-	/// Bins for sorting during rebuild
-	binIndices: ^c.int,
-
-	/// Allocated space for rebuilding
-	rebuildCapacity: c.int,
+	using _: struct {
+	},
+	nodes:                                               [^]TreeNode, /// The tree nodes
+	root, nodeCount, nodeCapacity, freeList, proxyCount: c.int,       /// The root index
+	leafIndices:                                         ^c.int,      /// Leaf indices for rebuild
+	leafBoxes:                                           ^AABB,       /// Leaf bounding boxes for rebuild
+	leafCenters:                                         ^Vec2,       /// Leaf bounding box centers for rebuild
+	binIndices:                                          ^c.int,      /// Bins for sorting during rebuild
+	rebuildCapacity:                                     c.int,       /// Allocated space for rebuilding
 }
 
 /// These are performance results returned by dynamic tree queries.
 TreeStats :: struct {
-	/// Number of internal nodes visited during the query
-	nodeVisits: c.int,
-
-	/// Number of leaf nodes visited during the query
-	leafVisits: c.int,
+	nodeVisits, leafVisits: c.int, /// Number of internal nodes visited during the query
 }
 
 /// This function receives proxies found in the AABB query.

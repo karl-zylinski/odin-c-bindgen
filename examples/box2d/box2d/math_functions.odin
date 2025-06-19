@@ -1,5 +1,3 @@
-// SPDX-FileCopyrightText: 2023 Erin Catto
-// SPDX-License-Identifier: MIT
 package box2d
 
 import "core:c"
@@ -11,23 +9,19 @@ foreign import lib "box2d.lib"
 /// 2D vector
 /// This can be used to represent a point or free vector
 Vec2 :: struct {
-	/// coordinates
-	x, y: f32,
+	x, y: f32, /// coordinates
 }
 
 /// Cosine and sine pair
 /// This uses a custom implementation designed for cross-platform determinism
 CosSin :: struct {
-	/// cosine and sine
-	cosine: f32,
-	sine: f32,
+	cosine, sine: f32, /// cosine and sine
 }
 
 /// 2D rotation
 /// This is similar to using a complex number for rotation
 Rot :: struct {
-	/// cosine and sine
-	_c, s: f32,
+	_c, s: f32, /// cosine and sine
 }
 
 /// A 2D rigid transform
@@ -38,8 +32,7 @@ Transform :: struct {
 
 /// A 2-by-2 Matrix
 Mat22 :: struct {
-	/// columns
-	cx, cy: Vec2,
+	cx, cy: Vec2, /// columns
 }
 
 /// Axis-aligned bounding box
@@ -47,14 +40,6 @@ AABB :: struct {
 	lowerBound: Vec2,
 	upperBound: Vec2,
 }
-
-/**
- * @addtogroup math
- * @{
- */
-
-/// https://en.wikipedia.org/wiki/Pi
-PI :: 3.14159265359
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
