@@ -49,12 +49,12 @@ Index :: rawptr
 * An opaque type representing target information for a given translation
 * unit.
 */
-Target_Info :: struct {}
+Target_Info :: rawptr
 
 /**
 * A single translation unit, which resides in an index.
 */
-Translation_Unit :: struct {}
+Translation_Unit :: rawptr
 
 /**
 * Opaque pointer representing client data that will be passed through
