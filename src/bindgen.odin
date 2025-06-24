@@ -2435,7 +2435,9 @@ gen :: proc(input: string, c: Config) {
 
 	// Extract any big comment at top of file (clang doesn't see these)
 	{
-		src := strings.trim_space(s.source)
+		source_data, source_data_ok := os.read_entire_file(input)
+		fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
+		src := strings.trim_space(string(source_data))
 		in_block := false
 
 		top_comment_loop: for ll in strings.split_lines_iterator(&src) {
