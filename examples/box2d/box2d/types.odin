@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2023 Erin Catto
+// SPDX-License-Identifier: MIT
 package box2d
 
 import "core:c"

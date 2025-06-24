@@ -1,3 +1,11 @@
+//
+// Public header file for PDFio.
+//
+// Copyright © 2021-2025 by Michael R Sweet.
+//
+// Licensed under Apache License v2.0.  See the file "LICENSE" for more
+// information.
+//
 package pdfio
 
 import "core:c"
