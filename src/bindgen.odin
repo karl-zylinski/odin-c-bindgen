@@ -135,48 +135,48 @@ Declaration :: struct {
 // 	return t, true
 // }
 
-find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
-	comment_start: int
-	semicolon_pos: int
-	for i in start_offset..<len(s.source) {
-		if s.source[i] == ';' {
-			semicolon_pos = i
-		}
+// find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+// 	comment_start: int
+// 	semicolon_pos: int
+// 	for i in start_offset..<len(s.source) {
+// 		if s.source[i] == ';' {
+// 			semicolon_pos = i
+// 		}
 
-		if semicolon_pos > 0 && i+2 < len(s.source) {
-			// Comments after proc starting with `//` are not picked up, but
-			// those with `///` are picked up.
-			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
-				comment_start = i
-			}
-		}
+// 		if semicolon_pos > 0 && i+2 < len(s.source) {
+// 			// Comments after proc starting with `//` are not picked up, but
+// 			// those with `///` are picked up.
+// 			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
+// 				comment_start = i
+// 			}
+// 		}
 
-		if s.source[i] == '\n' {
-			if comment_start != 0 {
-				side_comment = s.source[comment_start:i]
-				ok = true
-			}
-			return
-		}
-	}
-	return
-}
+// 		if s.source[i] == '\n' {
+// 			if comment_start != 0 {
+// 				side_comment = s.source[comment_start:i]
+// 				ok = true
+// 			}
+// 			return
+// 		}
+// 	}
+// 	return
+// }
 
-// used to get comments to the right of macros
-find_comment_at_line_end :: proc(str: string) -> (string, int) {
-	spaces_counter := 0
-	for c, i in str {
-		if c == ' ' {
-			spaces_counter += 1
-		} else if c == '/' && i + 1 < len(str) && (str[i + 1] == '/' || str[i + 1] == '*') {
-			return str[i:], spaces_counter
-		} else {
-			spaces_counter = 0
-		}
-	}
+// // used to get comments to the right of macros
+// find_comment_at_line_end :: proc(str: string) -> (string, int) {
+// 	spaces_counter := 0
+// 	for c, i in str {
+// 		if c == ' ' {
+// 			spaces_counter += 1
+// 		} else if c == '/' && i + 1 < len(str) && (str[i + 1] == '/' || str[i + 1] == '*') {
+// 			return str[i:], spaces_counter
+// 		} else {
+// 			spaces_counter = 0
+// 		}
+// 	}
 
-	return "", 0
-}
+// 	return "", 0
+// }
 
 // parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: bool) {
 // 	out_fields: [dynamic]Struct_Field
@@ -1158,63 +1158,63 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 // 	}
 // }
 
-get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
-	comment, ok = get_comment(v, s)
-	if line_i64, line_i64_ok := json_get(v, "loc.line", json.Integer); line_i64_ok {
-		line = int(line_i64)
-		line_ok = true
-	}
-	return
-}
+// get_comment_with_line :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, line: int, line_ok: bool, ok: bool) {
+// 	comment, ok = get_comment(v, s)
+// 	if line_i64, line_i64_ok := json_get(v, "loc.line", json.Integer); line_i64_ok {
+// 		line = int(line_i64)
+// 		line_ok = true
+// 	}
+// 	return
+// }
 
-get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool) {
-	begin := int(json_get(v, "range.begin.offset", json.Integer) or_return)
-	end := int(json_get(v, "range.end.offset", json.Integer) or_return)
+// get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool) {
+// 	begin := int(json_get(v, "range.begin.offset", json.Integer) or_return)
+// 	end := int(json_get(v, "range.end.offset", json.Integer) or_return)
 
-	// This makes sure to add in the starting `//` and any ending `*/` that clang
-	// might not have included in the comment.
+// 	// This makes sure to add in the starting `//` and any ending `*/` that clang
+// 	// might not have included in the comment.
 
-	double_slash_found := false
+// 	double_slash_found := false
 
-	for idx := int(begin); idx >= 0; idx -= 1 {
-		if idx + 2 >= len(s.source) {
-			continue
-		}
+// 	for idx := int(begin); idx >= 0; idx -= 1 {
+// 		if idx + 2 >= len(s.source) {
+// 			continue
+// 		}
 
-		cur := s.source[idx:idx+2]
-		if cur == "//" {
-			begin = idx
-			double_slash_found = true
-		}
+// 		cur := s.source[idx:idx+2]
+// 		if cur == "//" {
+// 			begin = idx
+// 			double_slash_found = true
+// 		}
 
-		if cur == "/*" {
-			begin = idx
-			break
-		}
+// 		if cur == "/*" {
+// 			begin = idx
+// 			break
+// 		}
 
-		if s.source[idx] == '\n' && double_slash_found {
-			break
-		}
-	}
+// 		if s.source[idx] == '\n' && double_slash_found {
+// 			break
+// 		}
+// 	}
 
-	cmt := s.source[begin:end+1]
+// 	cmt := s.source[begin:end+1]
 
-	num_block_openings := strings.count(cmt, "/*")
-	num_block_closing := strings.count(cmt, "*/")
+// 	num_block_openings := strings.count(cmt, "/*")
+// 	num_block_closing := strings.count(cmt, "*/")
 
-	if num_block_openings != num_block_closing {
-		for idx in end..<len(s.source) - 2 {
-			cur := s.source[idx:idx+2]
+// 	if num_block_openings != num_block_closing {
+// 		for idx in end..<len(s.source) - 2 {
+// 			cur := s.source[idx:idx+2]
 
-			if cur == "*/" {
-				end = idx+1
-				break
-			}
-		}
-	}
+// 			if cur == "*/" {
+// 				end = idx+1
+// 				break
+// 			}
+// 		}
+// 	}
 
-	return s.source[begin:end+1], true
-}
+// 	return s.source[begin:end+1], true
+// }
 
 trim_prefix :: proc(s: string, p: string) -> string {
 	return strings.trim_prefix(strings.trim_prefix(s, p), "_")
@@ -1626,7 +1626,6 @@ Config :: struct {
 Gen_State :: struct {
 	using config:       Config,
 	file:               clang.File,
-	source:             string,
 	decls:              [dynamic]Declaration,
 	defines:            map[string]string,
 	symbol_indices:     map[string]int,
@@ -1775,7 +1774,7 @@ gen :: proc(input: string, c: Config) {
 				vet_type(state, param_type)
 				append(&out_params, Function_Parameter {
 					name = param_name,
-					type = param_type
+					type = param_type,
 				})
 			case:
 				// For debugging purposes.
