@@ -1,4 +1,3 @@
-#+feature dynamic-literals
 /*
 Generates Odin bindings from C code.
 
@@ -9,6 +8,7 @@ The folder can contain a `bindgen.sjson` file tha can be used to do overrides
 and configure the generation. See the examples folder for how to do that.
 */
 
+#+feature dynamic-literals
 
 package bindgen
 
@@ -138,12 +138,12 @@ Declaration :: struct {
 find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
 	comment_start: int
 	semicolon_pos: int
-	for i in start_offset ..< len(s.source) {
+	for i in start_offset..<len(s.source) {
 		if s.source[i] == ';' {
 			semicolon_pos = i
 		}
 
-		if semicolon_pos > 0 && i + 2 < len(s.source) {
+		if semicolon_pos > 0 && i+2 < len(s.source) {
 			// Comments after proc starting with `//` are not picked up, but
 			// those with `///` are picked up.
 			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
@@ -1181,7 +1181,7 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 			continue
 		}
 
-		cur := s.source[idx:idx + 2]
+		cur := s.source[idx:idx+2]
 		if cur == "//" {
 			begin = idx
 			double_slash_found = true
@@ -1197,23 +1197,23 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 		}
 	}
 
-	cmt := s.source[begin:end + 1]
+	cmt := s.source[begin:end+1]
 
 	num_block_openings := strings.count(cmt, "/*")
 	num_block_closing := strings.count(cmt, "*/")
 
 	if num_block_openings != num_block_closing {
-		for idx in end ..< len(s.source) - 2 {
-			cur := s.source[idx:idx + 2]
+		for idx in end..<len(s.source) - 2 {
+			cur := s.source[idx:idx+2]
 
 			if cur == "*/" {
-				end = idx + 1
+				end = idx+1
 				break
 			}
 		}
 	}
 
-	return s.source[begin:end + 1], true
+	return s.source[begin:end+1], true
 }
 
 trim_prefix :: proc(s: string, p: string) -> string {
@@ -1222,7 +1222,7 @@ trim_prefix :: proc(s: string, p: string) -> string {
 
 // Types that would need `import "core:c/libc"`. Please add and send in a Pull Request if you needed
 // to add anything here!
-is_libc_type :: proc(t: string) -> bool {
+is_libc_type :: proc(t: string) -> bool{
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
 
@@ -1236,35 +1236,25 @@ is_libc_type :: proc(t: string) -> bool {
 
 // Types that would need "import 'core:sys/posix'". Please add and send in a Pull Request if you
 // needed to add anything here!
-is_posix_type :: proc(t: string) -> bool {
-	base_type := strings.trim_suffix(t, "*")
+is_posix_type :: proc(t:string) -> bool {
+	base_type := strings.trim_suffix(t,"*")
 	base_type = strings.trim_space(base_type)
 	switch t {
-	case "dev_t":
-		return true
-	case "blkcnt_t":
-		return true
-	case "blksize_t":
-		return true
-	case "clock_t":
-		return true
-	case "clockid_t":
-		return true
-	case "fsblkcnt_t":
-		return true
-	case "off_t":
-		return true
-	case "gid_t":
-		return true
-	case "pid_t":
-		return true
-	case "timespec":
-		return true
+	case "dev_t": return true
+	case "blkcnt_t": return true
+	case "blksize_t": return true
+	case "clock_t": return true
+	case "clockid_t": return true
+	case "fsblkcnt_t": return true
+	case "off_t": return true
+	case "gid_t": return true
+	case "pid_t": return true
+	case "timespec": return true
 	}
 	return false
 }
 
-is_c_type :: proc(t: string) -> bool {
+is_c_type :: proc(t: string) -> bool{
 	base_type := strings.trim_suffix(t, "*")
 	base_type = strings.trim_space(base_type)
 	return base_type in c_type_mapping
@@ -1444,7 +1434,7 @@ translate_type :: proc(s: Gen_State, t: string, override: bool) -> string {
 			tok = t[token_start:idx]
 			token_start = idx + utf8.rune_size(s)
 			num_ptrs += 1
-		} else if idx == len(t) - 1 {
+		} else if idx == len(t) - 1{
 			tok = t[token_start:idx + 1]
 		}
 
@@ -1493,7 +1483,7 @@ translate_type :: proc(s: Gen_State, t: string, override: bool) -> string {
 	} else if is_libc_type(t_prefixed) {
 		t = fmt.tprintf("libc.%v", t)
 	} else if is_posix_type(t_prefixed) {
-		t = fmt.tprintf("posix.%v", t)
+		t = fmt.tprintf("posix.%v",t)
 	} else if rename, exists := s.rename[t_prefixed]; exists {
 		t = vet_name(rename)
 	} else if s.force_ada_case_types && t != "void" {
@@ -1593,7 +1583,7 @@ vet_name :: proc(s: string) -> string {
 	return s
 }
 
-add_to_set :: proc(s: ^map[$T]struct {}, v: T) {
+add_to_set :: proc(s: ^map[$T]struct{}, v: T) {
 	s[v] = {}
 }
 
@@ -1677,12 +1667,12 @@ gen :: proc(input: string, c: Config) {
 
 	index := 1
 	for &include in c.clang_include_paths {
-		clang_args[index] = fmt.ctprintf("-I%s", include)
+		clang_args[index] = fmt.ctprintf("-I%v", include)
 		index += 1
 	}
 
-	for key, value in c.clang_defines {
-		clang_args[index] = fmt.ctprintf("-D%s=%s", key, value)
+	for k, v in c.clang_defines {
+		clang_args[index] = fmt.ctprintf("-D%s=%s", k, v)
 		index += 1
 	}
 
@@ -1825,13 +1815,13 @@ gen :: proc(input: string, c: Config) {
 		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
 
 		return Function {
-			original_name  = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			parameters     = out_params[:],
-			return_type    = return_type == "void" ? "" : return_type,
-			comment        = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
+			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
+			parameters = out_params[:],
+			return_type = return_type == "void" ? "" : return_type,
+			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			comment_before = cline != line,
-			post_comment   = "", // What is this?
-			variadic       = clang.Cursor_isVariadic(cursor) != 0,
+			post_comment = "", // What is this?
+			variadic = clang.Cursor_isVariadic(cursor) != 0,
 		}
 		// append(
 		// 	&s.decls,
@@ -1877,8 +1867,8 @@ gen :: proc(input: string, c: Config) {
 			// prev_idx := -1
 			// for &i in inner {
 
-			line, col: u32
-			clang.getExpansionLocation(clang.getCursorLocation(cursor), nil, &line, &col, nil)
+			line: u32
+			clang.getExpansionLocation(clang.getCursorLocation(cursor), nil, &line, nil, nil)
 			// if loc, loc_ok := json_get_object(i, "loc"); loc_ok {
 			// 	if lline, lline_ok := json_get_int(loc, "line"); lline_ok {
 			// 		prev_line = lline
@@ -2028,14 +2018,12 @@ gen :: proc(input: string, c: Config) {
 				} else {
 					// } else {
 					append(&data.out_fields, Struct_Field {
-						names          = [dynamic]string {
-							clang_string_to_string(clang.getCursorSpelling(cursor)),
-						},
-						type           = type,
-						anon_using     = false,
-						comment        = comment,
-						comment_before = comment_before, // Don't know how to get this yet
-						original_line  = int(line),
+						names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
+						type = type,
+						anon_using = false,
+						comment = comment,
+						comment_before = comment_before,
+						original_line = int(line),
 					})
 					// f := Struct_Field {
 					// 	type             = field_type,
@@ -2064,13 +2052,13 @@ gen :: proc(input: string, c: Config) {
 			// }
 			case .StructDecl, .UnionDecl:
 				append(&data.out_fields, Struct_Field {
-					names            = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
-					type             = get_cursor_type_string(cursor),
+					names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
+					type = get_cursor_type_string(cursor),
 					anon_struct_type = parse_record_decl(data.state, cursor),
-					anon_using       = true,
-					comment          = comment,
-					comment_before   = comment_before,
-					original_line    = int(line),
+					anon_using = true,
+					comment = comment,
+					comment_before = comment_before,
+					original_line = int(line),
 				})
 			case:
 				// For debugging purposes.
@@ -2095,7 +2083,7 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		data: Data = {
-			state      = state,
+			state = state,
 			out_fields = {},
 		}
 
@@ -2116,11 +2104,11 @@ gen :: proc(input: string, c: Config) {
 		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
 
 		return {
-			original_name      = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			id                 = clang_string_to_string(clang.getCursorUSR(cursor)),
-			fields             = data.out_fields[:],
-			comment            = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			is_union           = clang.getCursorKind(cursor) == .UnionDecl,
+			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
+			id = clang_string_to_string(clang.getCursorUSR(cursor)),
+			fields = data.out_fields[:],
+			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
+			is_union = clang.getCursorKind(cursor) == .UnionDecl,
 		}
 		// 	struct_decl.original_name = name
 		// 	struct_decl.id = id
@@ -2187,9 +2175,9 @@ gen :: proc(input: string, c: Config) {
 
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			type          = clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor))),
-			pre_comment   = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			side_comment  = "",
+			type = clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor))),
+			pre_comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
+			side_comment = "",
 		}
 		// s.typedefs[type] = name
 		// append(
@@ -2268,11 +2256,9 @@ gen :: proc(input: string, c: Config) {
 				clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
 
 				append(data.out_members, Enum_Member {
-					name           = clang_string_to_string(clang.getCursorSpelling(cursor)),
-					value          = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
-					comment        = clang_string_to_string(
-						clang.Cursor_getRawCommentText(cursor),
-					),
+					name = clang_string_to_string(clang.getCursorSpelling(cursor)),
+					value = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
+					comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 					comment_before = cline != data.line,
 				})
 			// append(
@@ -2339,9 +2325,9 @@ gen :: proc(input: string, c: Config) {
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			val           = "",
-			comment       = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			side_comment  = "", // ??
+			val = "",
+			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
+			side_comment = "", // ??
 		}
 	}
 
@@ -2362,6 +2348,7 @@ gen :: proc(input: string, c: Config) {
 		// Need to figure out how to get macro expansion values out and not parse certain macro definitions.
 		// We can't just check the file origin of the macro expansion unfortunatly as it doesn't stop us from pulling weird shit (e.g. _STDC_VERSION__).
 		#partial switch kind {
+		// This doesn't work yet.
 		// case .MacroDefinition:
 		// 	if clang.Cursor_isMacroFunctionLike(cursor) + clang.Cursor_isMacroBuiltin(cursor) != 0 {
 		// 		return .Continue
@@ -2483,7 +2470,7 @@ gen :: proc(input: string, c: Config) {
 		fpln(f, `import "core:c/libc"`)
 	}
 
-	if (s.needs_import_posix) {
+	if s.needs_import_posix {
 		fpln(f, `import "core:sys/posix"`)
 	}
 
@@ -2720,7 +2707,7 @@ gen :: proc(input: string, c: Config) {
 
 						if !field.comment_before {
 							// Padding between name and =
-							for _ in 0 ..< longest_field_name_with_side_comment - names_len {
+							for _ in 0..<longest_field_name_with_side_comment-names_len {
 								strings.write_rune(&b, ' ')
 							}
 						}
@@ -2764,10 +2751,7 @@ gen :: proc(input: string, c: Config) {
 
 				for &field in fields {
 					if field.comment != "" && !field.comment_before {
-						longest_field_with_side_comment = max(
-							len(field.field),
-							longest_field_with_side_comment,
-						)
+						longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
 					}
 				}
 
@@ -2782,7 +2766,7 @@ gen :: proc(input: string, c: Config) {
 
 						ci := field.comment
 						for l in strings.split_lines_iterator(&ci) {
-							for _ in 0 ..< indent + 1 {
+							for _ in 0..<indent+1 {
 								ws(&w, "\t")
 							}
 							ws(&w, strings.trim_space(l))
@@ -2790,7 +2774,7 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					for _ in 0 ..< indent + 1 {
+					for _ in 0..<indent+1 {
 						ws(&w, "\t")
 					}
 					ws(&w, field.field)
@@ -2798,7 +2782,7 @@ gen :: proc(input: string, c: Config) {
 
 					if has_comment && !comment_before {
 						// Padding in front of comment
-						for _ in 0 ..< (longest_field_with_side_comment - len(field.field)) {
+						for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
 							ws(&w, " ")
 						}
 
@@ -2809,7 +2793,7 @@ gen :: proc(input: string, c: Config) {
 					ws(&w, "\n")
 				}
 
-				for _ in 0 ..< indent {
+				for _ in 0..<indent {
 					ws(&w, "\t")
 				}
 				ws(&w, "}")
@@ -2862,7 +2846,7 @@ gen :: proc(input: string, c: Config) {
 					all_has_value = false
 				}
 
-				for idx in 1 ..< len(d.members) {
+				for idx in 1..<len(d.members) {
 					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) && bit_setify {
 						continue
 					}
@@ -2922,7 +2906,7 @@ gen :: proc(input: string, c: Config) {
 
 				if vv, v_ok := m.value.?; v_ok {
 					if !m.comment_before {
-						for _ in 0 ..< suffix_pad {
+						for _ in 0..<suffix_pad {
 							// Padding between name and `=`
 							strings.write_rune(&b, ' ')
 						}
@@ -2946,10 +2930,10 @@ gen :: proc(input: string, c: Config) {
 				}
 
 				append(&members, Formatted_Member {
-						name = name_without_overlap,
-						member = strings.to_string(b),
-						comment = m.comment,
-						comment_before = m.comment_before,
+					name = name_without_overlap,
+					member = strings.to_string(b),
+					comment = m.comment,
+					comment_before = m.comment_before,
 				})
 			}
 
@@ -2977,7 +2961,7 @@ gen :: proc(input: string, c: Config) {
 				fp(f, ",")
 
 				if has_comment && !comment_before {
-					for _ in 0 ..< (longest_member_name_with_side_comment - len(m.member)) {
+					for _ in 0..<(longest_member_name_with_side_comment - len(m.member)) {
 						// Padding in front of comment
 						fp(f, " ")
 					}
@@ -2999,12 +2983,7 @@ gen :: proc(input: string, c: Config) {
 				// There was a member with value `-1`... That means all bits are
 				// set. Create a bit_set constant with all variants set.
 				if bit_set_all_constant != "" {
-					all_constant := strings.to_screaming_snake_case(
-						trim_prefix(
-							strings.to_lower(bit_set_all_constant),
-							strings.to_lower(s.remove_type_prefix),
-						),
-					)
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_type_prefix)))
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
@@ -3278,11 +3257,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	if len(groups) > 0 {
-		fmt.fprintfln(
-			f,
-			`@(default_calling_convention="c", link_prefix="%v")`,
-			s.remove_function_prefix,
-		)
+		fmt.fprintfln(f, `@(default_calling_convention="c", link_prefix="%v")`, s.remove_function_prefix)
 		fmt.fprintln(f, "foreign lib {")
 
 		for &g, gidx in groups {
@@ -3322,7 +3297,7 @@ gen :: proc(input: string, c: Config) {
 
 				w(&b, d.name)
 
-				for _ in 0 ..< longest_function_name - len(d.name) {
+				for _ in 0..<longest_function_name-len(d.name) {
 					strings.write_rune(&b, ' ')
 				}
 
@@ -3362,7 +3337,7 @@ gen :: proc(input: string, c: Config) {
 						w(&b, ", ")
 					} else {
 						if d.variadic {
-							w(&b, ", #c_vararg _: ..any")
+							w(&b,", #c_vararg _: ..any")
 						}
 					}
 				}
@@ -3415,7 +3390,7 @@ gen :: proc(input: string, c: Config) {
 				fp(f, ff.function)
 
 				if ff.post_comment != "" {
-					for _ in 0 ..< (longest_formatted_function - len(ff.function)) {
+					for _ in 0..<(longest_formatted_function-len(ff.function)) {
 						fp(f, ' ')
 					}
 
@@ -3507,12 +3482,7 @@ main :: proc() {
 	for i in config.inputs {
 		if os.is_dir(i) {
 			input_folder, input_folder_err := os2.open(i)
-			fmt.ensuref(
-				input_folder_err == nil,
-				"Failed opening folder %v: %v",
-				i,
-				input_folder_err,
-			)
+			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", i, input_folder_err)
 			iter := os2.read_directory_iterator_create(input_folder)
 
 			for f in os2.read_directory_iterator(&iter) {
@@ -3533,12 +3503,7 @@ main :: proc() {
 
 	if config.output_folder != "" && !os2.exists(config.output_folder) {
 		make_dir_err := os2.make_directory_all(config.output_folder)
-		fmt.ensuref(
-			make_dir_err == nil,
-			"Failed creating output directory %v: %v",
-			config.output_folder,
-			make_dir_err,
-		)
+		fmt.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", config.output_folder, make_dir_err)
 	}
 
 	for i in input_files {
