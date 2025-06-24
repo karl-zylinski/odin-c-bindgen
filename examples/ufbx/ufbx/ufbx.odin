@@ -14,7 +14,7 @@ Real :: f32
 
 // Null-terminated UTF-8 encoded string within an FBX file
 String :: struct {
-	data: cstring,
+	data:   cstring,
 	length: c.size_t,
 }
 
@@ -57,8 +57,8 @@ ROTATION_ORDER_COUNT :: 7
 // NOTE: Rotation is a quaternion, not Euler angles!
 Transform :: struct {
 	translation: Vec3,
-	rotation: Quat,
-	scale: Vec3,
+	rotation:    Quat,
+	scale:       Vec3,
 }
 
 // 4x3 matrix encoding an affine transformation.
@@ -69,47 +69,47 @@ Matrix :: struct {
 			m00, m10, m20, m01, m11, m21, m02, m12, m22, m03, m13, m23: Real,
 		},
 		cols: [4]Vec3,
-		v: [12]Real,
+		v:    [12]Real,
 	},
 }
 
 Void_List :: struct {
-	data: [^]rawptr,
+	data:  [^]rawptr,
 	count: c.size_t,
 }
 
 Bool_List :: struct {
-	data: [^]bool,
+	data:  [^]bool,
 	count: c.size_t,
 }
 
 Uint32_List :: struct {
-	data: [^]u32,
+	data:  [^]u32,
 	count: c.size_t,
 }
 
 Real_List :: struct {
-	data: [^]Real,
+	data:  [^]Real,
 	count: c.size_t,
 }
 
 Vec2_List :: struct {
-	data: [^]Vec2,
+	data:  [^]Vec2,
 	count: c.size_t,
 }
 
 Vec3_List :: struct {
-	data: [^]Vec3,
+	data:  [^]Vec3,
 	count: c.size_t,
 }
 
 Vec4_List :: struct {
-	data: [^]Vec4,
+	data:  [^]Vec4,
 	count: c.size_t,
 }
 
 String_List :: struct {
-	data: [^]String,
+	data:  [^]String,
 	count: c.size_t,
 }
 
@@ -130,27 +130,27 @@ Dom_Value_Type :: enum c.int {
 DOM_VALUE_TYPE_COUNT :: 9
 
 Dom_Value :: struct {
-	type: Dom_Value_Type,
-	value_str: String,
-	value_blob: Blob,
-	value_int: i64,
+	type:        Dom_Value_Type,
+	value_str:   String,
+	value_blob:  Blob,
+	value_int:   i64,
 	value_float: f64,
 }
 
 Dom_Node_List :: struct {
-	data: ^^Dom_Node,
+	data:  ^^Dom_Node,
 	count: c.size_t,
 }
 
 Dom_Value_List :: struct {
-	data: [^]Dom_Value,
+	data:  [^]Dom_Value,
 	count: c.size_t,
 }
 
 Dom_Node :: struct {
-	name: String,
+	name:     String,
 	children: Dom_Node_List,
-	values: Dom_Value_List,
+	values:   Dom_Value_List,
 }
 
 // Data type contained within the property. All the data fields are always
@@ -281,24 +281,24 @@ PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOC
 
 // Single property with name/type/value.
 Prop :: struct {
-	name: String,
+	name:          String,
 	_internal_key: u32,
-	type: Prop_Type,
-	flags: Prop_Flag,
-	value_str: String,
-	value_blob: Blob,
-	value_int: i64,
+	type:          Prop_Type,
+	flags:         Prop_Flag,
+	value_str:     String,
+	value_blob:    Blob,
+	value_int:     i64,
 	using _: struct #raw_union {
 		value_real_arr: [4]Real,
-		value_real: Real,
-		value_vec2: Vec2,
-		value_vec3: Vec3,
-		value_vec4: Vec4,
+		value_real:     Real,
+		value_vec2:     Vec2,
+		value_vec3:     Vec3,
+		value_vec4:     Vec4,
 	},
 }
 
 Prop_List :: struct {
-	data: ^Prop,
+	data:  ^Prop,
 	count: c.size_t,
 }
 
@@ -306,223 +306,223 @@ Prop_List :: struct {
 // For animated objects in as scene from `ufbx_evaluate_scene()` this list
 // only has the animated properties, the originals are stored under `defaults`.
 Props :: struct {
-	props: Prop_List,
+	props:        Prop_List,
 	num_animated: c.size_t,
-	defaults: ^Props,
+	defaults:     ^Props,
 }
 
 Element_List :: struct {
-	data: ^^Element,
+	data:  ^^Element,
 	count: c.size_t,
 }
 
 Unknown_List :: struct {
-	data: ^^Unknown,
+	data:  ^^Unknown,
 	count: c.size_t,
 }
 
 Node_List :: struct {
-	data: [^]^Node,
+	data:  [^]^Node,
 	count: c.size_t,
 }
 
 Mesh_List :: struct {
-	data: ^^Mesh,
+	data:  ^^Mesh,
 	count: c.size_t,
 }
 
 Light_List :: struct {
-	data: ^^Light,
+	data:  ^^Light,
 	count: c.size_t,
 }
 
 Camera_List :: struct {
-	data: ^^Camera,
+	data:  ^^Camera,
 	count: c.size_t,
 }
 
 Bone_List :: struct {
-	data: ^^Bone,
+	data:  ^^Bone,
 	count: c.size_t,
 }
 
 Empty_List :: struct {
-	data: ^^Empty,
+	data:  ^^Empty,
 	count: c.size_t,
 }
 
 Line_Curve_List :: struct {
-	data: ^^Line_Curve,
+	data:  ^^Line_Curve,
 	count: c.size_t,
 }
 
 Nurbs_Curve_List :: struct {
-	data: ^^Nurbs_Curve,
+	data:  ^^Nurbs_Curve,
 	count: c.size_t,
 }
 
 Nurbs_Surface_List :: struct {
-	data: ^^Nurbs_Surface,
+	data:  ^^Nurbs_Surface,
 	count: c.size_t,
 }
 
 Nurbs_Trim_Surface_List :: struct {
-	data: ^^Nurbs_Trim_Surface,
+	data:  ^^Nurbs_Trim_Surface,
 	count: c.size_t,
 }
 
 Nurbs_Trim_Boundary_List :: struct {
-	data: ^^Nurbs_Trim_Boundary,
+	data:  ^^Nurbs_Trim_Boundary,
 	count: c.size_t,
 }
 
 Procedural_Geometry_List :: struct {
-	data: ^^Procedural_Geometry,
+	data:  ^^Procedural_Geometry,
 	count: c.size_t,
 }
 
 Stereo_Camera_List :: struct {
-	data: ^^Stereo_Camera,
+	data:  ^^Stereo_Camera,
 	count: c.size_t,
 }
 
 Camera_Switcher_List :: struct {
-	data: ^^Camera_Switcher,
+	data:  ^^Camera_Switcher,
 	count: c.size_t,
 }
 
 Marker_List :: struct {
-	data: ^^Marker,
+	data:  ^^Marker,
 	count: c.size_t,
 }
 
 Lod_Group_List :: struct {
-	data: ^^Lod_Group,
+	data:  ^^Lod_Group,
 	count: c.size_t,
 }
 
 Skin_Deformer_List :: struct {
-	data: ^^Skin_Deformer,
+	data:  ^^Skin_Deformer,
 	count: c.size_t,
 }
 
 Skin_Cluster_List :: struct {
-	data: ^^Skin_Cluster,
+	data:  ^^Skin_Cluster,
 	count: c.size_t,
 }
 
 Blend_Deformer_List :: struct {
-	data: ^^Blend_Deformer,
+	data:  ^^Blend_Deformer,
 	count: c.size_t,
 }
 
 Blend_Channel_List :: struct {
-	data: ^^Blend_Channel,
+	data:  ^^Blend_Channel,
 	count: c.size_t,
 }
 
 Blend_Shape_List :: struct {
-	data: ^^Blend_Shape,
+	data:  ^^Blend_Shape,
 	count: c.size_t,
 }
 
 Cache_Deformer_List :: struct {
-	data: ^^Cache_Deformer,
+	data:  ^^Cache_Deformer,
 	count: c.size_t,
 }
 
 Cache_File_List :: struct {
-	data: ^^Cache_File,
+	data:  ^^Cache_File,
 	count: c.size_t,
 }
 
 Material_List :: struct {
-	data: ^^Material,
+	data:  ^^Material,
 	count: c.size_t,
 }
 
 Texture_List :: struct {
-	data: ^^Texture,
+	data:  ^^Texture,
 	count: c.size_t,
 }
 
 Video_List :: struct {
-	data: ^^Video,
+	data:  ^^Video,
 	count: c.size_t,
 }
 
 Shader_List :: struct {
-	data: ^^Shader,
+	data:  ^^Shader,
 	count: c.size_t,
 }
 
 Shader_Binding_List :: struct {
-	data: ^^Shader_Binding,
+	data:  ^^Shader_Binding,
 	count: c.size_t,
 }
 
 Anim_Stack_List :: struct {
-	data: ^^Anim_Stack,
+	data:  ^^Anim_Stack,
 	count: c.size_t,
 }
 
 Anim_Layer_List :: struct {
-	data: ^^Anim_Layer,
+	data:  ^^Anim_Layer,
 	count: c.size_t,
 }
 
 Anim_Value_List :: struct {
-	data: ^^Anim_Value,
+	data:  ^^Anim_Value,
 	count: c.size_t,
 }
 
 Anim_Curve_List :: struct {
-	data: ^^Anim_Curve,
+	data:  ^^Anim_Curve,
 	count: c.size_t,
 }
 
 Display_Layer_List :: struct {
-	data: ^^Display_Layer,
+	data:  ^^Display_Layer,
 	count: c.size_t,
 }
 
 Selection_Set_List :: struct {
-	data: ^^Selection_Set,
+	data:  ^^Selection_Set,
 	count: c.size_t,
 }
 
 Selection_Node_List :: struct {
-	data: ^^Selection_Node,
+	data:  ^^Selection_Node,
 	count: c.size_t,
 }
 
 Character_List :: struct {
-	data: ^^Character,
+	data:  ^^Character,
 	count: c.size_t,
 }
 
 Constraint_List :: struct {
-	data: ^^Constraint,
+	data:  ^^Constraint,
 	count: c.size_t,
 }
 
 Audio_Layer_List :: struct {
-	data: ^^Audio_Layer,
+	data:  ^^Audio_Layer,
 	count: c.size_t,
 }
 
 Audio_Clip_List :: struct {
-	data: ^^Audio_Clip,
+	data:  ^^Audio_Clip,
 	count: c.size_t,
 }
 
 Pose_List :: struct {
-	data: ^^Pose,
+	data:  ^^Pose,
 	count: c.size_t,
 }
 
 Metadata_Object_List :: struct {
-	data: ^^Metadata_Object,
+	data:  ^^Metadata_Object,
 	count: c.size_t,
 }
 
@@ -663,12 +663,12 @@ ELEMENT_TYPE_COUNT :: 42
 // Source and destination are somewhat arbitrary but the destination is
 // often the "container" like a parent node or mesh containing a deformer.
 Connection :: struct {
-	src, dst: ^Element,
+	src, dst:           ^Element,
 	src_prop, dst_prop: String,
 }
 
 Connection_List :: struct {
-	data: ^Connection,
+	data:  ^Connection,
 	count: c.size_t,
 }
 
@@ -678,14 +678,14 @@ Connection_List :: struct {
 // NOTE: The `element_id` value is consistent when loading the
 // _same_ file, but re-exporting the file will invalidate them.
 Element :: struct {
-	name: String,
-	props: Props,
-	element_id, typed_id: u32,
-	instances: Node_List,
-	type: Element_Type,
+	name:                             String,
+	props:                            Props,
+	element_id, typed_id:             u32,
+	instances:                        Node_List,
+	type:                             Element_Type,
 	connections_src, connections_dst: Connection_List,
-	dom_node: ^Dom_Node,
-	scene: ^Scene,
+	dom_node:                         ^Dom_Node,
+	scene:                            ^Scene,
 }
 
 // -- Unknown
@@ -694,8 +694,8 @@ Unknown :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -760,8 +760,8 @@ Node :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -782,9 +782,9 @@ Node :: struct {
 	// can use utility functions like `ufbx_as_nurbs_curve(attrib)` to convert
 	// and check the attribute in one step.
 	mesh: ^Mesh,
-	light: ^Light,
-	camera: ^Camera,
-	bone: ^Bone,
+	light:                               ^Light,
+	camera:                              ^Camera,
+	bone:                                ^Bone,
 
 	// Less common attributes use these fields.
 	//
@@ -812,7 +812,7 @@ Node :: struct {
 	// Local transform in parent, geometry transform is a non-inherited
 	// transform applied only to attachments like meshes
 	inherit_mode: Inherit_Mode,
-	original_inherit_mode: Inherit_Mode,
+	original_inherit_mode:               Inherit_Mode,
 	local_transform, geometry_transform: Transform,
 
 	// Combined scale when using `UFBX_INHERIT_MODE_COMPONENTWISE_SCALE`.
@@ -937,48 +937,48 @@ Vertex_Attrib :: struct {
 
 // 1D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Real :: struct {
-	exists: bool,
-	values: Real_List,
-	indices: Uint32_List,
-	value_reals: c.size_t,
+	exists:            bool,
+	values:            Real_List,
+	indices:           Uint32_List,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
-	values_w: Real_List,
+	values_w:          Real_List,
 }
 
 // 2D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec2 :: struct {
-	exists: bool,
-	values: Vec2_List,
-	indices: Uint32_List,
-	value_reals: c.size_t,
+	exists:            bool,
+	values:            Vec2_List,
+	indices:           Uint32_List,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
-	values_w: Real_List,
+	values_w:          Real_List,
 }
 
 // 3D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec3 :: struct {
-	exists: bool,
-	values: Vec3_List,
-	indices: Uint32_List,
-	value_reals: c.size_t,
+	exists:            bool,
+	values:            Vec3_List,
+	indices:           Uint32_List,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
-	values_w: Real_List,
+	values_w:          Real_List,
 }
 
 // 4D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec4 :: struct {
-	exists: bool,
-	values: Vec4_List,
-	indices: Uint32_List,
-	value_reals: c.size_t,
+	exists:            bool,
+	values:            Vec4_List,
+	indices:           Uint32_List,
+	value_reals:       c.size_t,
 	unique_per_vertex: bool,
-	values_w: Real_List,
+	values_w:          Real_List,
 }
 
 // Vertex UV set/layer
 Uv_Set :: struct {
-	name: String,
-	index: u32,
+	name:             String,
+	index:            u32,
 	vertex_uv:        Vertex_Vec2, // < UV / texture coordinates
 	vertex_tangent:   Vertex_Vec3, // < (optional) Tangent vector in UV.x direction
 	vertex_bitangent: Vertex_Vec3, // < (optional) Tangent vector in UV.y direction
@@ -986,18 +986,18 @@ Uv_Set :: struct {
 
 // Vertex color set/layer
 Color_Set :: struct {
-	name: String,
-	index: u32,
+	name:         String,
+	index:        u32,
 	vertex_color: Vertex_Vec4, // < Per-vertex RGBA color
 }
 
 Uv_Set_List :: struct {
-	data: ^Uv_Set,
+	data:  ^Uv_Set,
 	count: c.size_t,
 }
 
 Color_Set_List :: struct {
-	data: ^Color_Set,
+	data:  ^Color_Set,
 	count: c.size_t,
 }
 
@@ -1012,7 +1012,7 @@ Edge :: struct {
 }
 
 Edge_List :: struct {
-	data: ^Edge,
+	data:  ^Edge,
 	count: c.size_t,
 }
 
@@ -1026,7 +1026,7 @@ Face :: struct {
 }
 
 Face_List :: struct {
-	data: [^]Face,
+	data:  [^]Face,
 	count: c.size_t,
 }
 
@@ -1046,7 +1046,7 @@ Mesh_Part :: struct {
 }
 
 Mesh_Part_List :: struct {
-	data: ^Mesh_Part,
+	data:  ^Mesh_Part,
 	count: c.size_t,
 }
 
@@ -1056,7 +1056,7 @@ Face_Group :: struct {
 }
 
 Face_Group_List :: struct {
-	data: ^Face_Group,
+	data:  ^Face_Group,
 	count: c.size_t,
 }
 
@@ -1065,17 +1065,17 @@ Subdivision_Weight_Range :: struct {
 }
 
 Subdivision_Weight_Range_List :: struct {
-	data: ^Subdivision_Weight_Range,
+	data:  ^Subdivision_Weight_Range,
 	count: c.size_t,
 }
 
 Subdivision_Weight :: struct {
 	weight: Real,
-	index: u32,
+	index:  u32,
 }
 
 Subdivision_Weight_List :: struct {
-	data: ^Subdivision_Weight,
+	data:  ^Subdivision_Weight,
 	count: c.size_t,
 }
 
@@ -1085,12 +1085,12 @@ Subdivision_Result :: struct {
 	// Weights of vertices in the source model.
 	// Defined if `ufbx_subdivide_opts.evaluate_source_vertices` is set.
 	source_vertex_ranges: Subdivision_Weight_Range_List,
-	source_vertex_weights: Subdivision_Weight_List,
+	source_vertex_weights:                                            Subdivision_Weight_List,
 
 	// Weights of skin clusters in the source model.
 	// Defined if `ufbx_subdivide_opts.evaluate_skin_weights` is set.
 	skin_cluster_ranges: Subdivision_Weight_Range_List,
-	skin_cluster_weights: Subdivision_Weight_List,
+	skin_cluster_weights:                                             Subdivision_Weight_List,
 }
 
 Subdivision_Display_Mode :: enum c.int {
@@ -1177,10 +1177,10 @@ Mesh :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 	num_vertices:                                  c.size_t,    // < Number of logical "vertex" points
@@ -1208,7 +1208,7 @@ Mesh :: struct {
 	// Logical vertices and positions, alternatively you can use
 	// `vertex_position` for consistent interface with other attributes.
 	vertex_indices: Uint32_List,
-	vertices: Vec3_List,
+	vertices:                                      Vec3_List,
 
 	// First index referring to a given vertex, `UFBX_NO_INDEX` if the vertex is unused.
 	vertex_first_index: Uint32_List,
@@ -1223,7 +1223,7 @@ Mesh :: struct {
 	// Multiple named UV/color sets
 	// NOTE: The first set contains the same data as `vertex_uv/color`!
 	uv_sets: Uv_Set_List,
-	color_sets: Color_Set_List,
+	color_sets:                                    Color_Set_List,
 
 	// Materials used by the mesh.
 	// NOTE: These can be wrong if you want to support per-instance materials!
@@ -1250,18 +1250,18 @@ Mesh :: struct {
 	// is set to true meaning you need to transform them manually using
 	// `ufbx_transform_position(&node->geometry_to_world, skinned_pos)`!
 	skinned_is_local: bool,
-	skinned_position, skinned_normal: Vertex_Vec3,
+	skinned_position, skinned_normal:              Vertex_Vec3,
 
 	// Deformers
 	skin_deformers: Skin_Deformer_List,
-	blend_deformers: Blend_Deformer_List,
-	cache_deformers: Cache_Deformer_List,
-	all_deformers: Element_List,
+	blend_deformers:                               Blend_Deformer_List,
+	cache_deformers:                               Cache_Deformer_List,
+	all_deformers:                                 Element_List,
 
 	// Subdivision
 	subdivision_preview_levels: u32,
-	subdivision_render_levels: u32,
-	subdivision_display_mode: Subdivision_Display_Mode,
+	subdivision_render_levels:                     u32,
+	subdivision_display_mode:                      Subdivision_Display_Mode,
 	subdivision_boundary, subdivision_uv_boundary: Subdivision_Boundary,
 
 	// The winding of the faces has been reversed.
@@ -1274,7 +1274,7 @@ Mesh :: struct {
 
 	// Subdivision (result)
 	subdivision_evaluated: bool,
-	subdivision_result: ^Subdivision_Result,
+	subdivision_result:                            ^Subdivision_Result,
 
 	// Tessellation (result)
 	from_tessellated_nurbs: bool,
@@ -1339,10 +1339,10 @@ Light :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1350,15 +1350,15 @@ Light :: struct {
 	// NOTE: `intensity` is 0.01x of the property `"Intensity"` as that matches
 	// matches values in DCC programs before exporting.
 	color: Vec3,
-	intensity: Real,
+	intensity:                Real,
 
 	// Direction the light is aimed at in node's local space, usually -Y
 	local_direction: Vec3,
 
 	// Type of the light and shape parameters
 	type: Light_Type,
-	decay: Light_Decay,
-	area_shape: Light_Area_Shape,
+	decay:                    Light_Decay,
+	area_shape:               Light_Area_Shape,
 	inner_angle, outer_angle: Real,
 	cast_light, cast_shadows: bool,
 }
@@ -1517,10 +1517,10 @@ Camera :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1571,9 +1571,9 @@ Camera :: struct {
 
 	// Advanced properties used to compute the above
 	aspect_mode: Aspect_Mode,
-	aperture_mode: Aperture_Mode,
-	gate_fit: Gate_Fit,
-	aperture_format: Aperture_Format,
+	aperture_mode:      Aperture_Mode,
+	gate_fit:           Gate_Fit,
+	aperture_format:    Aperture_Format,
 	focal_length_mm:    Real, // < Focal length in millimeters
 	film_size_inch:     Vec2, // < Film size in inches
 	aperture_size_inch: Vec2, // < Aperture/film gate size in inches
@@ -1586,10 +1586,10 @@ Bone :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1608,10 +1608,10 @@ Empty :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 }
@@ -1622,7 +1622,7 @@ Line_Segment :: struct {
 }
 
 Line_Segment_List :: struct {
-	data: ^Line_Segment,
+	data:  ^Line_Segment,
 	count: c.size_t,
 }
 
@@ -1630,16 +1630,16 @@ Line_Curve :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
-	color: Vec3,
+	color:          Vec3,
 	control_points: Vec3_List,   // < List of possible values the line passes through
 	point_indices:  Uint32_List, // < Indices to `control_points[]` the line goes through
-	segments: Line_Segment_List,
+	segments:       Line_Segment_List,
 
 	// Tessellation (result)
 	from_tessellated_nurbs: bool,
@@ -1699,10 +1699,10 @@ Nurbs_Curve :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1719,16 +1719,16 @@ Nurbs_Surface :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
 	// Basis in the U/V axes
 	basis_u: Nurbs_Basis,
-	basis_v: Nurbs_Basis,
+	basis_v:              Nurbs_Basis,
 
 	// Number of control points for the U/V axes
 	num_control_points_u: c.size_t,
@@ -1742,7 +1742,7 @@ Nurbs_Surface :: struct {
 
 	// How many segments tessellate each span in `ufbx_nurbs_basis.spans`.
 	span_subdivision_u: u32,
-	span_subdivision_v: u32,
+	span_subdivision_v:   u32,
 
 	// If `true` the resulting normals should be flipped when evaluated.
 	flip_normals: bool,
@@ -1756,10 +1756,10 @@ Nurbs_Trim_Surface :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 }
@@ -1768,10 +1768,10 @@ Nurbs_Trim_Boundary :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 }
@@ -1781,10 +1781,10 @@ Procedural_Geometry :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 }
@@ -1793,10 +1793,10 @@ Stereo_Camera :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 	left, right: ^Camera,
@@ -1806,10 +1806,10 @@ Camera_Switcher :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 }
@@ -1833,10 +1833,10 @@ Marker :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1874,7 +1874,7 @@ Lod_Level :: struct {
 }
 
 Lod_Level_List :: struct {
-	data: ^Lod_Level,
+	data:  ^Lod_Level,
 	count: c.size_t,
 }
 
@@ -1884,10 +1884,10 @@ Lod_Group :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
-			instances: Node_List,
+			instances:            Node_List,
 		},
 	},
 
@@ -1941,7 +1941,7 @@ Skin_Vertex :: struct {
 }
 
 Skin_Vertex_List :: struct {
-	data: ^Skin_Vertex,
+	data:  ^Skin_Vertex,
 	count: c.size_t,
 }
 
@@ -1952,7 +1952,7 @@ Skin_Weight :: struct {
 }
 
 Skin_Weight_List :: struct {
-	data: ^Skin_Weight,
+	data:  ^Skin_Weight,
 	count: c.size_t,
 }
 
@@ -1963,8 +1963,8 @@ Skin_Deformer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -1975,7 +1975,7 @@ Skin_Deformer :: struct {
 
 	// Per-vertex weight information
 	vertices: Skin_Vertex_List,
-	weights: Skin_Weight_List,
+	weights:         Skin_Weight_List,
 
 	// Largest amount of weights a single vertex can have
 	max_weights_per_vertex: c.size_t,
@@ -1984,8 +1984,8 @@ Skin_Deformer :: struct {
 	// HINT: You probably want to use `vertices` and `ufbx_skin_vertex.dq_weight` instead!
 	// NOTE: These may be out-of-bounds for a given mesh, `vertices` is always safe.
 	num_dq_weights: c.size_t,
-	dq_vertices: Uint32_List,
-	dq_weights: Real_List,
+	dq_vertices:     Uint32_List,
+	dq_weights:      Real_List,
 }
 
 // Cluster of vertices bound to a single bone.
@@ -1993,8 +1993,8 @@ Skin_Cluster :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2030,8 +2030,8 @@ Blend_Deformer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2053,7 +2053,7 @@ Blend_Keyframe :: struct {
 }
 
 Blend_Keyframe_List :: struct {
-	data: ^Blend_Keyframe,
+	data:  ^Blend_Keyframe,
 	count: c.size_t,
 }
 
@@ -2063,8 +2063,8 @@ Blend_Channel :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2085,8 +2085,8 @@ Blend_Shape :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2194,7 +2194,7 @@ Cache_Frame :: struct {
 }
 
 Cache_Frame_List :: struct {
-	data: ^Cache_Frame,
+	data:  ^Cache_Frame,
 	count: c.size_t,
 }
 
@@ -2221,28 +2221,28 @@ Cache_Channel :: struct {
 }
 
 Cache_Channel_List :: struct {
-	data: ^Cache_Channel,
+	data:  ^Cache_Channel,
 	count: c.size_t,
 }
 
 Geometry_Cache :: struct {
 	root_filename: String,
-	channels: Cache_Channel_List,
-	frames: Cache_Frame_List,
-	extra_info: String_List,
+	channels:      Cache_Channel_List,
+	frames:        Cache_Frame_List,
+	extra_info:    String_List,
 }
 
 Cache_Deformer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
-	channel: String,
-	file: ^Cache_File,
+	channel:          String,
+	file:             ^Cache_File,
 
 	// Only valid if `ufbx_load_opts.load_external_files` is set!
 	external_cache: ^Geometry_Cache,
@@ -2253,8 +2253,8 @@ Cache_File :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2341,7 +2341,7 @@ Material_Texture :: struct {
 }
 
 Material_Texture_List :: struct {
-	data: ^Material_Texture,
+	data:  ^Material_Texture,
 	count: c.size_t,
 }
 
@@ -2555,8 +2555,8 @@ Material :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2729,7 +2729,7 @@ Texture_Layer :: struct {
 }
 
 Texture_Layer_List :: struct {
-	data: ^Texture_Layer,
+	data:  ^Texture_Layer,
 	count: c.size_t,
 }
 
@@ -2764,8 +2764,8 @@ Shader_Texture_Input :: struct {
 		value_vec3: Vec3,
 		value_vec4: Vec4,
 	},
-	value_int: i64,
-	value_str: String,
+	value_int:  i64,
+	value_str:  String,
 	value_blob: Blob,
 
 	// Texture connected to this input.
@@ -2789,7 +2789,7 @@ Shader_Texture_Input :: struct {
 }
 
 Shader_Texture_Input_List :: struct {
-	data: ^Shader_Texture_Input,
+	data:  ^Shader_Texture_Input,
 	count: c.size_t,
 }
 
@@ -2865,7 +2865,7 @@ Texture_File :: struct {
 }
 
 Texture_File_List :: struct {
-	data: ^Texture_File,
+	data:  ^Texture_File,
 	count: c.size_t,
 }
 
@@ -2874,8 +2874,8 @@ Texture :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2936,7 +2936,7 @@ Texture :: struct {
 
 	// Wrapping mode
 	wrap_u: Wrap_Mode,
-	wrap_v: Wrap_Mode,
+	wrap_v:           Wrap_Mode,
 	has_uv_transform: bool,      // < Has a non-identity `transform` and derived matrices.
 	uv_transform:     Transform, // < Texture transformation in UV space
 	texture_to_uv:    Matrix,    // < Matrix representation of `transform`
@@ -2948,8 +2948,8 @@ Video :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -2988,8 +2988,8 @@ Shader :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3009,7 +3009,7 @@ Shader_Prop_Binding :: struct {
 }
 
 Shader_Prop_Binding_List :: struct {
-	data: ^Shader_Prop_Binding,
+	data:  ^Shader_Prop_Binding,
 	count: c.size_t,
 }
 
@@ -3018,8 +3018,8 @@ Shader_Binding :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3029,24 +3029,24 @@ Shader_Binding :: struct {
 // -- Animation
 Prop_Override :: struct {
 	element_id, _internal_key: u32,
-	prop_name: String,
-	value: Vec4,
-	value_str: String,
-	value_int: i64,
+	prop_name:                 String,
+	value:                     Vec4,
+	value_str:                 String,
+	value_int:                 i64,
 }
 
 Prop_Override_List :: struct {
-	data: ^Prop_Override,
+	data:  ^Prop_Override,
 	count: c.size_t,
 }
 
 Transform_Override :: struct {
-	node_id: u32,
+	node_id:   u32,
 	transform: Transform,
 }
 
 Transform_Override_List :: struct {
-	data: ^Transform_Override,
+	data:  ^Transform_Override,
 	count: c.size_t,
 }
 
@@ -3084,25 +3084,25 @@ Anim_Stack :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
 	time_begin, time_end: f64,
-	layers: Anim_Layer_List,
-	anim: ^Anim,
+	layers:               Anim_Layer_List,
+	anim:                 ^Anim,
 }
 
 Anim_Prop :: struct {
-	element: ^Element,
+	element:       ^Element,
 	_internal_key: u32,
-	prop_name: String,
-	anim_value: ^Anim_Value,
+	prop_name:     String,
+	anim_value:    ^Anim_Value,
 }
 
 Anim_Prop_List :: struct {
-	data: ^Anim_Prop,
+	data:  ^Anim_Prop,
 	count: c.size_t,
 }
 
@@ -3110,31 +3110,31 @@ Anim_Layer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
-	weight: Real,
+	weight:                                                                 Real,
 	weight_is_animated, blended, additive, compose_rotation, compose_scale: bool,
-	anim_values: Anim_Value_List,
+	anim_values:                                                            Anim_Value_List,
 	anim_props:                                                             Anim_Prop_List, // < Sorted by `element,prop_name`
-	anim: ^Anim,
-	_min_element_id, _max_element_id: u32,
-	_element_id_bitmask: [4]u32,
+	anim:                                                                   ^Anim,
+	_min_element_id, _max_element_id:                                       u32,
+	_element_id_bitmask:                                                    [4]u32,
 }
 
 Anim_Value :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
 	default_value: Vec3,
-	curves: [3]^Anim_Curve,
+	curves:        [3]^Anim_Curve,
 }
 
 // Animation curve segment interpolation mode between two keyframes
@@ -3202,14 +3202,14 @@ Tangent :: struct {
 // HINT: You can use `ufbx_evaluate_curve(ufbx_anim_curve *curve, double time)`
 // rather than trying to manually handle all the interpolation modes.
 Keyframe :: struct {
-	time: f64,
-	value: Real,
+	time:          f64,
+	value:         Real,
 	interpolation: Interpolation,
-	left, right: Tangent,
+	left, right:   Tangent,
 }
 
 Keyframe_List :: struct {
-	data: ^Keyframe,
+	data:  ^Keyframe,
 	count: c.size_t,
 }
 
@@ -3217,8 +3217,8 @@ Anim_Curve :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3238,7 +3238,7 @@ Anim_Curve :: struct {
 
 	// Time range for all the keyframes.
 	min_time: f64,
-	max_time: f64,
+	max_time:  f64,
 }
 
 // Collection of nodes to hide/freeze
@@ -3246,8 +3246,8 @@ Display_Layer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3264,8 +3264,8 @@ Selection_Set :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3279,15 +3279,15 @@ Selection_Node :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
 
 	// Selection targets, possibly `NULL`
 	target_node: ^Node,
-	target_mesh: ^Mesh,
+	target_mesh:  ^Mesh,
 	include_node: bool,        // < Is `target_node` included in the selection
 	vertices:     Uint32_List, // < Indices to `ufbx_mesh.vertices`
 	edges:        Uint32_List, // < Indices to `ufbx_mesh.edges`
@@ -3299,8 +3299,8 @@ Character :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3334,7 +3334,7 @@ Constraint_Target :: struct {
 }
 
 Constraint_Target_List :: struct {
-	data: ^Constraint_Target,
+	data:  ^Constraint_Target,
 	count: c.size_t,
 }
 
@@ -3375,15 +3375,15 @@ Constraint :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
 
 	// Type of constraint to use
 	type: Constraint_Type,
-	type_name: String,
+	type_name:                           String,
 
 	// Node to be constrained
 	node: ^Node,
@@ -3393,7 +3393,7 @@ Constraint :: struct {
 
 	// State of the constraint
 	weight: Real,
-	active: bool,
+	active:                              bool,
 
 	// Translation/rotation/scale axes the constraint is applied to
 	constrain_translation: [3]bool,
@@ -3404,14 +3404,14 @@ Constraint :: struct {
 
 	// AIM: Target and up vectors
 	aim_vector: Vec3,
-	aim_up_type: Constraint_Aim_Up_Type,
-	aim_up_node: ^Node,
-	aim_up_vector: Vec3,
+	aim_up_type:                         Constraint_Aim_Up_Type,
+	aim_up_node:                         ^Node,
+	aim_up_vector:                       Vec3,
 
 	// SINGLE_CHAIN_IK: Target for the IK, `targets` contains pole vectors!
 	ik_effector: ^Node,
-	ik_end_node: ^Node,
-	ik_pole_vector: Vec3,
+	ik_end_node:                         ^Node,
+	ik_pole_vector:                      Vec3,
 }
 
 // -- Audio
@@ -3419,8 +3419,8 @@ Audio_Layer :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3433,8 +3433,8 @@ Audio_Clip :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3482,7 +3482,7 @@ Bone_Pose :: struct {
 }
 
 Bone_Pose_List :: struct {
-	data: ^Bone_Pose,
+	data:  ^Bone_Pose,
 	count: c.size_t,
 }
 
@@ -3490,8 +3490,8 @@ Pose :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3508,8 +3508,8 @@ Metadata_Object :: struct {
 	using _: struct #raw_union {
 		element: Element,
 		using _: struct {
-			name: String,
-			props: Props,
+			name:                 String,
+			props:                Props,
 			element_id, typed_id: u32,
 		},
 	},
@@ -3517,14 +3517,14 @@ Metadata_Object :: struct {
 
 // -- Named elements
 Name_Element :: struct {
-	name: String,
-	type: Element_Type,
+	name:          String,
+	type:          Element_Type,
 	_internal_key: u32,
-	element: ^Element,
+	element:       ^Element,
 }
 
 Name_Element_List :: struct {
-	data: ^Name_Element,
+	data:  ^Name_Element,
 	count: c.size_t,
 }
 
@@ -3642,7 +3642,7 @@ Warning :: struct {
 }
 
 Warning_List :: struct {
-	data: ^Warning,
+	data:  ^Warning,
 	count: c.size_t,
 }
 
@@ -3689,7 +3689,7 @@ SPACE_CONVERSION_COUNT :: 3
 
 // Embedded thumbnail in the file, valid if the dimensions are non-zero.
 Thumbnail :: struct {
-	props: Props,
+	props:  Props,
 
 	// Extents of the thumbnail
 	width: u32,
@@ -3738,30 +3738,30 @@ Metadata :: struct {
 	// Flag for each possible warning type.
 	// See `ufbx_metadata.warnings[]` for detailed warning information.
 	has_warning: [15]bool,
-	creator: String,
-	big_endian: bool,
-	filename, relative_root: String,
-	raw_filename, raw_relative_root: Blob,
-	exporter: Exporter,
-	exporter_version: u32,
-	scene_props: Props,
-	original_application, latest_application: Application,
-	thumbnail: Thumbnail,
-	geometry_ignored, animation_ignored, embedded_ignored: bool,
+	creator:                                                                                                                        String,
+	big_endian:                                                                                                                     bool,
+	filename, relative_root:                                                                                                        String,
+	raw_filename, raw_relative_root:                                                                                                Blob,
+	exporter:                                                                                                                       Exporter,
+	exporter_version:                                                                                                               u32,
+	scene_props:                                                                                                                    Props,
+	original_application, latest_application:                                                                                       Application,
+	thumbnail:                                                                                                                      Thumbnail,
+	geometry_ignored, animation_ignored, embedded_ignored:                                                                          bool,
 	max_face_triangles, result_memory_used, temp_memory_used, result_allocs, temp_allocs, element_buffer_size, num_shader_textures: c.size_t,
-	bone_prop_size_unit: Real,
-	bone_prop_limb_length_relative: bool,
-	ortho_size_unit: Real,
+	bone_prop_size_unit:                                                                                                            Real,
+	bone_prop_limb_length_relative:                                                                                                 bool,
+	ortho_size_unit:                                                                                                                Real,
 	ktime_second:                                                                                                                   i64, // < One second in internal KTime units
-	original_file_path: String,
-	raw_original_file_path: Blob,
+	original_file_path:                                                                                                             String,
+	raw_original_file_path:                                                                                                         Blob,
 
 	// Space conversion method used on the scene.
 	space_conversion: Space_Conversion,
 
 	// Transform that has been applied to root for axis/unit conversion.
 	root_rotation: Quat,
-	root_scale: Real,
+	root_scale:                                                                                                                     Real,
 
 	// Axis that the scene has been mirrored by.
 	// All geometry has been mirrored in this axis.
@@ -3817,7 +3817,7 @@ SNAP_MODE_COUNT :: 4
 
 // Global settings: Axes and time/unit scales
 Scene_Settings :: struct {
-	props: Props,
+	props:                Props,
 
 	// Mapping of X/Y/Z axes to world-space directions.
 	// HINT: Use `ufbx_load_opts.target_axes` to normalize this.
@@ -3831,14 +3831,14 @@ Scene_Settings :: struct {
 
 	// Frames per second the animation is defined at.
 	frames_per_second: f64,
-	ambient_color: Vec3,
-	default_camera: String,
+	ambient_color:        Vec3,
+	default_camera:       String,
 
 	// Animation user interface settings.
 	// HINT: Use `ufbx_scene_settings.frames_per_second` instead of interpreting these yourself.
 	time_mode: Time_Mode,
-	time_protocol: Time_Protocol,
-	snap_mode: Snap_Mode,
+	time_protocol:        Time_Protocol,
+	snap_mode:            Snap_Mode,
 
 	// Original settings (?)
 	original_axis_up: Coordinate_Axis,
@@ -3846,7 +3846,7 @@ Scene_Settings :: struct {
 }
 
 Scene :: struct {
-	metadata: Metadata,
+	metadata:        Metadata,
 
 	// Global settings
 	settings: Scene_Settings,
@@ -3858,70 +3858,70 @@ Scene :: struct {
 	anim: ^Anim,
 	using _: struct #raw_union {
 		using _: struct {
-			unknowns: Unknown_List,
+			unknowns:              Unknown_List,
 
 			// Nodes
 			nodes: Node_List,
 
 			// Node attributes (common)
 			meshes: Mesh_List,
-			lights: Light_List,
-			cameras: Camera_List,
-			bones: Bone_List,
-			empties: Empty_List,
+			lights:                Light_List,
+			cameras:               Camera_List,
+			bones:                 Bone_List,
+			empties:               Empty_List,
 
 			// Node attributes (curves/surfaces)
 			line_curves: Line_Curve_List,
-			nurbs_curves: Nurbs_Curve_List,
-			nurbs_surfaces: Nurbs_Surface_List,
-			nurbs_trim_surfaces: Nurbs_Trim_Surface_List,
+			nurbs_curves:          Nurbs_Curve_List,
+			nurbs_surfaces:        Nurbs_Surface_List,
+			nurbs_trim_surfaces:   Nurbs_Trim_Surface_List,
 			nurbs_trim_boundaries: Nurbs_Trim_Boundary_List,
 
 			// Node attributes (advanced)
 			procedural_geometries: Procedural_Geometry_List,
-			stereo_cameras: Stereo_Camera_List,
-			camera_switchers: Camera_Switcher_List,
-			markers: Marker_List,
-			lod_groups: Lod_Group_List,
+			stereo_cameras:        Stereo_Camera_List,
+			camera_switchers:      Camera_Switcher_List,
+			markers:               Marker_List,
+			lod_groups:            Lod_Group_List,
 
 			// Deformers
 			skin_deformers: Skin_Deformer_List,
-			skin_clusters: Skin_Cluster_List,
-			blend_deformers: Blend_Deformer_List,
-			blend_channels: Blend_Channel_List,
-			blend_shapes: Blend_Shape_List,
-			cache_deformers: Cache_Deformer_List,
-			cache_files: Cache_File_List,
+			skin_clusters:         Skin_Cluster_List,
+			blend_deformers:       Blend_Deformer_List,
+			blend_channels:        Blend_Channel_List,
+			blend_shapes:          Blend_Shape_List,
+			cache_deformers:       Cache_Deformer_List,
+			cache_files:           Cache_File_List,
 
 			// Materials
 			materials: Material_List,
-			textures: Texture_List,
-			videos: Video_List,
-			shaders: Shader_List,
-			shader_bindings: Shader_Binding_List,
+			textures:              Texture_List,
+			videos:                Video_List,
+			shaders:               Shader_List,
+			shader_bindings:       Shader_Binding_List,
 
 			// Animation
 			anim_stacks: Anim_Stack_List,
-			anim_layers: Anim_Layer_List,
-			anim_values: Anim_Value_List,
-			anim_curves: Anim_Curve_List,
+			anim_layers:           Anim_Layer_List,
+			anim_values:           Anim_Value_List,
+			anim_curves:           Anim_Curve_List,
 
 			// Collections
 			display_layers: Display_Layer_List,
-			selection_sets: Selection_Set_List,
-			selection_nodes: Selection_Node_List,
+			selection_sets:        Selection_Set_List,
+			selection_nodes:       Selection_Node_List,
 
 			// Constraints
 			characters: Character_List,
-			constraints: Constraint_List,
+			constraints:           Constraint_List,
 
 			// Audio
 			audio_layers: Audio_Layer_List,
-			audio_clips: Audio_Clip_List,
+			audio_clips:           Audio_Clip_List,
 
 			// Miscellaneous
 			poses: Pose_List,
-			metadata_objects: Metadata_Object_List,
+			metadata_objects:      Metadata_Object_List,
 		},
 		elements_by_type: [42]Element_List,
 	},
@@ -3941,12 +3941,12 @@ Scene :: struct {
 
 // -- Curves
 Curve_Point :: struct {
-	valid: bool,
+	valid:                bool,
 	position, derivative: Vec3,
 }
 
 Surface_Point :: struct {
-	valid: bool,
+	valid:                                bool,
 	position, derivative_u, derivative_v: Vec3,
 }
 
@@ -3998,10 +3998,10 @@ Free_Allocator_Fn :: proc "c" (rawptr)
 Allocator :: struct {
 	// Callback functions, see `typedef`s above for information
 	alloc_fn: Alloc_Fn,
-	realloc_fn: Realloc_Fn,
-	free_fn: Free_Fn,
+	realloc_fn:        Realloc_Fn,
+	free_fn:           Free_Fn,
 	free_allocator_fn: Free_Allocator_Fn,
-	user: rawptr,
+	user:              rawptr,
 }
 
 Allocator_Opts :: struct {
@@ -4091,7 +4091,7 @@ Open_File_Info :: struct {
 Open_File_Fn :: proc "c" (rawptr, ^Stream, cstring, c.size_t, ^Open_File_Info) -> bool
 
 Open_File_Cb :: struct {
-	fn: Open_File_Fn,
+	fn:   Open_File_Fn,
 	user: rawptr,
 }
 
@@ -4104,14 +4104,14 @@ Open_File_Opts :: struct {
 
 	// The filename is guaranteed to be NULL-terminated.
 	filename_null_terminated: bool,
-	_end_zero: u32,
+	_end_zero:   u32,
 }
 
 // Memory stream options
 Close_Memory_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 Close_Memory_Cb :: struct {
-	fn: Close_Memory_Fn,
+	fn:   Close_Memory_Fn,
 	user: rawptr,
 }
 
@@ -4131,13 +4131,13 @@ Open_Memory_Opts :: struct {
 
 	// Callback to free the memory blob.
 	close_cb: Close_Memory_Cb,
-	_end_zero: u32,
+	_end_zero:   u32,
 }
 
 // Detailed error stack frame.
 // NOTE: You must compile `ufbx.c` with `UFBX_ENABLE_ERROR_STACK` to enable the error stack.
 Error_Frame :: struct {
-	source_line: u32,
+	source_line:           u32,
 	function, description: String,
 }
 
@@ -4251,7 +4251,7 @@ Error :: struct {
 	// Additional error information, such as missing file filename.
 	// `info` is a NULL-terminated UTF-8 string containing `info_length` bytes, excluding the trailing `'\0'`.
 	info_length: c.size_t,
-	info: [256]c.char,
+	info:  [256]c.char,
 }
 
 // Loading progress information.
@@ -4277,7 +4277,7 @@ Progress_Result :: enum c.int {
 Progress_Fn :: proc "c" (rawptr, ^Progress) -> Progress_Result
 
 Progress_Cb :: struct {
-	fn: Progress_Fn,
+	fn:   Progress_Fn,
 	user: rawptr,
 }
 
@@ -4288,15 +4288,15 @@ Inflate_Input :: struct {
 
 	// (optional) Initial or complete data chunk
 	data: rawptr,
-	data_size: c.size_t,
+	data_size:              c.size_t,
 
 	// (optional) Temporary buffer, defaults to 256b stack buffer
 	buffer: rawptr,
-	buffer_size: c.size_t,
+	buffer_size:            c.size_t,
 
 	// (optional) Streaming read function, concatenated after `data`
 	read_fn: Read_Fn,
-	read_user: rawptr,
+	read_user:              rawptr,
 
 	// (optional) Progress reporting
 	progress_cb: Progress_Cb,
@@ -4304,7 +4304,7 @@ Inflate_Input :: struct {
 
 	// (optional) Change the progress scope
 	progress_size_before: u64,
-	progress_size_after: u64,
+	progress_size_after:    u64,
 
 	// (optional) No the DEFLATE header
 	no_header: bool,
@@ -4320,7 +4320,7 @@ Inflate_Input :: struct {
 // NOTE: You must set `initialized` to `false`, but `data` may be uninitialized
 Inflate_Retain :: struct {
 	initialized: bool,
-	data: [1024]u64,
+	data:        [1024]u64,
 }
 
 Index_Error_Handling :: enum c.int {
@@ -4502,7 +4502,7 @@ Baked_Vec3 :: struct {
 }
 
 Baked_Vec3_List :: struct {
-	data: ^Baked_Vec3,
+	data:  ^Baked_Vec3,
 	count: c.size_t,
 }
 
@@ -4513,7 +4513,7 @@ Baked_Quat :: struct {
 }
 
 Baked_Quat_List :: struct {
-	data: ^Baked_Quat,
+	data:  ^Baked_Quat,
 	count: c.size_t,
 }
 
@@ -4545,7 +4545,7 @@ Baked_Node :: struct {
 }
 
 Baked_Node_List :: struct {
-	data: ^Baked_Node,
+	data:  ^Baked_Node,
 	count: c.size_t,
 }
 
@@ -4562,7 +4562,7 @@ Baked_Prop :: struct {
 }
 
 Baked_Prop_List :: struct {
-	data: ^Baked_Prop,
+	data:  ^Baked_Prop,
 	count: c.size_t,
 }
 
@@ -4576,7 +4576,7 @@ Baked_Element :: struct {
 }
 
 Baked_Element_List :: struct {
-	data: ^Baked_Element,
+	data:  ^Baked_Element,
 	count: c.size_t,
 }
 
@@ -4604,7 +4604,7 @@ Baked_Anim :: struct {
 
 	// Keyframe time range.
 	key_time_min: f64,
-	key_time_max: f64,
+	key_time_max:                         f64,
 
 	// Additional bake information.
 	metadata: Baked_Anim_Metadata,
@@ -4654,7 +4654,7 @@ Thread_Pool :: struct {
 	run_fn:  Thread_Pool_Run_Fn,  // < Required
 	wait_fn: Thread_Pool_Wait_Fn, // < Required
 	free_fn: Thread_Pool_Free_Fn, // < Optional
-	user: rawptr,
+	user:    rawptr,
 }
 
 // Thread pool options.
@@ -4686,7 +4686,7 @@ Evaluate_Flags :: enum c.int {
 // Options for `ufbx_load_file/memory/stream/stdio()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Load_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:            u32,
 	temp_allocator:         Allocator_Opts, // < Allocator used during loading
 	result_allocator:       Allocator_Opts, // < Allocator used for the final scene
 	thread_opts:            Thread_Opts,    // < Threading options
@@ -4861,7 +4861,7 @@ Load_Opts :: struct {
 
 	// Override for the root transform
 	use_root_transform: bool,
-	root_transform: Transform,
+	root_transform:         Transform,
 
 	// Animation keyframe clamp threshold, only applies to specific interpolation modes.
 	key_clamp_threshold: f64,
@@ -4924,13 +4924,13 @@ Load_Opts :: struct {
 	// .obj files do not define the coordinate space they use. By default no
 	// coordinate space is assumed and no conversion is performed.
 	obj_axes: Coordinate_Axes,
-	_end_zero: u32,
+	_end_zero:              u32,
 }
 
 // Options for `ufbx_evaluate_scene()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Evaluate_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:       u32,
 	temp_allocator:    Allocator_Opts, // < Allocator used during evaluation
 	result_allocator:  Allocator_Opts, // < Allocator used for the final scene
 	evaluate_skinning: bool,           // < Evaluate skinning (see ufbx_mesh.skinned_vertices)
@@ -4945,16 +4945,16 @@ Evaluate_Opts :: struct {
 
 	// External file callbacks (defaults to stdio.h)
 	open_file_cb: Open_File_Cb,
-	_end_zero: u32,
+	_end_zero:         u32,
 }
 
 Const_Uint32_List :: struct {
-	data: ^u32,
+	data:  ^u32,
 	count: c.size_t,
 }
 
 Const_Real_List :: struct {
-	data: ^Real,
+	data:  ^Real,
 	count: c.size_t,
 }
 
@@ -4973,17 +4973,17 @@ Prop_Override_Desc :: struct {
 }
 
 Const_Prop_Override_Desc_List :: struct {
-	data: ^Prop_Override_Desc,
+	data:  ^Prop_Override_Desc,
 	count: c.size_t,
 }
 
 Const_Transform_Override_List :: struct {
-	data: ^Transform_Override,
+	data:  ^Transform_Override,
 	count: c.size_t,
 }
 
 Anim_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:      u32,
 
 	// Animation layers indices.
 	// Corresponding to `ufbx_scene.anim_layers[]`, aka `ufbx_anim_layer.typed_id`.
@@ -5003,7 +5003,7 @@ Anim_Opts :: struct {
 	// Ignore connected properties
 	ignore_connections: bool,
 	result_allocator: Allocator_Opts, // < Allocator used to create the `ufbx_anim`
-	_end_zero: u32,
+	_end_zero:        u32,
 }
 
 // Specifies how to handle stepped tangents.
@@ -5037,7 +5037,7 @@ Bake_Step_Handling :: enum c.int {
 BAKE_STEP_HANDLING_COUNT :: 5
 
 Bake_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during loading
 	result_allocator: Allocator_Opts, // < Allocator used for the final baked animation
 
@@ -5109,25 +5109,25 @@ Bake_Opts :: struct {
 	// Every pass can potentially halve the the amount of keys.
 	// Default: `4`
 	key_reduction_passes: c.size_t,
-	_end_zero: u32,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_tessellate_nurbs_curve()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Tessellate_Curve_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during tessellation
 	result_allocator: Allocator_Opts, // < Allocator used for the final line curve
 
 	// How many segments tessellate each span in `ufbx_nurbs_basis.spans`.
 	span_subdivision: c.size_t,
-	_end_zero: u32,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_tessellate_nurbs_surface()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Tessellate_Surface_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:        u32,
 	temp_allocator:     Allocator_Opts, // < Allocator used during tessellation
 	result_allocator:   Allocator_Opts, // < Allocator used for the final mesh
 
@@ -5141,13 +5141,13 @@ Tessellate_Surface_Opts :: struct {
 
 	// Skip computing `ufbx_mesh.material_parts[]`
 	skip_mesh_parts: bool,
-	_end_zero: u32,
+	_end_zero:          u32,
 }
 
 // Options for `ufbx_subdivide_mesh()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Subdivide_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:           u32,
 	temp_allocator:        Allocator_Opts, // < Allocator used during subdivision
 	result_allocator:      Allocator_Opts, // < Allocator used for the final mesh
 	boundary, uv_boundary: Subdivision_Boundary,
@@ -5178,13 +5178,13 @@ Subdivide_Opts :: struct {
 
 	// Index of the skin deformer to use for `evaluate_skin_weights`.
 	skin_deformer_index: c.size_t,
-	_end_zero: u32,
+	_end_zero:             u32,
 }
 
 // Options for `ufbx_load_geometry_cache()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during loading
 	result_allocator: Allocator_Opts, // < Allocator used for the final scene
 
@@ -5202,28 +5202,28 @@ Geometry_Cache_Opts :: struct {
 
 	// Factor to scale the geometry by.
 	scale_factor: Real,
-	_end_zero: u32,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_read_geometry_cache_TYPE()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Data_Opts :: struct {
-	_begin_zero: u32,
+	_begin_zero:          u32,
 
 	// External file callbacks (defaults to stdio.h)
 	open_file_cb: Open_File_Cb,
 	additive, use_weight: bool,
-	weight: Real,
+	weight:               Real,
 
 	// Ignore scene transform.
 	ignore_transform: bool,
-	_end_zero: u32,
+	_end_zero:            u32,
 }
 
 Panic :: struct {
-	did_panic: bool,
+	did_panic:      bool,
 	message_length: c.size_t,
-	message: [128]c.char,
+	message:        [128]c.char,
 }
 
 // Flags to control `ufbx_evaluate_transform_flags()`.

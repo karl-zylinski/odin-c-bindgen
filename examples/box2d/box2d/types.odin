@@ -54,11 +54,11 @@ RestitutionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
 /// Result from b2World_RayCastClosest
 /// @ingroup world
 RayResult :: struct {
-	shapeId: ShapeId,
-	point, normal: Vec2,
-	fraction: f32,
+	shapeId:                ShapeId,
+	point, normal:          Vec2,
+	fraction:               f32,
 	nodeVisits, leafVisits: c.int,
-	hit: bool,
+	hit:                    bool,
 }
 
 /// World definition used to create a simulation world.
@@ -433,7 +433,7 @@ Profile :: struct {
 /// Counters that give details of the simulation size.
 Counters :: struct {
 	bodyCount, shapeCount, contactCount, jointCount, islandCount, stackUsed, staticTreeHeight, treeHeight, byteCount, taskCount: c.int,
-	colorCounts: [12]c.int,
+	colorCounts:                                                                                                                 [12]c.int,
 }
 
 /// Joint type enumeration
@@ -981,9 +981,9 @@ ContactEvents :: struct {
 /// and it is only populated with bodies that have moved.
 /// @note If sleeping is disabled all dynamic and kinematic bodies will trigger move events.
 BodyMoveEvent :: struct {
-	transform: Transform,
-	bodyId: BodyId,
-	userData: rawptr,
+	transform:  Transform,
+	bodyId:     BodyId,
+	userData:   rawptr,
 	fellAsleep: bool,
 }
 
@@ -1003,7 +1003,7 @@ BodyEvents :: struct {
 /// @see b2Shape_GetContactData() and b2Body_GetContactData()
 ContactData :: struct {
 	shapeIdA, shapeIdB: ShapeId,
-	manifold: Manifold,
+	manifold:           Manifold,
 }
 
 /// Prototype for a contact filter callback.
