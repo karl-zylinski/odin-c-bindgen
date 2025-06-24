@@ -1990,14 +1990,18 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
-				// The first two are the important checks. The comment checks are for formatting but don't work corrently yet.
-				// I need to figure out how to handle comment_before for this check to make sense.
-				if prev_idx := len(data.out_fields); prev_idx != 0 && data.out_fields[prev_idx - 1].type == type &&
-					comment == "" && data.out_fields[prev_idx - 1].comment == "" {
-					append(
-						&data.out_fields[prev_idx - 1].names,
-						clang_string_to_string(clang.getCursorSpelling(cursor)),
-					)
+				merge := false
+				if prev_idx := len(data.out_fields) - 1; prev_idx >= 0 {
+					same_type := data.out_fields[prev_idx].type == type
+					same_line := data.out_fields[prev_idx].original_line == int(line)
+					this_comment_ok := comment == ""
+					prev_comment_ok := data.out_fields[prev_idx].comment == ""
+
+					merge = same_type && (same_line || (this_comment_ok && prev_comment_ok))
+				}
+
+				if merge {
+					append(&data.out_fields[len(data.out_fields) - 1].names, clang_string_to_string(clang.getCursorSpelling(cursor)))
 					// merge: bool
 					// if field_name_exists && prev_idx != -1 {
 					// 	prev := &out_fields[prev_idx]
