@@ -1879,7 +1879,7 @@ gen :: proc(input: string, c: Config) {
 			clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
 
 			comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
-			comment_before := cline != line
+			comment_before := comment == "" ? false : cline != line
 
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .FieldDecl:
