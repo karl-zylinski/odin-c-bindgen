@@ -271,11 +271,11 @@ TOIInput :: struct {
 
 /// Describes the TOI output
 TOIState :: enum c.int {
-	Unknown = 0,
-	Failed = 1,
-	Overlapped = 2,
-	Hit = 3,
-	Separated = 4,
+	Unknown,
+	Failed,
+	Overlapped,
+	Hit,
+	Separated,
 }
 
 /// Output parameters for b2TimeOfImpact.

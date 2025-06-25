@@ -140,16 +140,16 @@ WorldDef :: struct {
 /// @ingroup body
 BodyType :: enum c.int {
 	/// zero mass, zero velocity, may be manually moved
-	staticBody = 0,
+	staticBody,
 
 	/// zero mass, velocity set by user, moved by solver
-	kinematicBody = 1,
+	kinematicBody,
 
 	/// positive mass, velocity determined by forces, moved by solver
-	dynamicBody = 2,
+	dynamicBody,
 
 	/// number of body types
-	bodyTypeCount = 3,
+	bodyTypeCount,
 }
 
 /// A body definition holds all the data needed to construct a rigid body.
@@ -279,22 +279,22 @@ QueryFilter :: struct {
 /// @ingroup shape
 ShapeType :: enum c.int {
 	/// A circle with an offset
-	circleShape = 0,
+	circleShape,
 
 	/// A capsule is an extruded circle
-	capsuleShape = 1,
+	capsuleShape,
 
 	/// A line segment
-	segmentShape = 2,
+	segmentShape,
 
 	/// A convex polygon
-	polygonShape = 3,
+	polygonShape,
 
 	/// A line segment owned by a chain shape
-	chainSegmentShape = 4,
+	chainSegmentShape,
 
 	/// The number of shape types
-	shapeTypeCount = 5,
+	shapeTypeCount,
 }
 
 /// Used to create a shape.
@@ -444,14 +444,14 @@ Counters :: struct {
 /// want to get the type of a joint.
 /// @ingroup joint
 JointType :: enum c.int {
-	distanceJoint = 0,
-	motorJoint = 1,
-	mouseJoint = 2,
-	nullJoint = 3,
-	prismaticJoint = 4,
-	revoluteJoint = 5,
-	weldJoint = 6,
-	wheelJoint = 7,
+	distanceJoint,
+	motorJoint,
+	mouseJoint,
+	nullJoint,
+	prismaticJoint,
+	revoluteJoint,
+	weldJoint,
+	wheelJoint,
 }
 
 /// Distance joint definition

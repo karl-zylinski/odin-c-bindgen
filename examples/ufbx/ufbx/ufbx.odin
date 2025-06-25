@@ -275,7 +275,7 @@ Prop_Flag :: enum c.int {
 	VALUE_BLOB = 26,
 }
 
-Prop_Flags :: distinct bit_set[Prop_Flag; c.int]
+Prop_Flags :: distinct bit_set[Prop_Flag; int]
 
 PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOCK_X, .LOCK_Y, .LOCK_Z, .LOCK_W, .MUTE_X, .MUTE_Y, .MUTE_Z, .MUTE_W, .SYNTHETIC, .ANIMATED, .NOT_FOUND, .CONNECTED, .NO_VALUE, .OVERRIDDEN, .VALUE_REAL, .VALUE_VEC2, .VALUE_VEC3, .VALUE_VEC4, .VALUE_INT, .VALUE_STR, .VALUE_BLOB }
 
@@ -4474,24 +4474,24 @@ PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum c.int {
 	// This keyframe represents a constant step from the left side
-	STEP_LEFT = 0,
+	STEP_LEFT,
 
 	// This keyframe represents a constant step from the right side
-	STEP_RIGHT = 1,
+	STEP_RIGHT,
 
 	// This keyframe is the main part of a step
 	// Bordering either `UFBX_BAKED_KEY_STEP_LEFT` or `UFBX_BAKED_KEY_STEP_RIGHT`.
-	STEP_KEY = 2,
+	STEP_KEY,
 
 	// This keyframe is a real keyframe in the source animation
-	KEYFRAME = 3,
+	KEYFRAME,
 
 	// This keyframe has been reduced by maximum sample rate.
 	// See `ufbx_bake_opts.maximum_sample_rate`.
-	REDUCED = 4,
+	REDUCED,
 }
 
-Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
+Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; int]
 
 BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
@@ -5253,7 +5253,7 @@ Transform_Flag :: enum c.int {
 	NO_EXTRAPOLATION = 7,
 }
 
-Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
+Transform_Flags :: distinct bit_set[Transform_Flag; int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 

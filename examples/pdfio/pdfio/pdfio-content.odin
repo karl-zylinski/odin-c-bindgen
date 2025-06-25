@@ -19,13 +19,13 @@ foreign import lib "pdfio1.lib"
 //
 cs_e :: enum c.int {
 	// AdobeRGB 1998
-	ADOBE = 0,
+	ADOBE,
 
 	// Display P3
-	P3_D65 = 1,
+	P3_D65,
 
 	// sRGB
-	SRGB = 2,
+	SRGB,
 }
 
 //
@@ -35,26 +35,26 @@ cs_t :: cs_e
 
 linecap_e :: enum c.int {
 	// Butt ends
-	BUTT = 0,
+	BUTT,
 
 	// Round ends
-	ROUND = 1,
+	ROUND,
 
 	// Square ends
-	SQUARE = 2,
+	SQUARE,
 }
 
 linecap_t :: linecap_e
 
 linejoin_e :: enum c.int {
 	// Miter joint
-	MITER = 0,
+	MITER,
 
 	// Round joint
-	ROUND = 1,
+	ROUND,
 
 	// Bevel joint
-	BEVEL = 2,
+	BEVEL,
 }
 
 linejoin_t :: linejoin_e
@@ -63,26 +63,26 @@ matrix_t :: [3][2]f64
 
 textrendering_e :: enum c.int {
 	// Fill text
-	FILL = 0,
+	FILL,
 
 	// Stroke text
-	STROKE = 1,
+	STROKE,
 
 	// Fill then stroke text
-	FILL_AND_STROKE = 2,
+	FILL_AND_STROKE,
 
 	// Don't fill or stroke (invisible)
-	INVISIBLE = 3,
+	INVISIBLE,
 
 	// Fill text and add to path
-	FILL_PATH = 4,
+	FILL_PATH,
 
 	// Stroke text and add to path
-	STROKE_PATH = 5,
-	FILL_AND_STROKE_PATH = 6,
+	STROKE_PATH,
+	FILL_AND_STROKE_PATH,
 
 	// Add text to path (invisible)
-	TEXT_PATH = 7,
+	TEXT_PATH,
 }
 
 textrendering_t :: textrendering_e

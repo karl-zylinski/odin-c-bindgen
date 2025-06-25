@@ -33,19 +33,19 @@ error_cb_t :: proc "c" (^file_t, cstring, rawptr) -> bool
 // Error callback
 encryption_e :: enum c.int {
 	// No encryption
-	NONE = 0,
+	NONE,
 
 	// 40-bit RC4 encryption (PDF 1.3)
-	RC4_40 = 1,
+	RC4_40,
 
 	// 128-bit RC4 encryption (PDF 1.4)
-	RC4_128 = 2,
+	RC4_128,
 
 	// 128-bit AES encryption (PDF 1.6)
-	AES_128 = 3,
+	AES_128,
 
 	// 256-bit AES encryption (PDF 2.0) @exclude all@
-	AES_256 = 4,
+	AES_256,
 }
 
 // Error callback
@@ -53,37 +53,37 @@ encryption_t :: encryption_e
 
 filter_e :: enum c.int {
 	// No filter
-	NONE = 0,
+	NONE,
 
 	// ASCIIHexDecode filter (reading only)
-	ASCIIHEX = 1,
+	ASCIIHEX,
 
 	// ASCII85Decode filter (reading only)
-	ASCII85 = 2,
+	ASCII85,
 
 	// CCITTFaxDecode filter
-	CCITTFAX = 3,
+	CCITTFAX,
 
 	// Encryption filter
-	CRYPT = 4,
+	CRYPT,
 
 	// DCTDecode (JPEG) filter
-	DCT = 5,
+	DCT,
 
 	// FlateDecode filter
-	FLATE = 6,
+	FLATE,
 
 	// JBIG2Decode filter
-	JBIG2 = 7,
+	JBIG2,
 
 	// JPXDecode filter (reading only)
-	JPX = 8,
+	JPX,
 
 	// LZWDecode filter (reading only)
-	LZW = 9,
+	LZW,
 
 	// RunLengthDecode filter (reading only)
-	RUNLENGTH = 10,
+	RUNLENGTH,
 }
 
 filter_t :: filter_e
@@ -122,7 +122,7 @@ permission_e :: enum c.int {
 	PRINT_HIGH = 11,
 }
 
-permission_t :: distinct bit_set[permission_e; c.int]
+permission_t :: distinct bit_set[permission_e; int]
 
 PERMISSION_ALL :: permission_t { .PRINT, .MODIFY, .COPY, .ANNOTATE, .FORMS, .READING, .ASSEMBLE, .PRINT_HIGH }
 
@@ -140,37 +140,37 @@ stream_t :: struct {}
 // Object data stream in PDF file
 valtype_e :: enum c.int {
 	// No value, not set
-	NONE = 0,
+	NONE,
 
 	// Array
-	ARRAY = 1,
+	ARRAY,
 
 	// Binary data
-	BINARY = 2,
+	BINARY,
 
 	// Boolean
-	BOOLEAN = 3,
+	BOOLEAN,
 
 	// Date/time
-	DATE = 4,
+	DATE,
 
 	// Dictionary
-	DICT = 5,
+	DICT,
 
 	// Indirect object (N G obj)
-	INDIRECT = 6,
+	INDIRECT,
 
 	// Name
-	NAME = 7,
+	NAME,
 
 	// Null object
-	NULL = 8,
+	NULL,
 
 	// Number (integer or real)
-	NUMBER = 9,
+	NUMBER,
 
 	// String
-	STRING = 10,
+	STRING,
 }
 
 // Object data stream in PDF file
