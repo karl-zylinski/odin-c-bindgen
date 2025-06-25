@@ -27,22 +27,22 @@ import "core:unicode"
 import "core:unicode/utf8"
 
 Struct_Field :: struct {
-	names:            [dynamic]string,
-	type:             string,
+	names: [dynamic]string,
+	type: string,
 	anon_struct_type: Maybe(Struct),
-	anon_using:       bool,
-	comment:          string,
-	comment_before:   bool,
-	original_line:    int,
+	anon_using: bool,
+	comment: string,
+	comment_before: bool,
+	original_line: int,
 }
 
 Struct :: struct {
-	original_name:      string,
-	name:               string,
-	id:                 string,
-	fields:             []Struct_Field,
-	comment:            string,
-	is_union:           bool,
+	original_name: string,
+	name: string,
+	id: string,
+	fields: []Struct_Field,
+	comment: string,
+	is_union: bool,
 	is_forward_declare: bool,
 }
 
@@ -52,50 +52,50 @@ Function_Parameter :: struct {
 }
 
 Function :: struct {
-	original_name:  string,
-	name:           string,
+	original_name: string,
+	name: string,
 
 	// if non-empty, then use this will be the link name used in bindings
-	link_name:      string,
-	parameters:     []Function_Parameter,
-	return_type:    string,
-	comment:        string,
+	link_name: string,
+	parameters: []Function_Parameter,
+	return_type: string,
+	comment: string,
 	comment_before: bool,
-	variadic:       bool,
-	post_comment:   string,
+	variadic: bool,
+	post_comment: string,
 }
 
 Enum_Member :: struct {
-	name:           string,
-	value:          int,
-	comment:        string,
+	name: string,
+	value: int,
+	comment: string,
 	comment_before: bool,
 }
 
 Enum :: struct {
 	original_name: string,
-	name:          string,
-	id:            string,
-	members:       []Enum_Member,
-	comment:       string,
-	backing_type:  string,
+	name: string,
+	id: string,
+	members: []Enum_Member,
+	comment: string,
+	backing_type: string,
 }
 
 Typedef :: struct {
 	original_name: string,
-	name:          string,
-	type:          string,
-	pre_comment:   string,
-	side_comment:  string,
+	name: string,
+	type: string,
+	pre_comment: string,
+	side_comment: string,
 }
 
 Macro :: struct {
-	original_name:                  string,
-	name:                           string,
-	val:                            string,
-	comment:                        string,
-	side_comment:                   string,
-	whitespace_after_name:          int,
+	original_name: string,
+	name: string,
+	val: string,
+	comment: string,
+	side_comment: string,
+	whitespace_after_name: int,
 	whitespace_before_side_comment: int,
 }
 
@@ -110,11 +110,11 @@ Declaration_Variant :: union {
 Declaration :: struct {
 	// Used for sorting the declarations. They may be added out-of-order due to macros
 	// coming in from a separate code path.
-	line:         int,
+	line: int,
 
 	// The original idx in `s.decls`. This is for tie-breaking when line is the same.
 	original_idx: int,
-	variant:      Declaration_Variant,
+	variant: Declaration_Variant,
 }
 
 // get_return_type :: proc(v: json.Value) -> (type: string, ok: bool) {
@@ -1588,50 +1588,50 @@ fpf :: fmt.fprintf
 fpfln :: fmt.fprintfln
 
 Config :: struct {
-	inputs:                   []string,
-	ignore_inputs:            []string,
-	output_folder:            string,
-	package_name:             string,
-	required_prefix:          string,
+	inputs: []string,
+	ignore_inputs: []string,
+	output_folder: string,
+	package_name: string,
+	required_prefix: string,
 
 	// deprecated: use remove_xxx_prefix
-	remove_prefix:            string,
-	remove_type_prefix:       string,
-	remove_function_prefix:   string,
-	remove_macro_prefix:      string,
-	import_lib:               string,
-	imports_file:             string,
-	clang_include_paths:      []string,
-	clang_defines:            map[string]string,
-	force_ada_case_types:     bool,
-	debug_dump_json_ast:      bool,
-	debug_dump_macros:        bool,
-	opaque_types:             []string,
-	rename:                   map[string]string,
+	remove_prefix: string,
+	remove_type_prefix: string,
+	remove_function_prefix: string,
+	remove_macro_prefix: string,
+	import_lib: string,
+	imports_file: string,
+	clang_include_paths: []string,
+	clang_defines: map[string]string,
+	force_ada_case_types: bool,
+	debug_dump_json_ast: bool,
+	debug_dump_macros: bool,
+	opaque_types: []string,
+	rename: map[string]string,
 
 	// deprecated: use rename
-	rename_types:             map[string]string,
-	type_overrides:           map[string]string,
-	struct_field_overrides:   map[string]string,
+	rename_types: map[string]string,
+	type_overrides: map[string]string,
+	struct_field_overrides: map[string]string,
 	procedure_type_overrides: map[string]string,
-	bit_setify:               map[string]string,
-	inject_before:            map[string]string,
+	bit_setify: map[string]string,
+	inject_before: map[string]string,
 }
 
 Gen_State :: struct {
-	using config:       Config,
-	file:               clang.File,
-	source:             string,
-	decls:              [dynamic]Declaration,
-	defines:            map[string]string,
-	symbol_indices:     map[string]int,
-	typedefs:           map[string]string,
-	created_symbols:    map[string]struct {},
-	type_is_proc:       map[string]struct {},
+	using config: Config,
+	file: clang.File,
+	source: string,
+	decls: [dynamic]Declaration,
+	defines: map[string]string,
+	symbol_indices: map[string]int,
+	typedefs: map[string]string,
+	created_symbols: map[string]struct {},
+	type_is_proc: map[string]struct {},
 	opaque_type_lookup: map[string]struct {},
-	created_types:      map[string]struct {},
-	needs_import_c:     bool,
-	needs_import_libc:  bool,
+	created_types: map[string]struct {},
+	needs_import_c: bool,
+	needs_import_libc: bool,
 	needs_import_posix: bool,
 }
 
@@ -2085,7 +2085,7 @@ gen :: proc(input: string, c: Config) {
 		// }
 
 		Data :: struct {
-			state:      ^Gen_State,
+			state: ^Gen_State,
 			out_fields: [dynamic]Struct_Field,
 		}
 
@@ -3230,7 +3230,7 @@ gen :: proc(input: string, c: Config) {
 
 	Function_Group :: struct {
 		header_comment: string,
-		functions:      [dynamic]Function,
+		functions: [dynamic]Function,
 	}
 
 	groups: [dynamic]Function_Group
@@ -3279,9 +3279,15 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			Formatted_Function :: struct {
-				function:     string,
+				function: string,
 				post_comment: string,
-				attributes:   []string,
+				attributes: []string,
+			}
+
+			Formatted_Member :: struct {
+				name: string,
+				member: string,
+				enum_member: ^Enum_Member,
 			}
 
 			formatted_functions: [dynamic]Formatted_Function
