@@ -67,7 +67,7 @@ Function :: struct {
 
 Enum_Member :: struct {
 	name:           string,
-	value:          Maybe(int),
+	value:          int,
 	comment:        string,
 	comment_before: bool,
 }
@@ -2832,27 +2832,45 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			fp(f, name)
-			fpf(f, " :: enum %s {{\n", translate_type(s, d.backing_type, false))
+			fpf(f, " :: enum %v {{\n", translate_type(s, d.backing_type, false))
 
 			bit_set_name, bit_setify := s.bit_setify[d.original_name]
-			bit_set_all_constant: string
+			make_constant: map[string]int
+
+			if bit_setify {
+				for &m, i in d.members {
+					if bits.count_ones(m.value) != 1 { // Not a power of two, so not part of a bit_set.
+						make_constant[m.name] = m.value
+						continue
+					}
+					m.value = transmute(int)bits.log2(transmute(uint)m.value)
+				}
+			}
 
 			overlap_length := 0
 			longest_name := 0
 
-			all_has_value := true
+			all_has_default_value := true
+			counter := 0
+			for &m in d.members {
+				if _, skip := make_constant[m.name]; skip {
+					continue
+				}
+
+				if m.value != counter {
+					all_has_default_value = false
+					break
+				}
+				counter += 1
+			}
 
 			if len(d.members) > 1 {
 				overlap_length_source := d.members[0].name
 				overlap_length = len(overlap_length_source)
 				longest_name = overlap_length
 
-				if d.members[0].value == nil {
-					all_has_value = false
-				}
-
 				for idx in 1..<len(d.members) {
-					if (d.members[idx].value == -1 || d.members[idx].value == 2147483647) && bit_setify {
+					if _, skip := make_constant[d.members[idx].name]; skip {
 						continue
 					}
 
@@ -2865,29 +2883,19 @@ gen :: proc(input: string, c: Config) {
 					}
 
 					longest_name = max(len(mn), longest_name)
-
-					if d.members[idx].value == nil {
-						all_has_value = false
-					}
 				}
 			}
 
 			Formatted_Member :: struct {
 				name:           string,
 				member:         string,
-				comment:        string,
-				comment_before: bool,
+				enum_member:    ^Enum_Member,
 			}
 
 			members: [dynamic]Formatted_Member
 
 			for &m in d.members {
-				if (m.value == -1 || m.value == 2147483647) && bit_setify {
-					bit_set_all_constant = m.name
-					continue
-				}
-
-				if m.value == 0 && bit_setify {
+				if _, skip := make_constant[m.name]; skip {
 					continue
 				}
 
@@ -2907,9 +2915,9 @@ gen :: proc(input: string, c: Config) {
 
 				strings.write_string(&b, name_without_overlap)
 
-				suffix_pad := all_has_value ? longest_name - len(name_without_overlap) - overlap_length : 0
+				suffix_pad := longest_name - len(name_without_overlap) - overlap_length
 
-				if vv, v_ok := m.value.?; v_ok {
+				if !all_has_default_value {
 					if !m.comment_before {
 						for _ in 0..<suffix_pad {
 							// Padding between name and `=`
@@ -2917,48 +2925,33 @@ gen :: proc(input: string, c: Config) {
 						}
 					}
 
-					val_string: string
-
-					if bit_setify {
-						v := u32(vv)
-						assert(v != 0)
-
-						// Note the `log2`... This turns a value such as `64`
-						// into `6`, which is what it should be for a bit_set.
-						val_string = fmt.tprintf(" = %v", bits.log2(v))
-
-					} else {
-						val_string = fmt.tprintf(" = %v", vv)
-					}
-
-					strings.write_string(&b, val_string)
+					strings.write_string(&b, fmt.tprintf(" = %v", m.value))
 				}
 
 				append(&members, Formatted_Member {
 					name = name_without_overlap,
 					member = strings.to_string(b),
-					comment = m.comment,
-					comment_before = m.comment_before,
+					enum_member = &m,
 				})
 			}
 
 			longest_member_name_with_side_comment: int
 
 			for &m in members {
-				if m.comment != "" && !m.comment_before && len(m.member) > longest_member_name_with_side_comment {
+				if m.enum_member.comment != "" && !m.enum_member.comment_before && len(m.member) > longest_member_name_with_side_comment {
 					longest_member_name_with_side_comment = len(m.member)
 				}
 			}
 
 			for &m, m_idx in members {
-				has_comment := m.comment != ""
-				comment_before := m.comment_before
+				has_comment := m.enum_member.comment != ""
+				comment_before := m.enum_member.comment_before
 
 				if has_comment && comment_before {
 					if m_idx != 0 {
 						fp(f, "\n")
 					}
-					output_comment(f, m.comment, "\t")
+					output_comment(f, m.enum_member.comment, "\t")
 				}
 
 				fp(f, "\t")
@@ -2971,7 +2964,7 @@ gen :: proc(input: string, c: Config) {
 						fp(f, " ")
 					}
 
-					fpf(f, " %v", m.comment)
+					fpf(f, " %v", m.enum_member.comment)
 				}
 
 				fp(f, '\n')
@@ -2980,23 +2973,31 @@ gen :: proc(input: string, c: Config) {
 			fp(f, "}\n\n")
 
 			if bit_setify {
-				fpf(f, "%v :: distinct bit_set[%v; c.int]\n\n", bit_set_name, name)
+				fpf(f, "%v :: distinct bit_set[%v; %v]\n\n", bit_set_name, name, d.backing_type)
 
 				// In case there is a typedef for this in the code.
 				add_to_set(&s.created_symbols, bit_set_name)
 
-				// There was a member with value `-1`... That means all bits are
-				// set. Create a bit_set constant with all variants set.
-				if bit_set_all_constant != "" {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(bit_set_all_constant), strings.to_lower(s.remove_type_prefix)))
+				// There was a member with a compound value, so we need to
+				// decompose it into a constant bit set
+				for name, val in make_constant {
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(name), strings.to_lower(s.remove_type_prefix)))
+
+					if val == 0 {
+						// If the value is 0, we don't need to output it.
+						// This is because the zero value of a bit set is an empty set.
+						continue
+					}
 
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
 					for &m, i in members {
-						fpf(f, ".%v", m.name)
+						if (1 << uint(m.enum_member.value)) & val != 0 {
+							fpf(f, ".%v", m.name)
 
-						if i != len(members) - 1 {
-							fp(f, ", ")
+							if i != len(members) - 1 {
+								fp(f, ", ")
+							}
 						}
 					}
 
