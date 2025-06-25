@@ -41,13 +41,13 @@ Quat :: quaternion128
 // not the multiplication order: eg. `UFBX_ROTATION_ORDER_XYZ` is `Z*Y*X`
 // [TODO: Figure out what the spheric rotation order is...]
 Rotation_Order :: enum c.int {
-	XYZ = 0,
-	XZY = 1,
-	YZX = 2,
-	YXZ = 3,
-	ZXY = 4,
-	ZYX = 5,
-	SPHERIC = 6,
+	XYZ         = 0,
+	XZY         = 1,
+	YZX         = 2,
+	YXZ         = 3,
+	ZXY         = 4,
+	ZYX         = 5,
+	SPHERIC     = 6,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -115,15 +115,15 @@ String_List :: struct {
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {
-	NUMBER = 0,
-	STRING = 1,
-	ARRAY_I8 = 2,
-	ARRAY_I32 = 3,
-	ARRAY_I64 = 4,
-	ARRAY_F32 = 5,
-	ARRAY_F64 = 6,
+	NUMBER           = 0,
+	STRING           = 1,
+	ARRAY_I8         = 2,
+	ARRAY_I32        = 3,
+	ARRAY_I64        = 4,
+	ARRAY_F32        = 5,
+	ARRAY_F64        = 6,
 	ARRAY_RAW_STRING = 7,
-	ARRAY_IGNORED = 8,
+	ARRAY_IGNORED    = 8,
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -158,22 +158,22 @@ Dom_Node :: struct {
 // eg. `prop->value_real` and `prop->value_int` have the same value (well, close)
 // if `prop->type == UFBX_PROP_INTEGER`. String values are not converted from/to.
 Prop_Type :: enum c.int {
-	UNKNOWN = 0,
-	BOOLEAN = 1,
-	INTEGER = 2,
-	NUMBER = 3,
-	VECTOR = 4,
-	COLOR = 5,
+	UNKNOWN          = 0,
+	BOOLEAN          = 1,
+	INTEGER          = 2,
+	NUMBER           = 3,
+	VECTOR           = 4,
+	COLOR            = 5,
 	COLOR_WITH_ALPHA = 6,
-	STRING = 7,
-	DATE_TIME = 8,
-	TRANSLATION = 9,
-	ROTATION = 10,
-	SCALING = 11,
-	DISTANCE = 12,
-	COMPOUND = 13,
-	BLOB = 14,
-	REFERENCE = 15,
+	STRING           = 7,
+	DATE_TIME        = 8,
+	TRANSLATION      = 9,
+	ROTATION         = 10,
+	SCALING          = 11,
+	DISTANCE         = 12,
+	COMPOUND         = 13,
+	BLOB             = 14,
+	REFERENCE        = 15,
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -275,7 +275,7 @@ Prop_Flag :: enum c.int {
 	VALUE_BLOB = 26,
 }
 
-Prop_Flags :: distinct bit_set[Prop_Flag; int]
+Prop_Flags :: distinct bit_set[Prop_Flag; c.int]
 
 PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOCK_X, .LOCK_Y, .LOCK_Z, .LOCK_W, .MUTE_X, .MUTE_Y, .MUTE_Z, .MUTE_W, .SYNTHETIC, .ANIMATED, .NOT_FOUND, .CONNECTED, .NO_VALUE, .OVERRIDDEN, .VALUE_REAL, .VALUE_VEC2, .VALUE_VEC3, .VALUE_VEC4, .VALUE_INT, .VALUE_STR, .VALUE_BLOB }
 
@@ -527,134 +527,51 @@ Metadata_Object_List :: struct {
 }
 
 Element_Type :: enum c.int {
-	// < `ufbx_unknown`
-	UNKNOWN = 0,
-
-	// < `ufbx_node`
-	NODE = 1,
-
-	// < `ufbx_mesh`
-	MESH = 2,
-
-	// < `ufbx_light`
-	LIGHT = 3,
-
-	// < `ufbx_camera`
-	CAMERA = 4,
-
-	// < `ufbx_bone`
-	BONE = 5,
-
-	// < `ufbx_empty`
-	EMPTY = 6,
-
-	// < `ufbx_line_curve`
-	LINE_CURVE = 7,
-
-	// < `ufbx_nurbs_curve`
-	NURBS_CURVE = 8,
-
-	// < `ufbx_nurbs_surface`
-	NURBS_SURFACE = 9,
-
-	// < `ufbx_nurbs_trim_surface`
-	NURBS_TRIM_SURFACE = 10,
-
-	// < `ufbx_nurbs_trim_boundary`
-	NURBS_TRIM_BOUNDARY = 11,
-
-	// < `ufbx_procedural_geometry`
-	PROCEDURAL_GEOMETRY = 12,
-
-	// < `ufbx_stereo_camera`
-	STEREO_CAMERA = 13,
-
-	// < `ufbx_camera_switcher`
-	CAMERA_SWITCHER = 14,
-
-	// < `ufbx_marker`
-	MARKER = 15,
-
-	// < `ufbx_lod_group`
-	LOD_GROUP = 16,
-
-	// < `ufbx_skin_deformer`
-	SKIN_DEFORMER = 17,
-
-	// < `ufbx_skin_cluster`
-	SKIN_CLUSTER = 18,
-
-	// < `ufbx_blend_deformer`
-	BLEND_DEFORMER = 19,
-
-	// < `ufbx_blend_channel`
-	BLEND_CHANNEL = 20,
-
-	// < `ufbx_blend_shape`
-	BLEND_SHAPE = 21,
-
-	// < `ufbx_cache_deformer`
-	CACHE_DEFORMER = 22,
-
-	// < `ufbx_cache_file`
-	CACHE_FILE = 23,
-
-	// < `ufbx_material`
-	MATERIAL = 24,
-
-	// < `ufbx_texture`
-	TEXTURE = 25,
-
-	// < `ufbx_video`
-	VIDEO = 26,
-
-	// < `ufbx_shader`
-	SHADER = 27,
-
-	// < `ufbx_shader_binding`
-	SHADER_BINDING = 28,
-
-	// < `ufbx_anim_stack`
-	ANIM_STACK = 29,
-
-	// < `ufbx_anim_layer`
-	ANIM_LAYER = 30,
-
-	// < `ufbx_anim_value`
-	ANIM_VALUE = 31,
-
-	// < `ufbx_anim_curve`
-	ANIM_CURVE = 32,
-
-	// < `ufbx_display_layer`
-	DISPLAY_LAYER = 33,
-
-	// < `ufbx_selection_set`
-	SELECTION_SET = 34,
-
-	// < `ufbx_selection_node`
-	SELECTION_NODE = 35,
-
-	// < `ufbx_character`
-	CHARACTER = 36,
-
-	// < `ufbx_constraint`
-	CONSTRAINT = 37,
-
-	// < `ufbx_audio_layer`
-	AUDIO_LAYER = 38,
-
-	// < `ufbx_audio_clip`
-	AUDIO_CLIP = 39,
-
-	// < `ufbx_pose`
-	POSE = 40,
-
-	// < `ufbx_metadata_object`
-	METADATA_OBJECT = 41,
-	TYPE_FIRST_ATTRIB = 2,
-	TYPE_LAST_ATTRIB = 16,
-	TYPE_FORCE_32BIT = 2147483647,
+	UNKNOWN             = 0,  // < `ufbx_unknown`
+	NODE                = 1,  // < `ufbx_node`
+	MESH                = 2,  // < `ufbx_mesh`
+	LIGHT               = 3,  // < `ufbx_light`
+	CAMERA              = 4,  // < `ufbx_camera`
+	BONE                = 5,  // < `ufbx_bone`
+	EMPTY               = 6,  // < `ufbx_empty`
+	LINE_CURVE          = 7,  // < `ufbx_line_curve`
+	NURBS_CURVE         = 8,  // < `ufbx_nurbs_curve`
+	NURBS_SURFACE       = 9,  // < `ufbx_nurbs_surface`
+	NURBS_TRIM_SURFACE  = 10, // < `ufbx_nurbs_trim_surface`
+	NURBS_TRIM_BOUNDARY = 11, // < `ufbx_nurbs_trim_boundary`
+	PROCEDURAL_GEOMETRY = 12, // < `ufbx_procedural_geometry`
+	STEREO_CAMERA       = 13, // < `ufbx_stereo_camera`
+	CAMERA_SWITCHER     = 14, // < `ufbx_camera_switcher`
+	MARKER              = 15, // < `ufbx_marker`
+	LOD_GROUP           = 16, // < `ufbx_lod_group`
+	SKIN_DEFORMER       = 17, // < `ufbx_skin_deformer`
+	SKIN_CLUSTER        = 18, // < `ufbx_skin_cluster`
+	BLEND_DEFORMER      = 19, // < `ufbx_blend_deformer`
+	BLEND_CHANNEL       = 20, // < `ufbx_blend_channel`
+	BLEND_SHAPE         = 21, // < `ufbx_blend_shape`
+	CACHE_DEFORMER      = 22, // < `ufbx_cache_deformer`
+	CACHE_FILE          = 23, // < `ufbx_cache_file`
+	MATERIAL            = 24, // < `ufbx_material`
+	TEXTURE             = 25, // < `ufbx_texture`
+	VIDEO               = 26, // < `ufbx_video`
+	SHADER              = 27, // < `ufbx_shader`
+	SHADER_BINDING      = 28, // < `ufbx_shader_binding`
+	ANIM_STACK          = 29, // < `ufbx_anim_stack`
+	ANIM_LAYER          = 30, // < `ufbx_anim_layer`
+	ANIM_VALUE          = 31, // < `ufbx_anim_value`
+	ANIM_CURVE          = 32, // < `ufbx_anim_curve`
+	DISPLAY_LAYER       = 33, // < `ufbx_display_layer`
+	SELECTION_SET       = 34, // < `ufbx_selection_set`
+	SELECTION_NODE      = 35, // < `ufbx_selection_node`
+	CHARACTER           = 36, // < `ufbx_character`
+	CONSTRAINT          = 37, // < `ufbx_constraint`
+	AUDIO_LAYER         = 38, // < `ufbx_audio_layer`
+	AUDIO_CLIP          = 39, // < `ufbx_audio_clip`
+	POSE                = 40, // < `ufbx_pose`
+	METADATA_OBJECT     = 41, // < `ufbx_metadata_object`
+	TYPE_FIRST_ATTRIB   = 2,
+	TYPE_LAST_ATTRIB    = 16,
+	TYPE_FORCE_32BIT    = 2147483647,
 }
 
 ELEMENT_TYPE_COUNT :: 42
@@ -744,10 +661,10 @@ INHERIT_MODE_COUNT :: 3
 
 // Axis used to mirror transformations for handedness conversion.
 Mirror_Axis :: enum c.int {
-	NONE = 0,
-	X = 1,
-	Y = 2,
-	Z = 3,
+	NONE        = 0,
+	X           = 1,
+	Y           = 2,
+	Z           = 3,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1094,18 +1011,18 @@ Subdivision_Result :: struct {
 }
 
 Subdivision_Display_Mode :: enum c.int {
-	DISABLED = 0,
-	HULL = 1,
-	HULL_AND_SMOOTH = 2,
-	SMOOTH = 3,
+	DISABLED         = 0,
+	HULL             = 1,
+	HULL_AND_SMOOTH  = 2,
+	SMOOTH           = 3,
 	MODE_FORCE_32BIT = 2147483647,
 }
 
 SUBDIVISION_DISPLAY_MODE_COUNT :: 4
 
 Subdivision_Boundary :: enum c.int {
-	DEFAULT = 0,
-	LEGACY = 1,
+	DEFAULT        = 0,
+	LEGACY         = 1,
 
 	// OpenSubdiv: `VTX_BOUNDARY_EDGE_AND_CORNER` / `FVAR_LINEAR_CORNERS_ONLY`
 	SHARP_CORNERS = 2,
@@ -1310,25 +1227,18 @@ LIGHT_TYPE_COUNT :: 5
 
 // How fast does the light intensity decay at a distance
 Light_Decay :: enum c.int {
-	// < 1 (no decay)
-	NONE = 0,
-
-	// < 1 / d
-	LINEAR = 1,
-
-	// < 1 / d^2 (physically accurate)
-	QUADRATIC = 2,
-
-	// < 1 / d^3
-	CUBIC = 3,
+	NONE        = 0, // < 1 (no decay)
+	LINEAR      = 1, // < 1 / d
+	QUADRATIC   = 2, // < 1 / d^2 (physically accurate)
+	CUBIC       = 3, // < 1 / d^3
 	FORCE_32BIT = 2147483647,
 }
 
 LIGHT_DECAY_COUNT :: 4
 
 Light_Area_Shape :: enum c.int {
-	RECTANGLE = 0,
-	SPHERE = 1,
+	RECTANGLE   = 0,
+	SPHERE      = 1,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1453,54 +1363,31 @@ GATE_FIT_COUNT :: 6
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Format :: enum c.int {
-	// < Use `"FilmWidth"` and `"FilmHeight"`
-	CUSTOM = 0,
-
-	// < 0.404 x 0.295 inches
-	_16MM_THEATRICAL = 1,
-
-	// < 0.493 x 0.292 inches
-	SUPER_16MM = 2,
-
-	// < 0.864 x 0.630 inches
-	_35MM_ACADEMY = 3,
-
-	// < 0.816 x 0.612 inches
-	_35MM_TV_PROJECTION = 4,
-
-	// < 0.980 x 0.735 inches
-	_35MM_FULL_APERTURE = 5,
-
-	// < 0.825 x 0.446 inches
-	_35MM_185_PROJECTION = 6,
-
-	// < 0.864 x 0.732 inches (squeeze ratio: 2)
-	_35MM_ANAMORPHIC = 7,
-
-	// < 2.066 x 0.906 inches
-	_70MM_PROJECTION = 8,
-
-	// < 1.485 x 0.991 inches
-	VISTAVISION = 9,
-
-	// < 2.080 x 1.480 inches
-	DYNAVISION = 10,
-
-	// < 2.772 x 2.072 inches
-	IMAX = 11,
-	FORCE_32BIT = 2147483647,
+	CUSTOM              = 0,  // < Use `"FilmWidth"` and `"FilmHeight"`
+	_16MM_THEATRICAL    = 1,  // < 0.404 x 0.295 inches
+	SUPER_16MM          = 2,  // < 0.493 x 0.292 inches
+	_35MM_ACADEMY       = 3,  // < 0.864 x 0.630 inches
+	_35MM_TV_PROJECTION = 4,  // < 0.816 x 0.612 inches
+	_35MM_FULL_APERTURE = 5,  // < 0.980 x 0.735 inches
+	_35MM_185_PROJECTION = 6, // < 0.825 x 0.446 inches
+	_35MM_ANAMORPHIC    = 7,  // < 0.864 x 0.732 inches (squeeze ratio: 2)
+	_70MM_PROJECTION    = 8,  // < 2.066 x 0.906 inches
+	VISTAVISION         = 9,  // < 1.485 x 0.991 inches
+	DYNAVISION          = 10, // < 2.080 x 1.480 inches
+	IMAX                = 11, // < 2.772 x 2.072 inches
+	FORCE_32BIT         = 2147483647,
 }
 
 APERTURE_FORMAT_COUNT :: 12
 
 Coordinate_Axis :: enum c.int {
-	POSITIVE_X = 0,
-	NEGATIVE_X = 1,
-	POSITIVE_Y = 2,
-	NEGATIVE_Y = 3,
-	POSITIVE_Z = 4,
-	NEGATIVE_Z = 5,
-	UNKNOWN = 6,
+	POSITIVE_X  = 0,
+	NEGATIVE_X  = 1,
+	POSITIVE_Y  = 2,
+	NEGATIVE_Y  = 3,
+	POSITIVE_Z  = 4,
+	NEGATIVE_Z  = 5,
+	UNKNOWN     = 6,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1815,14 +1702,9 @@ Camera_Switcher :: struct {
 }
 
 Marker_Type :: enum c.int {
-	// < Unknown marker type
-	UNKNOWN = 0,
-
-	// < FK (Forward Kinematics) effector
-	FK_EFFECTOR = 1,
-
-	// < IK (Inverse Kinematics) effector
-	IK_EFFECTOR = 2,
+	UNKNOWN          = 0, // < Unknown marker type
+	FK_EFFECTOR      = 1, // < FK (Forward Kinematics) effector
+	IK_EFFECTOR      = 2, // < IK (Inverse Kinematics) effector
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -1846,14 +1728,9 @@ Marker :: struct {
 
 // LOD level display mode.
 Lod_Display :: enum c.int {
-	// < Display the LOD level if the distance is appropriate.
-	USE_LOD = 0,
-
-	// < Always display the LOD level.
-	SHOW = 1,
-
-	// < Never display the LOD level.
-	HIDE = 2,
+	USE_LOD     = 0, // < Display the LOD level if the distance is appropriate.
+	SHOW        = 1, // < Always display the LOD level.
+	HIDE        = 2, // < Never display the LOD level.
 	FORCE_32BIT = 2147483647,
 }
 
@@ -2097,49 +1974,30 @@ Blend_Shape :: struct {
 }
 
 Cache_File_Format :: enum c.int {
-	// < Unknown cache file format
-	UNKNOWN = 0,
-
-	// < .pc2 Point cache file
-	PC2 = 1,
-
-	// < .mc/.mcx Maya cache file
-	MC = 2,
+	UNKNOWN     = 0, // < Unknown cache file format
+	PC2         = 1, // < .pc2 Point cache file
+	MC          = 2, // < .mc/.mcx Maya cache file
 	FORCE_32BIT = 2147483647,
 }
 
 CACHE_FILE_FORMAT_COUNT :: 3
 
 Cache_Data_Format :: enum c.int {
-	// < Unknown data format
-	UNKNOWN = 0,
-
-	// < `float data[]`
-	REAL_FLOAT = 1,
-
-	// < `struct { float x, y, z; } data[]`
-	VEC3_FLOAT = 2,
-
-	// < `double data[]`
-	REAL_DOUBLE = 3,
-
-	// < `struct { double x, y, z; } data[]`
-	VEC3_DOUBLE = 4,
+	UNKNOWN     = 0, // < Unknown data format
+	REAL_FLOAT  = 1, // < `float data[]`
+	VEC3_FLOAT  = 2, // < `struct { float x, y, z; } data[]`
+	REAL_DOUBLE = 3, // < `double data[]`
+	VEC3_DOUBLE = 4, // < `struct { double x, y, z; } data[]`
 	FORCE_32BIT = 2147483647,
 }
 
 CACHE_DATA_FORMAT_COUNT :: 5
 
 Cache_Data_Encoding :: enum c.int {
-	// < Unknown data encoding
-	UNKNOWN = 0,
-
-	// < Contiguous little-endian array
-	LITTLE_ENDIAN = 1,
-
-	// < Contiguous big-endian array
-	BIG_ENDIAN = 2,
-	FORCE_32BIT = 2147483647,
+	UNKNOWN       = 0, // < Unknown data encoding
+	LITTLE_ENDIAN = 1, // < Contiguous little-endian array
+	BIG_ENDIAN    = 2, // < Contiguous big-endian array
+	FORCE_32BIT   = 2147483647,
 }
 
 CACHE_DATA_ENCODING_COUNT :: 3
@@ -2404,120 +2262,120 @@ SHADER_TYPE_COUNT :: 13
 
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum c.int {
-	DIFFUSE_FACTOR = 0,
-	DIFFUSE_COLOR = 1,
-	SPECULAR_FACTOR = 2,
-	SPECULAR_COLOR = 3,
-	SPECULAR_EXPONENT = 4,
-	REFLECTION_FACTOR = 5,
-	REFLECTION_COLOR = 6,
-	TRANSPARENCY_FACTOR = 7,
-	TRANSPARENCY_COLOR = 8,
-	EMISSION_FACTOR = 9,
-	EMISSION_COLOR = 10,
-	AMBIENT_FACTOR = 11,
-	AMBIENT_COLOR = 12,
-	NORMAL_MAP = 13,
-	BUMP = 14,
-	BUMP_FACTOR = 15,
-	DISPLACEMENT_FACTOR = 16,
-	DISPLACEMENT = 17,
+	DIFFUSE_FACTOR             = 0,
+	DIFFUSE_COLOR              = 1,
+	SPECULAR_FACTOR            = 2,
+	SPECULAR_COLOR             = 3,
+	SPECULAR_EXPONENT          = 4,
+	REFLECTION_FACTOR          = 5,
+	REFLECTION_COLOR           = 6,
+	TRANSPARENCY_FACTOR        = 7,
+	TRANSPARENCY_COLOR         = 8,
+	EMISSION_FACTOR            = 9,
+	EMISSION_COLOR             = 10,
+	AMBIENT_FACTOR             = 11,
+	AMBIENT_COLOR              = 12,
+	NORMAL_MAP                 = 13,
+	BUMP                       = 14,
+	BUMP_FACTOR                = 15,
+	DISPLACEMENT_FACTOR        = 16,
+	DISPLACEMENT               = 17,
 	VECTOR_DISPLACEMENT_FACTOR = 18,
-	VECTOR_DISPLACEMENT = 19,
-	MAP_FORCE_32BIT = 2147483647,
+	VECTOR_DISPLACEMENT        = 19,
+	MAP_FORCE_32BIT            = 2147483647,
 }
 
 MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
 Material_Pbr_Map :: enum c.int {
-	BASE_FACTOR = 0,
-	BASE_COLOR = 1,
-	ROUGHNESS = 2,
-	METALNESS = 3,
-	DIFFUSE_ROUGHNESS = 4,
-	SPECULAR_FACTOR = 5,
-	SPECULAR_COLOR = 6,
-	SPECULAR_IOR = 7,
-	SPECULAR_ANISOTROPY = 8,
-	SPECULAR_ROTATION = 9,
-	TRANSMISSION_FACTOR = 10,
-	TRANSMISSION_COLOR = 11,
-	TRANSMISSION_DEPTH = 12,
-	TRANSMISSION_SCATTER = 13,
+	BASE_FACTOR                     = 0,
+	BASE_COLOR                      = 1,
+	ROUGHNESS                       = 2,
+	METALNESS                       = 3,
+	DIFFUSE_ROUGHNESS               = 4,
+	SPECULAR_FACTOR                 = 5,
+	SPECULAR_COLOR                  = 6,
+	SPECULAR_IOR                    = 7,
+	SPECULAR_ANISOTROPY             = 8,
+	SPECULAR_ROTATION               = 9,
+	TRANSMISSION_FACTOR             = 10,
+	TRANSMISSION_COLOR              = 11,
+	TRANSMISSION_DEPTH              = 12,
+	TRANSMISSION_SCATTER            = 13,
 	TRANSMISSION_SCATTER_ANISOTROPY = 14,
-	TRANSMISSION_DISPERSION = 15,
-	TRANSMISSION_ROUGHNESS = 16,
-	TRANSMISSION_EXTRA_ROUGHNESS = 17,
-	TRANSMISSION_PRIORITY = 18,
-	TRANSMISSION_ENABLE_IN_AOV = 19,
-	SUBSURFACE_FACTOR = 20,
-	SUBSURFACE_COLOR = 21,
-	SUBSURFACE_RADIUS = 22,
-	SUBSURFACE_SCALE = 23,
-	SUBSURFACE_ANISOTROPY = 24,
-	SUBSURFACE_TINT_COLOR = 25,
-	SUBSURFACE_TYPE = 26,
-	SHEEN_FACTOR = 27,
-	SHEEN_COLOR = 28,
-	SHEEN_ROUGHNESS = 29,
-	COAT_FACTOR = 30,
-	COAT_COLOR = 31,
-	COAT_ROUGHNESS = 32,
-	COAT_IOR = 33,
-	COAT_ANISOTROPY = 34,
-	COAT_ROTATION = 35,
-	COAT_NORMAL = 36,
-	COAT_AFFECT_BASE_COLOR = 37,
-	COAT_AFFECT_BASE_ROUGHNESS = 38,
-	THIN_FILM_FACTOR = 39,
-	THIN_FILM_THICKNESS = 40,
-	THIN_FILM_IOR = 41,
-	EMISSION_FACTOR = 42,
-	EMISSION_COLOR = 43,
-	OPACITY = 44,
-	INDIRECT_DIFFUSE = 45,
-	INDIRECT_SPECULAR = 46,
-	NORMAL_MAP = 47,
-	TANGENT_MAP = 48,
-	DISPLACEMENT_MAP = 49,
-	MATTE_FACTOR = 50,
-	MATTE_COLOR = 51,
-	AMBIENT_OCCLUSION = 52,
-	GLOSSINESS = 53,
-	COAT_GLOSSINESS = 54,
-	TRANSMISSION_GLOSSINESS = 55,
-	MAP_FORCE_32BIT = 2147483647,
+	TRANSMISSION_DISPERSION         = 15,
+	TRANSMISSION_ROUGHNESS          = 16,
+	TRANSMISSION_EXTRA_ROUGHNESS    = 17,
+	TRANSMISSION_PRIORITY           = 18,
+	TRANSMISSION_ENABLE_IN_AOV      = 19,
+	SUBSURFACE_FACTOR               = 20,
+	SUBSURFACE_COLOR                = 21,
+	SUBSURFACE_RADIUS               = 22,
+	SUBSURFACE_SCALE                = 23,
+	SUBSURFACE_ANISOTROPY           = 24,
+	SUBSURFACE_TINT_COLOR           = 25,
+	SUBSURFACE_TYPE                 = 26,
+	SHEEN_FACTOR                    = 27,
+	SHEEN_COLOR                     = 28,
+	SHEEN_ROUGHNESS                 = 29,
+	COAT_FACTOR                     = 30,
+	COAT_COLOR                      = 31,
+	COAT_ROUGHNESS                  = 32,
+	COAT_IOR                        = 33,
+	COAT_ANISOTROPY                 = 34,
+	COAT_ROTATION                   = 35,
+	COAT_NORMAL                     = 36,
+	COAT_AFFECT_BASE_COLOR          = 37,
+	COAT_AFFECT_BASE_ROUGHNESS      = 38,
+	THIN_FILM_FACTOR                = 39,
+	THIN_FILM_THICKNESS             = 40,
+	THIN_FILM_IOR                   = 41,
+	EMISSION_FACTOR                 = 42,
+	EMISSION_COLOR                  = 43,
+	OPACITY                         = 44,
+	INDIRECT_DIFFUSE                = 45,
+	INDIRECT_SPECULAR               = 46,
+	NORMAL_MAP                      = 47,
+	TANGENT_MAP                     = 48,
+	DISPLACEMENT_MAP                = 49,
+	MATTE_FACTOR                    = 50,
+	MATTE_COLOR                     = 51,
+	AMBIENT_OCCLUSION               = 52,
+	GLOSSINESS                      = 53,
+	COAT_GLOSSINESS                 = 54,
+	TRANSMISSION_GLOSSINESS         = 55,
+	MAP_FORCE_32BIT                 = 2147483647,
 }
 
 MATERIAL_PBR_MAP_COUNT :: 56
 
 // Known material features
 Material_Feature :: enum c.int {
-	PBR = 0,
-	METALNESS = 1,
-	DIFFUSE = 2,
-	SPECULAR = 3,
-	EMISSION = 4,
-	TRANSMISSION = 5,
-	COAT = 6,
-	SHEEN = 7,
-	OPACITY = 8,
-	AMBIENT_OCCLUSION = 9,
-	MATTE = 10,
-	UNLIT = 11,
-	IOR = 12,
-	DIFFUSE_ROUGHNESS = 13,
-	TRANSMISSION_ROUGHNESS = 14,
-	THIN_WALLED = 15,
-	CAUSTICS = 16,
-	EXIT_TO_BACKGROUND = 17,
-	INTERNAL_REFLECTIONS = 18,
-	DOUBLE_SIDED = 19,
-	ROUGHNESS_AS_GLOSSINESS = 20,
-	COAT_ROUGHNESS_AS_GLOSSINESS = 21,
+	PBR                                  = 0,
+	METALNESS                            = 1,
+	DIFFUSE                              = 2,
+	SPECULAR                             = 3,
+	EMISSION                             = 4,
+	TRANSMISSION                         = 5,
+	COAT                                 = 6,
+	SHEEN                                = 7,
+	OPACITY                              = 8,
+	AMBIENT_OCCLUSION                    = 9,
+	MATTE                                = 10,
+	UNLIT                                = 11,
+	IOR                                  = 12,
+	DIFFUSE_ROUGHNESS                    = 13,
+	TRANSMISSION_ROUGHNESS               = 14,
+	THIN_WALLED                          = 15,
+	CAUSTICS                             = 16,
+	EXIT_TO_BACKGROUND                   = 17,
+	INTERNAL_REFLECTIONS                 = 18,
+	DOUBLE_SIDED                         = 19,
+	ROUGHNESS_AS_GLOSSINESS              = 20,
+	COAT_ROUGHNESS_AS_GLOSSINESS         = 21,
 	TRANSMISSION_ROUGHNESS_AS_GLOSSINESS = 22,
-	FORCE_32BIT = 2147483647,
+	FORCE_32BIT                          = 2147483647,
 }
 
 MATERIAL_FEATURE_COUNT :: 23
@@ -2612,98 +2470,37 @@ TEXTURE_TYPE_COUNT :: 4
 // specified below where `src` is the layer to composite over `dst`.
 // See eg. https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingseparable
 Blend_Mode :: enum c.int {
-	// < `src` effects result alpha
-	TRANSLUCENT = 0,
-
-	// < `src + dst`
-	ADDITIVE = 1,
-
-	// < `src * dst`
-	MULTIPLY = 2,
-
-	// < `2 * src * dst`
-	MULTIPLY_2X = 3,
-
-	// < `src * src_alpha + dst * (1-src_alpha)`
-	OVER = 4,
-
-	// < `src` Replace the contents
-	REPLACE = 5,
-
-	// < `random() + src_alpha >= 1.0 ? src : dst`
-	DISSOLVE = 6,
-
-	// < `min(src, dst)`
-	DARKEN = 7,
-
-	// < `src > 0 ? 1 - min(1, (1-dst) / src) : 0`
-	COLOR_BURN = 8,
-
-	// < `src + dst - 1`
-	LINEAR_BURN = 9,
-
-	// < `value(src) < value(dst) ? src : dst`
-	DARKER_COLOR = 10,
-
-	// < `max(src, dst)`
-	LIGHTEN = 11,
-
-	// < `1 - (1-src)*(1-dst)`
-	SCREEN = 12,
-
-	// < `src < 1 ? dst / (1 - src)` : (dst>0?1:0)`
-	COLOR_DODGE = 13,
-
-	// < `src + dst`
-	LINEAR_DODGE = 14,
-
-	// < `value(src) > value(dst) ? src : dst`
-	LIGHTER_COLOR = 15,
-
-	// < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingsoftlight
-	SOFT_LIGHT = 16,
-
-	// < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendinghardlight
-	HARD_LIGHT = 17,
-
-	// < Combination of `COLOR_DODGE` and `COLOR_BURN`
-	VIVID_LIGHT = 18,
-
-	// < Combination of `LINEAR_DODGE` and `LINEAR_BURN`
-	LINEAR_LIGHT = 19,
-
-	// < Combination of `DARKEN` and `LIGHTEN`
-	PIN_LIGHT = 20,
-
-	// < Produces primary colors depending on similarity
-	HARD_MIX = 21,
-
-	// < `abs(src - dst)`
-	DIFFERENCE = 22,
-
-	// < `dst + src - 2 * src * dst`
-	EXCLUSION = 23,
-
-	// < `dst - src`
-	SUBTRACT = 24,
-
-	// < `dst / src`
-	DIVIDE = 25,
-
-	// < Replace hue
-	HUE = 26,
-
-	// < Replace saturation
-	SATURATION = 27,
-
-	// < Replace hue and saturatio
-	COLOR = 28,
-
-	// < Replace value
-	LUMINOSITY = 29,
-
-	// < Same as `HARD_LIGHT` but with `src` and `dst` swapped
-	OVERLAY = 30,
+	TRANSLUCENT      = 0,  // < `src` effects result alpha
+	ADDITIVE         = 1,  // < `src + dst`
+	MULTIPLY         = 2,  // < `src * dst`
+	MULTIPLY_2X      = 3,  // < `2 * src * dst`
+	OVER             = 4,  // < `src * src_alpha + dst * (1-src_alpha)`
+	REPLACE          = 5,  // < `src` Replace the contents
+	DISSOLVE         = 6,  // < `random() + src_alpha >= 1.0 ? src : dst`
+	DARKEN           = 7,  // < `min(src, dst)`
+	COLOR_BURN       = 8,  // < `src > 0 ? 1 - min(1, (1-dst) / src) : 0`
+	LINEAR_BURN      = 9,  // < `src + dst - 1`
+	DARKER_COLOR     = 10, // < `value(src) < value(dst) ? src : dst`
+	LIGHTEN          = 11, // < `max(src, dst)`
+	SCREEN           = 12, // < `1 - (1-src)*(1-dst)`
+	COLOR_DODGE      = 13, // < `src < 1 ? dst / (1 - src)` : (dst>0?1:0)`
+	LINEAR_DODGE     = 14, // < `src + dst`
+	LIGHTER_COLOR    = 15, // < `value(src) > value(dst) ? src : dst`
+	SOFT_LIGHT       = 16, // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingsoftlight
+	HARD_LIGHT       = 17, // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendinghardlight
+	VIVID_LIGHT      = 18, // < Combination of `COLOR_DODGE` and `COLOR_BURN`
+	LINEAR_LIGHT     = 19, // < Combination of `LINEAR_DODGE` and `LINEAR_BURN`
+	PIN_LIGHT        = 20, // < Combination of `DARKEN` and `LIGHTEN`
+	HARD_MIX         = 21, // < Produces primary colors depending on similarity
+	DIFFERENCE       = 22, // < `abs(src - dst)`
+	EXCLUSION        = 23, // < `dst + src - 2 * src * dst`
+	SUBTRACT         = 24, // < `dst - src`
+	DIVIDE           = 25, // < `dst / src`
+	HUE              = 26, // < Replace hue
+	SATURATION       = 27, // < Replace saturation
+	COLOR            = 28, // < Replace hue and saturatio
+	LUMINOSITY       = 29, // < Replace value
+	OVERLAY          = 30, // < Same as `HARD_LIGHT` but with `src` and `dst` swapped
 	MODE_FORCE_32BIT = 2147483647,
 }
 
@@ -2711,11 +2508,8 @@ BLEND_MODE_COUNT :: 31
 
 // Blend modes to combine layered textures with, compatible with common blend
 Wrap_Mode :: enum c.int {
-	// < Repeat the texture past the [0,1] range
-	REPEAT = 0,
-
-	// < Clamp the normalized texture coordinates to [0,1]
-	CLAMP = 1,
+	REPEAT           = 0, // < Repeat the texture past the [0,1] range
+	CLAMP            = 1, // < Clamp the normalized texture coordinates to [0,1]
 	MODE_FORCE_32BIT = 2147483647,
 }
 
@@ -2734,7 +2528,7 @@ Texture_Layer_List :: struct {
 }
 
 Shader_Texture_Type :: enum c.int {
-	UNKNOWN = 0,
+	UNKNOWN          = 0,
 
 	// Select an output of a multi-output shader.
 	// HINT: If this type is used the `ufbx_shader_texture.main_texture` and
@@ -3139,38 +2933,22 @@ Anim_Value :: struct {
 
 // Animation curve segment interpolation mode between two keyframes
 Interpolation :: enum c.int {
-	// < Hold previous key value
-	CONSTANT_PREV = 0,
-
-	// < Hold next key value
-	CONSTANT_NEXT = 1,
-
-	// < Linear interpolation between two keys
-	LINEAR = 2,
-
-	// < Cubic interpolation, see `ufbx_tangent`
-	CUBIC = 3,
-	FORCE_32BIT = 2147483647,
+	CONSTANT_PREV = 0, // < Hold previous key value
+	CONSTANT_NEXT = 1, // < Hold next key value
+	LINEAR        = 2, // < Linear interpolation between two keys
+	CUBIC         = 3, // < Cubic interpolation, see `ufbx_tangent`
+	FORCE_32BIT   = 2147483647,
 }
 
 INTERPOLATION_COUNT :: 4
 
 Extrapolation_Mode :: enum c.int {
-	// < Use the value of the first/last keyframe
-	CONSTANT = 0,
-
-	// < Repeat the whole animation curve
-	REPEAT = 1,
-
-	// < Repeat with mirroring
-	MIRROR = 2,
-
-	// < Use the tangent of the last keyframe to linearly extrapolate
-	SLOPE = 3,
-
-	// < Repeat the animation curve but connect the first and last keyframe values
-	REPEAT_RELATIVE = 4,
-	FORCE_32BIT = 2147483647,
+	CONSTANT        = 0, // < Use the value of the first/last keyframe
+	REPEAT          = 1, // < Repeat the whole animation curve
+	MIRROR          = 2, // < Repeat with mirroring
+	SLOPE           = 3, // < Use the tangent of the last keyframe to linearly extrapolate
+	REPEAT_RELATIVE = 4, // < Repeat the animation curve but connect the first and last keyframe values
+	FORCE_32BIT     = 2147483647,
 }
 
 EXTRAPOLATION_MODE_COUNT :: 5
@@ -3308,12 +3086,12 @@ Character :: struct {
 
 // Type of property constrain eg. position or look-at
 Constraint_Type :: enum c.int {
-	UNKNOWN = 0,
-	AIM = 1,
-	PARENT = 2,
-	POSITION = 3,
-	ROTATION = 4,
-	SCALE = 5,
+	UNKNOWN          = 0,
+	AIM              = 1,
+	PARENT           = 2,
+	POSITION         = 3,
+	ROTATION         = 4,
+	SCALE            = 5,
 
 	// Inverse kinematic chain to a single effector `ufbx_constraint.ik_effector`
 	// `targets` optionally contains a list of pole targets!
@@ -3340,20 +3118,11 @@ Constraint_Target_List :: struct {
 
 // Method to determine the up vector in aim constraints
 Constraint_Aim_Up_Type :: enum c.int {
-	// < Align the up vector to the scene global up vector
-	SCENE = 0,
-
-	// < Aim the up vector at `ufbx_constraint.aim_up_node`
-	TO_NODE = 1,
-
-	// < Copy the up vector from `ufbx_constraint.aim_up_node`
-	ALIGN_NODE = 2,
-
-	// < Use `ufbx_constraint.aim_up_vector` as the up vector
-	VECTOR = 3,
-
-	// < Don't align the up vector to anything
-	NONE = 4,
+	SCENE            = 0, // < Align the up vector to the scene global up vector
+	TO_NODE          = 1, // < Aim the up vector at `ufbx_constraint.aim_up_node`
+	ALIGN_NODE       = 2, // < Copy the up vector from `ufbx_constraint.aim_up_node`
+	VECTOR           = 3, // < Use `ufbx_constraint.aim_up_vector` as the up vector
+	NONE             = 4, // < Don't align the up vector to anything
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -3361,11 +3130,8 @@ CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
 
 // Method to determine the up vector in aim constraints
 Constraint_Ik_Pole_Type :: enum c.int {
-	// < Use towards calculated from `ufbx_constraint.targets`
-	VECTOR = 0,
-
-	// < Use `ufbx_constraint.ik_pole_vector` directly
-	NODE = 1,
+	VECTOR           = 0, // < Use towards calculated from `ufbx_constraint.targets`
+	NODE             = 1, // < Use `ufbx_constraint.ik_pole_vector` directly
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -3530,12 +3296,12 @@ Name_Element_List :: struct {
 
 // Scene is the root object loaded by ufbx that everything is accessed from.
 Exporter :: enum c.int {
-	UNKNOWN = 0,
-	FBX_SDK = 1,
+	UNKNOWN        = 0,
+	FBX_SDK        = 1,
 	BLENDER_BINARY = 2,
-	BLENDER_ASCII = 3,
+	BLENDER_ASCII  = 3,
 	MOTION_BUILDER = 4,
-	FORCE_32BIT = 2147483647,
+	FORCE_32BIT    = 2147483647,
 }
 
 EXPORTER_COUNT :: 5
@@ -3545,17 +3311,10 @@ Application :: struct {
 }
 
 File_Format :: enum c.int {
-	// < Unknown file format
-	UNKNOWN = 0,
-
-	// < .fbx Kaydara/Autodesk FBX file
-	FBX = 1,
-
-	// < .obj Wavefront OBJ file
-	OBJ = 2,
-
-	// < .mtl Wavefront MTL (Material template library) file
-	MTL = 3,
+	UNKNOWN     = 0, // < Unknown file format
+	FBX         = 1, // < .fbx Kaydara/Autodesk FBX file
+	OBJ         = 2, // < .obj Wavefront OBJ file
+	MTL         = 3, // < .mtl Wavefront MTL (Material template library) file
 	FORCE_32BIT = 2147483647,
 }
 
@@ -3647,14 +3406,9 @@ Warning_List :: struct {
 }
 
 Thumbnail_Format :: enum c.int {
-	// < Unknown format
-	UNKNOWN = 0,
-
-	// < 8-bit RGB pixels, in memory R,G,B
-	RGB_24 = 1,
-
-	// < 8-bit RGBA pixels, in memory R,G,B,A
-	RGBA_32 = 2,
+	UNKNOWN     = 0, // < Unknown format
+	RGB_24      = 1, // < 8-bit RGB pixels, in memory R,G,B
+	RGBA_32     = 2, // < 8-bit RGBA pixels, in memory R,G,B,A
 	FORCE_32BIT = 2147483647,
 }
 
@@ -3773,44 +3527,44 @@ Metadata :: struct {
 }
 
 Time_Mode :: enum c.int {
-	DEFAULT = 0,
-	_120_FPS = 1,
-	_100_FPS = 2,
-	_60_FPS = 3,
-	_50_FPS = 4,
-	_48_FPS = 5,
-	_30_FPS = 6,
-	_30_FPS_DROP = 7,
+	DEFAULT         = 0,
+	_120_FPS        = 1,
+	_100_FPS        = 2,
+	_60_FPS         = 3,
+	_50_FPS         = 4,
+	_48_FPS         = 5,
+	_30_FPS         = 6,
+	_30_FPS_DROP    = 7,
 	NTSC_DROP_FRAME = 8,
 	NTSC_FULL_FRAME = 9,
-	PAL = 10,
-	_24_FPS = 11,
-	_1000_FPS = 12,
+	PAL             = 10,
+	_24_FPS         = 11,
+	_1000_FPS       = 12,
 	FILM_FULL_FRAME = 13,
-	CUSTOM = 14,
-	_96_FPS = 15,
-	_72_FPS = 16,
-	_59_94_FPS = 17,
-	FORCE_32BIT = 2147483647,
+	CUSTOM          = 14,
+	_96_FPS         = 15,
+	_72_FPS         = 16,
+	_59_94_FPS      = 17,
+	FORCE_32BIT     = 2147483647,
 }
 
 TIME_MODE_COUNT :: 18
 
 Time_Protocol :: enum c.int {
-	SMPTE = 0,
+	SMPTE       = 0,
 	FRAME_COUNT = 1,
-	DEFAULT = 2,
+	DEFAULT     = 2,
 	FORCE_32BIT = 2147483647,
 }
 
 TIME_PROTOCOL_COUNT :: 3
 
 Snap_Mode :: enum c.int {
-	NONE = 0,
-	SNAP = 1,
-	PLAY = 2,
+	NONE          = 0,
+	SNAP          = 1,
+	PLAY          = 2,
 	SNAP_AND_PLAY = 3,
-	FORCE_32BIT = 2147483647,
+	FORCE_32BIT   = 2147483647,
 }
 
 SNAP_MODE_COUNT :: 4
@@ -3952,8 +3706,7 @@ Surface_Point :: struct {
 
 // -- Mesh topology
 Topo_Flags :: enum c.int {
-	// < Edge with three or more faces
-	NON_MANIFOLD = 1,
+	NON_MANIFOLD      = 1, // < Edge with three or more faces
 	FLAGS_FORCE_32BIT = 2147483647,
 }
 
@@ -4058,14 +3811,9 @@ Stream :: struct {
 }
 
 Open_File_Type :: enum c.int {
-	// < Main model file
-	MAIN_MODEL = 0,
-
-	// < Unknown geometry cache file
-	GEOMETRY_CACHE = 1,
-
-	// < .mtl material library file
-	OBJ_MTL = 2,
+	MAIN_MODEL       = 0, // < Main model file
+	GEOMETRY_CACHE   = 1, // < Unknown geometry cache file
+	OBJ_MTL          = 2, // < .mtl material library file
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -4491,7 +4239,7 @@ Baked_Key_Flag :: enum c.int {
 	REDUCED,
 }
 
-Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; int]
+Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
 
 BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
@@ -5253,7 +5001,7 @@ Transform_Flag :: enum c.int {
 	NO_EXTRAPOLATION = 7,
 }
 
-Transform_Flags :: distinct bit_set[Transform_Flag; int]
+Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 

@@ -135,32 +135,27 @@ Declaration :: struct {
 // 	return t, true
 // }
 
-// find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
-// 	comment_start: int
-// 	semicolon_pos: int
-// 	for i in start_offset..<len(s.source) {
-// 		if s.source[i] == ';' {
-// 			semicolon_pos = i
-// 		}
+find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
+	comment_start: int
+	for i in start_offset..<len(s.source) {
+		if i+2 < len(s.source) {
+			// Comments after proc starting with `//` are not picked up, but
+			// those with `///` are picked up.
+			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
+				comment_start = i
+			}
+		}
 
-// 		if semicolon_pos > 0 && i+2 < len(s.source) {
-// 			// Comments after proc starting with `//` are not picked up, but
-// 			// those with `///` are picked up.
-// 			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
-// 				comment_start = i
-// 			}
-// 		}
-
-// 		if s.source[i] == '\n' {
-// 			if comment_start != 0 {
-// 				side_comment = s.source[comment_start:i]
-// 				ok = true
-// 			}
-// 			return
-// 		}
-// 	}
-// 	return
-// }
+		if s.source[i] == '\n' {
+			if comment_start != 0 {
+				side_comment = s.source[comment_start:i]
+				ok = true
+			}
+			return
+		}
+	}
+	return
+}
 
 // // used to get comments to the right of macros
 // find_comment_at_line_end :: proc(str: string) -> (string, int) {
@@ -1626,6 +1621,7 @@ Config :: struct {
 Gen_State :: struct {
 	using config:       Config,
 	file:               clang.File,
+	source:             string,
 	decls:              [dynamic]Declaration,
 	defines:            map[string]string,
 	symbol_indices:     map[string]int,
@@ -1713,6 +1709,11 @@ gen :: proc(input: string, c: Config) {
 		return
 	}
 
+	get_comment_location :: proc(cursor: clang.Cursor) -> (line: u32) {
+		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &line, nil, nil)
+		return
+	}
+
 	get_cursor_type_string :: proc(cursor: clang.Cursor) -> string {
 		return clang_string_to_string(clang.getTypeSpelling(clang.getCursorType(cursor)))
 	}
@@ -1743,9 +1744,7 @@ gen :: proc(input: string, c: Config) {
 
 		// We could probably make use of `clang.Type` here and not store a string.
 		// This is easier to implement for now. We can make improvments later.
-		return_type := clang_string_to_string(
-			clang.getTypeSpelling(clang.getCursorResultType(cursor)),
-		)
+		return_type := clang_string_to_string(clang.getTypeSpelling(clang.getCursorResultType(cursor)))
 		if return_type != "void" {
 			vet_type(state, return_type)
 		}
@@ -1804,22 +1803,24 @@ gen :: proc(input: string, c: Config) {
 		// 	}
 		// }
 
+		offset: u32
+		clang.getExpansionLocation(clang.getCursorLocation(cursor), nil, nil, nil, &offset)
+		side_comment, _ := find_comment_after_semicolon(int(offset), state)
 		// side_comment: string
-
 		// if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
 		// 	side_comment, _ = find_comment_after_semicolon(end_offset, s)
 		// }
 
-		cline: u32
-		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+		comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
+		cline := get_comment_location(cursor)
 
 		return Function {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			parameters = out_params[:],
 			return_type = return_type == "void" ? "" : return_type,
-			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			comment_before = cline != line,
-			post_comment = "", // What is this?
+			comment = comment,
+			comment_before = comment == "" ? false : cline != line,
+			post_comment = side_comment,
 			variadic = clang.Cursor_isVariadic(cursor) != 0,
 		}
 		// append(
@@ -1874,8 +1875,7 @@ gen :: proc(input: string, c: Config) {
 			// 	}
 			// }
 
-			cline: u32
-			clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+			cline := get_comment_location(cursor)
 
 			comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
 			comment_before := comment == "" ? false : cline != line
@@ -2103,9 +2103,6 @@ gen :: proc(input: string, c: Config) {
 		// }
 		// if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 
-		cline: u32
-		clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
-
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			id = clang_string_to_string(clang.getCursorUSR(cursor)),
@@ -2255,14 +2252,18 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
-				cline: u32
-				clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), nil, &cline, nil, nil)
+				line := get_cursor_location(cursor, nil)
+
+				cline := get_comment_location(cursor)
+
+				comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
+				comment_before := comment == "" ? false : cline != line
 
 				append(data.out_members, Enum_Member {
 					name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 					value = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
-					comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-					comment_before = cline != data.line,
+					comment = comment,
+					comment_before = comment_before,
 				})
 			// append(
 			// 	&out_members,
@@ -2290,18 +2291,12 @@ gen :: proc(input: string, c: Config) {
 		Data :: struct {
 			is_unsigned_type: bool,
 			out_members:      ^[dynamic]Enum_Member,
-			line:             u32,
 		}
 
-		clang.visitChildren(
-			cursor,
-			child_proc,
-			&Data {
-				is_unsigned_type = backing_type.kind >= .Char_U && backing_type.kind <= .UInt128,
-				out_members = &out_members,
-				line = line,
-			},
-		)
+		clang.visitChildren(cursor, child_proc, &Data {
+			is_unsigned_type = backing_type.kind >= .Char_U && backing_type.kind <= .UInt128,
+			out_members = &out_members,
+		})
 
 		return {
 			original_name = clang.Cursor_isAnonymous(cursor) != 0 ? "" : clang_string_to_string(clang.getCursorSpelling(cursor)),
@@ -2432,14 +2427,13 @@ gen :: proc(input: string, c: Config) {
 	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
 	defer os.close(f)
 
+	source_data, source_data_ok := os.read_entire_file(input)
+	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
+	s.source = strings.trim_space(string(source_data))
 	// Extract any big comment at top of file (clang doesn't see these)
 	{
-		source_data, source_data_ok := os.read_entire_file(input)
-		fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
-		src := strings.trim_space(string(source_data))
 		in_block := false
-
-		top_comment_loop: for ll in strings.split_lines_iterator(&src) {
+		top_comment_loop: for ll in strings.split_lines_iterator(&s.source) {
 			l := strings.trim_space(ll)
 
 			if in_block {
@@ -2973,7 +2967,7 @@ gen :: proc(input: string, c: Config) {
 			fp(f, "}\n\n")
 
 			if bit_setify {
-				fpf(f, "%v :: distinct bit_set[%v; %v]\n\n", bit_set_name, name, d.backing_type)
+				fpf(f, "%v :: distinct bit_set[%v; %v]\n\n", bit_set_name, name, translate_type(s, d.backing_type, false))
 
 				// In case there is a typedef for this in the code.
 				add_to_set(&s.created_symbols, bit_set_name)

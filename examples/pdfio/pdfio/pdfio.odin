@@ -32,58 +32,28 @@ error_cb_t :: proc "c" (^file_t, cstring, rawptr) -> bool
 
 // Error callback
 encryption_e :: enum c.int {
-	// No encryption
-	NONE,
-
-	// 40-bit RC4 encryption (PDF 1.3)
-	RC4_40,
-
-	// 128-bit RC4 encryption (PDF 1.4)
-	RC4_128,
-
-	// 128-bit AES encryption (PDF 1.6)
-	AES_128,
-
-	// 256-bit AES encryption (PDF 2.0) @exclude all@
-	AES_256,
+	NONE,    // No encryption
+	RC4_40,  // 40-bit RC4 encryption (PDF 1.3)
+	RC4_128, // 128-bit RC4 encryption (PDF 1.4)
+	AES_128, // 128-bit AES encryption (PDF 1.6)
+	AES_256, // 256-bit AES encryption (PDF 2.0) @exclude all@
 }
 
 // Error callback
 encryption_t :: encryption_e
 
 filter_e :: enum c.int {
-	// No filter
-	NONE,
-
-	// ASCIIHexDecode filter (reading only)
-	ASCIIHEX,
-
-	// ASCII85Decode filter (reading only)
-	ASCII85,
-
-	// CCITTFaxDecode filter
-	CCITTFAX,
-
-	// Encryption filter
-	CRYPT,
-
-	// DCTDecode (JPEG) filter
-	DCT,
-
-	// FlateDecode filter
-	FLATE,
-
-	// JBIG2Decode filter
-	JBIG2,
-
-	// JPXDecode filter (reading only)
-	JPX,
-
-	// LZWDecode filter (reading only)
-	LZW,
-
-	// RunLengthDecode filter (reading only)
-	RUNLENGTH,
+	NONE,      // No filter
+	ASCIIHEX,  // ASCIIHexDecode filter (reading only)
+	ASCII85,   // ASCII85Decode filter (reading only)
+	CCITTFAX,  // CCITTFaxDecode filter
+	CRYPT,     // Encryption filter
+	DCT,       // DCTDecode (JPEG) filter
+	FLATE,     // FlateDecode filter
+	JBIG2,     // JBIG2Decode filter
+	JPX,       // JPXDecode filter (reading only)
+	LZW,       // LZWDecode filter (reading only)
+	RUNLENGTH, // RunLengthDecode filter (reading only)
 }
 
 filter_t :: filter_e
@@ -97,32 +67,17 @@ password_cb_t :: proc "c" (rawptr, cstring) -> cstring
 
 // Password callback for pdfioFileOpen
 permission_e :: enum c.int {
-	// PDF allows printing
-	PRINT = 2,
-
-	// PDF allows modification
-	MODIFY = 3,
-
-	// PDF allows copying
-	COPY = 4,
-
-	// PDF allows annotation
-	ANNOTATE = 5,
-
-	// PDF allows filling in forms
-	FORMS = 8,
-
-	// PDF allows screen reading/accessibility (deprecated in PDF 2.0)
-	READING = 9,
-
-	// PDF allows assembly (insert, delete, or rotate pages, add document outlines and thumbnails)
-	ASSEMBLE = 10,
-
-	// PDF allows high quality printing
-	PRINT_HIGH = 11,
+	PRINT      = 2,  // PDF allows printing
+	MODIFY     = 3,  // PDF allows modification
+	COPY       = 4,  // PDF allows copying
+	ANNOTATE   = 5,  // PDF allows annotation
+	FORMS      = 8,  // PDF allows filling in forms
+	READING    = 9,  // PDF allows screen reading/accessibility (deprecated in PDF 2.0)
+	ASSEMBLE   = 10, // PDF allows assembly (insert, delete, or rotate pages, add document outlines and thumbnails)
+	PRINT_HIGH = 11, // PDF allows high quality printing
 }
 
-permission_t :: distinct bit_set[permission_e; int]
+permission_t :: distinct bit_set[permission_e; c.int]
 
 PERMISSION_ALL :: permission_t { .PRINT, .MODIFY, .COPY, .ANNOTATE, .FORMS, .READING, .ASSEMBLE, .PRINT_HIGH }
 
@@ -139,38 +94,17 @@ stream_t :: struct {}
 
 // Object data stream in PDF file
 valtype_e :: enum c.int {
-	// No value, not set
-	NONE,
-
-	// Array
-	ARRAY,
-
-	// Binary data
-	BINARY,
-
-	// Boolean
-	BOOLEAN,
-
-	// Date/time
-	DATE,
-
-	// Dictionary
-	DICT,
-
-	// Indirect object (N G obj)
-	INDIRECT,
-
-	// Name
-	NAME,
-
-	// Null object
-	NULL,
-
-	// Number (integer or real)
-	NUMBER,
-
-	// String
-	STRING,
+	NONE,     // No value, not set
+	ARRAY,    // Array
+	BINARY,   // Binary data
+	BOOLEAN,  // Boolean
+	DATE,     // Date/time
+	DICT,     // Dictionary
+	INDIRECT, // Indirect object (N G obj)
+	NAME,     // Name
+	NULL,     // Null object
+	NUMBER,   // Number (integer or real)
+	STRING,   // String
 }
 
 // Object data stream in PDF file
