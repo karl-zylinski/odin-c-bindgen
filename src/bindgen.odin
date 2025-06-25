@@ -1696,6 +1696,10 @@ gen :: proc(input: string, c: Config) {
 		fmt.panicf("Failed to parse translation unit for %s. Error code: %i", input, err)
 	}
 
+	source_data, source_data_ok := os.read_entire_file(input)
+	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
+	s.source = strings.trim_space(string(source_data))
+
 	s.file = clang.getFile(unit, input_cstring)
 
 	clang_string_to_string :: proc(str: clang.String) -> string {
@@ -2427,9 +2431,6 @@ gen :: proc(input: string, c: Config) {
 	fmt.ensuref(f_err == nil, "Failed opening %v", output_filename)
 	defer os.close(f)
 
-	source_data, source_data_ok := os.read_entire_file(input)
-	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
-	s.source = strings.trim_space(string(source_data))
 	// Extract any big comment at top of file (clang doesn't see these)
 	{
 		in_block := false
