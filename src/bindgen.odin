@@ -636,8 +636,8 @@ gen :: proc(input: string, c: Config) {
 		return strings.clone_from_cstring(cstr)
 	}
 
-	get_cursor_location :: proc(cursor: clang.Cursor, file: ^clang.File) -> (line: u32) {
-		clang.getExpansionLocation(clang.getCursorLocation(cursor), file, &line, nil, nil)
+	get_cursor_location :: proc(cursor: clang.Cursor, file: ^clang.File = nil, offset: ^u32 = nil) -> (line: u32) {
+		clang.getExpansionLocation(clang.getCursorLocation(cursor), file, &line, nil, offset)
 		return
 	}
 
@@ -661,7 +661,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	// We can probably inline these functions.
-	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor, line: u32) -> Function {
+	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Function {
 		// name, name_ok := json_get_string(decl, "name")
 
 		// if !name_ok {
@@ -736,7 +736,7 @@ gen :: proc(input: string, c: Config) {
 		// }
 
 		offset: u32
-		clang.getExpansionLocation(clang.getCursorLocation(cursor), nil, nil, nil, &offset)
+		line := get_cursor_location(cursor, nil, &offset)
 		side_comment, _ := find_comment_after_semicolon(int(offset), state)
 		// side_comment: string
 		// if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
@@ -1184,12 +1184,8 @@ gen :: proc(input: string, c: Config) {
 				// 	}
 				// }
 
-				line := get_cursor_location(cursor, nil)
-
-				cline := get_comment_location(cursor)
-
 				comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
-				comment_before := comment == "" ? false : cline != line
+				comment_before := comment == "" ? false : get_comment_location(cursor) != get_cursor_location(cursor)
 
 				append(data.out_members, Enum_Member {
 					name = clang_string_to_string(clang.getCursorSpelling(cursor)),
@@ -1300,7 +1296,7 @@ gen :: proc(input: string, c: Config) {
 			append(&state.decls, Declaration {
 				line = int(line),
 				original_idx = len(state.decls),
-				variant = parse_function_decl(state, cursor, line),
+				variant = parse_function_decl(state, cursor),
 			})
 			return .Continue
 		}
