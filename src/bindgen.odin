@@ -1761,12 +1761,12 @@ gen :: proc(input: string, c: Config) {
 			make_constant: map[string]int
 
 			if bit_setify {
-				for &m, i in d.members {
+				for &m in d.members {
 					if bits.count_ones(m.value) != 1 { // Not a power of two, so not part of a bit_set.
 						make_constant[m.name] = m.value
 						continue
 					}
-					m.value = transmute(int)bits.log2(transmute(uint)m.value)
+					m.value = (int)(bits.log2((uint)(m.value)))
 				}
 			}
 
@@ -1903,10 +1903,10 @@ gen :: proc(input: string, c: Config) {
 
 				// There was a member with a compound value, so we need to
 				// decompose it into a constant bit set
-				for name, val in make_constant {
-					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(name), strings.to_lower(s.remove_type_prefix)))
+				for constant_name, constant_val in make_constant {
+					all_constant := strings.to_screaming_snake_case(trim_prefix(strings.to_lower(constant_name), strings.to_lower(s.remove_type_prefix)))
 
-					if val == 0 {
+					if constant_val == 0 {
 						// If the value is 0, we don't need to output it.
 						// This is because the zero value of a bit set is an empty set.
 						continue
@@ -1915,7 +1915,7 @@ gen :: proc(input: string, c: Config) {
 					fpf(f, "%v :: %v {{ ", all_constant, bit_set_name)
 
 					for &m, i in members {
-						if (1 << uint(m.enum_member.value)) & val != 0 {
+						if (1 << uint(m.enum_member.value)) & constant_val != 0 {
 							fpf(f, ".%v", m.name)
 
 							if i != len(members) - 1 {
