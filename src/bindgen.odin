@@ -117,28 +117,6 @@ Declaration :: struct {
 	variant: Declaration_Variant,
 }
 
-find_comment_after_semicolon :: proc(start_offset: int, s: ^Gen_State) -> (side_comment: string, ok: bool) {
-	comment_start: int
-	for i in start_offset..<len(s.source) {
-		if i+2 < len(s.source) {
-			// Comments after proc starting with `//` are not picked up, but
-			// those with `///` are picked up.
-			if s.source[i] == '/' && s.source[i + 1] == '/' && s.source[i + 2] != '/' {
-				comment_start = i
-			}
-		}
-
-		if s.source[i] == '\n' {
-			if comment_start != 0 {
-				side_comment = s.source[comment_start:i]
-				ok = true
-			}
-			return
-		}
-	}
-	return
-}
-
 trim_prefix :: proc(s: string, p: string) -> string {
 	return strings.trim_prefix(strings.trim_prefix(s, p), "_")
 }
@@ -549,7 +527,6 @@ Config :: struct {
 Gen_State :: struct {
 	using config: Config,
 	file: clang.File,
-	source: string,
 	decls: [dynamic]Declaration,
 	defines: map[string]string,
 	symbol_indices: map[string]int,
@@ -623,10 +600,6 @@ gen :: proc(input: string, c: Config) {
 	if err != .Success {
 		fmt.panicf("Failed to parse translation unit for %s. Error code: %i", input, err)
 	}
-
-	source_data, source_data_ok := os.read_entire_file(input)
-	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
-	s.source = strings.trim_space(string(source_data))
 
 	s.file = clang.getFile(unit, input_cstring)
 
@@ -737,7 +710,29 @@ gen :: proc(input: string, c: Config) {
 
 		offset: u32
 		line := get_cursor_location(cursor, nil, &offset)
-		side_comment, _ := find_comment_after_semicolon(int(offset), state)
+		side_comment: string
+		translation_unit := clang.Cursor_getTranslationUnit(cursor)
+		for true {
+			token := clang.getToken(translation_unit, clang.getLocationForOffset(translation_unit, state.file, offset))
+			if token == nil {
+				break
+			}
+
+			defer clang.disposeTokens(translation_unit, token, 1)
+			tline: u32
+			clang.getFileLocation(clang.getTokenLocation(translation_unit, token^), nil, &tline, nil, &offset)
+			if tline != line {
+				break
+			}
+			
+			token_string := clang_string_to_string(clang.getTokenSpelling(translation_unit, token^))
+			if clang.getTokenKind(token^) == .Comment {
+				side_comment = token_string
+				break
+			}
+
+			offset += u32(len(token_string))
+		}
 		// side_comment: string
 		// if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
 		// 	side_comment, _ = find_comment_after_semicolon(end_offset, s)
@@ -1347,8 +1342,11 @@ gen :: proc(input: string, c: Config) {
 
 	// Extract any big comment at top of file (clang doesn't see these)
 	{
+		source_data, source_data_ok := os.read_entire_file(input)
+		fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
+		source := strings.trim_space(string(source_data))
 		in_block := false
-		top_comment_loop: for ll in strings.split_lines_iterator(&s.source) {
+		top_comment_loop: for ll in strings.split_lines_iterator(&source) {
 			l := strings.trim_space(ll)
 
 			if in_block {
