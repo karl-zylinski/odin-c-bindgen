@@ -44,7 +44,8 @@ Mat22 :: struct {
 
 /// Axis-aligned bounding box
 AABB :: struct {
-	lowerBound, upperBound: Vec2,
+	lowerBound: Vec2,
+	upperBound: Vec2,
 }
 
 @(default_calling_convention="c", link_prefix="b2")

@@ -56,11 +56,13 @@ RestitutionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
 /// Result from b2World_RayCastClosest
 /// @ingroup world
 RayResult :: struct {
-	shapeId:                ShapeId,
-	point, normal:          Vec2,
-	fraction:               f32,
-	nodeVisits, leafVisits: c.int,
-	hit:                    bool,
+	shapeId:    ShapeId,
+	point:      Vec2,
+	normal:     Vec2,
+	fraction:   f32,
+	nodeVisits: c.int,
+	leafVisits: c.int,
+	hit:        bool,
 }
 
 /// World definition used to create a simulation world.
@@ -429,13 +431,43 @@ ChainDef :: struct {
 //! @cond
 /// Profiling data. Times are in milliseconds.
 Profile :: struct {
-	step, pairs, collide, solve, mergeIslands, prepareStages, solveConstraints, prepareConstraints, integrateVelocities, warmStart, solveImpulses, integratePositions, relaxImpulses, applyRestitution, storeImpulses, splitIslands, transforms, hitEvents, refit, bullets, sleepIslands, sensors: f32,
+	step:                f32,
+	pairs:               f32,
+	collide:             f32,
+	solve:               f32,
+	mergeIslands:        f32,
+	prepareStages:       f32,
+	solveConstraints:    f32,
+	prepareConstraints:  f32,
+	integrateVelocities: f32,
+	warmStart:           f32,
+	solveImpulses:       f32,
+	integratePositions:  f32,
+	relaxImpulses:       f32,
+	applyRestitution:    f32,
+	storeImpulses:       f32,
+	splitIslands:        f32,
+	transforms:          f32,
+	hitEvents:           f32,
+	refit:               f32,
+	bullets:             f32,
+	sleepIslands:        f32,
+	sensors:             f32,
 }
 
 /// Counters that give details of the simulation size.
 Counters :: struct {
-	bodyCount, shapeCount, contactCount, jointCount, islandCount, stackUsed, staticTreeHeight, treeHeight, byteCount, taskCount: c.int,
-	colorCounts:                                                                                                                 [12]c.int,
+	bodyCount:        c.int,
+	shapeCount:       c.int,
+	contactCount:     c.int,
+	jointCount:       c.int,
+	islandCount:      c.int,
+	stackUsed:        c.int,
+	staticTreeHeight: c.int,
+	treeHeight:       c.int,
+	byteCount:        c.int,
+	taskCount:        c.int,
+	colorCounts:      [12]c.int,
 }
 
 /// Joint type enumeration
@@ -1004,8 +1036,9 @@ BodyEvents :: struct {
 /// from shape A to shape B.
 /// @see b2Shape_GetContactData() and b2Body_GetContactData()
 ContactData :: struct {
-	shapeIdA, shapeIdB: ShapeId,
-	manifold:           Manifold,
+	shapeIdA: ShapeId,
+	shapeIdB: ShapeId,
+	manifold: Manifold,
 }
 
 /// Prototype for a contact filter callback.
