@@ -25,6 +25,7 @@ import "base:runtime"
 import "core:slice"
 import vmem "core:mem/virtual"
 import clang "../libclang"
+
 Struct_Field :: struct {
 	names: [dynamic]string,
 	type: string,
