@@ -12,19 +12,19 @@ and configure the generation. See the examples folder for how to do that.
 
 package bindgen
 
-import clang "../libclang"
-import "base:runtime"
-import "core:encoding/json"
 import "core:fmt"
-import "core:math/bits"
-import vmem "core:mem/virtual"
 import "core:os"
 import "core:os/os2"
-import "core:path/filepath"
-import "core:slice"
 import "core:strings"
+import "core:path/filepath"
+import "core:math/bits"
+import "core:encoding/json"
 import "core:unicode"
 import "core:unicode/utf8"
+import "base:runtime"
+import "core:slice"
+import vmem "core:mem/virtual"
+import clang "../libclang"
 
 Struct_Field :: struct {
 	names: [dynamic]string,
