@@ -110,7 +110,7 @@ Declaration_Variant :: union {
 Declaration :: struct {
 	// Used for sorting the declarations. They may be added out-of-order due to macros
 	// coming in from a separate code path.
-	line: int,
+	cursor: clang.Cursor,
 
 	// The original idx in `s.decls`. This is for tie-breaking when line is the same.
 	original_idx: int,
@@ -880,7 +880,7 @@ gen :: proc(input: string, c: Config) {
 
 			// We have to check for funtions before checking if it's a def.
 			append(&state.decls, Declaration {
-				line = int(line),
+				cursor = cursor,
 				original_idx = len(state.decls),
 				variant = parse_function_decl(state, cursor),
 			})
@@ -910,7 +910,7 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		append(&state.decls, Declaration {
-			line = int(line),
+			cursor = cursor,
 			original_idx = len(state.decls),
 			variant = def,
 		})
@@ -926,10 +926,10 @@ gen :: proc(input: string, c: Config) {
 	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
 
 	slice.sort_by(s.decls[:], proc(i, j: Declaration) -> bool {
-		if i.line == j.line {
-			return i.original_idx < j.original_idx
-		}
-		return i.line < j.line
+		// This should work but I get a linker error. Is the version of libclang from VS dev tools outdated?
+		// return clang.isBeforeInTranslationUnit(clang.getCursorLocation(i.cursor), clang.getCursorLocation(j.cursor)) != 0
+		// This should be fine for now.
+		return get_cursor_location(i.cursor) < get_cursor_location(j.cursor)
 	})
 
 	//
@@ -1725,7 +1725,7 @@ gen :: proc(input: string, c: Config) {
 
 				_, next_is_macro := next.variant.(Macro)
 
-				if !next_is_macro || next.line != decl.line + 1 {
+				if !next_is_macro || get_cursor_location(next.cursor) != get_cursor_location(decl.cursor) + 1 {
 					fp(f, "\n")
 				}
 			}
