@@ -559,7 +559,7 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	//
-	// Run clang and produce an AST in json format that describes the headers.
+	// Parse file using libclang and produce an AST.
 	//
 
 	clang_args := make([]cstring, 1 + len(c.clang_include_paths) + len(c.clang_defines))
@@ -635,39 +635,14 @@ gen :: proc(input: string, c: Config) {
 
 	// We can probably inline these functions.
 	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Function {
-		// name, name_ok := json_get_string(decl, "name")
-
-		// if !name_ok {
-		// 	return
-		// }
-
-		// _, line_ok := json_get_int(decl, "loc.line")
-
-		// if !line_ok {
-		// 	return
-		// }
-
 		// We could probably make use of `clang.Type` here and not store a string.
 		// This is easier to implement for now. We can make improvments later.
 		return_type := clang_string_to_string(clang.getTypeSpelling(clang.getCursorResultType(cursor)))
 		if return_type != "void" {
 			vet_type(state, return_type)
 		}
-		// return_type, has_return_type := get_return_type(decl)
-		// if has_return_type {
-		// 	if is_c_type(return_type) {
-		// 		s.needs_import_c = true
-		// 	} else if is_libc_type(return_type) {
-		// 		s.needs_import_libc = true
-		// 	} else if is_posix_type(return_type) {
-		// 		s.needs_import_posix = true
-		// 	}
-		// }
 
 		out_params: [dynamic]Function_Parameter
-		// out_params: [dynamic]Function_Parameter
-		// comment: string
-		// comment_before: bool
 
 		for i in 0 ..< clang.Cursor_getNumArguments(cursor) {
 			param_cursor := clang.Cursor_getArgument(cursor, u32(i))
@@ -685,28 +660,6 @@ gen :: proc(input: string, c: Config) {
 				fmt.printf("Unexpected cursor kind for parameter: %v\n", param_kind)
 			}
 		}
-		// if params, params_ok := json_get_array(decl, "inner"); params_ok {
-		// 	for &p in params {
-		// 		pkind := json_get_string(p, "kind") or_continue
-
-		// 		if pkind == "ParmVarDecl" {
-		// 			// Empty name is OK. It's an unnamed parameter.
-		// 			param_name, _ := json_get_string(p, "name")
-		// 			param_type := get_parameter_type(s, p) or_continue
-		// 			append(&out_params, Function_Parameter{name = param_name, type = param_type})
-		// 		} else if pkind == "FullComment" {
-		// 			com, com_line, com_line_ok, comment_ok := get_comment_with_line(p, s)
-
-		// 			if comment_ok {
-		// 				comment = com
-
-		// 				if com_line_ok {
-		// 					comment_before = com_line < int(line)
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
 
 		offset: u32
 		line := get_cursor_location(cursor, nil, &offset)
@@ -733,10 +686,6 @@ gen :: proc(input: string, c: Config) {
 
 			offset += u32(len(token_string))
 		}
-		// side_comment: string
-		// if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-		// 	side_comment, _ = find_comment_after_semicolon(end_offset, s)
-		// }
 
 		comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
 		cline := get_comment_location(cursor)
@@ -750,39 +699,9 @@ gen :: proc(input: string, c: Config) {
 			post_comment = side_comment,
 			variadic = clang.Cursor_isVariadic(cursor) != 0,
 		}
-		// append(
-		// 	&s.decls,
-		// 	Declaration {
-		// 		line = line,
-		// 		original_idx = len(s.decls),
-		// 		variant = Function {
-		// 			original_name = name,
-		// 			parameters = out_params[:],
-		// 			return_type = has_return_type ? return_type : "",
-		// 			comment = comment,
-		// 			comment_before = comment_before,
-		// 			post_comment = side_comment,
-		// 			variadic = json_check_bool(decl, "variadic"),
-		// 		},
-		// 	},
-		// )
 	}
 
 	parse_record_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Struct {
-		// name, _ := json_get_string(decl, "name")
-
-		// parse_struct_decl :: proc(s: ^Gen_State, decl: json.Value) -> (res: Struct, ok: bool) {
-		// out_fields: [dynamic]Struct_Field
-		// comment: string
-
-		// if inner, fields_ok := json_get_array(decl, "inner"); fields_ok {
-		// anonymous_struct_types: [dynamic]json.Object
-		// for &i in inner {
-		// 	i_kind := json_get_string(i, "kind") or_continue
-		// 	if i_kind == "RecordDecl" {
-		// 		append(&anonymous_struct_types, i.(json.Object))
-		// 	}
-		// }
 
 		child_proc: clang.Cursor_Visitor : proc "c" (
 			cursor, parent: clang.Cursor,
@@ -790,17 +709,9 @@ gen :: proc(input: string, c: Config) {
 		) -> clang.Child_Visit_Result {
 			context = runtime.default_context()
 			data := (^Data)(data)
-			// prev_line := 0
-			// prev_idx := -1
-			// for &i in inner {
 
 			line: u32
 			clang.getExpansionLocation(clang.getCursorLocation(cursor), nil, &line, nil, nil)
-			// if loc, loc_ok := json_get_object(i, "loc"); loc_ok {
-			// 	if lline, lline_ok := json_get_int(loc, "line"); lline_ok {
-			// 		prev_line = lline
-			// 	}
-			// }
 
 			cline := get_comment_location(cursor)
 
@@ -809,134 +720,10 @@ gen :: proc(input: string, c: Config) {
 
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .FieldDecl:
-				// i_kind := json_get_string(i, "kind") or_continue
-				// if i_kind == "FieldDecl" {
-
 				type := get_cursor_type_string(cursor)
-				// field_name, field_name_exists := json_get_string(i, "name")
-				// get_parameter_type :: proc(s: ^Gen_State, v: json.Value) -> (type: string, ok: bool) {
-				// 	t := json_get(v, "type.qualType", json.String) or_return
-
-				// 	if is_c_type(t) {
-				// 		s.needs_import_c = true
-				// 	}
-
-				// 	if is_libc_type(t) {
-				// 		s.needs_import_libc = true
-				// 	}
-
-				// 	if is_posix_type(t) {
-				// 		s.needs_import_posix = true
-				// 	}
-
-				// 	return t, true
-				// }
-				// field_type := get_parameter_type(s, i) or_continue
-				// field_anon_struct_type: Maybe(Struct)
-
-				// How to check is this is true?
-				// is_implicit := json_check_bool(i, "isImplicit")
-
-				// has_unnamed_type: bool
-				// unnamed_type_line: int
-				// unnamed_type_col: int
-				// anon_using: bool
-
-				// ANON_STRUCT_MARKER :: "struct (unnamed struct at "
-				// ANON_UNION_MARKER :: "union (unnamed union at "
-
-				// is_anon_struct := strings.has_prefix(field_type, ANON_STRUCT_MARKER)
-				// is_anon_union := strings.has_prefix(field_type, ANON_UNION_MARKER)
-
-				// We should use this to check if the field is a bit-field. issue #35
-				// clang.Cursor_isBitField(cursor) != 0
-
-				// if is_anon_struct || is_anon_union {
-				// 	location := is_anon_struct ? field_type[len(ANON_STRUCT_MARKER):len(field_type) - 1] : field_type[len(ANON_UNION_MARKER):len(field_type) - 1]
-
-				// 	loc_parts := strings.split(location, ":")
-				// 	assert(len(loc_parts) == 3)
-
-				// 	has_unnamed_type = true
-				// 	unnamed_type_line = strconv.atoi(loc_parts[1])
-				// 	unnamed_type_col = strconv.atoi(loc_parts[2])
-				// } else if is_implicit {
-				// 	LOC_START_MARKER :: "anonymous at "
-				// 	loc_start := strings.index(field_type, LOC_START_MARKER)
-
-				// 	if loc_start != -1 {
-				// 		location := field_type[loc_start +
-				// 		len(LOC_START_MARKER):len(field_type) -
-				// 		1]
-				// 		loc_parts := strings.split(location, ":")
-				// 		assert(len(loc_parts) == 3)
-
-				// 		anon_using = true
-				// 		has_unnamed_type = true
-				// 		unnamed_type_line = strconv.atoi(loc_parts[1])
-				// 		unnamed_type_col = strconv.atoi(loc_parts[2])
-				// 	}
-				// }
-
-				// if has_unnamed_type {
-				// 	for a in anonymous_struct_types {
-				// 		aloc := json_get(a, "loc", json.Object) or_continue
-				// 		aline := json_get(aloc, "line", json.Integer) or_else i64(prev_line)
-				// 		acol := json_get(aloc, "col", json.Integer) or_continue
-
-				// 		if unnamed_type_line == int(aline) && unnamed_type_col == int(acol) {
-				// 			if anon_struct, anon_struct_ok := parse_struct_decl(s, a);
-				// 			anon_struct_ok {
-				// 				field_anon_struct_type = anon_struct
-				// 			}
-				// 		}
-				// 	}
-				// }
-
-				// field_comment: string
-				// field_comment_before: bool
-				// field_line, field_line_ok := json_get_int(i, "loc.line")
-
-				// if field_inner, field_inner_ok := json_get_array(i, "inner"); field_inner_ok {
-				// 	for &fi in field_inner {
-				// 		fi_kind := json_get_string(fi, "kind") or_continue
-
-				// 		if fi_kind == "FullComment" {
-				// 			com, com_line, com_line_ok, comment_ok := get_comment_with_line(fi, s)
-
-				// 			if comment_ok {
-				// 				field_comment = com
-
-				// 				if com_line_ok {
-				// 					field_comment_before =
-				// 						!field_line_ok || com_line < int(field_line)
-				// 				}
-				// 			}
-				// 		}
-				// 	}
-				// }
-
 				if prev_idx := len(data.out_fields) - 1; prev_idx >= 0 && data.out_fields[prev_idx].type == type && data.out_fields[prev_idx].original_line == int(line) {
 					append(&data.out_fields[len(data.out_fields) - 1].names, clang_string_to_string(clang.getCursorSpelling(cursor)))
-					// merge: bool
-					// if field_name_exists && prev_idx != -1 {
-					// 	prev := &out_fields[prev_idx]
-
-					// 	if field_line_ok {
-					// 		if prev.original_line == field_line && prev.type == field_type {
-					// 			merge = true
-					// 		}
-					// 	} else if prev.type == field_type {
-					// 		merge = true
-					// 	}
-					// }
-
-					// if merge {
-					// 	assert(prev_idx != -1, "Merge requested by prev_idx == -1")
-					// 	prev := &out_fields[prev_idx]
-					// 	append(&prev.names, field_name)
 				} else {
-					// } else {
 					append(&data.out_fields, Struct_Field {
 						names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
 						type = type,
@@ -945,31 +732,9 @@ gen :: proc(input: string, c: Config) {
 						comment_before = comment_before,
 						original_line = int(line),
 					})
-					// f := Struct_Field {
-					// 	type             = field_type,
-					// 	anon_struct_type = field_anon_struct_type,
-					// 	anon_using       = anon_using,
-					// 	comment          = field_comment,
-					// 	comment_before   = field_comment_before,
-					// 	original_line    = field_line,
-					// }
-
-					// if field_name_exists {
-					// 	append(&f.names, field_name)
-					// }
-
-					// append(&out_fields, f)
 
 					vet_type(data.state, type)
-					// if is_c_type(field_type) {
-					// 	s.needs_import_c = true
-					// } else if is_libc_type(field_type) {
-					// 	s.needs_import_libc = true
-					// } else if is_posix_type(field_type) {
-					// 	s.needs_import_posix = true
-					// }
 				}
-			// }
 			case .StructDecl, .UnionDecl:
 				append(&data.out_fields, Struct_Field {
 					names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
@@ -982,20 +747,10 @@ gen :: proc(input: string, c: Config) {
 				})
 			case:
 				// For debugging purposes.
-				fmt.printf(
-					"Unexpected cursor kind for field: %v, name: %s\n",
-					kind,
-					clang_string_to_string(clang.getCursorSpelling(cursor)),
-				)
+				fmt.printf("Unexpected cursor kind for field: %v, name: %s\n", kind, clang_string_to_string(clang.getCursorSpelling(cursor)))
 			}
-			// 	} else if i_kind == "FullComment" {
-			// 		comment, _ = get_comment(i, s)
-			// 	}
-			// }
-
 			return .Continue
 		}
-		// }
 
 		Data :: struct {
 			state: ^Gen_State,
@@ -1008,17 +763,6 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		clang.visitChildren(cursor, child_proc, &data)
-		// struct_decl = res = {
-		// 	comment            = comment,
-		// 	fields             = out_fields[:],
-		// 	is_union           = (json_get_string(decl, "tagUsed") or_else "") == "union",
-		// 	is_forward_declare = !json_check_bool(decl, "completeDefinition"),
-		// }
-		// struct_decl_ok = ok = true
-
-		// 	return
-		// }
-		// if struct_decl, struct_decl_ok := parse_struct_decl(s, decl); struct_decl_ok {
 
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
@@ -1027,166 +771,42 @@ gen :: proc(input: string, c: Config) {
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			is_union = clang.getCursorKind(cursor) == .UnionDecl,
 		}
-		// 	struct_decl.original_name = name
-		// 	struct_decl.id = id
-
-		// 	if name != "" {
-		// 		if forward_idx, forward_declared := s.symbol_indices[name]; forward_declared {
-		// 			s.decls[forward_idx] = {}
-		// 		}
-
-		// 		s.symbol_indices[name] = len(s.decls)
-		// 	}
-		// 	append(
-		// 		&s.decls,
-		// 		Declaration{line = line, original_idx = len(s.decls), variant = struct_decl},
-		// 	)
-		// }
 	}
 
 	parse_typedef_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Typedef {
-		// type, type_ok := get_parameter_type(s, decl)
-
-		// if !type_ok {
-		// 	return
-		// }
-
-		// name, _ := json_get_string(decl, "name")
-		// _, line_ok := json_get_int(decl, "loc.line")
-
-		// pre_comment: string
-		// side_comment: string
-
-		// We don't need to check for an elaborated type here, because the libclang function we used above
-		// already returns the underlying type of the typedef, which is what we want. (I think...)
-		// if typedef_inner, typedef_inner_ok := json_get_array(decl, "inner"); typedef_inner_ok {
-		// 	for &i in typedef_inner {
-		// 		inner_kind := json_get_string(i, "kind") or_continue
-
-		// 		if inner_kind == "ElaboratedType" {
-		// 			if typedeffed_id, typedeffed_id_ok := json_get_string(i, "ownedTagDecl.id");
-		// 			   typedeffed_id_ok {
-		// 				type = typedeffed_id
-		// 			}
-		// 		} else if inner_kind == "FullComment" {
-		// 			comment, comment_line, comment_line_ok, comment_ok := get_comment_with_line(
-		// 				i,
-		// 				s,
-		// 			)
-
-		// 			if comment_ok {
-		// 				if comment_line_ok && line_ok && comment_line >= line {
-		// 					side_comment = comment
-		// 				} else {
-		// 					pre_comment = comment
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
-
-		// No clue how to do this with libclang yet.
-		// if end_offset, end_offset_ok := json_get_int(decl, "range.end.offset"); end_offset_ok {
-		// 	side_comment, _ = find_comment_after_semicolon(end_offset, s)
-		// }
-
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			type = clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor))),
 			pre_comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			side_comment = "",
 		}
-		// s.typedefs[type] = name
-		// append(
-		// 	&s.decls,
-		// 	Declaration {
-		// 		line = line,
-		// 		original_idx = len(s.decls),
-		// 		variant = Typedef {
-		// 			original_name = name,
-		// 			type = type,
-		// 			pre_comment = pre_comment,
-		// 			side_comment = side_comment,
-		// 		},
-		// 	},
-		// )
 	}
 
 	parse_enum_decl :: proc(state: ^Gen_State, cursor: clang.Cursor, line: u32) -> Enum {
-		// name, _ := json_get_string(decl, "name")
-
 		out_members: [dynamic]Enum_Member
-		// comment: string
-		// out_members: [dynamic]Enum_Member
 
 		backing_type := clang.getEnumDeclIntegerType(cursor)
 		backing_type_string := clang_string_to_string(clang.getTypeSpelling(backing_type))
 		vet_type(state, backing_type_string)
-		// s.needs_import_c = true // enums all use c.int
 
 		child_proc: clang.Cursor_Visitor : proc "c" (
 			cursor, parent: clang.Cursor,
 			data: clang.Client_Data,
 		) -> clang.Child_Visit_Result {
-			// if inner, inner_ok := json_get_array(decl, "inner"); inner_ok {
-			// 	for &m in inner {
-			// 		inner_kind := json_get_string(m, "kind") or_continue
 			context = runtime.default_context()
 			data := (^Data)(data)
 
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .EnumConstantDecl:
-				// if inner_kind == "EnumConstantDecl" {
-				// Still have no clue how to get the comment line with libclang.
-
-				// 	member_name := json_get_string(m, "name") or_continue
-				// 	member_value: Maybe(int)
-				// 	member_comment: string
-				// 	member_comment_before: bool
-				// 	member_line, member_line_ok := json_get_int(m, "loc.line")
-
-				// if values, values_ok := json_get_array(m, "inner"); values_ok {
-				// 	for &vv in values {
-				// 		value_kind := json_get_string(vv, "kind") or_continue
-
-				// 		if value_kind == "ConstantExpr" {
-				// 			value := json_get_string(vv, "value") or_continue
-				// 			member_value = strconv.atoi(value)
-				// 		} else if value_kind == "FullComment" {
-				// 			com, com_line, com_line_ok, comment_ok := get_comment_with_line(
-				// 				vv,
-				// 				s,
-				// 			)
-
-				// 			if comment_ok {
-				// 				member_comment = com
-
-				// 				if com_line_ok && member_line_ok {
-				// 					member_comment_before = com_line < int(member_line)
-				// 				}
-				// 			}
-				// 		}
-				// 	}
-				// }
-
 				comment := clang_string_to_string(clang.Cursor_getRawCommentText(cursor))
 				comment_before := comment == "" ? false : get_comment_location(cursor) != get_cursor_location(cursor)
 
 				append(data.out_members, Enum_Member {
 					name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-					value = data.is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(cursor)) : int(clang.getEnumConstantDeclValue(cursor)),
+					value = data.is_unsigned_type ? (int)(clang.getEnumConstantDeclUnsignedValue(cursor)) : (int)(clang.getEnumConstantDeclValue(cursor)),
 					comment = comment,
 					comment_before = comment_before,
 				})
-			// append(
-			// 	&out_members,
-			// 	Enum_Member {
-			// 		name = member_name,
-			// 		value = member_value,
-			// 		comment = member_comment,
-			// 		comment_before = member_comment_before,
-			// 	},
-			// )
 			case:
 				// For debugging purposes.
 				fmt.printf("Unexpected cursor kind for enum member: %v\n", kind)
@@ -1194,12 +814,6 @@ gen :: proc(input: string, c: Config) {
 
 			return .Continue
 		}
-
-		//  } else if inner_kind == "FullComment" {
-		// 			comment, _ = get_comment(m, s)
-		// 		}
-		// 	}
-		// }
 
 		Data :: struct {
 			is_unsigned_type: bool,
@@ -1218,19 +832,6 @@ gen :: proc(input: string, c: Config) {
 			members = out_members[:],
 			backing_type = backing_type_string,
 		}
-		// append(
-		// 	&s.decls,
-		// 	Declaration {
-		// 		line = line,
-		// 		original_idx = len(s.decls),
-		// 		variant = Enum {
-		// 			original_name = name,
-		// 			id = id,
-		// 			comment = comment,
-		// 			members = out_members[:],
-		// 		},
-		// 	},
-		// )
 	}
 
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
@@ -1257,7 +858,7 @@ gen :: proc(input: string, c: Config) {
 
 		kind := clang.getCursorKind(cursor)
 		// Need to figure out how to get macro expansion values out and not parse certain macro definitions.
-		// We can't just check the file origin of the macro expansion unfortunatly as it doesn't stop us from pulling weird shit (e.g. _STDC_VERSION__).
+		// We can't just check the file origin of the macro unfortunatly as it doesn't stop us from pulling weird things (e.g. _STDC_VERSION__).
 		#partial switch kind {
 		// This doesn't work yet.
 		// case .MacroDefinition:
