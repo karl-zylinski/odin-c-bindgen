@@ -774,6 +774,8 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	parse_typedef_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Typedef {
+		type := clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor)))
+		vet_type(state, type)	
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			type = clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor))),
