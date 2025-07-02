@@ -42,8 +42,8 @@ THREAD_GROUP_COUNT :: 4
 // FLAG_REPR :: 
 HAS_FORCE_32BIT :: 1
 
-HEADER_VERSION :: )((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
-VERSION :: )((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
+HEADER_VERSION :: ((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
+VERSION :: ((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
