@@ -33,7 +33,7 @@
 #define UFBX_HEADER_VERSION ufbx_pack_version(0, 18, 0)
 #define FUNC_ALIAS ufbx_pack_version
 
-#define NO_INDEX (uint32_t)0
+#define NO_INDEX ~(uint32_t)0
 
 #define VALUE 20010
 #define VALUE_STRING #VALUE
@@ -92,5 +92,12 @@ typedef time_t my_time;
 typedef int simple_typedef;
 
 typedef void void_typedef;
+
+#define INT int
+
+#define TYPE simple_typedef
+
+#define TEST_MACRO \
+  1
 
 #pragma GCC pop_options

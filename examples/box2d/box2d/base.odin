@@ -8,6 +8,11 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+// BOX2D_EXPORT :: 
+
+// API :: BOX2D_EXPORT
+// INLINE :: 
+
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
@@ -19,6 +24,8 @@ FreeFcn :: proc "c" (rawptr)
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
+
+// BREAKPOINT :: __debugbreak()
 
 /// Version numbering scheme.
 /// See https://semver.org/
@@ -32,6 +39,8 @@ Version :: struct {
 	/// Bug fixes
 	revision: c.int,
 }
+
+HASH_INIT :: 5381
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {

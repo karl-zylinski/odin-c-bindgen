@@ -6,6 +6,45 @@ _ :: c
 
 foreign import lib "ufbx.lib"
 
+// UFBX_H_INCLUDED :: 
+
+// STDC :: __STDC_VERSION__
+
+CPP :: 0
+
+// PLATFORM_MSC :: _MSC_VER
+
+PLATFORM_GNUC :: 0
+
+CPP11 :: 0
+
+// ufbx_inline :: 
+
+// ufbx_nullable :: 
+
+// ufbx_unsafe :: 
+
+// ufbx_abi :: 
+
+// ufbx_abi_data :: 
+
+// ufbx_abi_data_def :: 
+
+REAL_TYPE :: f32
+
+ERROR_STACK_MAX_DEPTH :: 8
+PANIC_MESSAGE_LENGTH :: 128
+ERROR_INFO_LENGTH :: 256
+
+THREAD_GROUP_COUNT :: 4
+
+// ENUM_REPR :: 
+// FLAG_REPR :: 
+HAS_FORCE_32BIT :: 1
+
+HEADER_VERSION :: )((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
+VERSION :: )((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
+
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
 // as `float` instead.
@@ -115,6 +154,8 @@ String_List :: struct {
 	data:  [^]String,
 	count: c.size_t,
 }
+
+NO_INDEX :: ((u32)~0)
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {
@@ -5198,6 +5239,31 @@ Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
+Lcl_Translation :: "Lcl Translation"
+
+Lcl_Rotation :: "Lcl Rotation"
+
+Lcl_Scaling :: "Lcl Scaling"
+
+RotationOrder :: "RotationOrder"
+
+ScalingPivot :: "ScalingPivot"
+
+RotationPivot :: "RotationPivot"
+
+ScalingOffset :: "ScalingOffset"
+
+RotationOffset :: "RotationOffset"
+
+PreRotation :: "PreRotation"
+
+PostRotation :: "PostRotation"
+
+Visibility :: "Visibility"
+
+Weight :: "Weight"
+
+DeformPercent :: "DeformPercent"
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
 	// Practically always `true` (see below), if not you need to be careful with threads.

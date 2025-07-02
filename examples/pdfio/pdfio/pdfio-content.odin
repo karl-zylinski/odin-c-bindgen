@@ -14,6 +14,8 @@ _ :: c
 
 foreign import lib "pdfio1.lib"
 
+// PDFIO_CONTENT_H :: 
+
 //
 // Types and constants...
 //
