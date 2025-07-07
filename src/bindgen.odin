@@ -892,10 +892,8 @@ gen :: proc(input: string, c: Config) {
 			offset += u32(len(token_string))
 		}
 
-		name := clang_string_to_string(clang.getCursorSpelling(cursor))
-		state.macro_defines[name] = len(state.decls)
 		return {
-			original_name = name,
+			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			tokens = tokens[:],
 			has_been_evaluated = false,
 			is_function = bool(clang.Cursor_isMacroFunctionLike(cursor)),
@@ -1084,7 +1082,7 @@ gen :: proc(input: string, c: Config) {
 	// Figure out all type names
 	//
 
-	for &decl in s.decls {
+	for &decl, i in s.decls {
 		du := &decl.variant
 		switch &d in du {
 		case Struct:
@@ -1174,6 +1172,7 @@ gen :: proc(input: string, c: Config) {
 			add_to_set(&s.created_types, d.name)
 		case Macro:
 			name := d.original_name
+			s.macro_defines[name] = i
 
 			if replacement, has_replacement := s.rename[name]; has_replacement {
 				name = replacement
@@ -1862,8 +1861,8 @@ gen :: proc(input: string, c: Config) {
 							strings.write_string(&builder, translate_type(state^, token_str, false))
 						}
 					case .Identifier:
-						val, offset := parse_identifier(state, cursor, macro, index)
-						index += offset
+						val, offset2 := parse_identifier(state, cursor, macro, index)
+						index += offset2
 						if val == "" {
 							macro.should_not_output = true
 							val = token_str // Fallback to the original token string.
@@ -1992,16 +1991,14 @@ gen :: proc(input: string, c: Config) {
 		}
 	}
 
-	for &decl in s.decls {
-		#partial switch &d in decl.variant {
-		case Macro:
-			tu := clang.Cursor_getTranslationUnit(decl.cursor)
-			for token in d.tokens {
-				// This function implies that we can dispose of multiple tokens at once.
-				// However the type of the `token` parameter is a pointer to a single token.
-				// Maybe internally they use pointer arithmetic to dispose of multiple tokens?
-				clang.disposeTokens(tu, token, 1)
-			}
+	for _, index in s.macro_defines {
+		decl := &s.decls[index]
+		tu := clang.Cursor_getTranslationUnit(decl.cursor)
+		for token in decl.variant.(Macro).tokens {
+			// This function implies that we can dispose of multiple tokens at once.
+			// However the type of the `token` parameter is a pointer to a single token.
+			// Maybe internally they use pointer arithmetic to dispose of multiple tokens?
+			clang.disposeTokens(tu, token, 1)
 		}
 	}
 
