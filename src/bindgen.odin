@@ -1683,7 +1683,11 @@ gen :: proc(input: string, c: Config) {
 				if is_c_type(token_str) {
 					return translate_type(state^, token_str, false), 0
 				} else if decl_index, exists := state.macro_defines[token_str]; exists {
-					return expand_inner_macro(state, cursor, macro, &state.decls[decl_index], index)
+					val, offset := expand_inner_macro(state, cursor, macro, &state.decls[decl_index], index)
+					if !state.decls[decl_index].variant.(Macro).should_not_output {
+						val = state.decls[decl_index].variant.(Macro).name
+					}
+					return val, offset
 				} else if token_str == "true" || token_str == "false" {
 					return token_str, 0	
 				}
