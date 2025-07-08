@@ -29,8 +29,7 @@ import clang "../libclang"
 
 Struct_Field :: struct {
 	names: [dynamic]string,
-	type: string,
-	anon_struct_type: Maybe(Struct),
+	type: clang.Type,
 	anon_using: bool,
 	comment: string,
 	comment_before: bool,
@@ -44,6 +43,7 @@ Struct :: struct {
 	fields: []Struct_Field,
 	comment: string,
 	is_union: bool,
+	is_anon: bool,
 	is_forward_declare: bool,
 }
 
@@ -85,7 +85,7 @@ Enum :: struct {
 Typedef :: struct {
 	original_name: string,
 	name: string,
-	type: string,
+	type: clang.Type,
 	pre_comment: string,
 	side_comment: string,
 }
@@ -626,8 +626,8 @@ gen :: proc(input: string, c: Config) {
 		return
 	}
 
-	get_cursor_type_string :: proc(cursor: clang.Cursor) -> string {
-		return clang_string_to_string(clang.getTypeSpelling(clang.getCursorType(cursor)))
+	type_to_string :: proc(type: clang.Type) -> string {
+		return clang_string_to_string(clang.getTypeSpelling(type))
 	}
 
 	vet_type :: proc(s: ^Gen_State, t: string) -> bool {
@@ -729,8 +729,8 @@ gen :: proc(input: string, c: Config) {
 
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .FieldDecl:
-				type := get_cursor_type_string(cursor)
-				if prev_idx := len(data.out_fields) - 1; prev_idx >= 0 && data.out_fields[prev_idx].type == type && data.out_fields[prev_idx].original_line == int(line) {
+				type := clang.getCursorType(cursor)
+				if prev_idx := len(data.out_fields) - 1; prev_idx >= 0 && bool(clang.equalTypes(data.out_fields[prev_idx].type, type)) && data.out_fields[prev_idx].original_line == int(line) {
 					append(&data.out_fields[len(data.out_fields) - 1].names, clang_string_to_string(clang.getCursorSpelling(cursor)))
 				} else {
 					append(&data.out_fields, Struct_Field {
@@ -742,17 +742,13 @@ gen :: proc(input: string, c: Config) {
 						original_line = int(line),
 					})
 
-					vet_type(data.state, type)
+					vet_type(data.state, type_to_string(type))
 				}
 			case .StructDecl, .UnionDecl:
-				append(&data.out_fields, Struct_Field {
-					names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
-					type = get_cursor_type_string(cursor),
-					anon_struct_type = parse_record_decl(data.state, cursor),
-					anon_using = true,
-					comment = comment,
-					comment_before = comment_before,
-					original_line = int(line),
+				append(&data.state.decls, Declaration {
+					cursor = cursor,
+					original_idx = len(data.state.decls),
+					variant = parse_record_decl(data.state, cursor),
 				})
 			case:
 				// For debugging purposes.
@@ -779,12 +775,12 @@ gen :: proc(input: string, c: Config) {
 			fields = data.out_fields[:],
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			is_union = clang.getCursorKind(cursor) == .UnionDecl,
+			is_anon = bool(clang.Cursor_isAnonymous(cursor)),
 		}
 	}
 
 	parse_typedef_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Typedef {
-		type := clang_string_to_string(clang.getTypeSpelling(clang.getTypedefDeclUnderlyingType(cursor)))
-		vet_type(state, type)	
+		type := clang.getTypedefDeclUnderlyingType(cursor)
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			type = type,
@@ -837,7 +833,7 @@ gen :: proc(input: string, c: Config) {
 		})
 
 		return {
-			original_name = clang.Cursor_isAnonymous(cursor) != 0 ? "" : clang_string_to_string(clang.getCursorSpelling(cursor)),
+			original_name = bool(clang.Cursor_isAnonymous(cursor)) ? "" : clang_string_to_string(clang.getCursorSpelling(cursor)),
 			id = clang_string_to_string(clang.getCursorUSR(cursor)),
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			members = out_members[:],
@@ -986,7 +982,8 @@ gen :: proc(input: string, c: Config) {
 
 	slice.sort_by(s.decls[:], proc(i, j: Declaration) -> bool {
 		// This should work but I get a linker error. Is the version of libclang from VS dev tools outdated?
-		// return clang.isBeforeInTranslationUnit(clang.getCursorLocation(i.cursor), clang.getCursorLocation(j.cursor)) != 0
+		// return bool(clang.isBeforeInTranslationUnit(clang.getCursorLocation(i.cursor), clang.getCursorLocation(j.cursor)))
+
 		// This should be fine for now.
 		return get_cursor_location(i.cursor) < get_cursor_location(j.cursor)
 	})
@@ -1086,6 +1083,11 @@ gen :: proc(input: string, c: Config) {
 		du := &decl.variant
 		switch &d in du {
 		case Struct:
+			if d.is_anon {
+				s.symbol_indices[d.original_name] = i
+				continue // Skip anonymous structs.
+			}
+
 			name := d.original_name
 
 			// This is really ugly, if you can simplify this, please do.
@@ -1190,9 +1192,171 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	for &decl, decl_idx in s.decls {
+		output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: string) -> string {
+			w := strings.builder_make()
+			ws :: strings.write_string
+			ws(&w, "struct ")
+
+			if d.is_union {
+				ws(&w, "#raw_union ")
+			}
+
+			ws(&w, "{\n")
+
+			longest_field_name_with_side_comment: int
+
+			for &field in d.fields {
+				if bool(clang.Cursor_isAnonymous(clang.getTypeDeclaration(field.type))) {
+					continue
+				}
+
+				field_len: int
+				for fn, nidx in field.names {
+					if nidx != 0 {
+						field_len += 2 // for comma and space
+					}
+
+					field_len += len(vet_name(fn))
+				}
+				if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
+					longest_field_name_with_side_comment = field_len
+				}
+			}
+
+			Formatted_Field :: struct {
+				field:          string,
+				comment:        string,
+				comment_before: bool,
+			}
+
+			fields: [dynamic]Formatted_Field
+
+			for &field in d.fields {
+				b := strings.builder_make()
+
+				override_key: string
+
+				if field.anon_using {
+					strings.write_string(&b, "using _: ")
+				} else {
+					for fn, nidx in field.names {
+						if nidx != 0 {
+							strings.write_string(&b, ", ")
+						}
+
+						strings.write_string(&b, vet_name(fn))
+					}
+
+					names_len := strings.builder_len(b)
+					override_key = fmt.tprintf("%s.%s", d.original_name, strings.to_string(b))
+					strings.write_string(&b, ": ")
+
+					if !field.comment_before {
+						// Padding between name and =
+						for _ in 0..<longest_field_name_with_side_comment-names_len {
+							strings.write_rune(&b, ' ')
+						}
+					}
+				}
+
+				field_type: string
+				
+				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; override_key != "" && has_field_type_override {
+					if field_type_override == "[^]" {
+						// Change first `^` for `[^]`
+						field_type = translate_type(s, type_to_string(field.type), true)
+					} else {
+						field_type = field_type_override
+					}
+				} else {
+					field_type = translate_type(s, type_to_string(field.type), false)
+				}
+
+				comment := field.comment
+				comment_before := field.comment_before
+
+				if bool(clang.Cursor_isAnonymous(clang.getTypeDeclaration(field.type))) {
+					decl_index, exists := s.symbol_indices[clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(field.type)))]
+					if exists {
+						anon_struct := s.decls[decl_index].variant.(Struct)
+						if anon_struct.comment != "" {
+							comment = anon_struct.comment
+							comment_before = true
+						}
+
+						field_type = output_struct(s, anon_struct, indent + 1, n)
+					}
+				}
+
+				strings.write_string(&b, field_type)
+
+				append(&fields, Formatted_Field {
+					field = strings.to_string(b),
+					comment = comment,
+					comment_before = comment_before,
+				})
+			}
+
+			longest_field_with_side_comment: int
+
+			for &field in fields {
+				if field.comment != "" && !field.comment_before {
+					longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
+				}
+			}
+
+			for &field, field_idx in fields {
+				has_comment := field.comment != ""
+				comment_before := field.comment_before
+
+				if has_comment && comment_before {
+					if field_idx != 0 {
+						ws(&w, "\n")
+					}
+
+					ci := field.comment
+					for l in strings.split_lines_iterator(&ci) {
+						for _ in 0..<indent+1 {
+							ws(&w, "\t")
+						}
+						ws(&w, strings.trim_space(l))
+						ws(&w, "\n")
+					}
+				}
+
+				for _ in 0..<indent+1 {
+					ws(&w, "\t")
+				}
+				ws(&w, field.field)
+				ws(&w, ",")
+
+				if has_comment && !comment_before {
+					// Padding in front of comment
+					for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
+						ws(&w, " ")
+					}
+
+					ws(&w, " ")
+					ws(&w, field.comment)
+				}
+
+				ws(&w, "\n")
+			}
+
+			for _ in 0..<indent {
+				ws(&w, "\t")
+			}
+			ws(&w, "}")
+			return strings.to_string(w)
+		}
+
 		du := &decl.variant
 		switch &d in du {
 		case Struct:
+			if d.is_anon {
+				continue // Skip anonymous structs.
+			}
+
 			n := d.name
 
 			if d.is_forward_declare {
@@ -1217,160 +1381,6 @@ gen :: proc(input: string, c: Config) {
 				fp(f, override)
 				fp(f, "\n\n")
 				break
-			}
-
-			output_struct :: proc(s: Gen_State, d: Struct, indent: int, n: string) -> string {
-				w := strings.builder_make()
-				ws :: strings.write_string
-				ws(&w, "struct ")
-
-				if d.is_union {
-					ws(&w, "#raw_union ")
-				}
-
-				ws(&w, "{\n")
-
-				longest_field_name_with_side_comment: int
-
-				for &field in d.fields {
-					if _, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
-						continue
-					}
-
-					field_len: int
-					for fn, nidx in field.names {
-						if nidx != 0 {
-							field_len += 2 // for comma and space
-						}
-
-						field_len += len(vet_name(fn))
-					}
-					if (field.comment == "" || !field.comment_before) && field_len > longest_field_name_with_side_comment {
-						longest_field_name_with_side_comment = field_len
-					}
-				}
-
-				Formatted_Field :: struct {
-					field:          string,
-					comment:        string,
-					comment_before: bool,
-				}
-
-				fields: [dynamic]Formatted_Field
-
-				for &field in d.fields {
-					b := strings.builder_make()
-
-					override_key: string
-
-					if field.anon_using {
-						strings.write_string(&b, "using _: ")
-					} else {
-						for fn, nidx in field.names {
-							if nidx != 0 {
-								strings.write_string(&b, ", ")
-							}
-
-							strings.write_string(&b, vet_name(fn))
-						}
-
-						names_len := strings.builder_len(b)
-						override_key = fmt.tprintf("%s.%s", d.original_name, strings.to_string(b))
-						strings.write_string(&b, ": ")
-
-						if !field.comment_before {
-							// Padding between name and =
-							for _ in 0..<longest_field_name_with_side_comment-names_len {
-								strings.write_rune(&b, ' ')
-							}
-						}
-					}
-
-					field_type: string
-					
-					if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; override_key != "" && has_field_type_override {
-						if field_type_override == "[^]" {
-							// Change first `^` for `[^]`
-							field_type = translate_type(s, field.type, true)
-						} else {
-							field_type = field_type_override
-						}
-					} else {
-						field_type = translate_type(s, field.type, false)
-					}
-
-					comment := field.comment
-					comment_before := field.comment_before
-
-					if anon_struct, anon_struct_ok := field.anon_struct_type.?; anon_struct_ok {
-						if anon_struct.comment != "" {
-							comment = anon_struct.comment
-							comment_before = true
-						}
-
-						field_type = output_struct(s, anon_struct, indent + 1, n)
-					}
-
-					strings.write_string(&b, field_type)
-
-					append(&fields, Formatted_Field {
-						field = strings.to_string(b),
-						comment = comment,
-						comment_before = comment_before,
-					})
-				}
-
-				longest_field_with_side_comment: int
-
-				for &field in fields {
-					if field.comment != "" && !field.comment_before {
-						longest_field_with_side_comment = max(len(field.field), longest_field_with_side_comment)
-					}
-				}
-
-				for &field, field_idx in fields {
-					has_comment := field.comment != ""
-					comment_before := field.comment_before
-
-					if has_comment && comment_before {
-						if field_idx != 0 {
-							ws(&w, "\n")
-						}
-
-						ci := field.comment
-						for l in strings.split_lines_iterator(&ci) {
-							for _ in 0..<indent+1 {
-								ws(&w, "\t")
-							}
-							ws(&w, strings.trim_space(l))
-							ws(&w, "\n")
-						}
-					}
-
-					for _ in 0..<indent+1 {
-						ws(&w, "\t")
-					}
-					ws(&w, field.field)
-					ws(&w, ",")
-
-					if has_comment && !comment_before {
-						// Padding in front of comment
-						for _ in 0..<(longest_field_with_side_comment - len(field.field)) {
-							ws(&w, " ")
-						}
-
-						ws(&w, " ")
-						ws(&w, field.comment)
-					}
-
-					ws(&w, "\n")
-				}
-
-				for _ in 0..<indent {
-					ws(&w, "\t")
-				}
-				ws(&w, "}")
-				return strings.to_string(w)
 			}
 
 			fp(f, output_struct(s, d, 0, n))
@@ -1599,11 +1609,12 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if n in s.created_symbols || strings.has_prefix(d.type, "0x") {
+			type_string := type_to_string(d.type)
+			if n in s.created_symbols || strings.has_prefix(type_string, "0x") {
 				continue
 			}
 
-			if translate_type(s, d.type, false) == d.name {
+			if translate_type(s, type_string, false) == d.name {
 				continue
 			}
 
@@ -1628,17 +1639,17 @@ gen :: proc(input: string, c: Config) {
 
 			type := d.type
 
-			if strings.has_prefix(type, "struct ") {
+			if strings.has_prefix(type_string, "struct ") {
 				// This is a weird case -- I used this for opaque types in the
 				// beginning, but opaque types are now handled by
 				// `s.opaque_type_lookup`, so perhaps this isn't needed anymore?
 				fp(f, "struct {}")
-			} else if strings.contains(type, "(") && strings.contains(type, ")") {
+			} else if strings.contains(type_string, "(") && strings.contains(type_string, ")") {
 				// function pointer typedef
-				fp(f, translate_type(s, type, false))
+				fp(f, translate_type(s, type_string, false))
 				add_to_set(&s.type_is_proc, n)
 			} else {
-				fpf(f, "%v", translate_type(s, type, false))
+				fpf(f, "%v", translate_type(s, type_string, false))
 			}
 
 			if d.side_comment != "" {
