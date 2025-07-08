@@ -71,6 +71,8 @@
 #define SECTIONED_ONE                 (1u << 0u)  /* end line */
 #define SECTIONED_TWO                 (1u << 1u)  /* end line */
 
+#define HEX 0XFFFF
+
 struct Color {
     int r;
     int g;

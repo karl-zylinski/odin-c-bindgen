@@ -1655,11 +1655,35 @@ gen :: proc(input: string, c: Config) {
 			parse_literal :: proc(token_str: string) -> string {
 				switch token_str[0] {
 				case '0'..='9':
+					token_str := token_str
+					if len(token_str) == 1 {
+						return token_str
+					}
+
+					hex := false
+					if token_str[1] == 'x' {
+						hex = true
+					} else if token_str[1] == 'X' {
+						hex = true
+						// Odin requires hex x to be lowercase.
+						// Odin should probably allow me to just do the following:
+						// transmute([]u8)(token_str)[1] = 'x'
+						// But it doesn't, so we have to do this.
+						tmp := transmute([]u8)(token_str)
+						tmp[1] = 'x'
+					}
+
 					index := len(token_str) - 1
 					LOOP: for ; index > 0; index -= 1 {
 						switch token_str[index] {
-						case 'L', 'l', 'U', 'u', 'F', 'f':
+						case 'L', 'l', 'U', 'u':
 							// These are suffixes for long and unsigned literals.
+							continue LOOP
+						case 'F', 'f':
+							if hex {
+								break LOOP
+							}
+							// Floating point literals can have 'F' or 'f' suffixes.
 							continue LOOP
 						case:
 							// Not a suffix char.
