@@ -17,10 +17,29 @@ import "core:c"
 _ :: c
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
+
+// LLVM_CLANG_C_CXDIAGNOSTIC_H :: 
 
 /**
 * Describes the severity of a particular diagnostic.
@@ -30,31 +49,31 @@ Diagnostic_Severity :: enum c.int {
 	* A diagnostic that has been suppressed, e.g., by a command-line
 	* option.
 	*/
-	Ignored = 0,
+	Ignored,
 
 	/**
 	* This diagnostic is a note that should be attached to the
 	* previous (non-note) diagnostic.
 	*/
-	Note = 1,
+	Note,
 
 	/**
 	* This diagnostic indicates suspicious code that may not be
 	* wrong.
 	*/
-	Warning = 2,
+	Warning,
 
 	/**
 	* This diagnostic indicates that the code is ill-formed.
 	*/
-	Error = 3,
+	Error,
 
 	/**
 	* This diagnostic indicates that the code is ill-formed such
 	* that future parser recovery is unlikely to produce useful
 	* results.
 	*/
-	Fatal = 4,
+	Fatal,
 }
 
 /**
@@ -76,25 +95,25 @@ Load_Diag_Error :: enum c.int {
 	/**
 	* Indicates that no error occurred.
 	*/
-	None = 0,
+	None,
 
 	/**
 	* Indicates that an unknown error occurred while attempting to
 	* deserialize diagnostics.
 	*/
-	Unknown = 1,
+	Unknown,
 
 	/**
 	* Indicates that the file containing the serialized diagnostics
 	* could not be opened.
 	*/
-	CannotLoad = 2,
+	CannotLoad,
 
 	/**
 	* Indicates that the serialized diagnostics file is invalid or
 	* corrupt.
 	*/
-	InvalidFile = 3,
+	InvalidFile,
 }
 
 /**

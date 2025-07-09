@@ -19,25 +19,36 @@ import "core:c"
 _ :: c
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
 
-/**
- * The version constants for the libclang API.
- * CINDEX_VERSION_MINOR should increase when there are API additions.
- * CINDEX_VERSION_MAJOR is intended for "major" source/ABI breaking changes.
- *
- * The policy about the libclang API was always to keep it source and ABI
- * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
- */
+// LLVM_CLANG_C_INDEX_H :: 
+
 CINDEX_VERSION_MAJOR :: 0
 CINDEX_VERSION_MINOR :: 64
 
-CINDEX_VERSION :: ((CINDEX_VERSION_MAJOR)*10000) + ((CINDEX_VERSION_MINOR)*1)
+// CINDEX_VERSION :: 
 
-// CINDEX_VERSION_STRING :: #CINDEX_VERSION_MAJOR "." #CINDEX_VERSION_MINOR
+// CINDEX_VERSION_STRING :: 
 
 /**
 * An "index" that consists of a set of translation units that would
@@ -204,24 +215,24 @@ Choice :: enum c.int {
 	* Use the default value of an option that may depend on the process
 	* environment.
 	*/
-	Default = 0,
+	Default,
 
 	/**
 	* Enable the option.
 	*/
-	Enabled = 1,
+	Enabled,
 
 	/**
 	* Disable the option.
 	*/
-	Disabled = 2,
+	Disabled,
 }
 
 Global_Opt_Flags :: enum c.int {
 	/**
 	* Used to indicate that no special CXIndex options are needed.
 	*/
-	None = 0,
+	None,
 
 	/**
 	* Used to indicate that threads that libclang creates for indexing
@@ -230,7 +241,7 @@ Global_Opt_Flags :: enum c.int {
 	* Affects #clang_indexSourceFile, #clang_indexTranslationUnit,
 	* #clang_parseTranslationUnit, #clang_saveTranslationUnit.
 	*/
-	ThreadBackgroundPriorityForIndexing = 1,
+	ThreadBackgroundPriorityForIndexing,
 
 	/**
 	* Used to indicate that threads that libclang creates for editing
@@ -239,13 +250,13 @@ Global_Opt_Flags :: enum c.int {
 	* Affects #clang_reparseTranslationUnit, #clang_codeCompleteAt,
 	* #clang_annotateTokens
 	*/
-	ThreadBackgroundPriorityForEditing = 2,
+	ThreadBackgroundPriorityForEditing,
 
 	/**
 	* Used to indicate that all threads that libclang creates should use
 	* background priority.
 	*/
-	ThreadBackgroundPriorityForAll = 3,
+	ThreadBackgroundPriorityForAll,
 }
 
 /**
@@ -337,7 +348,7 @@ Translation_Unit_Flag :: enum c.int {
 	* applications that require more detailed information about the
 	* behavior of the preprocessor.
 	*/
-	DetailedPreprocessingRecord = 0,
+	DetailedPreprocessingRecord,
 
 	/**
 	* Used to indicate that the translation unit is incomplete.
@@ -350,7 +361,7 @@ Translation_Unit_Flag :: enum c.int {
 	* C++. This option is typically used when parsing a header with the
 	* intent of producing a precompiled header.
 	*/
-	Incomplete = 1,
+	Incomplete,
 
 	/**
 	* Used to indicate that the translation unit should be built with an
@@ -366,7 +377,7 @@ Translation_Unit_Flag :: enum c.int {
 	* clang_reparseTranslationUnit() will re-use the implicit
 	* precompiled header to improve parsing performance.
 	*/
-	PrecompiledPreamble = 2,
+	PrecompiledPreamble,
 
 	/**
 	* Used to indicate that the translation unit should cache some
@@ -376,7 +387,7 @@ Translation_Unit_Flag :: enum c.int {
 	* introduces some overhead to reparsing but improves the performance of
 	* code-completion operations.
 	*/
-	CacheCompletionResults = 3,
+	CacheCompletionResults,
 
 	/**
 	* Used to indicate that the translation unit will be serialized with
@@ -385,7 +396,7 @@ Translation_Unit_Flag :: enum c.int {
 	* This option is typically used when parsing a header with the intent of
 	* producing a precompiled header.
 	*/
-	ForSerialization = 4,
+	ForSerialization,
 
 	/**
 	* DEPRECATED: Enabled chained precompiled preambles in C++.
@@ -393,7 +404,7 @@ Translation_Unit_Flag :: enum c.int {
 	* Note: this is a *temporary* option that is available only while
 	* we are testing C++ precompiled preamble support. It is deprecated.
 	*/
-	CXXChainedPCH = 5,
+	CXXChainedPCH,
 
 	/**
 	* Used to indicate that function/method bodies should be skipped while
@@ -402,14 +413,14 @@ Translation_Unit_Flag :: enum c.int {
 	* This option can be used to search for declarations/definitions while
 	* ignoring the usages.
 	*/
-	SkipFunctionBodies = 6,
+	SkipFunctionBodies,
 
 	/**
 	* Used to indicate that brief documentation comments should be
 	* included into the set of code completions returned from this translation
 	* unit.
 	*/
-	IncludeBriefCommentsInCodeCompletion = 7,
+	IncludeBriefCommentsInCodeCompletion,
 
 	/**
 	* Used to indicate that the precompiled preamble should be created on
@@ -417,7 +428,7 @@ Translation_Unit_Flag :: enum c.int {
 	* trades runtime on the first parse (serializing the preamble takes time) for
 	* reduced runtime on the second parse (can now reuse the preamble).
 	*/
-	CreatePreambleOnFirstParse = 8,
+	CreatePreambleOnFirstParse,
 
 	/**
 	* Do not stop processing when fatal errors are encountered.
@@ -428,12 +439,12 @@ Translation_Unit_Flag :: enum c.int {
 	* purposes of an IDE, this is undesirable behavior and as much information
 	* as possible should be reported. Use this flag to enable this behavior.
 	*/
-	KeepGoing = 9,
+	KeepGoing,
 
 	/**
 	* Sets the preprocessor in a mode for parsing a single file only.
 	*/
-	SingleFileParse = 10,
+	SingleFileParse,
 
 	/**
 	* Used in combination with CXTranslationUnit_SkipFunctionBodies to
@@ -441,17 +452,17 @@ Translation_Unit_Flag :: enum c.int {
 	*
 	* The function bodies of the main file are not skipped.
 	*/
-	LimitSkipFunctionBodiesToPreamble = 11,
+	LimitSkipFunctionBodiesToPreamble,
 
 	/**
 	* Used to indicate that attributed types should be included in CXType.
 	*/
-	IncludeAttributedTypes = 12,
+	IncludeAttributedTypes,
 
 	/**
 	* Used to indicate that implicit attributes should be visited.
 	*/
-	VisitImplicitAttributes = 13,
+	VisitImplicitAttributes,
 
 	/**
 	* Used to indicate that non-errors from included files should be ignored.
@@ -461,12 +472,12 @@ Translation_Unit_Flag :: enum c.int {
 	* the case where these warnings are not of interest, as for an IDE for
 	* example, which typically shows only the diagnostics in the main file.
 	*/
-	IgnoreNonErrorsFromIncludedFiles = 14,
+	IgnoreNonErrorsFromIncludedFiles,
 
 	/**
 	* Tells the preprocessor not to skip excluded conditional blocks.
 	*/
-	RetainExcludedConditionalBlocks = 15,
+	RetainExcludedConditionalBlocks,
 }
 
 Translation_Unit_Flags :: distinct bit_set[Translation_Unit_Flag; c.int]
@@ -491,7 +502,7 @@ Save_Error :: enum c.int {
 	/**
 	* Indicates that no error occurred while saving a translation unit.
 	*/
-	None = 0,
+	None,
 
 	/**
 	* Indicates that an unknown error occurred while attempting to save
@@ -500,7 +511,7 @@ Save_Error :: enum c.int {
 	* This error typically indicates that file I/O failed when attempting to
 	* write the file.
 	*/
-	Unknown = 1,
+	Unknown,
 
 	/**
 	* Indicates that errors during translation prevented this attempt
@@ -509,13 +520,13 @@ Save_Error :: enum c.int {
 	* Errors that prevent the translation unit from being saved can be
 	* extracted using \c clang_getNumDiagnostics() and \c clang_getDiagnostic().
 	*/
-	TranslationErrors = 2,
+	TranslationErrors,
 
 	/**
 	* Indicates that the translation unit to be saved was somehow
 	* invalid (e.g., NULL).
 	*/
-	InvalidTU = 3,
+	InvalidTU,
 }
 
 /**
@@ -529,7 +540,7 @@ Reparse_Flags :: enum c.int {
 	/**
 	* Used to indicate that no special reparsing options are needed.
 	*/
-	CXReparse_None = 0,
+	CXReparse_None,
 }
 
 /**
@@ -2134,7 +2145,7 @@ Platform_Availability :: struct {
 * Describe the "language" of the entity referred to by a cursor.
 */
 Language_Kind :: enum c.int {
-	Invalid = 0,
+	Invalid,
 	C,
 	ObjC,
 	CPlusPlus,
@@ -2145,7 +2156,7 @@ Language_Kind :: enum c.int {
 * referred to by a cursor.
 */
 Tlskind :: enum c.int {
-	None = 0,
+	None,
 	Dynamic,
 	Static,
 }
@@ -2646,12 +2657,12 @@ Type_Nullability_Kind :: enum c.int {
 	/**
 	* Values of this type can never be null.
 	*/
-	NonNull = 0,
+	NonNull,
 
 	/**
 	* Values of this type can be null.
 	*/
-	Nullable = 1,
+	Nullable,
 
 	/**
 	* Whether values of this type can be null is (explicitly)
@@ -2659,12 +2670,12 @@ Type_Nullability_Kind :: enum c.int {
 	* can't conclude anything about the nullability of the type even
 	* though it has been considered.
 	*/
-	Unspecified = 2,
+	Unspecified,
 
 	/**
 	* Nullability is not applicable to this type.
 	*/
-	Invalid = 3,
+	Invalid,
 
 	/**
 	* Generally behaves like Nullable, except when used in a block parameter that
@@ -2672,7 +2683,7 @@ Type_Nullability_Kind :: enum c.int {
 	* parameter can get null even if no error occurred. _Nullable parameters are
 	* assumed to only get null on error.
 	*/
-	NullableResult = 4,
+	NullableResult,
 }
 
 /**
@@ -2717,7 +2728,7 @@ Type_Layout_Error :: enum c.int {
 
 Ref_Qualifier_Kind :: enum c.int {
 	/** No ref-qualifier was provided. */
-	None = 0,
+	None,
 
 	/** An lvalue ref-qualifier was provided (\c &). */
 	LValue,
@@ -2847,33 +2858,33 @@ Printing_Policy :: rawptr
 * See \c clang::PrintingPolicy for more information.
 */
 Printing_Policy_Property :: enum c.int {
-	Indentation,
-	SuppressSpecifiers,
-	SuppressTagKeyword,
-	IncludeTagDefinition,
-	SuppressScope,
-	SuppressUnwrittenScope,
-	SuppressInitializers,
-	ConstantArraySizeAsWritten,
-	AnonymousTagLocations,
-	SuppressStrongLifetime,
-	SuppressLifetimeQualifiers,
-	SuppressTemplateArgsInCXXConstructors,
-	Bool,
-	Restrict,
-	Alignof,
-	UnderscoreAlignof,
-	UseVoidForZeroParams,
-	TerseOutput,
-	PolishForDeclaration,
-	Half,
-	MSWChar,
-	IncludeNewlines,
-	MSVCFormatting,
-	ConstantsAsWritten,
-	SuppressImplicitBase,
-	FullyQualifiedName,
-	LastProperty = 25,
+	Indentation                           = 0,
+	SuppressSpecifiers                    = 1,
+	SuppressTagKeyword                    = 2,
+	IncludeTagDefinition                  = 3,
+	SuppressScope                         = 4,
+	SuppressUnwrittenScope                = 5,
+	SuppressInitializers                  = 6,
+	ConstantArraySizeAsWritten            = 7,
+	AnonymousTagLocations                 = 8,
+	SuppressStrongLifetime                = 9,
+	SuppressLifetimeQualifiers            = 10,
+	SuppressTemplateArgsInCXXConstructors = 11,
+	Bool                                  = 12,
+	Restrict                              = 13,
+	Alignof                               = 14,
+	UnderscoreAlignof                     = 15,
+	UseVoidForZeroParams                  = 16,
+	TerseOutput                           = 17,
+	PolishForDeclaration                  = 18,
+	Half                                  = 19,
+	MSWChar                               = 20,
+	IncludeNewlines                       = 21,
+	MSVCFormatting                        = 22,
+	ConstantsAsWritten                    = 23,
+	SuppressImplicitBase                  = 24,
+	FullyQualifiedName                    = 25,
+	LastProperty                          = 25,
 }
 
 /**
@@ -3473,18 +3484,18 @@ Result :: enum c.int {
 	/**
 	* Function returned successfully.
 	*/
-	Success = 0,
+	Success,
 
 	/**
 	* One of the parameters was invalid for the function.
 	*/
-	Invalid = 1,
+	Invalid,
 
 	/**
 	* The function was terminated by a callback (e.g. it returned
 	* CXVisit_Break)
 	*/
-	VisitBreak = 2,
+	VisitBreak,
 }
 
 Cursor_And_Range_Visitor_Block :: struct {}
@@ -3574,42 +3585,42 @@ Idx_Imported_Astfile_Info :: struct {
 }
 
 Idx_Entity_Kind :: enum c.int {
-	Unexposed             = 0,
-	Typedef               = 1,
-	Function              = 2,
-	Variable              = 3,
-	Field                 = 4,
-	EnumConstant          = 5,
-	ObjCClass             = 6,
-	ObjCProtocol          = 7,
-	ObjCCategory          = 8,
-	ObjCInstanceMethod    = 9,
-	ObjCClassMethod       = 10,
-	ObjCProperty          = 11,
-	ObjCIvar              = 12,
-	Enum                  = 13,
-	Struct                = 14,
-	Union                 = 15,
-	CXXClass              = 16,
-	CXXNamespace          = 17,
-	CXXNamespaceAlias     = 18,
-	CXXStaticVariable     = 19,
-	CXXStaticMethod       = 20,
-	CXXInstanceMethod     = 21,
-	CXXConstructor        = 22,
-	CXXDestructor         = 23,
-	CXXConversionFunction = 24,
-	CXXTypeAlias          = 25,
-	CXXInterface          = 26,
-	CXXConcept            = 27,
+	Unexposed,
+	Typedef,
+	Function,
+	Variable,
+	Field,
+	EnumConstant,
+	ObjCClass,
+	ObjCProtocol,
+	ObjCCategory,
+	ObjCInstanceMethod,
+	ObjCClassMethod,
+	ObjCProperty,
+	ObjCIvar,
+	Enum,
+	Struct,
+	Union,
+	CXXClass,
+	CXXNamespace,
+	CXXNamespaceAlias,
+	CXXStaticVariable,
+	CXXStaticMethod,
+	CXXInstanceMethod,
+	CXXConstructor,
+	CXXDestructor,
+	CXXConversionFunction,
+	CXXTypeAlias,
+	CXXInterface,
+	CXXConcept,
 }
 
 Idx_Entity_Language :: enum c.int {
-	None  = 0,
-	C     = 1,
-	ObjC  = 2,
-	CXX   = 3,
-	Swift = 4,
+	None,
+	C,
+	ObjC,
+	CXX,
+	Swift,
 }
 
 /**
@@ -3623,17 +3634,17 @@ Idx_Entity_Language :: enum c.int {
 * CXIdxEntity_CXXTypeAlias
 */
 Idx_Entity_Cxxtemplate_Kind :: enum c.int {
-	NonTemplate                   = 0,
-	Template                      = 1,
-	TemplatePartialSpecialization = 2,
-	TemplateSpecialization        = 3,
+	NonTemplate,
+	Template,
+	TemplatePartialSpecialization,
+	TemplateSpecialization,
 }
 
 Idx_Attr_Kind :: enum c.int {
-	Unexposed          = 0,
-	IBAction           = 1,
-	IBOutlet           = 2,
-	IBOutletCollection = 3,
+	Unexposed,
+	IBAction,
+	IBOutlet,
+	IBOutletCollection,
 }
 
 Idx_Attr_Info :: struct {
@@ -3695,9 +3706,9 @@ Idx_Decl_Info :: struct {
 }
 
 Idx_Obj_Ccontainer_Kind :: enum c.int {
-	ForwardRef     = 0,
-	Interface      = 1,
-	Implementation = 2,
+	ForwardRef,
+	Interface,
+	Implementation,
 }
 
 Idx_Obj_Ccontainer_Decl_Info :: struct {
@@ -6407,7 +6418,7 @@ foreign lib {
 
 	/* for debug/testing */
 	getCursorKindSpelling          :: proc(Kind: Cursor_Kind) -> String ---
-	getDefinitionSpellingAndExtent :: proc(_: Cursor, startBuf: ^^c.char, endBuf: ^^c.char, startLine: ^c.uint, startColumn: ^c.uint, endLine: ^c.uint, endColumn: ^c.uint) ---
+	getDefinitionSpellingAndExtent :: proc(_: Cursor, startBuf: [^]cstring, endBuf: [^]cstring, startLine: ^c.uint, startColumn: ^c.uint, endLine: ^c.uint, endColumn: ^c.uint) ---
 	enableStackTraces              :: proc() ---
 	executeOnThread                :: proc(fn: proc "c" (rawptr), user_data: rawptr, stack_size: c.uint) ---
 
@@ -6854,7 +6865,7 @@ foreign lib {
 	* \returns the requested remapping. This remapping must be freed
 	* via a call to \c clang_remap_dispose(). Can return NULL if an error occurred.
 	*/
-	getRemappingsFromFileList :: proc(filePaths: ^^c.char, numFiles: c.uint) -> Remapping ---
+	getRemappingsFromFileList :: proc(filePaths: [^]cstring, numFiles: c.uint) -> Remapping ---
 
 	/**
 	* Determine the number of remappings.

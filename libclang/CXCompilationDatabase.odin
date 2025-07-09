@@ -18,10 +18,29 @@ import "core:c"
 _ :: c
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
+
+// LLVM_CLANG_C_CXCOMPILATIONDATABASE_H :: 
 
 /**
 * A compilation database holds all information used to compile files in a
@@ -55,12 +74,12 @@ Compilation_Database_Error :: enum c.int {
 	/*
 	* No error occurred
 	*/
-	NoError = 0,
+	NoError,
 
 	/*
 	* Database can not be loaded
 	*/
-	CanNotLoadDatabase = 1,
+	CanNotLoadDatabase,
 }
 
 @(default_calling_convention="c", link_prefix="clang_")

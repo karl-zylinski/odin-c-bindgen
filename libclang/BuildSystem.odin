@@ -17,10 +17,29 @@ import "core:c"
 _ :: c
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
+
+// LLVM_CLANG_C_BUILDSYSTEM_H :: 
 
 /**
 * Object encapsulating information about overlaying virtual
@@ -73,7 +92,7 @@ foreign lib {
 	* \param out_buffer_size pointer to receive the buffer size.
 	* \returns 0 for success, non-zero to indicate an error.
 	*/
-	VirtualFileOverlay_writeToBuffer :: proc(_: Virtual_File_Overlay, options: c.uint, out_buffer_ptr: ^^c.char, out_buffer_size: ^c.uint) -> Error_Code ---
+	VirtualFileOverlay_writeToBuffer :: proc(_: Virtual_File_Overlay, options: c.uint, out_buffer_ptr: [^]cstring, out_buffer_size: ^c.uint) -> Error_Code ---
 
 	/**
 	* free memory allocated by libclang, such as the buffer returned by
@@ -117,7 +136,7 @@ foreign lib {
 	* \param out_buffer_size pointer to receive the buffer size.
 	* \returns 0 for success, non-zero to indicate an error.
 	*/
-	ModuleMapDescriptor_writeToBuffer :: proc(_: Module_Map_Descriptor, options: c.uint, out_buffer_ptr: ^^c.char, out_buffer_size: ^c.uint) -> Error_Code ---
+	ModuleMapDescriptor_writeToBuffer :: proc(_: Module_Map_Descriptor, options: c.uint, out_buffer_ptr: [^]cstring, out_buffer_size: ^c.uint) -> Error_Code ---
 
 	/**
 	* Dispose a \c CXModuleMapDescriptor object.

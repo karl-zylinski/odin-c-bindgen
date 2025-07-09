@@ -19,10 +19,29 @@ _ :: c
 _ :: libc
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
+
+// LLVM_CLANG_C_CXFILE_H :: 
 
 /**
 * A particular source file that is part of a translation unit.

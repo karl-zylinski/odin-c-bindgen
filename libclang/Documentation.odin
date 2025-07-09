@@ -18,10 +18,29 @@ import "core:c"
 _ :: c
 
 when ODIN_OS == .Windows {
-    foreign import lib "system:libclang.lib"
+    @(extra_linker_flags="/NODEFAULTLIB:libcmt")
+    foreign import lib {
+        "system:ntdll.lib",
+        "system:ucrt.lib",
+        "system:msvcrt.lib",
+        "system:legacy_stdio_definitions.lib",
+        "system:kernel32.lib",
+        "system:user32.lib",
+        "system:advapi32.lib",
+        "system:shell32.lib",
+        "system:ole32.lib",
+        "system:oleaut32.lib",
+        "system:uuid.lib",
+        "system:ws2_32.lib",
+        "system:version.lib",
+        "system:oldnames.lib",
+        "libclang.lib",
+	}
 } else {
     foreign import lib "system:clang"
 }
+
+// LLVM_CLANG_C_DOCUMENTATION_H :: 
 
 /**
 * A parsed comment.
@@ -41,19 +60,19 @@ Comment_Kind :: enum c.int {
 	* Null comment.  No AST node is constructed at the requested location
 	* because there is no text or a syntax error.
 	*/
-	Null = 0,
+	Null,
 
 	/**
 	* Plain text.  Inline content.
 	*/
-	Text = 1,
+	Text,
 
 	/**
 	* A command with word-like arguments that is considered inline content.
 	*
 	* For example: \\c command.
 	*/
-	InlineCommand = 2,
+	InlineCommand,
 
 	/**
 	* HTML start tag with attributes (name-value pairs).  Considered
@@ -64,7 +83,7 @@ Comment_Kind :: enum c.int {
 	* <br> <br /> <a href="http://example.org/">
 	* \endverbatim
 	*/
-	HTMLStartTag = 3,
+	HTMLStartTag,
 
 	/**
 	* HTML end tag.  Considered inline content.
@@ -74,13 +93,13 @@ Comment_Kind :: enum c.int {
 	* </a>
 	* \endverbatim
 	*/
-	HTMLEndTag = 4,
+	HTMLEndTag,
 
 	/**
 	* A paragraph, contains inline comment.  The paragraph itself is
 	* block content.
 	*/
-	Paragraph = 5,
+	Paragraph,
 
 	/**
 	* A command that has zero or more word-like arguments (number of
@@ -94,7 +113,7 @@ Comment_Kind :: enum c.int {
 	* AST nodes of special kinds that parser knows about (e. g., \\param
 	* command) have their own node kinds.
 	*/
-	BlockCommand = 6,
+	BlockCommand,
 
 	/**
 	* A \\param or \\arg command that describes the function parameter
@@ -102,7 +121,7 @@ Comment_Kind :: enum c.int {
 	*
 	* For example: \\param [in] ParamName description.
 	*/
-	ParamCommand = 7,
+	ParamCommand,
 
 	/**
 	* A \\tparam command that describes a template parameter (name and
@@ -110,7 +129,7 @@ Comment_Kind :: enum c.int {
 	*
 	* For example: \\tparam T description.
 	*/
-	TParamCommand = 8,
+	TParamCommand,
 
 	/**
 	* A verbatim block command (e. g., preformatted code).  Verbatim
@@ -122,25 +141,25 @@ Comment_Kind :: enum c.int {
 	* aaa
 	* \\endverbatim
 	*/
-	VerbatimBlockCommand = 9,
+	VerbatimBlockCommand,
 
 	/**
 	* A line of text that is contained within a
 	* CXComment_VerbatimBlockCommand node.
 	*/
-	VerbatimBlockLine = 10,
+	VerbatimBlockLine,
 
 	/**
 	* A verbatim line command.  Verbatim line has an opening command,
 	* a single line of text (up to the newline after the opening command) and
 	* has no closing command.
 	*/
-	VerbatimLine = 11,
+	VerbatimLine,
 
 	/**
 	* A full comment attached to a declaration, contains block content.
 	*/
-	FullComment = 12,
+	FullComment,
 }
 
 /**
