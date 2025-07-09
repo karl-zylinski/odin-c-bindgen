@@ -349,9 +349,6 @@ Manifold :: struct {
 TreeNode :: struct {}
 
 DynamicTree :: struct {
-	using _: struct {
-	},
-
 	/// The tree nodes
 	nodes: [^]TreeNode,
 
@@ -384,6 +381,9 @@ DynamicTree :: struct {
 
 	/// Allocated space for rebuilding
 	rebuildCapacity: c.int,
+}
+
+TreeNode :: struct {
 }
 
 /// These are performance results returned by dynamic tree queries.

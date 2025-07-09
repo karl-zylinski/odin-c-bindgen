@@ -659,7 +659,7 @@ gen :: proc(input: string, c: Config) {
 			#partial switch param_kind := clang.getCursorKind(param_cursor); param_kind {
 			case .ParmDecl:
 				param_name := clang_string_to_string(clang.getCursorSpelling(param_cursor))
-				param_type := get_cursor_type_string(param_cursor)
+				param_type := type_to_string(clang.getCursorType(param_cursor))
 				vet_type(state, param_type)
 				append(&out_params, Function_Parameter {
 					name = param_name,
@@ -750,6 +750,17 @@ gen :: proc(input: string, c: Config) {
 					original_idx = len(data.state.decls),
 					variant = parse_record_decl(data.state, cursor),
 				})
+
+				if bool(clang.Cursor_isAnonymous(cursor)) {
+					append(&data.out_fields, Struct_Field {
+						names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
+						type = clang.getCursorType(cursor),
+						anon_using = true,
+						comment = comment,
+						comment_before = comment_before,
+						original_line = int(line),
+					})
+				}
 			case:
 				// For debugging purposes.
 				fmt.printf("Unexpected cursor kind for field: %v, name: %s\n", kind, clang_string_to_string(clang.getCursorSpelling(cursor)))
