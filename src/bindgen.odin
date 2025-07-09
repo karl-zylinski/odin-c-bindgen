@@ -1648,8 +1648,6 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			type := d.type
-
 			if strings.has_prefix(type_string, "struct ") {
 				// This is a weird case -- I used this for opaque types in the
 				// beginning, but opaque types are now handled by
