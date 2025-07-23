@@ -1189,22 +1189,6 @@ get_comment :: proc(v: json.Value, s: ^Gen_State) -> (comment: string, ok: bool)
 		}
 	}
 
-	cmt := s.source[begin:end+1]
-
-	num_block_openings := strings.count(cmt, "/*")
-	num_block_closing := strings.count(cmt, "*/")
-
-	if num_block_openings != num_block_closing {
-		for idx in end..<len(s.source) - 2 {
-			cur := s.source[idx:idx+2]
-
-			if cur == "*/" {
-				end = idx+1
-				break
-			}
-		}
-	}
-
 	return s.source[begin:end+1], true
 }
 
