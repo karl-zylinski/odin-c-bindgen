@@ -2207,7 +2207,15 @@ gen :: proc(input: string, c: Config) {
 				name_without_overlap := m.name[overlap_length:]
 
 				// Remove any leading underscores.
-				for ; name_without_overlap[0] == '_'; name_without_overlap = name_without_overlap[1:] {} 
+                // Here, name_without_overlap can be empty. 
+                // (ex: libcurl lib curl.h line 991)
+                if len(name_without_overlap) == 0 {
+                    // TODO: this approach is somewhat duck-tape problem solving.
+                    // If one has a nice replacement, please change it
+                    name_without_overlap = name
+                } else {
+                    for ; name_without_overlap[0] == '_'; name_without_overlap = name_without_overlap[1:] {}
+                }
 
 				// First letter is number... Can't have that!
 				if len(name_without_overlap) > 0 && unicode.is_number(utf8.rune_at(name_without_overlap, 0)) {
