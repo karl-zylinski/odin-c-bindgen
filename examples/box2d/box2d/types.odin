@@ -145,13 +145,13 @@ WorldDef :: struct {
 /// @ingroup body
 BodyType :: enum c.int {
 	/// zero mass, zero velocity, may be manually moved
-	staticBody = 0,
+	staticBody,
 
 	/// zero mass, velocity set by user, moved by solver
-	kinematicBody = 1,
+	kinematicBody,
 
 	/// positive mass, velocity determined by forces, moved by solver
-	dynamicBody = 2,
+	dynamicBody,
 
 	/// number of body types
 	bodyTypeCount,
@@ -237,14 +237,25 @@ BodyDef :: struct {
 Filter :: struct {
 	/// The collision category bits. Normally you would just set one bit. The category bits should
 	/// represent your application object types. For example:
-	/// @code{
+	/// @code{.cpp}
+	/// enum MyCategories
+	/// {
+	///    Static  = 0x00000001,
+	///    Dynamic = 0x00000002,
+	///    Debris  = 0x00000004,
+	///    Player  = 0x00000008,
+	///    // etc
+	/// };
+	/// @endcode
 	categoryBits: u64,
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
 	/// For example, you may want your player to only collide with static objects
 	/// and other players.
-	/// @code{
+	/// @code{.c}
+	/// maskBits = Static | Player;
+	/// @endcode
 	maskBits: u64,
 
 	/// Collision groups allow a certain group of objects to never collide (negative)

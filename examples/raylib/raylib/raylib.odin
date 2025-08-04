@@ -96,46 +96,56 @@ foreign import lib {
 	"system:Shell32.lib",
 }
 
+// RAYLIB_H :: 
+
 RAYLIB_VERSION_MAJOR :: 5
 RAYLIB_VERSION_MINOR :: 6
 RAYLIB_VERSION_PATCH :: 0
-RAYLIB_VERSION  :: "5.6-dev"
+RAYLIB_VERSION :: "5.6-dev"
+
+// RLAPI :: // Functions defined as 'extern' by default (implicit specifiers)
 
 PI :: 3.14159265358979323846
 
-DEG2RAD :: PI/180.0
+DEG2RAD :: (PI/180.0)
 
-RAD2DEG :: 180.0/PI
+RAD2DEG :: (180.0/PI)
 
-// Some Basic Colors
-// NOTE: Custom raylib color palette for amazing visuals on WHITE background
-LIGHTGRAY  :: (Color){ 200, 200, 200, 255 }   // Light Gray
-GRAY       :: (Color){ 130, 130, 130, 255 }   // Gray
-DARKGRAY   :: (Color){ 80, 80, 80, 255 }      // Dark Gray
-YELLOW     :: (Color){ 253, 249, 0, 255 }     // Yellow
-GOLD       :: (Color){ 255, 203, 0, 255 }     // Gold
-ORANGE     :: (Color){ 255, 161, 0, 255 }     // Orange
-PINK       :: (Color){ 255, 109, 194, 255 }   // Pink
-RED        :: (Color){ 230, 41, 55, 255 }     // Red
-MAROON     :: (Color){ 190, 33, 55, 255 }     // Maroon
-GREEN      :: (Color){ 0, 228, 48, 255 }      // Green
-LIME       :: (Color){ 0, 158, 47, 255 }      // Lime
-DARKGREEN  :: (Color){ 0, 117, 44, 255 }      // Dark Green
-SKYBLUE    :: (Color){ 102, 191, 255, 255 }   // Sky Blue
-BLUE       :: (Color){ 0, 121, 241, 255 }     // Blue
-DARKBLUE   :: (Color){ 0, 82, 172, 255 }      // Dark Blue
-PURPLE     :: (Color){ 200, 122, 255, 255 }   // Purple
-VIOLET     :: (Color){ 135, 60, 190, 255 }    // Violet
-DARKPURPLE :: (Color){ 112, 31, 126, 255 }    // Dark Purple
-BEIGE      :: (Color){ 211, 176, 131, 255 }   // Beige
-BROWN      :: (Color){ 127, 106, 79, 255 }    // Brown
-DARKBROWN  :: (Color){ 76, 63, 47, 255 }      // Dark Brown
+// RL_COLOR_TYPE :: 
+// RL_RECTANGLE_TYPE :: 
+// RL_VECTOR2_TYPE :: 
+// RL_VECTOR3_TYPE :: 
+// RL_VECTOR4_TYPE :: 
+// RL_QUATERNION_TYPE :: 
+// RL_MATRIX_TYPE :: 
 
-WHITE      :: (Color){ 255, 255, 255, 255 }   // White
-BLACK      :: (Color){ 0, 0, 0, 255 }         // Black
-BLANK      :: (Color){ 0, 0, 0, 0 }           // Blank (Transparent)
-MAGENTA    :: (Color){ 255, 0, 255, 255 }     // Magenta
-RAYWHITE   :: (Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
+// LIGHTGRAY :: (Color){200,200,200,255}// Light Gray
+// GRAY :: (Color){130,130,130,255}// Gray
+// DARKGRAY :: (Color){80,80,80,255}// Dark Gray
+// YELLOW :: (Color){253,249,0,255}// Yellow
+// GOLD :: (Color){255,203,0,255}// Gold
+// ORANGE :: (Color){255,161,0,255}// Orange
+// PINK :: (Color){255,109,194,255}// Pink
+// RED :: (Color){230,41,55,255}// Red
+// MAROON :: (Color){190,33,55,255}// Maroon
+// GREEN :: (Color){0,228,48,255}// Green
+// LIME :: (Color){0,158,47,255}// Lime
+// DARKGREEN :: (Color){0,117,44,255}// Dark Green
+// SKYBLUE :: (Color){102,191,255,255}// Sky Blue
+// BLUE :: (Color){0,121,241,255}// Blue
+// DARKBLUE :: (Color){0,82,172,255}// Dark Blue
+// PURPLE :: (Color){200,122,255,255}// Purple
+// VIOLET :: (Color){135,60,190,255}// Violet
+// DARKPURPLE :: (Color){112,31,126,255}// Dark Purple
+// BEIGE :: (Color){211,176,131,255}// Beige
+// BROWN :: (Color){127,106,79,255}// Brown
+// DARKBROWN :: (Color){76,63,47,255}// Dark Brown
+
+// WHITE :: (Color){255,255,255,255}// White
+// BLACK :: (Color){0,0,0,255}// Black
+// BLANK :: (Color){0,0,0,0}// Blank (Transparent)
+// MAGENTA :: (Color){255,0,255,255}// Magenta
+// RAYWHITE :: (Color){245,245,245,255}// My own White (raylib logo)
 
 // Vector2, 2 components
 Vector2 :: [2]f32
@@ -235,7 +245,7 @@ Camera3D :: struct {
 	projection: c.int,   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 }
 
-Camera :: Camera3D // Camera type fallback, defaults to Camera3D
+Camera :: Camera3D
 
 // Camera2D, defines position/orientation in 2d space
 Camera2D :: struct {
@@ -450,7 +460,7 @@ ConfigFlags :: distinct bit_set[ConfigFlag; c.int]
 // Trace log level
 // NOTE: Organized by priority level
 TraceLogLevel :: enum c.int {
-	ALL = 0, // Display all logs
+	ALL,     // Display all logs
 	TRACE,   // Trace logging, intended for internal use only
 	DEBUG,   // Debug logging, used for internal debugging, it should be disabled on release builds
 	INFO,    // Info logging, used for program execution info
@@ -576,40 +586,39 @@ KeyboardKey :: enum c.int {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
-// Add backwards compatibility support for deprecated names
-// MOUSE_LEFT_BUTTON   :: MOUSE_BUTTON_LEFT
-// MOUSE_RIGHT_BUTTON  :: MOUSE_BUTTON_RIGHT
+// MOUSE_LEFT_BUTTON :: MOUSE_BUTTON_LEFT
+// MOUSE_RIGHT_BUTTON :: MOUSE_BUTTON_RIGHT
 // MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
 
 // Mouse buttons
 MouseButton :: enum c.int {
-	LEFT    = 0, // Mouse button left
-	RIGHT   = 1, // Mouse button right
-	MIDDLE  = 2, // Mouse button middle (pressed wheel)
-	SIDE    = 3, // Mouse button side (advanced mouse device)
-	EXTRA   = 4, // Mouse button extra (advanced mouse device)
-	FORWARD = 5, // Mouse button forward (advanced mouse device)
-	BACK    = 6, // Mouse button back (advanced mouse device)
+	LEFT,    // Mouse button left
+	RIGHT,   // Mouse button right
+	MIDDLE,  // Mouse button middle (pressed wheel)
+	SIDE,    // Mouse button side (advanced mouse device)
+	EXTRA,   // Mouse button extra (advanced mouse device)
+	FORWARD, // Mouse button forward (advanced mouse device)
+	BACK,    // Mouse button back (advanced mouse device)
 }
 
 // Mouse cursor
 MouseCursor :: enum c.int {
-	DEFAULT       = 0,  // Default pointer shape
-	ARROW         = 1,  // Arrow shape
-	IBEAM         = 2,  // Text writing cursor shape
-	CROSSHAIR     = 3,  // Cross shape
-	POINTING_HAND = 4,  // Pointing hand cursor
-	RESIZE_EW     = 5,  // Horizontal resize/move arrow shape
-	RESIZE_NS     = 6,  // Vertical resize/move arrow shape
-	RESIZE_NWSE   = 7,  // Top-left to bottom-right diagonal resize/move arrow shape
-	RESIZE_NESW   = 8,  // The top-right to bottom-left diagonal resize/move arrow shape
-	RESIZE_ALL    = 9,  // The omnidirectional resize/move cursor shape
-	NOT_ALLOWED   = 10, // The operation-not-allowed shape
+	DEFAULT,       // Default pointer shape
+	ARROW,         // Arrow shape
+	IBEAM,         // Text writing cursor shape
+	CROSSHAIR,     // Cross shape
+	POINTING_HAND, // Pointing hand cursor
+	RESIZE_EW,     // Horizontal resize/move arrow shape
+	RESIZE_NS,     // Vertical resize/move arrow shape
+	RESIZE_NWSE,   // Top-left to bottom-right diagonal resize/move arrow shape
+	RESIZE_NESW,   // The top-right to bottom-left diagonal resize/move arrow shape
+	RESIZE_ALL,    // The omnidirectional resize/move cursor shape
+	NOT_ALLOWED,   // The operation-not-allowed shape
 }
 
 // Gamepad buttons
 GamepadButton :: enum c.int {
-	UNKNOWN = 0,      // Unknown button, just for error checking
+	UNKNOWN,          // Unknown button, just for error checking
 	LEFT_FACE_UP,     // Gamepad left DPAD up button
 	LEFT_FACE_RIGHT,  // Gamepad left DPAD right button
 	LEFT_FACE_DOWN,   // Gamepad left DPAD down button
@@ -631,17 +640,17 @@ GamepadButton :: enum c.int {
 
 // Gamepad axis
 GamepadAxis :: enum c.int {
-	LEFT_X        = 0, // Gamepad left stick X axis
-	LEFT_Y        = 1, // Gamepad left stick Y axis
-	RIGHT_X       = 2, // Gamepad right stick X axis
-	RIGHT_Y       = 3, // Gamepad right stick Y axis
-	LEFT_TRIGGER  = 4, // Gamepad back trigger left, pressure level: [1..-1]
-	RIGHT_TRIGGER = 5, // Gamepad back trigger right, pressure level: [1..-1]
+	LEFT_X,        // Gamepad left stick X axis
+	LEFT_Y,        // Gamepad left stick Y axis
+	RIGHT_X,       // Gamepad right stick X axis
+	RIGHT_Y,       // Gamepad right stick Y axis
+	LEFT_TRIGGER,  // Gamepad back trigger left, pressure level: [1..-1]
+	RIGHT_TRIGGER, // Gamepad back trigger right, pressure level: [1..-1]
 }
 
 // Material map index
 MaterialMapIndex :: enum c.int {
-	ALBEDO = 0, // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
+	ALBEDO,     // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
 	METALNESS,  // Metalness material (same as: MATERIAL_MAP_SPECULAR)
 	NORMAL,     // Normal material
 	ROUGHNESS,  // Roughness material
@@ -654,49 +663,49 @@ MaterialMapIndex :: enum c.int {
 	BRDF,       // Brdf material
 }
 
-// MATERIAL_MAP_DIFFUSE      :: MATERIAL_MAP_ALBEDO
-// MATERIAL_MAP_SPECULAR     :: MATERIAL_MAP_METALNESS
+// MATERIAL_MAP_DIFFUSE :: MATERIAL_MAP_ALBEDO
+// MATERIAL_MAP_SPECULAR :: MATERIAL_MAP_METALNESS
 
 // Shader location index
 ShaderLocationIndex :: enum c.int {
-	VERTEX_POSITION = 0, // Shader location: vertex attribute: position
-	VERTEX_TEXCOORD01,   // Shader location: vertex attribute: texcoord01
-	VERTEX_TEXCOORD02,   // Shader location: vertex attribute: texcoord02
-	VERTEX_NORMAL,       // Shader location: vertex attribute: normal
-	VERTEX_TANGENT,      // Shader location: vertex attribute: tangent
-	VERTEX_COLOR,        // Shader location: vertex attribute: color
-	MATRIX_MVP,          // Shader location: matrix uniform: model-view-projection
-	MATRIX_VIEW,         // Shader location: matrix uniform: view (camera transform)
-	MATRIX_PROJECTION,   // Shader location: matrix uniform: projection
-	MATRIX_MODEL,        // Shader location: matrix uniform: model (transform)
-	MATRIX_NORMAL,       // Shader location: matrix uniform: normal
-	VECTOR_VIEW,         // Shader location: vector uniform: view
-	COLOR_DIFFUSE,       // Shader location: vector uniform: diffuse color
-	COLOR_SPECULAR,      // Shader location: vector uniform: specular color
-	COLOR_AMBIENT,       // Shader location: vector uniform: ambient color
-	MAP_ALBEDO,          // Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
-	MAP_METALNESS,       // Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
-	MAP_NORMAL,          // Shader location: sampler2d texture: normal
-	MAP_ROUGHNESS,       // Shader location: sampler2d texture: roughness
-	MAP_OCCLUSION,       // Shader location: sampler2d texture: occlusion
-	MAP_EMISSION,        // Shader location: sampler2d texture: emission
-	MAP_HEIGHT,          // Shader location: sampler2d texture: height
-	MAP_CUBEMAP,         // Shader location: samplerCube texture: cubemap
-	MAP_IRRADIANCE,      // Shader location: samplerCube texture: irradiance
-	MAP_PREFILTER,       // Shader location: samplerCube texture: prefilter
-	MAP_BRDF,            // Shader location: sampler2d texture: brdf
-	VERTEX_BONEIDS,      // Shader location: vertex attribute: boneIds
-	VERTEX_BONEWEIGHTS,  // Shader location: vertex attribute: boneWeights
-	BONE_MATRICES,       // Shader location: array of matrices uniform: boneMatrices
-	VERTEX_INSTANCE_TX,  // Shader location: vertex attribute: instanceTransform
+	VERTEX_POSITION,    // Shader location: vertex attribute: position
+	VERTEX_TEXCOORD01,  // Shader location: vertex attribute: texcoord01
+	VERTEX_TEXCOORD02,  // Shader location: vertex attribute: texcoord02
+	VERTEX_NORMAL,      // Shader location: vertex attribute: normal
+	VERTEX_TANGENT,     // Shader location: vertex attribute: tangent
+	VERTEX_COLOR,       // Shader location: vertex attribute: color
+	MATRIX_MVP,         // Shader location: matrix uniform: model-view-projection
+	MATRIX_VIEW,        // Shader location: matrix uniform: view (camera transform)
+	MATRIX_PROJECTION,  // Shader location: matrix uniform: projection
+	MATRIX_MODEL,       // Shader location: matrix uniform: model (transform)
+	MATRIX_NORMAL,      // Shader location: matrix uniform: normal
+	VECTOR_VIEW,        // Shader location: vector uniform: view
+	COLOR_DIFFUSE,      // Shader location: vector uniform: diffuse color
+	COLOR_SPECULAR,     // Shader location: vector uniform: specular color
+	COLOR_AMBIENT,      // Shader location: vector uniform: ambient color
+	MAP_ALBEDO,         // Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
+	MAP_METALNESS,      // Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
+	MAP_NORMAL,         // Shader location: sampler2d texture: normal
+	MAP_ROUGHNESS,      // Shader location: sampler2d texture: roughness
+	MAP_OCCLUSION,      // Shader location: sampler2d texture: occlusion
+	MAP_EMISSION,       // Shader location: sampler2d texture: emission
+	MAP_HEIGHT,         // Shader location: sampler2d texture: height
+	MAP_CUBEMAP,        // Shader location: samplerCube texture: cubemap
+	MAP_IRRADIANCE,     // Shader location: samplerCube texture: irradiance
+	MAP_PREFILTER,      // Shader location: samplerCube texture: prefilter
+	MAP_BRDF,           // Shader location: sampler2d texture: brdf
+	VERTEX_BONEIDS,     // Shader location: vertex attribute: boneIds
+	VERTEX_BONEWEIGHTS, // Shader location: vertex attribute: boneWeights
+	BONE_MATRICES,      // Shader location: array of matrices uniform: boneMatrices
+	VERTEX_INSTANCE_TX, // Shader location: vertex attribute: instanceTransform
 }
 
-// SHADER_LOC_MAP_DIFFUSE      :: SHADER_LOC_MAP_ALBEDO
-// SHADER_LOC_MAP_SPECULAR     :: SHADER_LOC_MAP_METALNESS
+// SHADER_LOC_MAP_DIFFUSE :: SHADER_LOC_MAP_ALBEDO
+// SHADER_LOC_MAP_SPECULAR :: SHADER_LOC_MAP_METALNESS
 
 // Shader uniform data type
 ShaderUniformDataType :: enum c.int {
-	FLOAT = 0, // Shader uniform type: float
+	FLOAT,     // Shader uniform type: float
 	VEC2,      // Shader uniform type: vec2 (2 float)
 	VEC3,      // Shader uniform type: vec3 (3 float)
 	VEC4,      // Shader uniform type: vec4 (4 float)
@@ -713,46 +722,46 @@ ShaderUniformDataType :: enum c.int {
 
 // Shader attribute data types
 ShaderAttributeDataType :: enum c.int {
-	FLOAT = 0, // Shader attribute type: float
-	VEC2,      // Shader attribute type: vec2 (2 float)
-	VEC3,      // Shader attribute type: vec3 (3 float)
-	VEC4,      // Shader attribute type: vec4 (4 float)
+	FLOAT, // Shader attribute type: float
+	VEC2,  // Shader attribute type: vec2 (2 float)
+	VEC3,  // Shader attribute type: vec3 (3 float)
+	VEC4,  // Shader attribute type: vec4 (4 float)
 }
 
 // Pixel formats
 // NOTE: Support depends on OpenGL version and platform
 PixelFormat :: enum c.int {
-	UNCOMPRESSED_GRAYSCALE = 1, // 8 bit per pixel (no alpha)
-	UNCOMPRESSED_GRAY_ALPHA,    // 8*2 bpp (2 channels)
-	UNCOMPRESSED_R5G6B5,        // 16 bpp
-	UNCOMPRESSED_R8G8B8,        // 24 bpp
-	UNCOMPRESSED_R5G5B5A1,      // 16 bpp (1 bit alpha)
-	UNCOMPRESSED_R4G4B4A4,      // 16 bpp (4 bit alpha)
-	UNCOMPRESSED_R8G8B8A8,      // 32 bpp
-	UNCOMPRESSED_R32,           // 32 bpp (1 channel - float)
-	UNCOMPRESSED_R32G32B32,     // 32*3 bpp (3 channels - float)
-	UNCOMPRESSED_R32G32B32A32,  // 32*4 bpp (4 channels - float)
-	UNCOMPRESSED_R16,           // 16 bpp (1 channel - half float)
-	UNCOMPRESSED_R16G16B16,     // 16*3 bpp (3 channels - half float)
-	UNCOMPRESSED_R16G16B16A16,  // 16*4 bpp (4 channels - half float)
-	COMPRESSED_DXT1_RGB,        // 4 bpp (no alpha)
-	COMPRESSED_DXT1_RGBA,       // 4 bpp (1 bit alpha)
-	COMPRESSED_DXT3_RGBA,       // 8 bpp
-	COMPRESSED_DXT5_RGBA,       // 8 bpp
-	COMPRESSED_ETC1_RGB,        // 4 bpp
-	COMPRESSED_ETC2_RGB,        // 4 bpp
-	COMPRESSED_ETC2_EAC_RGBA,   // 8 bpp
-	COMPRESSED_PVRT_RGB,        // 4 bpp
-	COMPRESSED_PVRT_RGBA,       // 4 bpp
-	COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
-	COMPRESSED_ASTC_8x8_RGBA,   // 2 bpp
+	UNCOMPRESSED_GRAYSCALE    = 1,  // 8 bit per pixel (no alpha)
+	UNCOMPRESSED_GRAY_ALPHA   = 2,  // 8*2 bpp (2 channels)
+	UNCOMPRESSED_R5G6B5       = 3,  // 16 bpp
+	UNCOMPRESSED_R8G8B8       = 4,  // 24 bpp
+	UNCOMPRESSED_R5G5B5A1     = 5,  // 16 bpp (1 bit alpha)
+	UNCOMPRESSED_R4G4B4A4     = 6,  // 16 bpp (4 bit alpha)
+	UNCOMPRESSED_R8G8B8A8     = 7,  // 32 bpp
+	UNCOMPRESSED_R32          = 8,  // 32 bpp (1 channel - float)
+	UNCOMPRESSED_R32G32B32    = 9,  // 32*3 bpp (3 channels - float)
+	UNCOMPRESSED_R32G32B32A32 = 10, // 32*4 bpp (4 channels - float)
+	UNCOMPRESSED_R16          = 11, // 16 bpp (1 channel - half float)
+	UNCOMPRESSED_R16G16B16    = 12, // 16*3 bpp (3 channels - half float)
+	UNCOMPRESSED_R16G16B16A16 = 13, // 16*4 bpp (4 channels - half float)
+	COMPRESSED_DXT1_RGB       = 14, // 4 bpp (no alpha)
+	COMPRESSED_DXT1_RGBA      = 15, // 4 bpp (1 bit alpha)
+	COMPRESSED_DXT3_RGBA      = 16, // 8 bpp
+	COMPRESSED_DXT5_RGBA      = 17, // 8 bpp
+	COMPRESSED_ETC1_RGB       = 18, // 4 bpp
+	COMPRESSED_ETC2_RGB       = 19, // 4 bpp
+	COMPRESSED_ETC2_EAC_RGBA  = 20, // 8 bpp
+	COMPRESSED_PVRT_RGB       = 21, // 4 bpp
+	COMPRESSED_PVRT_RGBA      = 22, // 4 bpp
+	COMPRESSED_ASTC_4x4_RGBA  = 23, // 8 bpp
+	COMPRESSED_ASTC_8x8_RGBA  = 24, // 2 bpp
 }
 
 // Texture parameters: filter mode
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 TextureFilter :: enum c.int {
-	POINT = 0,       // No filter, just pixel approximation
+	POINT,           // No filter, just pixel approximation
 	BILINEAR,        // Linear filtering
 	TRILINEAR,       // Trilinear filtering (linear with mipmaps)
 	ANISOTROPIC_4X,  // Anisotropic filtering 4x
@@ -762,7 +771,7 @@ TextureFilter :: enum c.int {
 
 // Texture parameters: wrap mode
 TextureWrap :: enum c.int {
-	REPEAT = 0,    // Repeats texture in tiled mode
+	REPEAT,        // Repeats texture in tiled mode
 	CLAMP,         // Clamps texture to edge pixel in tiled mode
 	MIRROR_REPEAT, // Mirrors and repeats the texture in tiled mode
 	MIRROR_CLAMP,  // Mirrors and clamps to border the texture in tiled mode
@@ -770,7 +779,7 @@ TextureWrap :: enum c.int {
 
 // Cubemap layouts
 CubemapLayout :: enum c.int {
-	AUTO_DETECT = 0,     // Automatically detect layout type
+	AUTO_DETECT,         // Automatically detect layout type
 	LINE_VERTICAL,       // Layout is defined by a vertical line with faces
 	LINE_HORIZONTAL,     // Layout is defined by a horizontal line with faces
 	CROSS_THREE_BY_FOUR, // Layout is defined by a 3x4 cross with cubemap faces
@@ -779,14 +788,14 @@ CubemapLayout :: enum c.int {
 
 // Font type, defines generation method
 FontType :: enum c.int {
-	DEFAULT = 0, // Default font generation, anti-aliased
-	BITMAP,      // Bitmap font generation, no anti-aliasing
-	SDF,         // SDF font generation, requires external shader
+	DEFAULT, // Default font generation, anti-aliased
+	BITMAP,  // Bitmap font generation, no anti-aliasing
+	SDF,     // SDF font generation, requires external shader
 }
 
 // Color blending modes (pre-defined)
 BlendMode :: enum c.int {
-	ALPHA = 0,         // Blend textures considering alpha (default)
+	ALPHA,             // Blend textures considering alpha (default)
 	ADDITIVE,          // Blend textures adding colors
 	MULTIPLIED,        // Blend textures multiplying colors
 	ADD_COLORS,        // Blend textures adding colors (alternative)
@@ -799,23 +808,23 @@ BlendMode :: enum c.int {
 // Gesture
 // NOTE: Provided as bit-wise flags to enable only desired gestures
 Gesture :: enum c.int {
-	TAP         = 0, // Tap gesture
-	DOUBLETAP   = 1, // Double tap gesture
-	HOLD        = 2, // Hold gesture
-	DRAG        = 3, // Drag gesture
-	SWIPE_RIGHT = 4, // Swipe right gesture
-	SWIPE_LEFT  = 5, // Swipe left gesture
-	SWIPE_UP    = 6, // Swipe up gesture
-	SWIPE_DOWN  = 7, // Swipe down gesture
-	PINCH_IN    = 8, // Pinch in gesture
-	PINCH_OUT   = 9, // Pinch out gesture
+	TAP,         // Tap gesture
+	DOUBLETAP,   // Double tap gesture
+	HOLD,        // Hold gesture
+	DRAG,        // Drag gesture
+	SWIPE_RIGHT, // Swipe right gesture
+	SWIPE_LEFT,  // Swipe left gesture
+	SWIPE_UP,    // Swipe up gesture
+	SWIPE_DOWN,  // Swipe down gesture
+	PINCH_IN,    // Pinch in gesture
+	PINCH_OUT,   // Pinch out gesture
 }
 
 Gestures :: distinct bit_set[Gesture; c.int]
 
 // Camera system modes
 CameraMode :: enum c.int {
-	CUSTOM = 0,   // Camera custom, controlled by user (UpdateCamera() does nothing)
+	CUSTOM,       // Camera custom, controlled by user (UpdateCamera() does nothing)
 	FREE,         // Camera free mode
 	ORBITAL,      // Camera orbital, around target, zoom supported
 	FIRST_PERSON, // Camera first person
@@ -824,31 +833,30 @@ CameraMode :: enum c.int {
 
 // Camera projection
 CameraProjection :: enum c.int {
-	PERSPECTIVE = 0, // Perspective projection
-	ORTHOGRAPHIC,    // Orthographic projection
+	PERSPECTIVE,  // Perspective projection
+	ORTHOGRAPHIC, // Orthographic projection
 }
 
 // N-patch layout
 NPatchLayout :: enum c.int {
-	NINE_PATCH = 0,         // Npatch layout: 3x3 tiles
+	NINE_PATCH,             // Npatch layout: 3x3 tiles
 	THREE_PATCH_VERTICAL,   // Npatch layout: 1x3 tiles
 	THREE_PATCH_HORIZONTAL, // Npatch layout: 3x1 tiles
 }
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
-TraceLogCallback :: proc "c" (c.int, cstring, ^c.va_list) // Logging: Redirect trace log messages
+TraceLogCallback :: proc "c" (c.int, cstring, ^c.va_list)
 
-LoadFileDataCallback :: proc "c" (cstring, ^c.int) -> ^c.uchar // FileIO: Load binary data
+LoadFileDataCallback :: proc "c" (cstring, ^c.int) -> ^c.uchar
 
-SaveFileDataCallback :: proc "c" (cstring, rawptr, c.int) -> bool // FileIO: Save binary data
+SaveFileDataCallback :: proc "c" (cstring, rawptr, c.int) -> bool
 
-LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
+LoadFileTextCallback :: proc "c" (cstring) -> cstring
 
-SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
+SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool
 
-// Screen-space-related functions
-// GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib versions
+// GetMouseRay :: GetScreenToWorldRay// Compatibility hack for previous raylib versions
 
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)

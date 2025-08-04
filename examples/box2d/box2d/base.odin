@@ -8,8 +8,10 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+// BOX2D_EXPORT :: 
+
 // API :: BOX2D_EXPORT
-// INLINE :: static inline
+// INLINE :: 
 
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
@@ -23,7 +25,7 @@ FreeFcn :: proc "c" (rawptr)
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
 AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
 
-// BREAKPOINT :: _debugbreak()
+// BREAKPOINT :: __debugbreak()
 
 /// Version numbering scheme.
 /// See https://semver.org/
@@ -38,7 +40,6 @@ Version :: struct {
 	revision: c.int,
 }
 
-/// Simple djb2 hash function for determinism testing
 HASH_INIT :: 5381
 
 @(default_calling_convention="c", link_prefix="b2")

@@ -6,41 +6,44 @@ _ :: c
 
 foreign import lib "ufbx.lib"
 
-// STDC :: _Stdc_Version
+// UFBX_H_INCLUDED :: 
+
+// STDC :: __STDC_VERSION__
 
 CPP :: 0
 
-// PLATFORM_MSC :: Msc_Ver
+// PLATFORM_MSC :: _MSC_VER
 
 PLATFORM_GNUC :: 0
 
 CPP11 :: 0
 
-// ufbx_inline :: Static _Forceinline
+// ufbx_inline :: 
 
-// ufbx_abi_data :: Extern
+// ufbx_nullable :: 
+
+// ufbx_unsafe :: 
+
+// ufbx_abi :: 
+
+// ufbx_abi_data :: 
+
+// ufbx_abi_data_def :: 
 
 REAL_TYPE :: f32
 
-// Limits for embedded arrays within structures.
 ERROR_STACK_MAX_DEPTH :: 8
 PANIC_MESSAGE_LENGTH :: 128
 ERROR_INFO_LENGTH :: 256
 
-// Number of thread groups to use if threading is enabled.
-// A thread group processes a number of tasks and is then waited and potentially
-// re-used later. In essence, this controls the granularity of threading.
 THREAD_GROUP_COUNT :: 4
 
+// ENUM_REPR :: 
+// FLAG_REPR :: 
 HAS_FORCE_32BIT :: 1
 
-// Version of the ufbx header.
-// `UFBX_VERSION` is simply an alias of `UFBX_HEADER_VERSION`.
-// `ufbx_source_version` contains the version of the corresponding source file.
-// HINT: The version can be compared numerically to the result of `ufbx_pack_version()`,
-// for example `#if UFBX_VERSION >= ufbx_pack_version(0, 12, 0)`.
-HEADER_VERSION :: (u32)(0)*1000000 + (u32)(18)*1000 + (u32)(0)
-// VERSION :: Ufbx_Header_Version
+HEADER_VERSION :: ((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
+VERSION :: HEADER_VERSION
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
 // If you define `UFBX_REAL_IS_FLOAT` to any value, `ufbx_real` will be defined
@@ -77,13 +80,13 @@ Quat :: quaternion128
 // not the multiplication order: eg. `UFBX_ROTATION_ORDER_XYZ` is `Z*Y*X`
 // [TODO: Figure out what the spheric rotation order is...]
 Rotation_Order :: enum c.int {
-	XYZ,
-	XZY,
-	YZX,
-	YXZ,
-	ZXY,
-	ZYX,
-	SPHERIC,
+	XYZ         = 0,
+	XZY         = 1,
+	YZX         = 2,
+	YXZ         = 3,
+	ZXY         = 4,
+	ZYX         = 5,
+	SPHERIC     = 6,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -152,20 +155,19 @@ String_List :: struct {
 	count: c.size_t,
 }
 
-// Sentinel value used to represent a missing index.
-// NO_INDEX :: (u32)~0
+NO_INDEX :: ((u32)~0)
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {
-	NUMBER,
-	STRING,
-	ARRAY_I8,
-	ARRAY_I32,
-	ARRAY_I64,
-	ARRAY_F32,
-	ARRAY_F64,
-	ARRAY_RAW_STRING,
-	ARRAY_IGNORED,
+	NUMBER           = 0,
+	STRING           = 1,
+	ARRAY_I8         = 2,
+	ARRAY_I32        = 3,
+	ARRAY_I64        = 4,
+	ARRAY_F32        = 5,
+	ARRAY_F64        = 6,
+	ARRAY_RAW_STRING = 7,
+	ARRAY_IGNORED    = 8,
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -200,22 +202,22 @@ Dom_Node :: struct {
 // eg. `prop->value_real` and `prop->value_int` have the same value (well, close)
 // if `prop->type == UFBX_PROP_INTEGER`. String values are not converted from/to.
 Prop_Type :: enum c.int {
-	UNKNOWN,
-	BOOLEAN,
-	INTEGER,
-	NUMBER,
-	VECTOR,
-	COLOR,
-	COLOR_WITH_ALPHA,
-	STRING,
-	DATE_TIME,
-	TRANSLATION,
-	ROTATION,
-	SCALING,
-	DISTANCE,
-	COMPOUND,
-	BLOB,
-	REFERENCE,
+	UNKNOWN          = 0,
+	BOOLEAN          = 1,
+	INTEGER          = 2,
+	NUMBER           = 3,
+	VECTOR           = 4,
+	COLOR            = 5,
+	COLOR_WITH_ALPHA = 6,
+	STRING           = 7,
+	DATE_TIME        = 8,
+	TRANSLATION      = 9,
+	ROTATION         = 10,
+	SCALING          = 11,
+	DISTANCE         = 12,
+	COMPOUND         = 13,
+	BLOB             = 14,
+	REFERENCE        = 15,
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -569,51 +571,51 @@ Metadata_Object_List :: struct {
 }
 
 Element_Type :: enum c.int {
-	UNKNOWN,             // < `ufbx_unknown`
-	NODE,                // < `ufbx_node`
-	MESH,                // < `ufbx_mesh`
-	LIGHT,               // < `ufbx_light`
-	CAMERA,              // < `ufbx_camera`
-	BONE,                // < `ufbx_bone`
-	EMPTY,               // < `ufbx_empty`
-	LINE_CURVE,          // < `ufbx_line_curve`
-	NURBS_CURVE,         // < `ufbx_nurbs_curve`
-	NURBS_SURFACE,       // < `ufbx_nurbs_surface`
-	NURBS_TRIM_SURFACE,  // < `ufbx_nurbs_trim_surface`
-	NURBS_TRIM_BOUNDARY, // < `ufbx_nurbs_trim_boundary`
-	PROCEDURAL_GEOMETRY, // < `ufbx_procedural_geometry`
-	STEREO_CAMERA,       // < `ufbx_stereo_camera`
-	CAMERA_SWITCHER,     // < `ufbx_camera_switcher`
-	MARKER,              // < `ufbx_marker`
-	LOD_GROUP,           // < `ufbx_lod_group`
-	SKIN_DEFORMER,       // < `ufbx_skin_deformer`
-	SKIN_CLUSTER,        // < `ufbx_skin_cluster`
-	BLEND_DEFORMER,      // < `ufbx_blend_deformer`
-	BLEND_CHANNEL,       // < `ufbx_blend_channel`
-	BLEND_SHAPE,         // < `ufbx_blend_shape`
-	CACHE_DEFORMER,      // < `ufbx_cache_deformer`
-	CACHE_FILE,          // < `ufbx_cache_file`
-	MATERIAL,            // < `ufbx_material`
-	TEXTURE,             // < `ufbx_texture`
-	VIDEO,               // < `ufbx_video`
-	SHADER,              // < `ufbx_shader`
-	SHADER_BINDING,      // < `ufbx_shader_binding`
-	ANIM_STACK,          // < `ufbx_anim_stack`
-	ANIM_LAYER,          // < `ufbx_anim_layer`
-	ANIM_VALUE,          // < `ufbx_anim_value`
-	ANIM_CURVE,          // < `ufbx_anim_curve`
-	DISPLAY_LAYER,       // < `ufbx_display_layer`
-	SELECTION_SET,       // < `ufbx_selection_set`
-	SELECTION_NODE,      // < `ufbx_selection_node`
-	CHARACTER,           // < `ufbx_character`
-	CONSTRAINT,          // < `ufbx_constraint`
-	AUDIO_LAYER,         // < `ufbx_audio_layer`
-	AUDIO_CLIP,          // < `ufbx_audio_clip`
-	POSE,                // < `ufbx_pose`
-	METADATA_OBJECT,     // < `ufbx_metadata_object`
-	TYPE_FIRST_ATTRIB = 2,
-	TYPE_LAST_ATTRIB = 16,
-	TYPE_FORCE_32BIT = 2147483647,
+	UNKNOWN             = 0,  // < `ufbx_unknown`
+	NODE                = 1,  // < `ufbx_node`
+	MESH                = 2,  // < `ufbx_mesh`
+	LIGHT               = 3,  // < `ufbx_light`
+	CAMERA              = 4,  // < `ufbx_camera`
+	BONE                = 5,  // < `ufbx_bone`
+	EMPTY               = 6,  // < `ufbx_empty`
+	LINE_CURVE          = 7,  // < `ufbx_line_curve`
+	NURBS_CURVE         = 8,  // < `ufbx_nurbs_curve`
+	NURBS_SURFACE       = 9,  // < `ufbx_nurbs_surface`
+	NURBS_TRIM_SURFACE  = 10, // < `ufbx_nurbs_trim_surface`
+	NURBS_TRIM_BOUNDARY = 11, // < `ufbx_nurbs_trim_boundary`
+	PROCEDURAL_GEOMETRY = 12, // < `ufbx_procedural_geometry`
+	STEREO_CAMERA       = 13, // < `ufbx_stereo_camera`
+	CAMERA_SWITCHER     = 14, // < `ufbx_camera_switcher`
+	MARKER              = 15, // < `ufbx_marker`
+	LOD_GROUP           = 16, // < `ufbx_lod_group`
+	SKIN_DEFORMER       = 17, // < `ufbx_skin_deformer`
+	SKIN_CLUSTER        = 18, // < `ufbx_skin_cluster`
+	BLEND_DEFORMER      = 19, // < `ufbx_blend_deformer`
+	BLEND_CHANNEL       = 20, // < `ufbx_blend_channel`
+	BLEND_SHAPE         = 21, // < `ufbx_blend_shape`
+	CACHE_DEFORMER      = 22, // < `ufbx_cache_deformer`
+	CACHE_FILE          = 23, // < `ufbx_cache_file`
+	MATERIAL            = 24, // < `ufbx_material`
+	TEXTURE             = 25, // < `ufbx_texture`
+	VIDEO               = 26, // < `ufbx_video`
+	SHADER              = 27, // < `ufbx_shader`
+	SHADER_BINDING      = 28, // < `ufbx_shader_binding`
+	ANIM_STACK          = 29, // < `ufbx_anim_stack`
+	ANIM_LAYER          = 30, // < `ufbx_anim_layer`
+	ANIM_VALUE          = 31, // < `ufbx_anim_value`
+	ANIM_CURVE          = 32, // < `ufbx_anim_curve`
+	DISPLAY_LAYER       = 33, // < `ufbx_display_layer`
+	SELECTION_SET       = 34, // < `ufbx_selection_set`
+	SELECTION_NODE      = 35, // < `ufbx_selection_node`
+	CHARACTER           = 36, // < `ufbx_character`
+	CONSTRAINT          = 37, // < `ufbx_constraint`
+	AUDIO_LAYER         = 38, // < `ufbx_audio_layer`
+	AUDIO_CLIP          = 39, // < `ufbx_audio_clip`
+	POSE                = 40, // < `ufbx_pose`
+	METADATA_OBJECT     = 41, // < `ufbx_metadata_object`
+	TYPE_FIRST_ATTRIB   = 2,
+	TYPE_LAST_ATTRIB    = 16,
+	TYPE_FORCE_32BIT    = 2147483647,
 }
 
 ELEMENT_TYPE_COUNT :: 42
@@ -680,7 +682,7 @@ Unknown :: struct {
 Inherit_Mode :: enum c.int {
 	// Normal matrix composition of hierarchy: `R*S*r*s`.
 	//   child.node_to_world = parent.node_to_world * child.node_to_parent;
-	NORMAL,
+	NORMAL = 0,
 
 	// Ignore parent scale when computing the transform: `R*r*s`.
 	//   ufbx_transform t = node.local_transform;
@@ -688,29 +690,31 @@ Inherit_Mode :: enum c.int {
 	//   t.scale *= node.inherit_scale_node.inherit_scale;
 	//   child.node_to_world = parent.unscaled_node_to_world * t;
 	// Also known as "Segment scale compensate" in some software.
-	IGNORE_PARENT_SCALE,
+	IGNORE_PARENT_SCALE = 1,
 
 	// Apply parent scale component-wise: `R*r*S*s`.
 	//   ufbx_transform t = node.local_transform;
 	//   t.translation *= parent.inherit_scale;
 	//   t.scale *= node.inherit_scale_node.inherit_scale;
 	//   child.node_to_world = parent.unscaled_node_to_world * t;
-	COMPONENTWISE_SCALE,
-	FORCE_32BIT = 2147483647, // Apply parent scale component-wise: `R*r*S*s`.
+	COMPONENTWISE_SCALE = 2,
+
+	// Apply parent scale component-wise: `R*r*S*s`.
 	//   ufbx_transform t = node.local_transform;
 	//   t.translation *= parent.inherit_scale;
 	//   t.scale *= node.inherit_scale_node.inherit_scale;
 	//   child.node_to_world = parent.unscaled_node_to_world * t;
+	FORCE_32BIT = 2147483647,
 }
 
 INHERIT_MODE_COUNT :: 3
 
 // Axis used to mirror transformations for handedness conversion.
 Mirror_Axis :: enum c.int {
-	NONE,
-	X,
-	Y,
-	Z,
+	NONE        = 0,
+	X           = 1,
+	Y           = 2,
+	Z           = 3,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1064,31 +1068,33 @@ Subdivision_Result :: struct {
 }
 
 Subdivision_Display_Mode :: enum c.int {
-	DISABLED,
-	HULL,
-	HULL_AND_SMOOTH,
-	SMOOTH,
+	DISABLED         = 0,
+	HULL             = 1,
+	HULL_AND_SMOOTH  = 2,
+	SMOOTH           = 3,
 	MODE_FORCE_32BIT = 2147483647,
 }
 
 SUBDIVISION_DISPLAY_MODE_COUNT :: 4
 
 Subdivision_Boundary :: enum c.int {
-	DEFAULT,
-	LEGACY,
+	DEFAULT        = 0,
+	LEGACY         = 1,
 
 	// OpenSubdiv: `VTX_BOUNDARY_EDGE_AND_CORNER` / `FVAR_LINEAR_CORNERS_ONLY`
-	SHARP_CORNERS,
+	SHARP_CORNERS = 2,
 
 	// OpenSubdiv: `VTX_BOUNDARY_EDGE_ONLY` / `FVAR_LINEAR_NONE`
-	SHARP_NONE,
+	SHARP_NONE = 3,
 
 	// OpenSubdiv: `FVAR_LINEAR_BOUNDARIES`
-	SHARP_BOUNDARY,
+	SHARP_BOUNDARY = 4,
 
 	// OpenSubdiv: `FVAR_LINEAR_ALL`
-	SHARP_INTERIOR,
-	FORCE_32BIT = 2147483647, // OpenSubdiv: `FVAR_LINEAR_ALL`
+	SHARP_INTERIOR = 5,
+
+	// OpenSubdiv: `FVAR_LINEAR_ALL`
+	FORCE_32BIT = 2147483647,
 }
 
 SUBDIVISION_BOUNDARY_COUNT :: 6
@@ -1140,6 +1146,7 @@ SUBDIVISION_BOUNDARY_COUNT :: 6
 //   0 1 4 2 5 9  vertex_first_index[vertex]
 //   0 0 0 1 1 1  vertex_normal.indices[vertex_first_index[vertex]]
 //   ^ ^ ^ v v v  vertex_normal.data[vertex_normal.indices[vertex_first_index[vertex]]]
+//
 Mesh :: struct {
 	using _: struct #raw_union {
 		element: Element,
@@ -1253,43 +1260,45 @@ Mesh :: struct {
 // The kind of light source
 Light_Type :: enum c.int {
 	// Single point at local origin, at `node->world_transform.position`
-	POINT,
+	POINT = 0,
 
 	// Infinite directional light pointing locally towards `light->local_direction`
 	// For global: `ufbx_transform_direction(&node->node_to_world, light->local_direction)`
-	DIRECTIONAL,
+	DIRECTIONAL = 1,
 
 	// Cone shaped light towards `light->local_direction`, between `light->inner/outer_angle`.
 	// For global: `ufbx_transform_direction(&node->node_to_world, light->local_direction)`
-	SPOT,
+	SPOT = 2,
 
 	// Area light, shape specified by `light->area_shape`
 	// TODO: Units?
-	AREA,
+	AREA = 3,
 
 	// Volumetric light source
 	// TODO: How does this work
-	VOLUME,
-	TYPE_FORCE_32BIT = 2147483647, // Volumetric light source
+	VOLUME = 4,
+
+	// Volumetric light source
 	// TODO: How does this work
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 LIGHT_TYPE_COUNT :: 5
 
 // How fast does the light intensity decay at a distance
 Light_Decay :: enum c.int {
-	NONE,      // < 1 (no decay)
-	LINEAR,    // < 1 / d
-	QUADRATIC, // < 1 / d^2 (physically accurate)
-	CUBIC,     // < 1 / d^3
+	NONE        = 0, // < 1 (no decay)
+	LINEAR      = 1, // < 1 / d
+	QUADRATIC   = 2, // < 1 / d^2 (physically accurate)
+	CUBIC       = 3, // < 1 / d^3
 	FORCE_32BIT = 2147483647,
 }
 
 LIGHT_DECAY_COUNT :: 4
 
 Light_Area_Shape :: enum c.int {
-	RECTANGLE,
-	SPHERE,
+	RECTANGLE   = 0,
+	SPHERE      = 1,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1329,11 +1338,13 @@ Light :: struct {
 
 Projection_Mode :: enum c.int {
 	// Perspective projection.
-	PERSPECTIVE,
+	PERSPECTIVE = 0,
 
 	// Orthographic projection.
-	ORTHOGRAPHIC,
-	FORCE_32BIT = 2147483647, // Orthographic projection.
+	ORTHOGRAPHIC = 1,
+
+	// Orthographic projection.
+	FORCE_32BIT = 2147483647,
 }
 
 PROJECTION_MODE_COUNT :: 2
@@ -1342,20 +1353,22 @@ PROJECTION_MODE_COUNT :: 2
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aspect_Mode :: enum c.int {
 	// No defined resolution
-	WINDOW_SIZE,
+	WINDOW_SIZE = 0,
 
 	// `"AspectWidth"` and `"AspectHeight"` are relative to each other
-	FIXED_RATIO,
+	FIXED_RATIO = 1,
 
 	// `"AspectWidth"` and `"AspectHeight"` are both pixels
-	FIXED_RESOLUTION,
+	FIXED_RESOLUTION = 2,
 
 	// `"AspectWidth"` is pixels, `"AspectHeight"` is relative to width
-	FIXED_WIDTH,
+	FIXED_WIDTH = 3,
 
 	// < `"AspectHeight"` is pixels, `"AspectWidth"` is relative to height
-	FIXED_HEIGHT,
-	FORCE_32BIT = 2147483647, // < `"AspectHeight"` is pixels, `"AspectWidth"` is relative to height
+	FIXED_HEIGHT = 4,
+
+	// < `"AspectHeight"` is pixels, `"AspectWidth"` is relative to height
+	FORCE_32BIT = 2147483647,
 }
 
 ASPECT_MODE_COUNT :: 5
@@ -1364,17 +1377,19 @@ ASPECT_MODE_COUNT :: 5
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Mode :: enum c.int {
 	// Use separate `"FieldOfViewX"` and `"FieldOfViewY"` as horizontal/vertical FOV angles
-	HORIZONTAL_AND_VERTICAL,
+	HORIZONTAL_AND_VERTICAL = 0,
 
 	// Use `"FieldOfView"` as horizontal FOV angle, derive vertical angle via aspect ratio
-	HORIZONTAL,
+	HORIZONTAL = 1,
 
 	// Use `"FieldOfView"` as vertical FOV angle, derive horizontal angle via aspect ratio
-	VERTICAL,
+	VERTICAL = 2,
 
 	// Compute the field of view from the render gate size and focal length
-	FOCAL_LENGTH,
-	FORCE_32BIT = 2147483647, // Compute the field of view from the render gate size and focal length
+	FOCAL_LENGTH = 3,
+
+	// Compute the field of view from the render gate size and focal length
+	FORCE_32BIT = 2147483647,
 }
 
 APERTURE_MODE_COUNT :: 4
@@ -1383,25 +1398,27 @@ APERTURE_MODE_COUNT :: 4
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Gate_Fit :: enum c.int {
 	// Use the film/aperture size directly as the render gate
-	NONE,
+	NONE = 0,
 
 	// Fit the render gate to the height of the film, derive width from aspect ratio
-	VERTICAL,
+	VERTICAL = 1,
 
 	// Fit the render gate to the width of the film, derive height from aspect ratio
-	HORIZONTAL,
+	HORIZONTAL = 2,
 
 	// Fit the render gate so that it is fully contained within the film gate
-	FILL,
+	FILL = 3,
 
 	// Fit the render gate so that it fully contains the film gate
-	OVERSCAN,
+	OVERSCAN = 4,
 
 	// Stretch the render gate to match the film gate
 	// TODO: Does this differ from `UFBX_GATE_FIT_NONE`?
-	STRETCH,
-	FORCE_32BIT = 2147483647, // Stretch the render gate to match the film gate
+	STRETCH = 5,
+
+	// Stretch the render gate to match the film gate
 	// TODO: Does this differ from `UFBX_GATE_FIT_NONE`?
+	FORCE_32BIT = 2147483647,
 }
 
 GATE_FIT_COUNT :: 6
@@ -1409,31 +1426,31 @@ GATE_FIT_COUNT :: 6
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Format :: enum c.int {
-	CUSTOM,               // < Use `"FilmWidth"` and `"FilmHeight"`
-	_16MM_THEATRICAL,     // < 0.404 x 0.295 inches
-	SUPER_16MM,           // < 0.493 x 0.292 inches
-	_35MM_ACADEMY,        // < 0.864 x 0.630 inches
-	_35MM_TV_PROJECTION,  // < 0.816 x 0.612 inches
-	_35MM_FULL_APERTURE,  // < 0.980 x 0.735 inches
-	_35MM_185_PROJECTION, // < 0.825 x 0.446 inches
-	_35MM_ANAMORPHIC,     // < 0.864 x 0.732 inches (squeeze ratio: 2)
-	_70MM_PROJECTION,     // < 2.066 x 0.906 inches
-	VISTAVISION,          // < 1.485 x 0.991 inches
-	DYNAVISION,           // < 2.080 x 1.480 inches
-	IMAX,                 // < 2.772 x 2.072 inches
-	FORCE_32BIT = 2147483647,
+	CUSTOM              = 0,  // < Use `"FilmWidth"` and `"FilmHeight"`
+	_16MM_THEATRICAL    = 1,  // < 0.404 x 0.295 inches
+	SUPER_16MM          = 2,  // < 0.493 x 0.292 inches
+	_35MM_ACADEMY       = 3,  // < 0.864 x 0.630 inches
+	_35MM_TV_PROJECTION = 4,  // < 0.816 x 0.612 inches
+	_35MM_FULL_APERTURE = 5,  // < 0.980 x 0.735 inches
+	_35MM_185_PROJECTION = 6, // < 0.825 x 0.446 inches
+	_35MM_ANAMORPHIC    = 7,  // < 0.864 x 0.732 inches (squeeze ratio: 2)
+	_70MM_PROJECTION    = 8,  // < 2.066 x 0.906 inches
+	VISTAVISION         = 9,  // < 1.485 x 0.991 inches
+	DYNAVISION          = 10, // < 2.080 x 1.480 inches
+	IMAX                = 11, // < 2.772 x 2.072 inches
+	FORCE_32BIT         = 2147483647,
 }
 
 APERTURE_FORMAT_COUNT :: 12
 
 Coordinate_Axis :: enum c.int {
-	POSITIVE_X,
-	NEGATIVE_X,
-	POSITIVE_Y,
-	NEGATIVE_Y,
-	POSITIVE_Z,
-	NEGATIVE_Z,
-	UNKNOWN,
+	POSITIVE_X  = 0,
+	NEGATIVE_X  = 1,
+	POSITIVE_Y  = 2,
+	NEGATIVE_Y  = 3,
+	POSITIVE_Z  = 4,
+	NEGATIVE_Z  = 5,
+	UNKNOWN     = 6,
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1587,14 +1604,16 @@ Line_Curve :: struct {
 
 Nurbs_Topology :: enum c.int {
 	// The endpoints are not connected.
-	OPEN,
+	OPEN = 0,
 
 	// Repeats first `ufbx_nurbs_basis.order - 1` control points after the end.
-	PERIODIC,
+	PERIODIC = 1,
 
 	// Repeats the first control point after the end.
-	CLOSED,
-	FORCE_32BIT = 2147483647, // Repeats the first control point after the end.
+	CLOSED = 2,
+
+	// Repeats the first control point after the end.
+	FORCE_32BIT = 2147483647,
 }
 
 NURBS_TOPOLOGY_COUNT :: 3
@@ -1761,9 +1780,9 @@ Camera_Switcher :: struct {
 }
 
 Marker_Type :: enum c.int {
-	UNKNOWN,     // < Unknown marker type
-	FK_EFFECTOR, // < FK (Forward Kinematics) effector
-	IK_EFFECTOR, // < IK (Inverse Kinematics) effector
+	UNKNOWN          = 0, // < Unknown marker type
+	FK_EFFECTOR      = 1, // < FK (Forward Kinematics) effector
+	IK_EFFECTOR      = 2, // < IK (Inverse Kinematics) effector
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -1788,9 +1807,9 @@ Marker :: struct {
 
 // LOD level display mode.
 Lod_Display :: enum c.int {
-	USE_LOD, // < Display the LOD level if the distance is appropriate.
-	SHOW,    // < Always display the LOD level.
-	HIDE,    // < Never display the LOD level.
+	USE_LOD     = 0, // < Display the LOD level if the distance is appropriate.
+	SHOW        = 1, // < Always display the LOD level.
+	HIDE        = 2, // < Never display the LOD level.
 	FORCE_32BIT = 2147483647,
 }
 
@@ -1848,21 +1867,23 @@ Lod_Group :: struct {
 // Method to evaluate the skinning on a per-vertex level
 Skinning_Method :: enum c.int {
 	// Linear blend skinning: Blend transformation matrices by vertex weights
-	LINEAR,
+	LINEAR = 0,
 
 	// One vertex should have only one bone attached
-	RIGID,
+	RIGID = 1,
 
 	// Convert the transformations to dual quaternions and blend in that space
-	DUAL_QUATERNION,
+	DUAL_QUATERNION = 2,
 
 	// Blend between `UFBX_SKINNING_METHOD_LINEAR` and `UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
 	// The blend weight can be found either per-vertex in `ufbx_skin_vertex.dq_weight`
 	// or in `ufbx_skin_deformer.dq_vertices/dq_weights` (indexed by vertex).
-	BLENDED_DQ_LINEAR,
-	FORCE_32BIT = 2147483647, // Blend between `UFBX_SKINNING_METHOD_LINEAR` and `UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
+	BLENDED_DQ_LINEAR = 3,
+
+	// Blend between `UFBX_SKINNING_METHOD_LINEAR` and `UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
 	// The blend weight can be found either per-vertex in `ufbx_skin_vertex.dq_weight`
 	// or in `ufbx_skin_deformer.dq_vertices/dq_weights` (indexed by vertex).
+	FORCE_32BIT = 2147483647,
 }
 
 SKINNING_METHOD_COUNT :: 4
@@ -2039,30 +2060,30 @@ Blend_Shape :: struct {
 }
 
 Cache_File_Format :: enum c.int {
-	UNKNOWN, // < Unknown cache file format
-	PC2,     // < .pc2 Point cache file
-	MC,      // < .mc/.mcx Maya cache file
+	UNKNOWN     = 0, // < Unknown cache file format
+	PC2         = 1, // < .pc2 Point cache file
+	MC          = 2, // < .mc/.mcx Maya cache file
 	FORCE_32BIT = 2147483647,
 }
 
 CACHE_FILE_FORMAT_COUNT :: 3
 
 Cache_Data_Format :: enum c.int {
-	UNKNOWN,     // < Unknown data format
-	REAL_FLOAT,  // < `float data[]`
-	VEC3_FLOAT,  // < `struct { float x, y, z; } data[]`
-	REAL_DOUBLE, // < `double data[]`
-	VEC3_DOUBLE, // < `struct { double x, y, z; } data[]`
+	UNKNOWN     = 0, // < Unknown data format
+	REAL_FLOAT  = 1, // < `float data[]`
+	VEC3_FLOAT  = 2, // < `struct { float x, y, z; } data[]`
+	REAL_DOUBLE = 3, // < `double data[]`
+	VEC3_DOUBLE = 4, // < `struct { double x, y, z; } data[]`
 	FORCE_32BIT = 2147483647,
 }
 
 CACHE_DATA_FORMAT_COUNT :: 5
 
 Cache_Data_Encoding :: enum c.int {
-	UNKNOWN,       // < Unknown data encoding
-	LITTLE_ENDIAN, // < Contiguous little-endian array
-	BIG_ENDIAN,    // < Contiguous big-endian array
-	FORCE_32BIT = 2147483647,
+	UNKNOWN       = 0, // < Unknown data encoding
+	LITTLE_ENDIAN = 1, // < Contiguous little-endian array
+	BIG_ENDIAN    = 2, // < Contiguous big-endian array
+	FORCE_32BIT   = 2147483647,
 }
 
 CACHE_DATA_ENCODING_COUNT :: 3
@@ -2070,18 +2091,20 @@ CACHE_DATA_ENCODING_COUNT :: 3
 // Known interpretations of geometry cache data.
 Cache_Interpretation :: enum c.int {
 	// Unknown interpretation, see `ufbx_cache_channel.interpretation_name` for more information.
-	UNKNOWN,
+	UNKNOWN = 0,
 
 	// Generic "points" interpretation, FBX SDK default. Usually fine to interpret
 	// as vertex positions if no other cache channels are specified.
-	POINTS,
+	POINTS = 1,
 
 	// Vertex positions.
-	VERTEX_POSITION,
+	VERTEX_POSITION = 2,
 
 	// Vertex normals.
-	VERTEX_NORMAL,
-	FORCE_32BIT = 2147483647, // Vertex normals.
+	VERTEX_NORMAL = 3,
+
+	// Vertex normals.
+	FORCE_32BIT = 2147483647,
 }
 
 CACHE_INTERPRETATION_COUNT :: 4
@@ -2271,174 +2294,176 @@ Material_Texture_List :: struct {
 // Shading model type
 Shader_Type :: enum c.int {
 	// Unknown shading model
-	UNKNOWN,
+	UNKNOWN = 0,
 
 	// FBX builtin diffuse material
-	FBX_LAMBERT,
+	FBX_LAMBERT = 1,
 
 	// FBX builtin diffuse+specular material
-	FBX_PHONG,
+	FBX_PHONG = 2,
 
 	// Open Shading Language standard surface
 	// https://github.com/Autodesk/standard-surface
-	OSL_STANDARD_SURFACE,
+	OSL_STANDARD_SURFACE = 3,
 
 	// Arnold standard surface
 	// https://docs.arnoldrenderer.com/display/A5AFMUG/Standard+Surface
-	ARNOLD_STANDARD_SURFACE,
+	ARNOLD_STANDARD_SURFACE = 4,
 
 	// 3ds Max Physical Material
 	// https://knowledge.autodesk.com/support/3ds-max/learn-explore/caas/CloudHelp/cloudhelp/2022/ENU/3DSMax-Lighting-Shading/files/GUID-C1328905-7783-4917-AB86-FC3CC19E8972-htm.html
-	_3DS_MAX_PHYSICAL_MATERIAL,
+	_3DS_MAX_PHYSICAL_MATERIAL = 5,
 
 	// 3ds Max PBR (Metal/Rough) material
 	// https://knowledge.autodesk.com/support/3ds-max/learn-explore/caas/CloudHelp/cloudhelp/2021/ENU/3DSMax-Lighting-Shading/files/GUID-A16234A5-6500-4662-8B20-A5EC9FE1B255-htm.html
-	_3DS_MAX_PBR_METAL_ROUGH,
+	_3DS_MAX_PBR_METAL_ROUGH = 6,
 
 	// 3ds Max PBR (Spec/Gloss) material
 	// https://knowledge.autodesk.com/support/3ds-max/learn-explore/caas/CloudHelp/cloudhelp/2021/ENU/3DSMax-Lighting-Shading/files/GUID-18087194-B2A6-43EF-9B80-8FD1736FAE52-htm.html
-	_3DS_MAX_PBR_SPEC_GLOSS,
+	_3DS_MAX_PBR_SPEC_GLOSS = 7,
 
 	// 3ds glTF Material
 	// https://help.autodesk.com/view/3DSMAX/2023/ENU/?guid=GUID-7ABFB805-1D9F-417E-9C22-704BFDF160FA
-	GLTF_MATERIAL,
+	GLTF_MATERIAL = 8,
 
 	// 3ds OpenPBR Material
 	// https://help.autodesk.com/view/3DSMAX/2025/ENU/?guid=GUID-CD90329C-1E2B-4BBA-9285-3BB46253B9C2
-	OPENPBR_MATERIAL,
+	OPENPBR_MATERIAL = 9,
 
 	// Stingray ShaderFX shader graph.
 	// Contains a serialized `"ShaderGraph"` in `ufbx_props`.
-	SHADERFX_GRAPH,
+	SHADERFX_GRAPH = 10,
 
 	// Variation of the FBX phong shader that can recover PBR properties like
 	// `metalness` or `roughness` from the FBX non-physical values.
 	// NOTE: Enable `ufbx_load_opts.use_blender_pbr_material`.
-	BLENDER_PHONG,
+	BLENDER_PHONG = 11,
 
 	// Wavefront .mtl format shader (used by .obj files)
-	WAVEFRONT_MTL,
-	TYPE_FORCE_32BIT = 2147483647, // Wavefront .mtl format shader (used by .obj files)
+	WAVEFRONT_MTL = 12,
+
+	// Wavefront .mtl format shader (used by .obj files)
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 SHADER_TYPE_COUNT :: 13
 
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum c.int {
-	DIFFUSE_FACTOR,
-	DIFFUSE_COLOR,
-	SPECULAR_FACTOR,
-	SPECULAR_COLOR,
-	SPECULAR_EXPONENT,
-	REFLECTION_FACTOR,
-	REFLECTION_COLOR,
-	TRANSPARENCY_FACTOR,
-	TRANSPARENCY_COLOR,
-	EMISSION_FACTOR,
-	EMISSION_COLOR,
-	AMBIENT_FACTOR,
-	AMBIENT_COLOR,
-	NORMAL_MAP,
-	BUMP,
-	BUMP_FACTOR,
-	DISPLACEMENT_FACTOR,
-	DISPLACEMENT,
-	VECTOR_DISPLACEMENT_FACTOR,
-	VECTOR_DISPLACEMENT,
-	MAP_FORCE_32BIT = 2147483647,
+	DIFFUSE_FACTOR             = 0,
+	DIFFUSE_COLOR              = 1,
+	SPECULAR_FACTOR            = 2,
+	SPECULAR_COLOR             = 3,
+	SPECULAR_EXPONENT          = 4,
+	REFLECTION_FACTOR          = 5,
+	REFLECTION_COLOR           = 6,
+	TRANSPARENCY_FACTOR        = 7,
+	TRANSPARENCY_COLOR         = 8,
+	EMISSION_FACTOR            = 9,
+	EMISSION_COLOR             = 10,
+	AMBIENT_FACTOR             = 11,
+	AMBIENT_COLOR              = 12,
+	NORMAL_MAP                 = 13,
+	BUMP                       = 14,
+	BUMP_FACTOR                = 15,
+	DISPLACEMENT_FACTOR        = 16,
+	DISPLACEMENT               = 17,
+	VECTOR_DISPLACEMENT_FACTOR = 18,
+	VECTOR_DISPLACEMENT        = 19,
+	MAP_FORCE_32BIT            = 2147483647,
 }
 
 MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
 Material_Pbr_Map :: enum c.int {
-	BASE_FACTOR,
-	BASE_COLOR,
-	ROUGHNESS,
-	METALNESS,
-	DIFFUSE_ROUGHNESS,
-	SPECULAR_FACTOR,
-	SPECULAR_COLOR,
-	SPECULAR_IOR,
-	SPECULAR_ANISOTROPY,
-	SPECULAR_ROTATION,
-	TRANSMISSION_FACTOR,
-	TRANSMISSION_COLOR,
-	TRANSMISSION_DEPTH,
-	TRANSMISSION_SCATTER,
-	TRANSMISSION_SCATTER_ANISOTROPY,
-	TRANSMISSION_DISPERSION,
-	TRANSMISSION_ROUGHNESS,
-	TRANSMISSION_EXTRA_ROUGHNESS,
-	TRANSMISSION_PRIORITY,
-	TRANSMISSION_ENABLE_IN_AOV,
-	SUBSURFACE_FACTOR,
-	SUBSURFACE_COLOR,
-	SUBSURFACE_RADIUS,
-	SUBSURFACE_SCALE,
-	SUBSURFACE_ANISOTROPY,
-	SUBSURFACE_TINT_COLOR,
-	SUBSURFACE_TYPE,
-	SHEEN_FACTOR,
-	SHEEN_COLOR,
-	SHEEN_ROUGHNESS,
-	COAT_FACTOR,
-	COAT_COLOR,
-	COAT_ROUGHNESS,
-	COAT_IOR,
-	COAT_ANISOTROPY,
-	COAT_ROTATION,
-	COAT_NORMAL,
-	COAT_AFFECT_BASE_COLOR,
-	COAT_AFFECT_BASE_ROUGHNESS,
-	THIN_FILM_FACTOR,
-	THIN_FILM_THICKNESS,
-	THIN_FILM_IOR,
-	EMISSION_FACTOR,
-	EMISSION_COLOR,
-	OPACITY,
-	INDIRECT_DIFFUSE,
-	INDIRECT_SPECULAR,
-	NORMAL_MAP,
-	TANGENT_MAP,
-	DISPLACEMENT_MAP,
-	MATTE_FACTOR,
-	MATTE_COLOR,
-	AMBIENT_OCCLUSION,
-	GLOSSINESS,
-	COAT_GLOSSINESS,
-	TRANSMISSION_GLOSSINESS,
-	MAP_FORCE_32BIT = 2147483647,
+	BASE_FACTOR                     = 0,
+	BASE_COLOR                      = 1,
+	ROUGHNESS                       = 2,
+	METALNESS                       = 3,
+	DIFFUSE_ROUGHNESS               = 4,
+	SPECULAR_FACTOR                 = 5,
+	SPECULAR_COLOR                  = 6,
+	SPECULAR_IOR                    = 7,
+	SPECULAR_ANISOTROPY             = 8,
+	SPECULAR_ROTATION               = 9,
+	TRANSMISSION_FACTOR             = 10,
+	TRANSMISSION_COLOR              = 11,
+	TRANSMISSION_DEPTH              = 12,
+	TRANSMISSION_SCATTER            = 13,
+	TRANSMISSION_SCATTER_ANISOTROPY = 14,
+	TRANSMISSION_DISPERSION         = 15,
+	TRANSMISSION_ROUGHNESS          = 16,
+	TRANSMISSION_EXTRA_ROUGHNESS    = 17,
+	TRANSMISSION_PRIORITY           = 18,
+	TRANSMISSION_ENABLE_IN_AOV      = 19,
+	SUBSURFACE_FACTOR               = 20,
+	SUBSURFACE_COLOR                = 21,
+	SUBSURFACE_RADIUS               = 22,
+	SUBSURFACE_SCALE                = 23,
+	SUBSURFACE_ANISOTROPY           = 24,
+	SUBSURFACE_TINT_COLOR           = 25,
+	SUBSURFACE_TYPE                 = 26,
+	SHEEN_FACTOR                    = 27,
+	SHEEN_COLOR                     = 28,
+	SHEEN_ROUGHNESS                 = 29,
+	COAT_FACTOR                     = 30,
+	COAT_COLOR                      = 31,
+	COAT_ROUGHNESS                  = 32,
+	COAT_IOR                        = 33,
+	COAT_ANISOTROPY                 = 34,
+	COAT_ROTATION                   = 35,
+	COAT_NORMAL                     = 36,
+	COAT_AFFECT_BASE_COLOR          = 37,
+	COAT_AFFECT_BASE_ROUGHNESS      = 38,
+	THIN_FILM_FACTOR                = 39,
+	THIN_FILM_THICKNESS             = 40,
+	THIN_FILM_IOR                   = 41,
+	EMISSION_FACTOR                 = 42,
+	EMISSION_COLOR                  = 43,
+	OPACITY                         = 44,
+	INDIRECT_DIFFUSE                = 45,
+	INDIRECT_SPECULAR               = 46,
+	NORMAL_MAP                      = 47,
+	TANGENT_MAP                     = 48,
+	DISPLACEMENT_MAP                = 49,
+	MATTE_FACTOR                    = 50,
+	MATTE_COLOR                     = 51,
+	AMBIENT_OCCLUSION               = 52,
+	GLOSSINESS                      = 53,
+	COAT_GLOSSINESS                 = 54,
+	TRANSMISSION_GLOSSINESS         = 55,
+	MAP_FORCE_32BIT                 = 2147483647,
 }
 
 MATERIAL_PBR_MAP_COUNT :: 56
 
 // Known material features
 Material_Feature :: enum c.int {
-	PBR,
-	METALNESS,
-	DIFFUSE,
-	SPECULAR,
-	EMISSION,
-	TRANSMISSION,
-	COAT,
-	SHEEN,
-	OPACITY,
-	AMBIENT_OCCLUSION,
-	MATTE,
-	UNLIT,
-	IOR,
-	DIFFUSE_ROUGHNESS,
-	TRANSMISSION_ROUGHNESS,
-	THIN_WALLED,
-	CAUSTICS,
-	EXIT_TO_BACKGROUND,
-	INTERNAL_REFLECTIONS,
-	DOUBLE_SIDED,
-	ROUGHNESS_AS_GLOSSINESS,
-	COAT_ROUGHNESS_AS_GLOSSINESS,
-	TRANSMISSION_ROUGHNESS_AS_GLOSSINESS,
-	FORCE_32BIT = 2147483647,
+	PBR                                  = 0,
+	METALNESS                            = 1,
+	DIFFUSE                              = 2,
+	SPECULAR                             = 3,
+	EMISSION                             = 4,
+	TRANSMISSION                         = 5,
+	COAT                                 = 6,
+	SHEEN                                = 7,
+	OPACITY                              = 8,
+	AMBIENT_OCCLUSION                    = 9,
+	MATTE                                = 10,
+	UNLIT                                = 11,
+	IOR                                  = 12,
+	DIFFUSE_ROUGHNESS                    = 13,
+	TRANSMISSION_ROUGHNESS               = 14,
+	THIN_WALLED                          = 15,
+	CAUSTICS                             = 16,
+	EXIT_TO_BACKGROUND                   = 17,
+	INTERNAL_REFLECTIONS                 = 18,
+	DOUBLE_SIDED                         = 19,
+	ROUGHNESS_AS_GLOSSINESS              = 20,
+	COAT_ROUGHNESS_AS_GLOSSINESS         = 21,
+	TRANSMISSION_ROUGHNESS_AS_GLOSSINESS = 22,
+	FORCE_32BIT                          = 2147483647,
 }
 
 MATERIAL_FEATURE_COUNT :: 23
@@ -2606,19 +2631,21 @@ Texture_Type :: enum c.int {
 	// and `texture->relative_filename` contain the texture's path. If the file
 	// has embedded content `texture->content` may hold `texture->content_size`
 	// bytes of raw image data.
-	FILE,
+	FILE = 0,
 
 	// The texture consists of multiple texture layers blended together.
-	LAYERED,
+	LAYERED = 1,
 
 	// Reserved as these _should_ exist in FBX files.
-	PROCEDURAL,
+	PROCEDURAL = 2,
 
 	// Node in a shader graph.
 	// Use `ufbx_texture.shader` for more information.
-	SHADER,
-	TYPE_FORCE_32BIT = 2147483647, // Node in a shader graph.
+	SHADER = 3,
+
+	// Node in a shader graph.
 	// Use `ufbx_texture.shader` for more information.
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 TEXTURE_TYPE_COUNT :: 4
@@ -2628,37 +2655,37 @@ TEXTURE_TYPE_COUNT :: 4
 // specified below where `src` is the layer to composite over `dst`.
 // See eg. https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingseparable
 Blend_Mode :: enum c.int {
-	TRANSLUCENT,   // < `src` effects result alpha
-	ADDITIVE,      // < `src + dst`
-	MULTIPLY,      // < `src * dst`
-	MULTIPLY_2X,   // < `2 * src * dst`
-	OVER,          // < `src * src_alpha + dst * (1-src_alpha)`
-	REPLACE,       // < `src` Replace the contents
-	DISSOLVE,      // < `random() + src_alpha >= 1.0 ? src : dst`
-	DARKEN,        // < `min(src, dst)`
-	COLOR_BURN,    // < `src > 0 ? 1 - min(1, (1-dst) / src) : 0`
-	LINEAR_BURN,   // < `src + dst - 1`
-	DARKER_COLOR,  // < `value(src) < value(dst) ? src : dst`
-	LIGHTEN,       // < `max(src, dst)`
-	SCREEN,        // < `1 - (1-src)*(1-dst)`
-	COLOR_DODGE,   // < `src < 1 ? dst / (1 - src)` : (dst>0?1:0)`
-	LINEAR_DODGE,  // < `src + dst`
-	LIGHTER_COLOR, // < `value(src) > value(dst) ? src : dst`
-	SOFT_LIGHT,    // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingsoftlight
-	HARD_LIGHT,    // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendinghardlight
-	VIVID_LIGHT,   // < Combination of `COLOR_DODGE` and `COLOR_BURN`
-	LINEAR_LIGHT,  // < Combination of `LINEAR_DODGE` and `LINEAR_BURN`
-	PIN_LIGHT,     // < Combination of `DARKEN` and `LIGHTEN`
-	HARD_MIX,      // < Produces primary colors depending on similarity
-	DIFFERENCE,    // < `abs(src - dst)`
-	EXCLUSION,     // < `dst + src - 2 * src * dst`
-	SUBTRACT,      // < `dst - src`
-	DIVIDE,        // < `dst / src`
-	HUE,           // < Replace hue
-	SATURATION,    // < Replace saturation
-	COLOR,         // < Replace hue and saturatio
-	LUMINOSITY,    // < Replace value
-	OVERLAY,       // < Same as `HARD_LIGHT` but with `src` and `dst` swapped
+	TRANSLUCENT      = 0,  // < `src` effects result alpha
+	ADDITIVE         = 1,  // < `src + dst`
+	MULTIPLY         = 2,  // < `src * dst`
+	MULTIPLY_2X      = 3,  // < `2 * src * dst`
+	OVER             = 4,  // < `src * src_alpha + dst * (1-src_alpha)`
+	REPLACE          = 5,  // < `src` Replace the contents
+	DISSOLVE         = 6,  // < `random() + src_alpha >= 1.0 ? src : dst`
+	DARKEN           = 7,  // < `min(src, dst)`
+	COLOR_BURN       = 8,  // < `src > 0 ? 1 - min(1, (1-dst) / src) : 0`
+	LINEAR_BURN      = 9,  // < `src + dst - 1`
+	DARKER_COLOR     = 10, // < `value(src) < value(dst) ? src : dst`
+	LIGHTEN          = 11, // < `max(src, dst)`
+	SCREEN           = 12, // < `1 - (1-src)*(1-dst)`
+	COLOR_DODGE      = 13, // < `src < 1 ? dst / (1 - src)` : (dst>0?1:0)`
+	LINEAR_DODGE     = 14, // < `src + dst`
+	LIGHTER_COLOR    = 15, // < `value(src) > value(dst) ? src : dst`
+	SOFT_LIGHT       = 16, // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingsoftlight
+	HARD_LIGHT       = 17, // < https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendinghardlight
+	VIVID_LIGHT      = 18, // < Combination of `COLOR_DODGE` and `COLOR_BURN`
+	LINEAR_LIGHT     = 19, // < Combination of `LINEAR_DODGE` and `LINEAR_BURN`
+	PIN_LIGHT        = 20, // < Combination of `DARKEN` and `LIGHTEN`
+	HARD_MIX         = 21, // < Produces primary colors depending on similarity
+	DIFFERENCE       = 22, // < `abs(src - dst)`
+	EXCLUSION        = 23, // < `dst + src - 2 * src * dst`
+	SUBTRACT         = 24, // < `dst - src`
+	DIVIDE           = 25, // < `dst / src`
+	HUE              = 26, // < Replace hue
+	SATURATION       = 27, // < Replace saturation
+	COLOR            = 28, // < Replace hue and saturatio
+	LUMINOSITY       = 29, // < Replace value
+	OVERLAY          = 30, // < Same as `HARD_LIGHT` but with `src` and `dst` swapped
 	MODE_FORCE_32BIT = 2147483647,
 }
 
@@ -2666,8 +2693,8 @@ BLEND_MODE_COUNT :: 31
 
 // Blend modes to combine layered textures with, compatible with common blend
 Wrap_Mode :: enum c.int {
-	REPEAT, // < Repeat the texture past the [0,1] range
-	CLAMP,  // < Clamp the normalized texture coordinates to [0,1]
+	REPEAT           = 0, // < Repeat the texture past the [0,1] range
+	CLAMP            = 1, // < Clamp the normalized texture coordinates to [0,1]
 	MODE_FORCE_32BIT = 2147483647,
 }
 
@@ -2686,18 +2713,20 @@ Texture_Layer_List :: struct {
 }
 
 Shader_Texture_Type :: enum c.int {
-	UNKNOWN,
+	UNKNOWN          = 0,
 
 	// Select an output of a multi-output shader.
 	// HINT: If this type is used the `ufbx_shader_texture.main_texture` and
 	// `ufbx_shader_texture.main_texture_output_index` fields are set.
-	SELECT_OUTPUT,
+	SELECT_OUTPUT = 1,
 
 	// Open Shading Language (OSL) shader.
 	// https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
-	OSL,
-	TYPE_FORCE_32BIT = 2147483647, // Open Shading Language (OSL) shader.
+	OSL = 2,
+
+	// Open Shading Language (OSL) shader.
 	// https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 SHADER_TEXTURE_TYPE_COUNT :: 3
@@ -3103,22 +3132,22 @@ Anim_Value :: struct {
 
 // Animation curve segment interpolation mode between two keyframes
 Interpolation :: enum c.int {
-	CONSTANT_PREV, // < Hold previous key value
-	CONSTANT_NEXT, // < Hold next key value
-	LINEAR,        // < Linear interpolation between two keys
-	CUBIC,         // < Cubic interpolation, see `ufbx_tangent`
-	FORCE_32BIT = 2147483647,
+	CONSTANT_PREV = 0, // < Hold previous key value
+	CONSTANT_NEXT = 1, // < Hold next key value
+	LINEAR        = 2, // < Linear interpolation between two keys
+	CUBIC         = 3, // < Cubic interpolation, see `ufbx_tangent`
+	FORCE_32BIT   = 2147483647,
 }
 
 INTERPOLATION_COUNT :: 4
 
 Extrapolation_Mode :: enum c.int {
-	CONSTANT,        // < Use the value of the first/last keyframe
-	REPEAT,          // < Repeat the whole animation curve
-	MIRROR,          // < Repeat with mirroring
-	SLOPE,           // < Use the tangent of the last keyframe to linearly extrapolate
-	REPEAT_RELATIVE, // < Repeat the animation curve but connect the first and last keyframe values
-	FORCE_32BIT = 2147483647,
+	CONSTANT        = 0, // < Use the value of the first/last keyframe
+	REPEAT          = 1, // < Repeat the whole animation curve
+	MIRROR          = 2, // < Repeat with mirroring
+	SLOPE           = 3, // < Use the tangent of the last keyframe to linearly extrapolate
+	REPEAT_RELATIVE = 4, // < Repeat the animation curve but connect the first and last keyframe values
+	FORCE_32BIT     = 2147483647,
 }
 
 EXTRAPOLATION_MODE_COUNT :: 5
@@ -3262,18 +3291,20 @@ Character :: struct {
 
 // Type of property constrain eg. position or look-at
 Constraint_Type :: enum c.int {
-	UNKNOWN,
-	AIM,
-	PARENT,
-	POSITION,
-	ROTATION,
-	SCALE,
+	UNKNOWN          = 0,
+	AIM              = 1,
+	PARENT           = 2,
+	POSITION         = 3,
+	ROTATION         = 4,
+	SCALE            = 5,
 
 	// Inverse kinematic chain to a single effector `ufbx_constraint.ik_effector`
 	// `targets` optionally contains a list of pole targets!
-	SINGLE_CHAIN_IK,
-	TYPE_FORCE_32BIT = 2147483647, // Inverse kinematic chain to a single effector `ufbx_constraint.ik_effector`
+	SINGLE_CHAIN_IK = 6,
+
+	// Inverse kinematic chain to a single effector `ufbx_constraint.ik_effector`
 	// `targets` optionally contains a list of pole targets!
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 CONSTRAINT_TYPE_COUNT :: 7
@@ -3292,11 +3323,11 @@ Constraint_Target_List :: struct {
 
 // Method to determine the up vector in aim constraints
 Constraint_Aim_Up_Type :: enum c.int {
-	SCENE,      // < Align the up vector to the scene global up vector
-	TO_NODE,    // < Aim the up vector at `ufbx_constraint.aim_up_node`
-	ALIGN_NODE, // < Copy the up vector from `ufbx_constraint.aim_up_node`
-	VECTOR,     // < Use `ufbx_constraint.aim_up_vector` as the up vector
-	NONE,       // < Don't align the up vector to anything
+	SCENE            = 0, // < Align the up vector to the scene global up vector
+	TO_NODE          = 1, // < Aim the up vector at `ufbx_constraint.aim_up_node`
+	ALIGN_NODE       = 2, // < Copy the up vector from `ufbx_constraint.aim_up_node`
+	VECTOR           = 3, // < Use `ufbx_constraint.aim_up_vector` as the up vector
+	NONE             = 4, // < Don't align the up vector to anything
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -3304,8 +3335,8 @@ CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
 
 // Method to determine the up vector in aim constraints
 Constraint_Ik_Pole_Type :: enum c.int {
-	VECTOR, // < Use towards calculated from `ufbx_constraint.targets`
-	NODE,   // < Use `ufbx_constraint.ik_pole_vector` directly
+	VECTOR           = 0, // < Use towards calculated from `ufbx_constraint.targets`
+	NODE             = 1, // < Use `ufbx_constraint.ik_pole_vector` directly
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -3476,12 +3507,12 @@ Name_Element_List :: struct {
 
 // Scene is the root object loaded by ufbx that everything is accessed from.
 Exporter :: enum c.int {
-	UNKNOWN,
-	FBX_SDK,
-	BLENDER_BINARY,
-	BLENDER_ASCII,
-	MOTION_BUILDER,
-	FORCE_32BIT = 2147483647,
+	UNKNOWN        = 0,
+	FBX_SDK        = 1,
+	BLENDER_BINARY = 2,
+	BLENDER_ASCII  = 3,
+	MOTION_BUILDER = 4,
+	FORCE_32BIT    = 2147483647,
 }
 
 EXPORTER_COUNT :: 5
@@ -3493,10 +3524,10 @@ Application :: struct {
 }
 
 File_Format :: enum c.int {
-	UNKNOWN, // < Unknown file format
-	FBX,     // < .fbx Kaydara/Autodesk FBX file
-	OBJ,     // < .obj Wavefront OBJ file
-	MTL,     // < .mtl Wavefront MTL (Material template library) file
+	UNKNOWN     = 0, // < Unknown file format
+	FBX         = 1, // < .fbx Kaydara/Autodesk FBX file
+	OBJ         = 2, // < .obj Wavefront OBJ file
+	MTL         = 3, // < .mtl Wavefront MTL (Material template library) file
 	FORCE_32BIT = 2147483647,
 }
 
@@ -3505,60 +3536,62 @@ FILE_FORMAT_COUNT :: 4
 Warning_Type :: enum c.int {
 	// Missing external file file (for example .mtl for Wavefront .obj file or a
 	// geometry cache)
-	MISSING_EXTERNAL_FILE,
+	MISSING_EXTERNAL_FILE = 0,
 
 	// Loaded a Wavefront .mtl file derived from the filename instead of a proper
 	// `mtllib` statement.
-	IMPLICIT_MTL,
+	IMPLICIT_MTL = 1,
 
 	// Truncated array has been auto-expanded.
-	TRUNCATED_ARRAY,
+	TRUNCATED_ARRAY = 2,
 
 	// Geometry data has been defined but has no data.
-	MISSING_GEOMETRY_DATA,
+	MISSING_GEOMETRY_DATA = 3,
 
 	// Duplicated connection between two elements that shouldn't have.
-	DUPLICATE_CONNECTION,
+	DUPLICATE_CONNECTION = 4,
 
 	// Vertex 'W' attribute length differs from main attribute.
-	BAD_VERTEX_W_ATTRIBUTE,
+	BAD_VERTEX_W_ATTRIBUTE = 5,
 
 	// Missing polygon mapping type.
-	MISSING_POLYGON_MAPPING,
+	MISSING_POLYGON_MAPPING = 6,
 
 	// Unsupported version, loaded but may be incorrect.
 	// If the loading fails `UFBX_ERROR_UNSUPPORTED_VERSION` is issued instead.
-	UNSUPPORTED_VERSION,
+	UNSUPPORTED_VERSION = 7,
 
 	// Out-of-bounds index has been clamped to be in-bounds.
 	// HINT: You can use `ufbx_index_error_handling` to adjust behavior.
-	INDEX_CLAMPED,
+	INDEX_CLAMPED = 8,
 
 	// Non-UTF8 encoded strings.
 	// HINT: You can use `ufbx_unicode_error_handling` to adjust behavior.
-	BAD_UNICODE,
+	BAD_UNICODE = 9,
 
 	// Invalid base64-encoded embedded content ignored.
-	BAD_BASE64_CONTENT,
+	BAD_BASE64_CONTENT = 10,
 
 	// Non-node element connected to root.
-	BAD_ELEMENT_CONNECTED_TO_ROOT,
+	BAD_ELEMENT_CONNECTED_TO_ROOT = 11,
 
 	// Duplicated object ID in the file, connections will be wrong.
-	DUPLICATE_OBJECT_ID,
+	DUPLICATE_OBJECT_ID = 12,
 
 	// Empty face has been removed.
 	// Use `ufbx_load_opts.allow_empty_faces` if you want to allow them.
-	EMPTY_FACE_REMOVED,
+	EMPTY_FACE_REMOVED = 13,
 
 	// Unknown .obj file directive.
-	UNKNOWN_OBJ_DIRECTIVE,
+	UNKNOWN_OBJ_DIRECTIVE = 14,
 
 	// Warnings after this one are deduplicated.
 	// See `ufbx_warning.count` for how many times they happened.
 	TYPE_FIRST_DEDUPLICATED = 8,
-	TYPE_FORCE_32BIT = 2147483647, // Warnings after this one are deduplicated.
+
+	// Warnings after this one are deduplicated.
 	// See `ufbx_warning.count` for how many times they happened.
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 WARNING_TYPE_COUNT :: 15
@@ -3586,9 +3619,9 @@ Warning_List :: struct {
 }
 
 Thumbnail_Format :: enum c.int {
-	UNKNOWN, // < Unknown format
-	RGB_24,  // < 8-bit RGB pixels, in memory R,G,B
-	RGBA_32, // < 8-bit RGBA pixels, in memory R,G,B,A
+	UNKNOWN     = 0, // < Unknown format
+	RGB_24      = 1, // < 8-bit RGB pixels, in memory R,G,B
+	RGBA_32     = 2, // < 8-bit RGBA pixels, in memory R,G,B,A
 	FORCE_32BIT = 2147483647,
 }
 
@@ -3600,21 +3633,23 @@ THUMBNAIL_FORMAT_COUNT :: 3
 Space_Conversion :: enum c.int {
 	// Store the space conversion transform in the root node.
 	// Sets `ufbx_node.local_transform` of the root node.
-	TRANSFORM_ROOT,
+	TRANSFORM_ROOT = 0,
 
 	// Perform the conversion by using "adjust" transforms.
 	// Compensates for the transforms using `ufbx_node.adjust_pre_rotation` and
 	// `ufbx_node.adjust_pre_scale`. You don't need to account for these unless
 	// you are manually building transforms from `ufbx_props`.
-	ADJUST_TRANSFORMS,
+	ADJUST_TRANSFORMS = 1,
 
 	// Perform the conversion by scaling geometry in addition to adjusting transforms.
 	// Compensates transforms like `UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS` but
 	// applies scaling to geometry as well.
-	MODIFY_GEOMETRY,
-	FORCE_32BIT = 2147483647, // Perform the conversion by scaling geometry in addition to adjusting transforms.
+	MODIFY_GEOMETRY = 2,
+
+	// Perform the conversion by scaling geometry in addition to adjusting transforms.
 	// Compensates transforms like `UFBX_SPACE_CONVERSION_ADJUST_TRANSFORMS` but
 	// applies scaling to geometry as well.
+	FORCE_32BIT = 2147483647,
 }
 
 SPACE_CONVERSION_COUNT :: 3
@@ -3716,44 +3751,44 @@ Metadata :: struct {
 }
 
 Time_Mode :: enum c.int {
-	DEFAULT,
-	_120_FPS,
-	_100_FPS,
-	_60_FPS,
-	_50_FPS,
-	_48_FPS,
-	_30_FPS,
-	_30_FPS_DROP,
-	NTSC_DROP_FRAME,
-	NTSC_FULL_FRAME,
-	PAL,
-	_24_FPS,
-	_1000_FPS,
-	FILM_FULL_FRAME,
-	CUSTOM,
-	_96_FPS,
-	_72_FPS,
-	_59_94_FPS,
-	FORCE_32BIT = 2147483647,
+	DEFAULT         = 0,
+	_120_FPS        = 1,
+	_100_FPS        = 2,
+	_60_FPS         = 3,
+	_50_FPS         = 4,
+	_48_FPS         = 5,
+	_30_FPS         = 6,
+	_30_FPS_DROP    = 7,
+	NTSC_DROP_FRAME = 8,
+	NTSC_FULL_FRAME = 9,
+	PAL             = 10,
+	_24_FPS         = 11,
+	_1000_FPS       = 12,
+	FILM_FULL_FRAME = 13,
+	CUSTOM          = 14,
+	_96_FPS         = 15,
+	_72_FPS         = 16,
+	_59_94_FPS      = 17,
+	FORCE_32BIT     = 2147483647,
 }
 
 TIME_MODE_COUNT :: 18
 
 Time_Protocol :: enum c.int {
-	SMPTE,
-	FRAME_COUNT,
-	DEFAULT,
+	SMPTE       = 0,
+	FRAME_COUNT = 1,
+	DEFAULT     = 2,
 	FORCE_32BIT = 2147483647,
 }
 
 TIME_PROTOCOL_COUNT :: 3
 
 Snap_Mode :: enum c.int {
-	NONE,
-	SNAP,
-	PLAY,
-	SNAP_AND_PLAY,
-	FORCE_32BIT = 2147483647,
+	NONE          = 0,
+	SNAP          = 1,
+	PLAY          = 2,
+	SNAP_AND_PLAY = 3,
+	FORCE_32BIT   = 2147483647,
 }
 
 SNAP_MODE_COUNT :: 4
@@ -4003,9 +4038,9 @@ Stream :: struct {
 }
 
 Open_File_Type :: enum c.int {
-	MAIN_MODEL,     // < Main model file
-	GEOMETRY_CACHE, // < Unknown geometry cache file
-	OBJ_MTL,        // < .mtl material library file
+	MAIN_MODEL       = 0, // < Main model file
+	GEOMETRY_CACHE   = 1, // < Unknown geometry cache file
+	OBJ_MTL          = 2, // < .mtl material library file
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
@@ -4085,90 +4120,92 @@ Error_Frame :: struct {
 // Error causes (and `UFBX_ERROR_NONE` for no error).
 Error_Type :: enum c.int {
 	// No error, operation has been performed successfully.
-	NONE,
+	NONE = 0,
 
 	// Unspecified error, most likely caused by an invalid FBX file or a file
 	// that contains something ufbx can't handle.
-	UNKNOWN,
+	UNKNOWN = 1,
 
 	// File not found.
-	FILE_NOT_FOUND,
+	FILE_NOT_FOUND = 2,
 
 	// Empty file.
-	EMPTY_FILE,
+	EMPTY_FILE = 3,
 
 	// External file not found.
 	// See `ufbx_load_opts.load_external_files` for more information.
-	EXTERNAL_FILE_NOT_FOUND,
+	EXTERNAL_FILE_NOT_FOUND = 4,
 
 	// Out of memory (allocator returned `NULL`).
-	OUT_OF_MEMORY,
+	OUT_OF_MEMORY = 5,
 
 	// `ufbx_allocator_opts.memory_limit` exhausted.
-	MEMORY_LIMIT,
+	MEMORY_LIMIT = 6,
 
 	// `ufbx_allocator_opts.allocation_limit` exhausted.
-	ALLOCATION_LIMIT,
+	ALLOCATION_LIMIT = 7,
 
 	// File ended abruptly.
-	TRUNCATED_FILE,
+	TRUNCATED_FILE = 8,
 
 	// IO read error.
 	// eg. returning `SIZE_MAX` from `ufbx_stream.read_fn` or stdio `ferror()` condition.
-	IO,
+	IO = 9,
 
 	// User cancelled the loading via `ufbx_load_opts.progress_cb` returning `UFBX_PROGRESS_CANCEL`.
-	CANCELLED,
+	CANCELLED = 10,
 
 	// Could not detect file format from file data or filename.
 	// HINT: You can supply it manually using `ufbx_load_opts.file_format` or use `ufbx_load_opts.filename`
 	// when using `ufbx_load_memory()` to let ufbx guess the format from the extension.
-	UNRECOGNIZED_FILE_FORMAT,
+	UNRECOGNIZED_FILE_FORMAT = 11,
 
 	// Options struct (eg. `ufbx_load_opts`) is not cleared to zero.
 	// Make sure you initialize the structure to zero via eg.
 	//   ufbx_load_opts opts = { 0 }; // C
 	//   ufbx_load_opts opts = { }; // C++
-	UNINITIALIZED_OPTIONS,
+	UNINITIALIZED_OPTIONS = 12,
 
 	// The vertex streams in `ufbx_generate_indices()` are empty.
-	ZERO_VERTEX_SIZE,
+	ZERO_VERTEX_SIZE = 13,
 
 	// Vertex stream passed to `ufbx_generate_indices()`.
-	TRUNCATED_VERTEX_STREAM,
+	TRUNCATED_VERTEX_STREAM = 14,
 
 	// Invalid UTF-8 encountered in a file when loading with `UFBX_UNICODE_ERROR_HANDLING_ABORT_LOADING`.
-	INVALID_UTF8,
+	INVALID_UTF8 = 15,
 
 	// Feature needed for the operation has been compiled out.
-	FEATURE_DISABLED,
+	FEATURE_DISABLED = 16,
 
 	// Attempting to tessellate an invalid NURBS object.
 	// See `ufbx_nurbs_basis.valid`.
-	BAD_NURBS,
+	BAD_NURBS = 17,
 
 	// Out of bounds index in the file when loading with `UFBX_INDEX_ERROR_HANDLING_ABORT_LOADING`.
-	BAD_INDEX,
+	BAD_INDEX = 18,
 
 	// Node is deeper than `ufbx_load_opts.node_depth_limit` in the hierarchy.
-	NODE_DEPTH_LIMIT,
+	NODE_DEPTH_LIMIT = 19,
 
 	// Error parsing ASCII array in a thread.
 	// Threaded ASCII parsing is slightly more strict than non-threaded, for cursed files,
 	// set `ufbx_load_opts.force_single_thread_ascii_parsing` to `true`.
-	THREADED_ASCII_PARSE,
+	THREADED_ASCII_PARSE = 20,
 
 	// Unsafe options specified without enabling `ufbx_load_opts.allow_unsafe`.
-	UNSAFE_OPTIONS,
+	UNSAFE_OPTIONS = 21,
 
 	// Duplicated override property in `ufbx_create_anim()`
-	DUPLICATE_OVERRIDE,
+	DUPLICATE_OVERRIDE = 22,
 
 	// Unsupported file format version.
 	// ufbx still tries to load files with unsupported versions, see `UFBX_WARNING_UNSUPPORTED_VERSION`.
-	UNSUPPORTED_VERSION,
-	TYPE_FORCE_32BIT = 2147483647, // Unsupported file format version.
+	UNSUPPORTED_VERSION = 23,
+
+	// Unsupported file format version.
 	// ufbx still tries to load files with unsupported versions, see `UFBX_WARNING_UNSUPPORTED_VERSION`.
+	TYPE_FORCE_32BIT = 2147483647,
 }
 
 ERROR_TYPE_COUNT :: 24
@@ -4207,7 +4244,9 @@ Progress_Result :: enum c.int {
 
 	// Cancel loading and fail with `UFBX_ERROR_CANCELLED`.
 	CANCEL = 512,
-	RESULT_FORCE_32BIT = 2147483647, // Cancel loading and fail with `UFBX_ERROR_CANCELLED`.
+
+	// Cancel loading and fail with `UFBX_ERROR_CANCELLED`.
+	RESULT_FORCE_32BIT = 2147483647,
 }
 
 // Called periodically with the current progress.
@@ -4263,53 +4302,57 @@ Inflate_Retain :: struct {
 
 Index_Error_Handling :: enum c.int {
 	// Clamp to a valid value.
-	CLAMP,
+	CLAMP = 0,
 
 	// Set bad indices to `UFBX_NO_INDEX`.
 	// This is the recommended way if you need to deal with files with gaps in information.
 	// HINT: If you use this `ufbx_get_vertex_TYPE()` functions will return zero
 	// on invalid indices instead of failing.
-	NO_INDEX,
+	NO_INDEX = 1,
 
 	// Fail loading entierely when encountering a bad index.
-	ABORT_LOADING,
+	ABORT_LOADING = 2,
 
 	// Pass bad indices through as-is.
 	// Requires `ufbx_load_opts.allow_unsafe`.
 	// UNSAFE: Breaks any API guarantees regarding indexes being in bounds and makes
 	// `ufbx_get_vertex_TYPE()` memory-unsafe to use.
-	UNSAFE_IGNORE,
-	FORCE_32BIT = 2147483647, // Pass bad indices through as-is.
+	UNSAFE_IGNORE = 3,
+
+	// Pass bad indices through as-is.
 	// Requires `ufbx_load_opts.allow_unsafe`.
 	// UNSAFE: Breaks any API guarantees regarding indexes being in bounds and makes
 	// `ufbx_get_vertex_TYPE()` memory-unsafe to use.
+	FORCE_32BIT = 2147483647,
 }
 
 INDEX_ERROR_HANDLING_COUNT :: 4
 
 Unicode_Error_Handling :: enum c.int {
 	// Replace errors with U+FFFD "Replacement Character"
-	REPLACEMENT_CHARACTER,
+	REPLACEMENT_CHARACTER = 0,
 
 	// Replace errors with '_' U+5F "Low Line"
-	UNDERSCORE,
+	UNDERSCORE = 1,
 
 	// Replace errors with '?' U+3F "Question Mark"
-	QUESTION_MARK,
+	QUESTION_MARK = 2,
 
 	// Remove errors from the output
-	REMOVE,
+	REMOVE = 3,
 
 	// Fail loading on encountering an Unicode error
-	ABORT_LOADING,
+	ABORT_LOADING = 4,
 
 	// Ignore and pass-through non-UTF-8 string data.
 	// Requires `ufbx_load_opts.allow_unsafe`.
 	// UNSAFE: Breaks API guarantee that `ufbx_string` is UTF-8 encoded.
-	UNSAFE_IGNORE,
-	FORCE_32BIT = 2147483647, // Ignore and pass-through non-UTF-8 string data.
+	UNSAFE_IGNORE = 5,
+
+	// Ignore and pass-through non-UTF-8 string data.
 	// Requires `ufbx_load_opts.allow_unsafe`.
 	// UNSAFE: Breaks API guarantee that `ufbx_string` is UTF-8 encoded.
+	FORCE_32BIT = 2147483647,
 }
 
 UNICODE_ERROR_HANDLING_COUNT :: 6
@@ -4325,24 +4368,26 @@ Geometry_Transform_Handling :: enum c.int {
 	// To be correct for all files you have to use `ufbx_node.geometry_transform`,
 	// `ufbx_node.geometry_to_node`, or `ufbx_node.geometry_to_world` to compensate
 	// for any potential geometry transforms.
-	PRESERVE,
+	PRESERVE = 0,
 
 	// Add helper nodes between the nodes and geometry where needed.
 	// The created nodes have `ufbx_node.is_geometry_transform_helper` set and are
 	// named `ufbx_load_opts.geometry_transform_helper_name`.
-	HELPER_NODES,
+	HELPER_NODES = 1,
 
 	// Modify the geometry of meshes attached to nodes with geometry transforms.
 	// Will add helper nodes like `UFBX_GEOMETRY_TRANSFORM_HANDLING_HELPER_NODES` if
 	// necessary, for example if there are multiple instances of the same mesh with
 	// geometry transforms.
-	MODIFY_GEOMETRY,
+	MODIFY_GEOMETRY = 2,
 
 	// Modify the geometry of meshes attached to nodes with geometry transforms.
 	// NOTE: This will not work correctly for instanced geometry.
-	MODIFY_GEOMETRY_NO_FALLBACK,
-	FORCE_32BIT = 2147483647, // Modify the geometry of meshes attached to nodes with geometry transforms.
+	MODIFY_GEOMETRY_NO_FALLBACK = 3,
+
+	// Modify the geometry of meshes attached to nodes with geometry transforms.
 	// NOTE: This will not work correctly for instanced geometry.
+	FORCE_32BIT = 2147483647,
 }
 
 GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
@@ -4352,32 +4397,34 @@ Inherit_Mode_Handling :: enum c.int {
 	// Preserve inherit mode in `ufbx_node.inherit_mode`.
 	// NOTE: To correctly handle all scenes you would need to handle the
 	// non-standard inherit modes.
-	PRESERVE,
+	PRESERVE = 0,
 
 	// Create scale helper nodes parented to nodes that need special inheritance.
 	// Scale helper nodes will have `ufbx_node.is_scale_helper` and parents of
 	// scale helpers will have `ufbx_node.scale_helper` pointing to it.
-	HELPER_NODES,
+	HELPER_NODES = 1,
 
 	// Attempt to compensate for bone scale by inversely scaling children.
 	// NOTE: This only works for uniform non-animated scaling, if scale is
 	// non-uniform or animated, ufbx will add scale helpers in the same way
 	// as `UFBX_INHERIT_MODE_HANDLING_HELPER_NODES`.
-	COMPENSATE,
+	COMPENSATE = 2,
 
 	// Attempt to compensate for bone scale by inversely scaling children.
 	// Will never create helper nodes.
-	COMPENSATE_NO_FALLBACK,
+	COMPENSATE_NO_FALLBACK = 3,
 
 	// Ignore non-standard inheritance modes.
 	// Forces all nodes to have `UFBX_INHERIT_MODE_NORMAL` regardless of the
 	// inherit mode specified in the file. This can be useful for emulating
 	// results from importers/programs that don't support inherit modes.
-	IGNORE,
-	FORCE_32BIT = 2147483647, // Ignore non-standard inheritance modes.
+	IGNORE = 4,
+
+	// Ignore non-standard inheritance modes.
 	// Forces all nodes to have `UFBX_INHERIT_MODE_NORMAL` regardless of the
 	// inherit mode specified in the file. This can be useful for emulating
 	// results from importers/programs that don't support inherit modes.
+	FORCE_32BIT = 2147483647,
 }
 
 INHERIT_MODE_HANDLING_COUNT :: 5
@@ -4385,38 +4432,40 @@ INHERIT_MODE_HANDLING_COUNT :: 5
 // How to handle FBX transform pivots.
 Pivot_Handling :: enum c.int {
 	// Take pivots into account when computing the transform.
-	RETAIN,
+	RETAIN = 0,
 
 	// Translate objects to be located at their pivot.
 	// NOTE: Only applied if rotation and scaling pivots are equal.
 	// NOTE: Results in geometric translation. Use `ufbx_geometry_transform_handling`
 	// to interpret these in a standard scene graph.
-	ADJUST_TO_PIVOT,
-	FORCE_32BIT = 2147483647, // Translate objects to be located at their pivot.
+	ADJUST_TO_PIVOT = 1,
+
+	// Translate objects to be located at their pivot.
 	// NOTE: Only applied if rotation and scaling pivots are equal.
 	// NOTE: Results in geometric translation. Use `ufbx_geometry_transform_handling`
 	// to interpret these in a standard scene graph.
+	FORCE_32BIT = 2147483647,
 }
 
 PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum c.int {
 	// This keyframe represents a constant step from the left side
-	STEP_LEFT = 0,
+	STEP_LEFT,
 
 	// This keyframe represents a constant step from the right side
-	STEP_RIGHT = 1,
+	STEP_RIGHT,
 
 	// This keyframe is the main part of a step
 	// Bordering either `UFBX_BAKED_KEY_STEP_LEFT` or `UFBX_BAKED_KEY_STEP_RIGHT`.
-	STEP_KEY = 2,
+	STEP_KEY,
 
 	// This keyframe is a real keyframe in the source animation
-	KEYFRAME = 3,
+	KEYFRAME,
 
 	// This keyframe has been reduced by maximum sample rate.
 	// See `ufbx_bake_opts.maximum_sample_rate`.
-	REDUCED = 4,
+	REDUCED,
 }
 
 Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
@@ -4579,6 +4628,7 @@ Thread_Pool_Free_Fn :: proc "c" (rawptr, Thread_Pool_Context)
 //   run_fn(group=0, start_index=10, count=15) -> t0 := threaded { ufbx_thread_pool_run_task(10..14) }
 //   wait_fn(group=1, max_index=10)            -> wait_threads(t1)
 //   wait_fn(group=0, max_index=15)            -> wait_threads(t0)
+//
 Thread_Pool :: struct {
 	init_fn: Thread_Pool_Init_Fn, // < Optional
 	run_fn:  Thread_Pool_Run_Fn,  // < Required
@@ -4608,7 +4658,9 @@ Thread_Opts :: struct {
 Evaluate_Flags :: enum c.int {
 	// Do not extrapolate past the keyframes.
 	UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION = 1,
-	ufbx_evaluate_flags_FORCE_32BIT     = 2147483647, // Do not extrapolate past the keyframes.
+
+	// Do not extrapolate past the keyframes.
+	ufbx_evaluate_flags_FORCE_32BIT = 2147483647,
 }
 
 // Options for `ufbx_load_file/memory/stream/stdio()`
@@ -4937,27 +4989,29 @@ Anim_Opts :: struct {
 // Specifies how to handle stepped tangents.
 Bake_Step_Handling :: enum c.int {
 	// One millisecond default step duration, with potential extra slack for converting to `float`.
-	UFBX_BAKE_STEP_HANDLING_DEFAULT,
+	UFBX_BAKE_STEP_HANDLING_DEFAULT = 0,
 
 	// Use a custom interpolation duration for the constant step.
 	// See `ufbx_bake_opts.step_custom_duration` and optionally `ufbx_bake_opts.step_custom_epsilon`.
-	UFBX_BAKE_STEP_HANDLING_CUSTOM_DURATION,
+	UFBX_BAKE_STEP_HANDLING_CUSTOM_DURATION = 1,
 
 	// Stepped keyframes are represented as keyframes at the exact same time.
 	// Use flags `UFBX_BAKED_KEY_STEP_LEFT` and `UFBX_BAKED_KEY_STEP_RIGHT` to differentiate
 	// between the primary key and edge limits.
-	UFBX_BAKE_STEP_HANDLING_IDENTICAL_TIME,
+	UFBX_BAKE_STEP_HANDLING_IDENTICAL_TIME = 2,
 
 	// Represent stepped keyframe times as the previous/next representable `double` value.
 	// Using this and robust linear interpolation will handle stepped tangents correctly
 	// without having to look at the key flags.
 	// NOTE: Casting these values to `float` or otherwise modifying them can collapse
 	// the keyframes to have the identical time.
-	UFBX_BAKE_STEP_HANDLING_ADJACENT_DOUBLE,
+	UFBX_BAKE_STEP_HANDLING_ADJACENT_DOUBLE = 3,
 
 	// Treat all stepped tangents as linearly interpolated.
-	UFBX_BAKE_STEP_HANDLING_IGNORE,
-	ufbx_bake_step_handling_FORCE_32BIT = 2147483647, // Treat all stepped tangents as linearly interpolated.
+	UFBX_BAKE_STEP_HANDLING_IGNORE = 4,
+
+	// Treat all stepped tangents as linearly interpolated.
+	ufbx_bake_step_handling_FORCE_32BIT = 2147483647,
 }
 
 BAKE_STEP_HANDLING_COUNT :: 5
@@ -5185,66 +5239,30 @@ Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 
-// bindgen-enable
-
-// -- Properties
-
-// Names of common properties in `ufbx_props`.
-// Some of these differ from ufbx interpretations.
-
-// Local translation.
-// Used by: `ufbx_node`
 Lcl_Translation :: "Lcl Translation"
 
-// Local rotation expressed in Euler degrees.
-// Used by: `ufbx_node`
-// The rotation order is defined by the `UFBX_RotationOrder` property.
 Lcl_Rotation :: "Lcl Rotation"
 
-// Local scaling factor, 3D vector.
-// Used by: `ufbx_node`
 Lcl_Scaling :: "Lcl Scaling"
 
-// Euler rotation interpretation, used by `UFBX_Lcl_Rotation`.
-// Used by: `ufbx_node`, enum value `ufbx_rotation_order`.
 RotationOrder :: "RotationOrder"
 
-// Scaling pivot: point around which scaling is performed.
-// Used by: `ufbx_node`.
 ScalingPivot :: "ScalingPivot"
 
-// Scaling pivot: point around which rotation is performed.
-// Used by: `ufbx_node`.
 RotationPivot :: "RotationPivot"
 
-// Scaling offset: translation added after scaling is performed.
-// Used by: `ufbx_node`.
 ScalingOffset :: "ScalingOffset"
 
-// Rotation offset: translation added after rotation is performed.
-// Used by: `ufbx_node`.
 RotationOffset :: "RotationOffset"
 
-// Pre-rotation: Rotation applied _after_ `UFBX_Lcl_Rotation`.
-// Used by: `ufbx_node`.
-// Affected by `UFBX_RotationPivot` but not `UFBX_RotationOrder`.
 PreRotation :: "PreRotation"
 
-// Post-rotation: Rotation applied _before_ `UFBX_Lcl_Rotation`.
-// Used by: `ufbx_node`.
-// Affected by `UFBX_RotationPivot` but not `UFBX_RotationOrder`.
 PostRotation :: "PostRotation"
 
-// Controls whether the node should be displayed or not.
-// Used by: `ufbx_node`.
 Visibility :: "Visibility"
 
-// Weight of an animation layer in percentage (100.0 being full).
-// Used by: `ufbx_anim_layer`.
 Weight :: "Weight"
 
-// Blend shape deformation weight (100.0 being full).
-// Used by: `ufbx_blend_channel`.
 DeformPercent :: "DeformPercent"
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
@@ -5511,7 +5529,6 @@ foreign lib {
 	// Get a matrix representing the deformation for a single vertex.
 	// Returns `fallback` if the vertex is not skinned.
 	catch_get_skin_vertex_matrix :: proc(panic: ^Panic, skin: ^Skin_Deformer, vertex: c.size_t, fallback: ^Matrix) -> Matrix ---
-	get_skin_vertex_matrix       :: proc(skin: ^Skin_Deformer, vertex: c.size_t, fallback: ^Matrix) -> Matrix ---
 
 	// Resolve the index into `ufbx_blend_shape.position_offsets[]` given a vertex.
 	// Returns `UFBX_NO_INDEX` if the vertex is not included in the blend shape.
@@ -5638,18 +5655,11 @@ foreign lib {
 	thread_pool_get_user_ptr :: proc(ctx: Thread_Pool_Context) -> rawptr ---
 
 	// Utility functions for reading geometry data for a single index.
-	catch_get_vertex_real :: proc(panic: ^Panic, v: ^Vertex_Real, index: c.size_t) -> Real ---
-	catch_get_vertex_vec2 :: proc(panic: ^Panic, v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
-	catch_get_vertex_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
-	catch_get_vertex_vec4 :: proc(panic: ^Panic, v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
-
-	// Utility functions for reading geometry data for a single index.
-	get_vertex_real         :: proc(v: ^Vertex_Real, index: c.size_t) -> Real ---
-	get_vertex_vec2         :: proc(v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
-	get_vertex_vec3         :: proc(v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
-	get_vertex_vec4         :: proc(v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
+	catch_get_vertex_real   :: proc(panic: ^Panic, v: ^Vertex_Real, index: c.size_t) -> Real ---
+	catch_get_vertex_vec2   :: proc(panic: ^Panic, v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
+	catch_get_vertex_vec3   :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
+	catch_get_vertex_vec4   :: proc(panic: ^Panic, v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
 	catch_get_vertex_w_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Real ---
-	get_vertex_w_vec3       :: proc(v: ^Vertex_Vec3, index: c.size_t) -> Real ---
 
 	// Functions for converting an untyped `ufbx_element` to a concrete type.
 	// Returns `NULL` if the element is not that type.
