@@ -23,6 +23,7 @@ import "core:encoding/json"
 import "core:unicode"
 import "core:unicode/utf8"
 import "base:runtime"
+import "core:c"
 import "core:slice"
 import vmem "core:mem/virtual"
 import clang "../libclang"
@@ -533,6 +534,7 @@ Config :: struct {
 Gen_State :: struct {
 	using config: Config,
 	file: clang.File,
+	source: string,
 	decls: [dynamic]Declaration,
 	macro_defines: map[string]int,
 	symbol_indices: map[string]int,
@@ -616,6 +618,10 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	s.file = clang.getFile(unit, input_cstring)
+
+	source_data, source_data_ok := os.read_entire_file(input)
+	fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
+	s.source = string(source_data)
 
 	clang_string_to_string :: proc(str: clang.String) -> string {
 		ret := strings.clone_from_cstring(clang.getCString(str))
@@ -864,6 +870,34 @@ gen :: proc(input: string, c: Config) {
 		translation_unit := clang.Cursor_getTranslationUnit(cursor)
 		source_range := clang.getCursorExtent(cursor)
 
+		whitespace_after_name: int
+
+		{
+			start := clang.getRangeStart(source_range)
+			start_offset: c.uint
+			clang.getExpansionLocation(start, &state.file, nil, nil, &start_offset)
+			end := clang.getRangeEnd(source_range)
+			end_offset: c.uint
+			clang.getExpansionLocation(end, &state.file, nil, nil, &end_offset)
+			macro_source := state.source[start_offset:end_offset]
+
+			first_space_seen := false
+
+			for c in macro_source {
+				if unicode.is_white_space(c) {
+					if !first_space_seen {
+						first_space_seen = true
+					}
+					
+					whitespace_after_name += 1
+				} else {
+					if first_space_seen {
+						break
+					}
+				}
+			}
+		}
+
 		tokens: [^]clang.Token
 		token_count: u32
 		clang.tokenize(translation_unit, source_range, &tokens, &token_count)
@@ -875,6 +909,7 @@ gen :: proc(input: string, c: Config) {
 			is_function = bool(clang.Cursor_isMacroFunctionLike(cursor)),
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			side_comment = side_comment,
+			whitespace_after_name = whitespace_after_name,
 		}
 	}
 
@@ -967,9 +1002,7 @@ gen :: proc(input: string, c: Config) {
 
 	// Extract any big comment at top of file (clang doesn't see these)
 	{
-		source_data, source_data_ok := os.read_entire_file(input)
-		fmt.ensuref(source_data_ok, "Failed reading source file: %v", input)
-		source := strings.trim_space(string(source_data))
+		source := strings.trim_space(s.source)
 		in_block := false
 		top_comment_loop: for ll in strings.split_lines_iterator(&source) {
 			l := strings.trim_space(ll)

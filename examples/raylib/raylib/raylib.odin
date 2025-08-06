@@ -101,7 +101,7 @@ foreign import lib {
 RAYLIB_VERSION_MAJOR :: 5
 RAYLIB_VERSION_MINOR :: 6
 RAYLIB_VERSION_PATCH :: 0
-RAYLIB_VERSION :: "5.6-dev"
+RAYLIB_VERSION  :: "5.6-dev"
 
 // RLAPI :: 
 
@@ -119,33 +119,33 @@ RAD2DEG :: (180.0/PI)
 // RL_QUATERNION_TYPE :: 
 // RL_MATRIX_TYPE :: 
 
-LIGHTGRAY :: (Color){200,200,200,255}
-GRAY :: (Color){130,130,130,255}
-DARKGRAY :: (Color){80,80,80,255}
-YELLOW :: (Color){253,249,0,255}
-GOLD :: (Color){255,203,0,255}
-ORANGE :: (Color){255,161,0,255}
-PINK :: (Color){255,109,194,255}
-RED :: (Color){230,41,55,255}
-MAROON :: (Color){190,33,55,255}
-GREEN :: (Color){0,228,48,255}
-LIME :: (Color){0,158,47,255}
-DARKGREEN :: (Color){0,117,44,255}
-SKYBLUE :: (Color){102,191,255,255}
-BLUE :: (Color){0,121,241,255}
-DARKBLUE :: (Color){0,82,172,255}
-PURPLE :: (Color){200,122,255,255}
-VIOLET :: (Color){135,60,190,255}
+LIGHTGRAY  :: (Color){200,200,200,255}
+GRAY       :: (Color){130,130,130,255}
+DARKGRAY   :: (Color){80,80,80,255}
+YELLOW     :: (Color){253,249,0,255}
+GOLD       :: (Color){255,203,0,255}
+ORANGE     :: (Color){255,161,0,255}
+PINK       :: (Color){255,109,194,255}
+RED        :: (Color){230,41,55,255}
+MAROON     :: (Color){190,33,55,255}
+GREEN      :: (Color){0,228,48,255}
+LIME       :: (Color){0,158,47,255}
+DARKGREEN  :: (Color){0,117,44,255}
+SKYBLUE    :: (Color){102,191,255,255}
+BLUE       :: (Color){0,121,241,255}
+DARKBLUE   :: (Color){0,82,172,255}
+PURPLE     :: (Color){200,122,255,255}
+VIOLET     :: (Color){135,60,190,255}
 DARKPURPLE :: (Color){112,31,126,255}
-BEIGE :: (Color){211,176,131,255}
-BROWN :: (Color){127,106,79,255}
-DARKBROWN :: (Color){76,63,47,255}
+BEIGE      :: (Color){211,176,131,255}
+BROWN      :: (Color){127,106,79,255}
+DARKBROWN  :: (Color){76,63,47,255}
 
-WHITE :: (Color){255,255,255,255}
-BLACK :: (Color){0,0,0,255}
-BLANK :: (Color){0,0,0,0}
-MAGENTA :: (Color){255,0,255,255}
-RAYWHITE :: (Color){245,245,245,255}
+WHITE      :: (Color){255,255,255,255}
+BLACK      :: (Color){0,0,0,255}
+BLANK      :: (Color){0,0,0,0}
+MAGENTA    :: (Color){255,0,255,255}
+RAYWHITE   :: (Color){245,245,245,255}
 
 // Vector2, 2 components
 Vector2 :: [2]f32
@@ -586,8 +586,8 @@ KeyboardKey :: enum c.int {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
-// MOUSE_LEFT_BUTTON :: MOUSE_BUTTON_LEFT
-// MOUSE_RIGHT_BUTTON :: MOUSE_BUTTON_RIGHT
+// MOUSE_LEFT_BUTTON   :: MOUSE_BUTTON_LEFT
+// MOUSE_RIGHT_BUTTON  :: MOUSE_BUTTON_RIGHT
 // MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
 
 // Mouse buttons
@@ -663,8 +663,8 @@ MaterialMapIndex :: enum c.int {
 	BRDF,       // Brdf material
 }
 
-// MATERIAL_MAP_DIFFUSE :: MATERIAL_MAP_ALBEDO
-// MATERIAL_MAP_SPECULAR :: MATERIAL_MAP_METALNESS
+// MATERIAL_MAP_DIFFUSE      :: MATERIAL_MAP_ALBEDO
+// MATERIAL_MAP_SPECULAR     :: MATERIAL_MAP_METALNESS
 
 // Shader location index
 ShaderLocationIndex :: enum c.int {
@@ -700,8 +700,8 @@ ShaderLocationIndex :: enum c.int {
 	VERTEX_INSTANCE_TX, // Shader location: vertex attribute: instanceTransform
 }
 
-// SHADER_LOC_MAP_DIFFUSE :: SHADER_LOC_MAP_ALBEDO
-// SHADER_LOC_MAP_SPECULAR :: SHADER_LOC_MAP_METALNESS
+// SHADER_LOC_MAP_DIFFUSE      :: SHADER_LOC_MAP_ALBEDO
+// SHADER_LOC_MAP_SPECULAR     :: SHADER_LOC_MAP_METALNESS
 
 // Shader uniform data type
 ShaderUniformDataType :: enum c.int {
