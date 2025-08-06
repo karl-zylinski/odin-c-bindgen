@@ -18,7 +18,10 @@ foreign import lib "pdfio1.lib"
 
 // PDFIO_H :: 
 
-PDFIO_VERSION :: "1.4.1"
+//
+// Version number...
+//
+PDFIO_VERSION  :: "1.4.1"
 
 // PDFIO_PUBLIC :: ((visibility("default")))
 // PDFIO_DEPRECATED :: ((deprecated))PDFIO_PUBLIC

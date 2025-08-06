@@ -8,6 +8,7 @@ _ :: c
 
 foreign import lib "box2d.lib"
 
+// static library
 // BOX2D_EXPORT :: 
 
 // API :: BOX2D_EXPORT

@@ -866,12 +866,13 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
-		side_comment: string
-		side_comment_align_whitespace: int
 		translation_unit := clang.Cursor_getTranslationUnit(cursor)
 		source_range := clang.getCursorExtent(cursor)
+		
 		whitespace_after_name: int
-
+		comment: string
+		side_comment: string
+		side_comment_align_whitespace: int
 		{
 			start := clang.getRangeStart(source_range)
 			start_offset: c.uint
@@ -881,6 +882,9 @@ gen :: proc(input: string, c: Config) {
 			clang.getExpansionLocation(end, &state.file, nil, nil, &end_offset)
 			macro_source := state.source[start_offset:end_offset]
 
+			//
+			// Figure out spacing between name and value
+			//
 			first_space_seen := false
 
 			for c in macro_source {
@@ -897,6 +901,9 @@ gen :: proc(input: string, c: Config) {
 				}
 			}
 
+			//
+			// Figure out comments at the end of line
+			//
 			macro_source_continued := state.source[start_offset:]
 
 			find_comment_at_line_end :: proc(str: string) -> (string, int) {
@@ -911,8 +918,8 @@ gen :: proc(input: string, c: Config) {
 						comment_start = i
 						break
 					} else if c == '/' && i + 1 < len(str) && str[i + 1] == '*' {
-					 	comment_start = i
-					 	block_comment = true
+						comment_start = i
+						block_comment = true
 						break
 					} else if c == '\n' {
 						break
@@ -947,6 +954,84 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			side_comment, side_comment_align_whitespace = find_comment_at_line_end(macro_source_continued)
+
+			//
+			// Figure out comments before the macro
+			//
+
+			{
+				Find_Comment_State :: enum {
+					Looking_For_Start,
+					Looking_For_Comment,
+					Looking_For_Single_Line_Start,
+					Verifying_Single_Line,
+					Inside_Block_Comment,
+				}
+				src := state.source
+				find_state: Find_Comment_State
+				comment_start := -1
+				comment_end: int
+
+				comment_loop: for i := int(start_offset); i >= 0; {
+					c := utf8.rune_at(src, i)
+					defer i -= utf8.rune_size(c)
+					switch find_state {
+					case .Looking_For_Start:
+						if c == '#' {
+							comment_end = i
+							find_state = .Looking_For_Comment
+							break
+						}
+
+						if c == '\n' {
+							break comment_loop
+						}
+					case .Looking_For_Comment:
+						if unicode.is_white_space(c) {
+							break
+						}
+
+						if c == '/' && i > 1 && src[i - 1] == '*' {
+							find_state = .Inside_Block_Comment
+							break
+						}
+
+						// TODO: Special case when line only is `//`
+
+						find_state = .Looking_For_Single_Line_Start
+					case .Looking_For_Single_Line_Start:
+						if c == '\n' {
+							break comment_loop
+						}
+
+						if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
+							find_state = .Verifying_Single_Line
+							break
+						}
+
+					case .Verifying_Single_Line:
+						if c == '\n' {
+							comment_start = i
+							find_state = .Looking_For_Comment
+							break
+						}
+
+						if !unicode.is_white_space(c) {
+							break comment_loop
+						}
+					case .Inside_Block_Comment:
+						if c == '/' && i < len(src) - 1 && src[i + 1] == '*' {
+							comment_start = i
+							find_state = .Looking_For_Comment
+							break
+						}
+					}
+				}
+
+				if comment_start != -1 && comment_end > comment_start {
+					comment = strings.trim_space(src[comment_start:comment_end])
+				}
+			}
 		}
 
 		tokens: [^]clang.Token
@@ -958,7 +1043,7 @@ gen :: proc(input: string, c: Config) {
 			tokens = tokens[:token_count],
 			has_been_evaluated = false,
 			is_function = bool(clang.Cursor_isMacroFunctionLike(cursor)),
-			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
+			comment = comment,
 			side_comment = side_comment,
 			whitespace_before_side_comment = side_comment_align_whitespace,
 			whitespace_after_name = whitespace_after_name,
@@ -2051,7 +2136,7 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			if d.comment != "" {
-				fp(f, d.comment)
+				fpln(f, d.comment)
 			}
 
 			if d.should_not_output || d.original_name in s.remove_macros_lookup {

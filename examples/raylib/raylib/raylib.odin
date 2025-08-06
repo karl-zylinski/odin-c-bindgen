@@ -111,6 +111,10 @@ DEG2RAD :: (PI/180.0)
 
 RAD2DEG :: (180.0/PI)
 
+// NOTE: We set some defines with some data types declared by raylib
+// Other modules (raymath, rlgl) also require some of those types, so,
+// to be able to use those other modules as standalone (not depending on raylib)
+// this defines are very useful for internal check and avoid type (re)definitions
 // RL_COLOR_TYPE :: 
 // RL_RECTANGLE_TYPE :: 
 // RL_VECTOR2_TYPE :: 
@@ -119,6 +123,8 @@ RAD2DEG :: (180.0/PI)
 // RL_QUATERNION_TYPE :: 
 // RL_MATRIX_TYPE :: 
 
+// Some Basic Colors
+// NOTE: Custom raylib color palette for amazing visuals on WHITE background
 LIGHTGRAY  :: (Color){200, 200, 200, 255}   // Light Gray
 GRAY       :: (Color){130, 130, 130, 255}   // Gray
 DARKGRAY   :: (Color){80, 80, 80, 255}      // Dark Gray
@@ -586,6 +592,7 @@ KeyboardKey :: enum c.int {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
+// Add backwards compatibility support for deprecated names
 // MOUSE_LEFT_BUTTON   :: MOUSE_BUTTON_LEFT
 // MOUSE_RIGHT_BUTTON  :: MOUSE_BUTTON_RIGHT
 // MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
@@ -856,6 +863,7 @@ LoadFileTextCallback :: proc "c" (cstring) -> cstring
 
 SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool
 
+// Screen-space-related functions
 GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib versions
 
 //------------------------------------------------------------------------------------
