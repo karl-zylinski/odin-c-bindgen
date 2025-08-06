@@ -32,3 +32,8 @@ opaque_types = [
 	"pdfio_stream_t"
 	"pdfio_obj_t"
 ]
+
+remove_macros = [
+	"_PDFIO_PUBLIC",
+	"_PDFIO_DEPRECATED"
+]

@@ -6377,7 +6377,7 @@ foreign lib {
 	* array.
 	*
 	*/
-	tokenize :: proc(TU: Translation_Unit, Range: Source_Range, Tokens: ^^Token, NumTokens: ^c.uint) ---
+	tokenize :: proc(TU: Translation_Unit, Range: Source_Range, Tokens: ^[^]Token, NumTokens: ^c.uint) ---
 
 	/**
 	* Annotate the given set of tokens by providing cursors for each token
@@ -6414,7 +6414,7 @@ foreign lib {
 	/**
 	* Free the given set of tokens.
 	*/
-	disposeTokens :: proc(TU: Translation_Unit, Tokens: ^Token, NumTokens: c.uint) ---
+	disposeTokens :: proc(TU: Translation_Unit, Tokens: [^]Token, NumTokens: c.uint) ---
 
 	/* for debug/testing */
 	getCursorKindSpelling          :: proc(Kind: Cursor_Kind) -> String ---

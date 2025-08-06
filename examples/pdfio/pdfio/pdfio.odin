@@ -21,7 +21,7 @@ foreign import lib "pdfio1.lib"
 PDFIO_VERSION :: "1.4.1"
 
 // PDFIO_PUBLIC :: ((visibility("default")))
-// PDFIO_DEPRECATED :: ((deprecated))((visibility("default")))
+// PDFIO_DEPRECATED :: ((deprecated))PDFIO_PUBLIC
 
 array_t :: struct {}
 

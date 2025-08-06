@@ -155,7 +155,7 @@ String_List :: struct {
 	count: c.size_t,
 }
 
-NO_INDEX :: ((u32)~0)
+// NO_INDEX :: ((u32)~0)
 
 // -- Document object model
 Dom_Value_Type :: enum c.int {

@@ -93,4 +93,8 @@ typedef int simple_typedef;
 
 typedef void void_typedef;
 
+#define MULTILINE_MACRO_TEST 3, \
+  1, \
+  2
+
 #pragma GCC pop_options

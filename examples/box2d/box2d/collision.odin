@@ -346,8 +346,6 @@ Manifold :: struct {
 
 /// The dynamic tree structure. This should be considered private data.
 /// It is placed here for performance reasons.
-TreeNode :: struct {}
-
 DynamicTree :: struct {
 	/// The tree nodes
 	nodes: [^]TreeNode,

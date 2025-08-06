@@ -31,6 +31,8 @@ procedure_type_overrides = {
 	// This is not a complete override list, it's just an example.
 }
 
-inject_before = {
-	"b2DynamicTree" = "TreeNode :: struct {}"
-}
+remove_macros = [
+	"B2_API",
+	"B2_BREAKPOINT",
+	"B2_DEFAULT_MASK_BITS"
+]

@@ -93,7 +93,7 @@ Typedef :: struct {
 Macro :: struct {
 	original_name: string,
 	name: string,
-	tokens: []^clang.Token,
+	tokens: []clang.Token,
 	is_function: bool,
 	has_been_evaluated: bool,
 	should_not_output: bool,
@@ -519,6 +519,7 @@ Config :: struct {
 	debug_dump_macros: bool,
 	opaque_types: []string,
 	rename: map[string]string,
+	remove_macros: []string,
 
 	// deprecated: use rename
 	rename_types: map[string]string,
@@ -539,6 +540,7 @@ Gen_State :: struct {
 	created_symbols: map[string]struct {},
 	type_is_proc: map[string]struct {},
 	opaque_type_lookup: map[string]struct {},
+	remove_macros_lookup: map[string]struct {},
 	created_types: map[string]struct {},
 	needs_import_c: bool,
 	needs_import_libc: bool,
@@ -561,6 +563,11 @@ gen :: proc(input: string, c: Config) {
 	for ot in c.opaque_types {
 		// For quick lookup
 		add_to_set(&s.opaque_type_lookup, ot)
+	}
+
+	for m in c.remove_macros {
+		// For quick lookup
+		add_to_set(&s.remove_macros_lookup, m)
 	}
 
 	//
@@ -611,9 +618,9 @@ gen :: proc(input: string, c: Config) {
 	s.file = clang.getFile(unit, input_cstring)
 
 	clang_string_to_string :: proc(str: clang.String) -> string {
-		cstr := clang.getCString(str)
-		defer clang.disposeString(str)
-		return strings.clone_from_cstring(cstr)
+		ret := strings.clone_from_cstring(clang.getCString(str))
+		clang.disposeString(str)
+		return ret
 	}
 
 	get_cursor_location :: proc(cursor: clang.Cursor, file: ^clang.File = nil, offset: ^u32 = nil) -> (line: u32) {
@@ -853,55 +860,17 @@ gen :: proc(input: string, c: Config) {
 	}
 
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
-		offset: u32
-		line := get_cursor_location(cursor, nil, &offset)
-		
 		side_comment: string
 		translation_unit := clang.Cursor_getTranslationUnit(cursor)
+		source_range := clang.getCursorExtent(cursor)
 
-		// Skip the first token, which is the macro name.
-		{
-			token := clang.getToken(translation_unit, clang.getLocationForOffset(translation_unit, state.file, offset))
-			offset += u32(len(clang_string_to_string(clang.getTokenSpelling(translation_unit, token^))))
-			clang.disposeTokens(translation_unit, token, 1)
-		}
-
-		tokens: [dynamic]^clang.Token
-		for true {
-			token := clang.getToken(translation_unit, clang.getLocationForOffset(translation_unit, state.file, offset))
-			if token == nil {
-				break
-			}
-
-			location := clang.getTokenLocation(translation_unit, token^)
-
-			file: clang.File
-			tline: u32
-			clang.getFileLocation(location, &file, &tline, nil, &offset)
-			if clang.File_isEqual(file, state.file) == 0 || tline != line {
-				// If the token is not in the same file or line, we are done.
-				// Macros could be multiline but IDK how to check for this.
-				// We don't get the '\' char to identify multiline macros.
-				break
-			}
-
-			token_string := clang_string_to_string(clang.getTokenSpelling(translation_unit, token^))
-
-			#partial switch clang.getTokenKind(token^) {
-			case .Keyword, .Identifier:
-				vet_type(state, token_string)
-			case .Comment:
-				side_comment = token_string
-				break // If we hit a comment, we are garanteed to have reached the end of the macro.
-			}
-
-			append(&tokens, token)
-			offset += u32(len(token_string))
-		}
+		tokens: [^]clang.Token
+		token_count: u32
+		clang.tokenize(translation_unit, source_range, &tokens, &token_count)
 
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
-			tokens = tokens[:],
+			tokens = tokens[:token_count],
 			has_been_evaluated = false,
 			is_function = bool(clang.Cursor_isMacroFunctionLike(cursor)),
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
@@ -923,10 +892,7 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		kind := clang.getCursorKind(cursor)
-		// Need to figure out how to get macro expansion values out and not parse certain macro definitions.
-		// We can't just check the file origin of the macro unfortunatly as it doesn't stop us from pulling weird things (e.g. _STDC_VERSION__).
 		#partial switch kind {
-		// This doesn't work yet.
 		case .MacroDefinition:
 			if bool(clang.Cursor_isMacroBuiltin(cursor)) {
 				return .Continue
@@ -939,12 +905,10 @@ gen :: proc(input: string, c: Config) {
 			})
 			return .Continue
 		case .FunctionDecl:
-			// Don't output inlined functions.
 			if clang.Cursor_isFunctionInlined(cursor) != 0 {
 				return .Continue
 			}
 
-			// We have to check for funtions before checking if it's a def.
 			append(&state.decls, Declaration {
 				cursor = cursor,
 				original_idx = len(state.decls),
@@ -953,7 +917,7 @@ gen :: proc(input: string, c: Config) {
 			return .Continue
 		}
 
-		// This stops us from getting macros so we have to check for macros above.
+		// Stops forward declarations from being parsed.
 		if clang.isCursorDefinition(cursor) == 0 {
 			return .Continue // Skip forward declarations.
 		}
@@ -966,13 +930,6 @@ gen :: proc(input: string, c: Config) {
 			def = parse_typedef_decl(state, cursor)
 		case .EnumDecl:
 			def = parse_enum_decl(state, cursor, line)
-		case .VarDecl:
-			// Should we output variables as constants?
-			return .Continue
-		case:
-			// For debugging purposes.
-			fmt.printf("Unhandled cursor kind: %v, name: %s\n", kind, clang_string_to_string(clang.getCursorSpelling(cursor)))
-			return .Continue
 		}
 
 		append(&state.decls, Declaration {
@@ -1686,9 +1643,6 @@ gen :: proc(input: string, c: Config) {
 					} else if token_str[1] == 'X' {
 						hex = true
 						// Odin requires hex x to be lowercase.
-						// Odin should probably allow me to just do the following:
-						// transmute([]u8)(token_str)[1] = 'x'
-						// But it doesn't, so we have to do this.
 						tmp := transmute([]u8)(token_str)
 						tmp[1] = 'x'
 					}
@@ -1723,7 +1677,7 @@ gen :: proc(input: string, c: Config) {
 				// Could be a type or macro name. Could also be the name of a function or variable.
 				tu := clang.Cursor_getTranslationUnit(cursor)
 				token := macro.tokens[index]
-				token_str := clang_string_to_string(clang.getTokenSpelling(tu, token^))
+				token_str := clang_string_to_string(clang.getTokenSpelling(tu, token))
 				if is_c_type(token_str) {
 					return translate_type(state^, token_str, false), 0
 				} else if decl_index, exists := state.macro_defines[token_str]; exists {
@@ -1766,7 +1720,7 @@ gen :: proc(input: string, c: Config) {
 				tu := clang.Cursor_getTranslationUnit(cursor)
 
 				{
-					token_str := clang_string_to_string(clang.getTokenSpelling(tu, macro.tokens[index]^))
+					token_str := clang_string_to_string(clang.getTokenSpelling(tu, macro.tokens[index]))
 					if token_str[0] != '(' {
 						return nil, 0 // No parameters.
 					}
@@ -1778,8 +1732,8 @@ gen :: proc(input: string, c: Config) {
 					token := macro.tokens[loop_index]
 
 					paren_count := 1
-					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token^))
-					#partial switch clang.getTokenKind(token^) {
+					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token))
+					#partial switch clang.getTokenKind(token) {
 					case .Punctuation:
 						switch token_str[0] {
 						case '(':
@@ -1788,7 +1742,7 @@ gen :: proc(input: string, c: Config) {
 							paren_count -= 1
 							if paren_count == 0 {
 								append(&params, strings.to_string(builder))
-								return params[:], loop_index
+								return params[:], loop_index - index + 1
 							}
 						case ',':
 							if paren_count == 1 {
@@ -1804,7 +1758,7 @@ gen :: proc(input: string, c: Config) {
 						val, offset := parse_identifier(state, cursor, macro, loop_index)
 						loop_index += offset
 						if val == "" {
-							macro.should_not_output = true
+							// macro.should_not_output = true
 							val = token_str // Fallback to the original token string.
 						}
 
@@ -1868,7 +1822,8 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			evaluate_fn_macro :: proc(state: ^Gen_State, cursor: clang.Cursor, macro: ^Macro) {
-				params, offset := get_fn_macro_params(state, cursor, macro, 0)
+				macro.should_not_output = true
+				params, offset := get_fn_macro_params(state, cursor, macro, 1)
 				if params == nil {
 					// We couldn't find the parameters.
 					return
@@ -1884,7 +1839,7 @@ gen :: proc(input: string, c: Config) {
 				for index := offset + 1; index < len(macro.tokens); index += 1 {
 					token := macro.tokens[index]
 
-					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token^))
+					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token))
 
 					if replace_val, has_replace := paramsMap[token_str]; has_replace {
 						// If the token is a parameter, replace it with the corresponding value.
@@ -1895,7 +1850,7 @@ gen :: proc(input: string, c: Config) {
 						continue
 					}
 
-					#partial switch clang.getTokenKind(token^) {
+					#partial switch clang.getTokenKind(token) {
 					case .Punctuation:
 						switch token_str[0] {
 						case '#':
@@ -1912,7 +1867,7 @@ gen :: proc(input: string, c: Config) {
 						val, offset2 := parse_identifier(state, cursor, macro, index)
 						index += offset2
 						if val == "" {
-							macro.should_not_output = true
+							// macro.should_not_output = true
 							val = token_str // Fallback to the original token string.
 						}
 						strings.write_string(&builder, val)
@@ -1930,18 +1885,18 @@ gen :: proc(input: string, c: Config) {
 
 			evaluate_nonfn_macro :: proc(state: ^Gen_State, cursor: clang.Cursor, macro: ^Macro) {
 				builder := strings.builder_make()
-				for index := 0; index < len(macro.tokens); index += 1 {
+				curly_parens := 0
+				for index := 1; index < len(macro.tokens); index += 1 {
 					token := macro.tokens[index]
 					tu := clang.Cursor_getTranslationUnit(cursor)
-					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token^))
+					token_str := clang_string_to_string(clang.getTokenSpelling(tu, token))
 
-					curly_parens := 0
-					#partial switch clang.getTokenKind(token^) {
+					#partial switch clang.getTokenKind(token) {
 					case .Identifier:
 						val, offset := parse_identifier(state, cursor, macro, index)
 						index += offset
 						if val == "" {
-							macro.should_not_output = true
+							// macro.should_not_output = true
 							val = token_str // Fallback to the original token string.
 						}
 						strings.write_string(&builder, val)
@@ -1966,7 +1921,7 @@ gen :: proc(input: string, c: Config) {
 							strings.write_string(&builder, token_str)
 						case ',':
 							if curly_parens == 0 {
-								// If we are not in a parenthesis, we can output a comma.
+								// If we are not in a parenthesis, we can't output a comma.
 								macro.should_not_output = true
 							}
 							strings.write_string(&builder, token_str)
@@ -1987,16 +1942,17 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			evaluate_macro :: proc(state: ^Gen_State, cursor: clang.Cursor, macro: ^Macro) {
+				// I set this to true before evaluating the macro to avoid infinite recursion.
+				// This is just a guard against a macro that calls itself.
+				macro.has_been_evaluated = true
 				if macro.is_function {
 					evaluate_fn_macro(state, cursor, macro)
 				} else {
 					evaluate_nonfn_macro(state, cursor, macro)
 				}
-				macro.has_been_evaluated = true
 			}
 
 			if d.is_function {
-				// Function-like macro, we don't output these.
 				continue
 			}
 
@@ -2012,14 +1968,12 @@ gen :: proc(input: string, c: Config) {
 				fp(f, d.comment)
 			}
 
-			if d.should_not_output {
-				// When we're happy with the parser we can change this to a continue.
+			if d.should_not_output || d.original_name in s.remove_macros_lookup {
+				// When we're happy with the parser this can change to a continue.
 				fp(f, "// ")
 			}
-			// This isn't working atm. I'm hoping that libclang will give use the final value of the macro
-			// Making the code above redundant.
+
 			fpf(f, "%v%*s:: %v", d.name, max(d.whitespace_after_name, 1), "", d.val)
-			// fpf(f, "%v%*s:: %v", d.name, max(d.whitespace_after_name, 1), "", value_string)
 
 			if d.side_comment != "" {
 				fpf(f, "%*s%v", d.whitespace_before_side_comment, "", d.side_comment)
@@ -2042,12 +1996,7 @@ gen :: proc(input: string, c: Config) {
 	for _, index in s.macro_defines {
 		decl := &s.decls[index]
 		tu := clang.Cursor_getTranslationUnit(decl.cursor)
-		for token in decl.variant.(Macro).tokens {
-			// This function implies that we can dispose of multiple tokens at once.
-			// However the type of the `token` parameter is a pointer to a single token.
-			// Maybe internally they use pointer arithmetic to dispose of multiple tokens?
-			clang.disposeTokens(tu, token, 1)
-		}
+		clang.disposeTokens(tu, raw_data(decl.variant.(Macro).tokens), u32(len(decl.variant.(Macro).tokens)))
 	}
 
 	//
