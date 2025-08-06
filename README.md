@@ -126,12 +126,6 @@ clang_include_paths = [
 remove_macros = [
 	// "SOME_BROKEN_MACRO"
 ]
-
-// Writes the clang JSON ast dump for debug inspection (in output folder)
-debug_dump_json_ast = false
-
-// Writes the clang preprocessor macro dump
-debug_dump_macros = false
 ```
 
 ## FAQ and common problems

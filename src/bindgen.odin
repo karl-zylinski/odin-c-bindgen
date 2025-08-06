@@ -564,8 +564,6 @@ Config :: struct {
 	clang_include_paths: []string,
 	clang_defines: map[string]string,
 	force_ada_case_types: bool,
-	debug_dump_json_ast: bool,
-	debug_dump_macros: bool,
 	opaque_types: []string,
 	rename: map[string]string,
 	remove_macros: []string,
