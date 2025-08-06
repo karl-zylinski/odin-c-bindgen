@@ -2001,10 +2001,8 @@ gen :: proc(input: string, c: Config) {
 							// If we hit a curly brace, we need to count how many we have.
 							curly_parens += 1
 							strings.write_string(&builder, token_str)
-							strings.write_rune(&builder, ' ')
 						case '}':
 							curly_parens -= 1
-							strings.write_rune(&builder, ' ')
 							strings.write_string(&builder, token_str)
 						case ',':
 							if curly_parens == 0 {
@@ -2047,8 +2045,8 @@ gen :: proc(input: string, c: Config) {
 			if !d.has_been_evaluated {
 				evaluate_macro(&s, decl.cursor, &d)
 			}
-			
-			if d.val == "{  }" || d.val == "{ 0 }" {
+
+			if d.val == "{}" || d.val == "{0}" {
 				continue
 			}
 
