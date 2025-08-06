@@ -251,7 +251,7 @@ Camera3D :: struct {
 	projection: c.int,   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC
 }
 
-Camera :: Camera3D
+Camera :: Camera3D // Camera type fallback, defaults to Camera3D
 
 // Camera2D, defines position/orientation in 2d space
 Camera2D :: struct {
@@ -853,15 +853,15 @@ NPatchLayout :: enum c.int {
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
-TraceLogCallback :: proc "c" (c.int, cstring, ^c.va_list)
+TraceLogCallback :: proc "c" (c.int, cstring, ^c.va_list) // Logging: Redirect trace log messages
 
-LoadFileDataCallback :: proc "c" (cstring, ^c.int) -> ^c.uchar
+LoadFileDataCallback :: proc "c" (cstring, ^c.int) -> ^c.uchar // FileIO: Load binary data
 
-SaveFileDataCallback :: proc "c" (cstring, rawptr, c.int) -> bool
+SaveFileDataCallback :: proc "c" (cstring, rawptr, c.int) -> bool // FileIO: Save binary data
 
-LoadFileTextCallback :: proc "c" (cstring) -> cstring
+LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
 
-SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool
+SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
 
 // Screen-space-related functions
 GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib versions

@@ -494,6 +494,54 @@ add_to_set :: proc(s: ^map[$T]struct{}, v: T) {
 	s[v] = {}
 }
 
+find_comment_at_line_end :: proc(str: string) -> (string, int) {
+	space_before_comment: int
+	comment_start: int
+	block_comment: bool
+
+	for c, i in str {
+		if c == ' ' {
+			space_before_comment += 1
+		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
+			comment_start = i
+			break
+		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '*' {
+			comment_start = i
+			block_comment = true
+			break
+		} else if c == '\n' {
+			break
+		} else {
+			space_before_comment = 0
+		}
+	}
+
+	if comment_start == 0 {
+		return "", 0
+	}
+
+	if block_comment {
+		from_start := str[comment_start:]
+
+		for c, i in from_start {
+			if c == '*' && i < len(from_start) - 1 && from_start[i + 1] == '/' {
+				return from_start[:i+2], space_before_comment
+			}
+		}
+	} else {
+		from_start := str[comment_start:]
+
+		for c, i in from_start {
+			if c == '\n' {
+				return from_start[:i], space_before_comment
+			}
+		}
+	}
+
+	return "", 0
+}
+
+
 fp :: fmt.fprint
 fpln :: fmt.fprintln
 fpf :: fmt.fprintf
@@ -805,11 +853,18 @@ gen :: proc(input: string, c: Config) {
 
 	parse_typedef_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Typedef {
 		type := clang.getTypedefDeclUnderlyingType(cursor)
+
+		source_range := clang.getCursorExtent(cursor)
+		start := clang.getRangeStart(source_range)
+		start_offset: c.uint
+		clang.getExpansionLocation(start, &state.file, nil, nil, &start_offset)
+		side_comment, _ := find_comment_at_line_end(state.source[start_offset:])
+
 		return {
 			original_name = clang_string_to_string(clang.getCursorSpelling(cursor)),
 			type = type,
 			pre_comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
-			side_comment = "",
+			side_comment = side_comment,
 		}
 	}
 
@@ -904,56 +959,7 @@ gen :: proc(input: string, c: Config) {
 			//
 			// Figure out comments at the end of line
 			//
-			macro_source_continued := state.source[start_offset:]
-
-			find_comment_at_line_end :: proc(str: string) -> (string, int) {
-				space_before_comment: int
-				comment_start: int
-				block_comment: bool
-
-				for c, i in str {
-					if c == ' ' {
-						space_before_comment += 1
-					} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
-						comment_start = i
-						break
-					} else if c == '/' && i + 1 < len(str) && str[i + 1] == '*' {
-						comment_start = i
-						block_comment = true
-						break
-					} else if c == '\n' {
-						break
-					} else {
-						space_before_comment = 0
-					}
-				}
-
-				if comment_start == 0 {
-					return "", 0
-				}
-
-				if block_comment {
-					from_start := str[comment_start:]
-
-					for c, i in from_start {
-						if c == '*' && i < len(from_start) - 1 && from_start[i + 1] == '/' {
-							return from_start[:i+2], space_before_comment
-						}
-					}
-				} else {
-					from_start := str[comment_start:]
-
-					for c, i in from_start {
-						if c == '\n' {
-							return from_start[:i], space_before_comment
-						}
-					}
-				}
-
-				return "", 0
-			}
-
-			side_comment, side_comment_align_whitespace = find_comment_at_line_end(macro_source_continued)
+			side_comment, side_comment_align_whitespace = find_comment_at_line_end(state.source[start_offset:])
 
 			//
 			// Figure out comments before the macro

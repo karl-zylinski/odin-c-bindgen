@@ -28,7 +28,7 @@ cs_e :: enum c.int {
 //
 // Types and constants...
 //
-cs_t :: cs_e
+cs_t :: cs_e // Standard color spaces
 
 linecap_e :: enum c.int {
 	BUTT,   // Butt ends
@@ -36,7 +36,7 @@ linecap_e :: enum c.int {
 	SQUARE, // Square ends
 }
 
-linecap_t :: linecap_e
+linecap_t :: linecap_e // Line capping modes
 
 linejoin_e :: enum c.int {
 	MITER, // Miter joint
@@ -44,9 +44,9 @@ linejoin_e :: enum c.int {
 	BEVEL, // Bevel joint
 }
 
-linejoin_t :: linejoin_e
+linejoin_t :: linejoin_e // Line joining modes
 
-matrix_t :: [3][2]f64
+matrix_t :: [3][2]f64 // Transform matrix
 
 textrendering_e :: enum c.int {
 	FILL,            // Fill text
@@ -59,7 +59,7 @@ textrendering_e :: enum c.int {
 	TEXT_PATH,       // Add text to path (invisible)
 }
 
-textrendering_t :: textrendering_e
+textrendering_t :: textrendering_e // Text rendering modes
 
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {

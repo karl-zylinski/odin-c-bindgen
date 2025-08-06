@@ -50,7 +50,7 @@ encryption_e :: enum c.int {
 }
 
 // Error callback
-encryption_t :: encryption_e
+encryption_t :: encryption_e // PDF encryption modes
 
 filter_e :: enum c.int {
 	NONE,      // No filter
@@ -66,9 +66,9 @@ filter_e :: enum c.int {
 	RUNLENGTH, // RunLengthDecode filter (reading only)
 }
 
-filter_t :: filter_e
+filter_t :: filter_e // Compression/decompression filters for streams
 
-obj_t :: struct {}
+obj_t :: struct {} // Numbered object in PDF file
 
 output_cb_t :: proc "c" (rawptr, rawptr, c.size_t) -> c.ssize_t
 
@@ -98,7 +98,7 @@ rect_s :: struct {
 	y2: f64, // Upper-right Y coordinate
 }
 
-rect_t :: struct {}
+rect_t :: struct {} // PDF rectangle
 
 stream_t :: struct {}
 
@@ -118,7 +118,7 @@ valtype_e :: enum c.int {
 }
 
 // Object data stream in PDF file
-valtype_t :: valtype_e
+valtype_t :: valtype_e // PDF value types
 
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {
