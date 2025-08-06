@@ -10,10 +10,12 @@ Features:
 
 ## Requirements
 - Odin
-- clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
+- libclang
+	- Included on Windows (DLL lives in root folder of repository)
+	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint.
 
 > [!NOTE]
-> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
+> libclang is used for analysing the C headers and deciding what Odin code to output.
 
 ## Getting started
 
@@ -22,9 +24,6 @@ Features:
 3. Execute `bindgen the_folder`
 4. Bindings can be found inside `the_folder/the_folder`
 5. To get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
-
-> [!WARNING]
-> The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 
 ## Configuration
 
@@ -120,6 +119,12 @@ opaque_types = [
 // clang will look into this path in search for included headers.
 clang_include_paths = [
 	// "include"
+]
+
+// Put the names of macros to remove in here. This is useful for removing
+// macros that were converted into invalid Odin constants.
+remove_macros = [
+	// "SOME_BROKEN_MACRO"
 ]
 
 // Writes the clang JSON ast dump for debug inspection (in output folder)
