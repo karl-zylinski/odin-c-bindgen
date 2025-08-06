@@ -867,9 +867,9 @@ gen :: proc(input: string, c: Config) {
 
 	parse_macro_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Macro {
 		side_comment: string
+		side_comment_align_whitespace: int
 		translation_unit := clang.Cursor_getTranslationUnit(cursor)
 		source_range := clang.getCursorExtent(cursor)
-
 		whitespace_after_name: int
 
 		{
@@ -888,7 +888,7 @@ gen :: proc(input: string, c: Config) {
 					if !first_space_seen {
 						first_space_seen = true
 					}
-					
+
 					whitespace_after_name += 1
 				} else {
 					if first_space_seen {
@@ -896,6 +896,57 @@ gen :: proc(input: string, c: Config) {
 					}
 				}
 			}
+
+			macro_source_continued := state.source[start_offset:]
+
+			find_comment_at_line_end :: proc(str: string) -> (string, int) {
+				space_before_comment: int
+				comment_start: int
+				block_comment: bool
+
+				for c, i in str {
+					if c == ' ' {
+						space_before_comment += 1
+					} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
+						comment_start = i
+						break
+					} else if c == '/' && i + 1 < len(str) && str[i + 1] == '*' {
+					 	comment_start = i
+					 	block_comment = true
+						break
+					} else if c == '\n' {
+						break
+					} else {
+						space_before_comment = 0
+					}
+				}
+
+				if comment_start == 0 {
+					return "", 0
+				}
+
+				if block_comment {
+					from_start := str[comment_start:]
+
+					for c, i in from_start {
+						if c == '*' && i < len(from_start) - 1 && from_start[i + 1] == '/' {
+							return from_start[:i+2], space_before_comment
+						}
+					}
+				} else {
+					from_start := str[comment_start:]
+
+					for c, i in from_start {
+						if c == '\n' {
+							return from_start[:i], space_before_comment
+						}
+					}
+				}
+
+				return "", 0
+			}
+
+			side_comment, side_comment_align_whitespace = find_comment_at_line_end(macro_source_continued)
 		}
 
 		tokens: [^]clang.Token
@@ -909,6 +960,7 @@ gen :: proc(input: string, c: Config) {
 			is_function = bool(clang.Cursor_isMacroFunctionLike(cursor)),
 			comment = clang_string_to_string(clang.Cursor_getRawCommentText(cursor)),
 			side_comment = side_comment,
+			whitespace_before_side_comment = side_comment_align_whitespace,
 			whitespace_after_name = whitespace_after_name,
 		}
 	}
@@ -1949,8 +2001,10 @@ gen :: proc(input: string, c: Config) {
 							// If we hit a curly brace, we need to count how many we have.
 							curly_parens += 1
 							strings.write_string(&builder, token_str)
+							strings.write_rune(&builder, ' ')
 						case '}':
 							curly_parens -= 1
+							strings.write_rune(&builder, ' ')
 							strings.write_string(&builder, token_str)
 						case ',':
 							if curly_parens == 0 {
@@ -1958,6 +2012,7 @@ gen :: proc(input: string, c: Config) {
 								macro.should_not_output = true
 							}
 							strings.write_string(&builder, token_str)
+							strings.write_rune(&builder, ' ')
 						case:
 							// +, -, /, *, etc.
 							strings.write_string(&builder, token_str)
@@ -1992,8 +2047,8 @@ gen :: proc(input: string, c: Config) {
 			if !d.has_been_evaluated {
 				evaluate_macro(&s, decl.cursor, &d)
 			}
-
-			if d.val == "{}" || d.val == "{0}" {
+			
+			if d.val == "{  }" || d.val == "{ 0 }" {
 				continue
 			}
 
