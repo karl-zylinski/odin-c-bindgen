@@ -27,7 +27,7 @@ jobs:
 
       - name: Build bindgen
         run: |
-          odin build src -out:bindgen.exe -vet -strict-style"
+          odin build src -out:bindgen.exe -vet -strict-style
       
       - name: Raylib
         run: |
