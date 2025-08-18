@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Symlink libclang.so (Linux)
-        run: sudo ln -s libclang-11.so.1 /lib/x86_64-linux-gnu/libclang.so
+        run: sudo ln -s libclang-18.so.1 /lib/x86_64-linux-gnu/libclang.so
         working-directory: ${{ env.LLVM_PATH }}/lib
 
       - name: Build bindgen
