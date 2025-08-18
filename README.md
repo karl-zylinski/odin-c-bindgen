@@ -177,7 +177,7 @@ opaque_types = [
 ]
 ```
 
-You should put in the translated type name, as it would appear in the Odin file (will all prefixes removed, etc).
+You should put in the untranslated type name, as it appears in the input file (including all prefixes, etc).
 
 ## Acknowledgements
 
