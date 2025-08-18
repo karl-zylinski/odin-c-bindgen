@@ -19,14 +19,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           release: false
 
-      - name: Setup libclang
-        run: sudo apt-get install -y libclang-dev
-
       - uses: actions/checkout@v4
 
       - name: Build bindgen
         run: |
-          export LD_LIBRARY_PATH=/usr/lib/llvm-18.0/lib
+          sudo export LD_LIBRARY_PATH=/usr/lib/llvm-18.0/lib
           ldconfig
           odin build src -out:bindgen.exe -vet -strict-style
       
