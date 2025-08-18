@@ -42,29 +42,3 @@ JointId :: struct {
 	generation: u16,
 }
 
-@(default_calling_convention="c", link_prefix="b2")
-foreign lib {
-	/// Store a body id into a uint64_t.
-	StoreBodyId :: proc(id: BodyId) -> u64 ---
-
-	/// Load a uint64_t into a body id.
-	LoadBodyId :: proc(x: u64) -> BodyId ---
-
-	/// Store a shape id into a uint64_t.
-	StoreShapeId :: proc(id: ShapeId) -> u64 ---
-
-	/// Load a uint64_t into a shape id.
-	LoadShapeId :: proc(x: u64) -> ShapeId ---
-
-	/// Store a chain id into a uint64_t.
-	StoreChainId :: proc(id: ChainId) -> u64 ---
-
-	/// Load a uint64_t into a chain id.
-	LoadChainId :: proc(x: u64) -> ChainId ---
-
-	/// Store a joint id into a uint64_t.
-	StoreJointId :: proc(id: JointId) -> u64 ---
-
-	/// Load a uint64_t into a joint id.
-	LoadJointId :: proc(x: u64) -> JointId ---
-}

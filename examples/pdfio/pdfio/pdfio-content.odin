@@ -14,28 +14,41 @@ _ :: c
 
 foreign import lib "pdfio1.lib"
 
+// PDFIO_CONTENT_H :: 
+
+//
 // Types and constants...
-cs_t :: enum c.int {
+//
+cs_e :: enum c.int {
 	ADOBE,  // AdobeRGB 1998
 	P3_D65, // Display P3
 	SRGB,   // sRGB
 }
 
-linecap_t :: enum c.int {
+//
+// Types and constants...
+//
+cs_t :: cs_e // Standard color spaces
+
+linecap_e :: enum c.int {
 	BUTT,   // Butt ends
 	ROUND,  // Round ends
 	SQUARE, // Square ends
 }
 
-linejoin_t :: enum c.int {
+linecap_t :: linecap_e // Line capping modes
+
+linejoin_e :: enum c.int {
 	MITER, // Miter joint
 	ROUND, // Round joint
 	BEVEL, // Bevel joint
 }
 
+linejoin_t :: linejoin_e // Line joining modes
+
 matrix_t :: [3][2]f64 // Transform matrix
 
-textrendering_t :: enum c.int {
+textrendering_e :: enum c.int {
 	FILL,            // Fill text
 	STROKE,          // Stroke text
 	FILL_AND_STROKE, // Fill then stroke text
@@ -46,11 +59,13 @@ textrendering_t :: enum c.int {
 	TEXT_PATH,       // Add text to path (invisible)
 }
 
+textrendering_t :: textrendering_e // Text rendering modes
+
 @(default_calling_convention="c", link_prefix="pdfio")
 foreign lib {
 	// Color array functions...
 	ArrayCreateColorFromICCObj    :: proc(pdf: ^file_t, icc_object: ^obj_t) -> ^array_t ---
-	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [^][3]f64, white_point: ^f64) -> ^array_t ---
+	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [3][3]f64, white_point: [3]f64) -> ^array_t ---
 	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: c.size_t, colors: ^c.uchar) -> ^array_t ---
 	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
 	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: c.size_t, cs: cs_t) -> ^array_t ---
@@ -60,7 +75,7 @@ foreign lib {
 	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: f64, y: f64, w: f64, h: f64) -> bool ---
 	ContentFill                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
 	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: bool) -> bool ---
-	ContentMatrixConcat             :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentMatrixConcat             :: proc(st: ^stream_t, m: matrix_t) -> bool ---
 	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: f64) -> bool ---
 	ContentMatrixScale              :: proc(st: ^stream_t, sx: f64, sy: f64) -> bool ---
 	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
@@ -95,7 +110,7 @@ foreign lib {
 	ContentSetTextCharacterSpacing  :: proc(st: ^stream_t, spacing: f64) -> bool ---
 	ContentSetTextFont              :: proc(st: ^stream_t, name: cstring, size: f64) -> bool ---
 	ContentSetTextLeading           :: proc(st: ^stream_t, leading: f64) -> bool ---
-	ContentSetTextMatrix            :: proc(st: ^stream_t, m: [^][2]f64) -> bool ---
+	ContentSetTextMatrix            :: proc(st: ^stream_t, m: matrix_t) -> bool ---
 	ContentSetTextRenderingMode     :: proc(st: ^stream_t, mode: textrendering_t) -> bool ---
 	ContentSetTextRise              :: proc(st: ^stream_t, rise: f64) -> bool ---
 	ContentSetTextWordSpacing       :: proc(st: ^stream_t, spacing: f64) -> bool ---

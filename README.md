@@ -10,10 +10,12 @@ Features:
 
 ## Requirements
 - Odin
-- clang (download from https://llvm.org/ or using the clang payload in Visual Studio installer)
+- libclang
+	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz and from within that archive copy 'lib/libclang.lib' into the 'libclang' folder of this repository. Also copy 'bin/libclang.dll' into the root folder of the repository.
+	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint.
 
 > [!NOTE]
-> clang is used for analysing the C headers and outputting an AST. The binding generator then processses that AST into Odin code.
+> libclang is used for analysing the C headers and deciding what Odin code to output.
 
 ## Getting started
 
@@ -22,9 +24,6 @@ Features:
 3. Execute `bindgen the_folder`
 4. Bindings can be found inside `the_folder/the_folder`
 5. To get more control of how the generation happens, use a `bindgen.sjson` file to. See how in the next section, or look in the `examples` folder.
-
-> [!WARNING]
-> The generator assumes that the `clang` executable is in your PATH, i.e. that it is accessible system-wide.
 
 ## Configuration
 
@@ -122,11 +121,11 @@ clang_include_paths = [
 	// "include"
 ]
 
-// Writes the clang JSON ast dump for debug inspection (in output folder)
-debug_dump_json_ast = false
-
-// Writes the clang preprocessor macro dump
-debug_dump_macros = false
+// Put the names of macros to remove in here. This is useful for removing
+// macros that were converted into invalid Odin constants.
+remove_macros = [
+	// "SOME_BROKEN_MACRO"
+]
 ```
 
 ## FAQ and common problems

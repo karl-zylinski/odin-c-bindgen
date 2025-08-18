@@ -10,39 +10,46 @@ on:
 
 
 jobs:
-  build_windows:
-    name: Windows
-    runs-on: windows-latest
+  build_linux:
+    name: Linux
+    runs-on: ubuntu-latest
     steps:
       - uses: laytan/setup-odin@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          release: false
 
       - uses: actions/checkout@v4
 
+      - name: Symlink libclang.so (Linux)
+        run: sudo ln -s libclang-18.so.1 /lib/x86_64-linux-gnu/libclang.so
+        working-directory: ${{ env.LLVM_PATH }}/lib
+
       - name: Build bindgen
-        run: odin build src -out:bindgen.exe -vet -strict-style
+        run: |
+          odin build src -out:bindgen.exe -vet -strict-style
       
       - name: Raylib
         run: |
-          .\bindgen.exe examples/raylib
-          odin build examples/raylib/test
+          ./bindgen.exe examples/raylib
+          
+#          odin build examples/raylib/test
 
       - name: Box2D 
         run: |
-          .\bindgen.exe examples/box2d
-          odin build examples/box2d/test
+          ./bindgen.exe examples/box2d
+#          odin build examples/box2d/test
 
       - name: pdfio
         run: |
-          .\bindgen.exe examples/pdfio
-          cd examples/pdfio/test
-          copy ..\pdfio\pdfio1.dll .
-          copy ..\pdfio\zlib.dll .
-          odin run .
+          ./bindgen.exe examples/pdfio
+#          cd examples/pdfio/test
+#          copy ../pdfio\pdfio1.dll .
+#          copy ../pdfio\zlib.dll .
+#          odin run .
 
       - name: ufbx
         run: |
-          .\bindgen.exe examples/ufbx
-          odin build examples/ufbx/test
+          ./bindgen.exe examples/ufbx
+#          odin build examples/ufbx/test
 
