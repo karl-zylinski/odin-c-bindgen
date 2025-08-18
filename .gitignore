@@ -3,3 +3,5 @@
 *.exe
 scrap
 .vscode
+libclang.dll
+libclang/libclang.lib
