@@ -23,9 +23,7 @@ jobs:
 
       - name: Build bindgen
         run: |
-          sudo export LD_LIBRARY_PATH=/usr/lib/llvm-18.0/lib
-          ldconfig
-          odin build src -out:bindgen.exe -vet -strict-style
+          LD_LIBRARY_PATH=/usr/lib/llvm-18/lib odin build src -out:bindgen.exe -vet -strict-style
       
       - name: Raylib
         run: |
