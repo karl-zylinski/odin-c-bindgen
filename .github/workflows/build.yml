@@ -23,7 +23,7 @@ jobs:
 
       - name: Build bindgen
         run: |
-          LD_LIBRARY_PATH=/usr/lib/llvm-18/lib odin build src -out:bindgen.exe -vet -strict-style
+          odin build src -out:bindgen.exe -vet -strict-style -extra-linker-flags:"-L/usr/lib/llvm-18/lib"
       
       - name: Raylib
         run: |
