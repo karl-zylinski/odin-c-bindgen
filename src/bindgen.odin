@@ -833,7 +833,6 @@ gen :: proc(input: string, c: Config) {
 		}
 	}
 
-	// We can probably inline these functions.
 	parse_function_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Function {
 		// We could probably make use of `clang.Type` here and not store a string.
 		// This is easier to implement for now. We can make improvments later.
@@ -990,7 +989,7 @@ gen :: proc(input: string, c: Config) {
 		}
 	}
 
-	parse_enum_decl :: proc(state: ^Gen_State, cursor: clang.Cursor, line: u32) -> Enum {
+	parse_enum_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Enum {
 		out_members: [dynamic]Enum_Member
 
 		backing_type := clang.getEnumDeclIntegerType(cursor)
@@ -1217,7 +1216,7 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		// Stops forward declarations from being parsed.
-		if clang.isCursorDefinition(cursor) == 0 {
+		if !bool(clang.isCursorDefinition(cursor)) || bool(clang.Cursor_isAnonymous(cursor)){
 			return .Continue // Skip forward declarations.
 		}
 
@@ -1228,7 +1227,7 @@ gen :: proc(input: string, c: Config) {
 		case .TypedefDecl:
 			def = parse_typedef_decl(state, cursor)
 		case .EnumDecl:
-			def = parse_enum_decl(state, cursor, line)
+			def = parse_enum_decl(state, cursor)
 		}
 
 		append(&state.decls, Declaration {
@@ -1354,32 +1353,15 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			name := d.original_name
-
-			// This is really ugly, if you can simplify this, please do.
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				d.original_name = typedef
 				name = typedef
-				if replacement, has_replacement := s.rename[name]; has_replacement {
-					name = replacement
-				} else {
-					name = trim_prefix(name, s.remove_type_prefix)
-					if s.force_ada_case_types {
-						name = strings.to_ada_case(name)
-					}
-				}
-				add_to_set(&s.created_symbols, name)
-			} else if replacement, has_replacement := s.rename[name]; has_replacement {
-				name = replacement
-			} else {
-				name = trim_prefix(name, s.remove_type_prefix)
-
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
 			}
+			name = translate_name(&s, name)
 
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
+			add_to_set(&s.created_symbols, name)
 		case Function:
 			name := d.original_name
 
@@ -1397,26 +1379,11 @@ gen :: proc(input: string, c: Config) {
 			if typedef, has_typedef := s.typedefs[d.id]; has_typedef {
 				d.original_name = typedef
 				name = typedef
-				if replacement, has_replacement := s.rename[name]; has_replacement {
-					name = replacement
-				} else {
-					name = trim_prefix(name, s.remove_type_prefix)
-					if s.force_ada_case_types {
-						name = strings.to_ada_case(name)
-					}
-				}
-				add_to_set(&s.created_symbols, name)
-			} else if replacement, has_replacement := s.rename[name]; has_replacement {
-				name = replacement
-			} else {
-				name = trim_prefix(name, s.remove_type_prefix)
-
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
 			}
-
+			name = translate_name(&s, name)
+			
 			d.name = vet_name(name)
+			add_to_set(&s.created_symbols, d.name)
 			add_to_set(&s.created_types, d.name)
 		case Typedef:
 			name := d.original_name
@@ -1425,16 +1392,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if replacement, has_replacement := s.rename[name]; has_replacement {
-				name = replacement
-			} else {
-				name = trim_prefix(name, s.remove_type_prefix)
-
-				if s.force_ada_case_types {
-					name = strings.to_ada_case(name)
-				}
-			}
-
+			name = translate_name(&s, name)
 			d.name = vet_name(name)
 			add_to_set(&s.created_types, d.name)
 		case Macro:
@@ -1850,7 +1808,6 @@ gen :: proc(input: string, c: Config) {
 
 		case Function:
 			// handled later. This makes all procs end up at bottom, after types.
-
 		case Typedef:
 			n := d.name
 

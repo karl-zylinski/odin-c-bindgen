@@ -69,38 +69,20 @@ String :: struct {
 	length: c.size_t,
 }
 
-// Null-terminated UTF-8 encoded string within an FBX file
-String :: struct {}
-
 // Opaque byte buffer blob
 Blob :: struct {
 	data: rawptr,
 	size: c.size_t,
 }
 
-// Opaque byte buffer blob
-Blob :: struct {}
-
-// 2D vector
-Vec2 :: [2]Real
-
 // 2D vector
 Vec2 :: [2]Real
 
 // 3D vector
 Vec3 :: [3]Real
 
-// 3D vector
-Vec3 :: [3]Real
-
 // 4D vector
 Vec4 :: [4]Real
-
-// 4D vector
-Vec4 :: [4]Real
-
-// Quaternion
-Quat :: quaternion128
 
 // Quaternion
 Quat :: quaternion128
@@ -120,14 +102,6 @@ Rotation_Order :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Order in which Euler-angle rotation axes are applied for a transform
-// NOTE: The order in the name refers to the order of axes *applied*,
-// not the multiplication order: eg. `UFBX_ROTATION_ORDER_XYZ` is `Z*Y*X`
-// [TODO: Figure out what the spheric rotation order is...]
-Rotation_Order :: Enum_Ufbx_Rotation_Order
-
-ROTATION_ORDER_COUNT :: 7
-
 // Explicit translation+rotation+scale transformation.
 // NOTE: Rotation is a quaternion, not Euler angles!
 Transform :: struct {
@@ -135,10 +109,6 @@ Transform :: struct {
 	rotation:    Quat,
 	scale:       Vec3,
 }
-
-// Explicit translation+rotation+scale transformation.
-// NOTE: Rotation is a quaternion, not Euler angles!
-Transform :: struct {}
 
 // 4x3 matrix encoding an affine transformation.
 // `cols[0..2]` are the X/Y/Z basis vectors, `cols[3]` is the translation
@@ -155,53 +125,35 @@ Matrix :: struct {
 	},
 }
 
-// 4x3 matrix encoding an affine transformation.
-// `cols[0..2]` are the X/Y/Z basis vectors, `cols[3]` is the translation
-Matrix :: struct {}
-
 Void_List :: struct {
 	data:  [^]rawptr,
 	count: c.size_t,
 }
-
-Void_List :: struct {}
 
 Bool_List :: struct {
 	data:  ^bool,
 	count: c.size_t,
 }
 
-Bool_List :: struct {}
-
 Uint32_List :: struct {
 	data:  ^u32,
 	count: c.size_t,
 }
-
-Uint32_List :: struct {}
 
 Real_List :: struct {
 	data:  ^Real,
 	count: c.size_t,
 }
 
-Real_List :: struct {}
-
 Vec2_List :: struct {
 	data:  ^Vec2,
 	count: c.size_t,
 }
 
-Vec2_List :: struct {}
-
 Vec3_List :: struct {
 	data:  ^Vec3,
 	count: c.size_t,
 }
-
-Vec3_List :: struct {}
-
-Vec4_List :: struct {}
 
 Vec4_List :: struct {
 	data:  ^Vec4,
@@ -212,8 +164,6 @@ String_List :: struct {
 	data:  ^String,
 	count: c.size_t,
 }
-
-String_List :: struct {}
 
 // Sentinel value used to represent a missing index.
 // NO_INDEX :: ((uint32_t)~0)
@@ -232,13 +182,6 @@ Dom_Value_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-// -- Document object model
-Dom_Value_Type :: Enum_Ufbx_Dom_Value_Type
-
-DOM_VALUE_TYPE_COUNT :: 9
-
-Dom_Node :: struct {}
-
 Dom_Value :: struct {
 	type:        Dom_Value_Type,
 	value_str:   String,
@@ -247,16 +190,10 @@ Dom_Value :: struct {
 	value_float: f64,
 }
 
-Dom_Value :: struct {}
-
 Dom_Node_List :: struct {
 	data:  ^^Dom_Node,
 	count: c.size_t,
 }
-
-Dom_Node_List :: struct {}
-
-Dom_Value_List :: struct {}
 
 Dom_Value_List :: struct {
 	data:  ^Dom_Value,
@@ -268,15 +205,6 @@ Dom_Node :: struct {
 	children: Dom_Node_List,
 	values:   Dom_Value_List,
 }
-
-// FBX elements have properties which are arbitrary key/value pairs that can
-// have inherited default values or be animated. In most cases you don't need
-// to access these unless you need a feature not implemented directly in ufbx.
-// NOTE: Prefer using `ufbx_find_prop[_len](...)` to search for a property by
-// name as it can find it from the defaults if necessary.
-Prop :: struct {}
-
-Props :: struct {}
 
 // Data type contained within the property. All the data fields are always
 // populated regardless of type, so there's no need to switch by type usually
@@ -301,14 +229,6 @@ Prop_Type :: enum i32 {
 	REFERENCE        = 15,
 	TYPE_FORCE_32BIT = 2147483647,
 }
-
-// Data type contained within the property. All the data fields are always
-// populated regardless of type, so there's no need to switch by type usually
-// eg. `prop->value_real` and `prop->value_int` have the same value (well, close)
-// if `prop->type == UFBX_PROP_INTEGER`. String values are not converted from/to.
-Prop_Type :: Enum_Ufbx_Prop_Type
-
-PROP_TYPE_COUNT :: 16
 
 // Property flags: Advanced information about properties, not usually needed.
 Prop_Flag :: enum i32 {
@@ -410,9 +330,6 @@ Prop_Flags :: distinct bit_set[Prop_Flag; i32]
 
 PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOCK_X, .LOCK_Y, .LOCK_Z, .LOCK_W, .MUTE_X, .MUTE_Y, .MUTE_Z, .MUTE_W, .SYNTHETIC, .ANIMATED, .NOT_FOUND, .CONNECTED, .NO_VALUE, .OVERRIDDEN, .VALUE_REAL, .VALUE_VEC2, .VALUE_VEC3, .VALUE_VEC4, .VALUE_INT, .VALUE_STR, .VALUE_BLOB }
 
-// Property flags: Advanced information about properties, not usually needed.
-Prop_Flag :: Enum_Ufbx_Prop_Flags
-
 // Single property with name/type/value.
 Prop :: struct {
 	name:          String,
@@ -436,8 +353,6 @@ Prop_List :: struct {
 	count: c.size_t,
 }
 
-Prop_List :: struct {}
-
 // List of alphabetically sorted properties with potential defaults.
 // For animated objects in as scene from `ufbx_evaluate_scene()` this list
 // only has the animated properties, the originals are stored under `defaults`.
@@ -446,111 +361,6 @@ Props :: struct {
 	num_animated: c.size_t,
 	defaults:     ^Props,
 }
-
-Scene :: struct {}
-
-// Element is the lowest level representation of the FBX file in ufbx.
-// An element contains type, id, name, and properties (see `ufbx_props` above)
-// Elements may be connected to each other arbitrarily via `ufbx_connection`
-Element :: struct {}
-
-// Unknown
-Unknown :: struct {}
-
-// Nodes
-Node :: struct {}
-
-// Node attributes (common)
-Mesh :: struct {}
-
-Light :: struct {}
-
-Camera :: struct {}
-
-Bone :: struct {}
-
-Empty :: struct {}
-
-// Node attributes (curves/surfaces)
-Line_Curve :: struct {}
-
-Nurbs_Curve :: struct {}
-
-Nurbs_Surface :: struct {}
-
-Nurbs_Trim_Surface :: struct {}
-
-Nurbs_Trim_Boundary :: struct {}
-
-// Node attributes (advanced)
-Procedural_Geometry :: struct {}
-
-Stereo_Camera :: struct {}
-
-Camera_Switcher :: struct {}
-
-Marker :: struct {}
-
-Lod_Group :: struct {}
-
-// Deformers
-Skin_Deformer :: struct {}
-
-Skin_Cluster :: struct {}
-
-Blend_Deformer :: struct {}
-
-Blend_Channel :: struct {}
-
-Blend_Shape :: struct {}
-
-Cache_Deformer :: struct {}
-
-Cache_File :: struct {}
-
-// Materials
-Material :: struct {}
-
-Texture :: struct {}
-
-Video :: struct {}
-
-Shader :: struct {}
-
-Shader_Binding :: struct {}
-
-// Animation
-Anim_Stack :: struct {}
-
-Anim_Layer :: struct {}
-
-Anim_Value :: struct {}
-
-Anim_Curve :: struct {}
-
-// Collections
-Display_Layer :: struct {}
-
-Selection_Set :: struct {}
-
-Selection_Node :: struct {}
-
-// Constraints
-Character :: struct {}
-
-Constraint :: struct {}
-
-// Audio
-Audio_Layer :: struct {}
-
-Audio_Clip :: struct {}
-
-// Miscellaneous
-Pose :: struct {}
-
-Metadata_Object :: struct {}
-
-Element_List :: struct {}
 
 Element_List :: struct {
 	data:  ^^Element,
@@ -562,30 +372,20 @@ Unknown_List :: struct {
 	count: c.size_t,
 }
 
-Unknown_List :: struct {}
-
 Node_List :: struct {
 	data:  ^^Node,
 	count: c.size_t,
 }
-
-Node_List :: struct {}
 
 Mesh_List :: struct {
 	data:  ^^Mesh,
 	count: c.size_t,
 }
 
-Mesh_List :: struct {}
-
 Light_List :: struct {
 	data:  ^^Light,
 	count: c.size_t,
 }
-
-Light_List :: struct {}
-
-Camera_List :: struct {}
 
 Camera_List :: struct {
 	data:  ^^Camera,
@@ -597,23 +397,15 @@ Bone_List :: struct {
 	count: c.size_t,
 }
 
-Bone_List :: struct {}
-
-Empty_List :: struct {}
-
 Empty_List :: struct {
 	data:  ^^Empty,
 	count: c.size_t,
 }
 
-Line_Curve_List :: struct {}
-
 Line_Curve_List :: struct {
 	data:  ^^Line_Curve,
 	count: c.size_t,
 }
-
-Nurbs_Curve_List :: struct {}
 
 Nurbs_Curve_List :: struct {
 	data:  ^^Nurbs_Curve,
@@ -625,10 +417,6 @@ Nurbs_Surface_List :: struct {
 	count: c.size_t,
 }
 
-Nurbs_Surface_List :: struct {}
-
-Nurbs_Trim_Surface_List :: struct {}
-
 Nurbs_Trim_Surface_List :: struct {
 	data:  ^^Nurbs_Trim_Surface,
 	count: c.size_t,
@@ -639,23 +427,15 @@ Nurbs_Trim_Boundary_List :: struct {
 	count: c.size_t,
 }
 
-Nurbs_Trim_Boundary_List :: struct {}
-
 Procedural_Geometry_List :: struct {
 	data:  ^^Procedural_Geometry,
 	count: c.size_t,
 }
 
-Procedural_Geometry_List :: struct {}
-
-Stereo_Camera_List :: struct {}
-
 Stereo_Camera_List :: struct {
 	data:  ^^Stereo_Camera,
 	count: c.size_t,
 }
-
-Camera_Switcher_List :: struct {}
 
 Camera_Switcher_List :: struct {
 	data:  ^^Camera_Switcher,
@@ -667,16 +447,10 @@ Marker_List :: struct {
 	count: c.size_t,
 }
 
-Marker_List :: struct {}
-
-Lod_Group_List :: struct {}
-
 Lod_Group_List :: struct {
 	data:  ^^Lod_Group,
 	count: c.size_t,
 }
-
-Skin_Deformer_List :: struct {}
 
 Skin_Deformer_List :: struct {
 	data:  ^^Skin_Deformer,
@@ -688,37 +462,25 @@ Skin_Cluster_List :: struct {
 	count: c.size_t,
 }
 
-Skin_Cluster_List :: struct {}
-
 Blend_Deformer_List :: struct {
 	data:  ^^Blend_Deformer,
 	count: c.size_t,
 }
-
-Blend_Deformer_List :: struct {}
 
 Blend_Channel_List :: struct {
 	data:  ^^Blend_Channel,
 	count: c.size_t,
 }
 
-Blend_Channel_List :: struct {}
-
 Blend_Shape_List :: struct {
 	data:  ^^Blend_Shape,
 	count: c.size_t,
 }
 
-Blend_Shape_List :: struct {}
-
-Cache_Deformer_List :: struct {}
-
 Cache_Deformer_List :: struct {
 	data:  ^^Cache_Deformer,
 	count: c.size_t,
 }
-
-Cache_File_List :: struct {}
 
 Cache_File_List :: struct {
 	data:  ^^Cache_File,
@@ -730,44 +492,30 @@ Material_List :: struct {
 	count: c.size_t,
 }
 
-Material_List :: struct {}
-
 Texture_List :: struct {
 	data:  ^^Texture,
 	count: c.size_t,
 }
-
-Texture_List :: struct {}
 
 Video_List :: struct {
 	data:  ^^Video,
 	count: c.size_t,
 }
 
-Video_List :: struct {}
-
-Shader_List :: struct {}
-
 Shader_List :: struct {
 	data:  ^^Shader,
 	count: c.size_t,
 }
-
-Shader_Binding_List :: struct {}
 
 Shader_Binding_List :: struct {
 	data:  ^^Shader_Binding,
 	count: c.size_t,
 }
 
-Anim_Stack_List :: struct {}
-
 Anim_Stack_List :: struct {
 	data:  ^^Anim_Stack,
 	count: c.size_t,
 }
-
-Anim_Layer_List :: struct {}
 
 Anim_Layer_List :: struct {
 	data:  ^^Anim_Layer,
@@ -779,16 +527,10 @@ Anim_Value_List :: struct {
 	count: c.size_t,
 }
 
-Anim_Value_List :: struct {}
-
-Anim_Curve_List :: struct {}
-
 Anim_Curve_List :: struct {
 	data:  ^^Anim_Curve,
 	count: c.size_t,
 }
-
-Display_Layer_List :: struct {}
 
 Display_Layer_List :: struct {
 	data:  ^^Display_Layer,
@@ -800,10 +542,6 @@ Selection_Set_List :: struct {
 	count: c.size_t,
 }
 
-Selection_Set_List :: struct {}
-
-Selection_Node_List :: struct {}
-
 Selection_Node_List :: struct {
 	data:  ^^Selection_Node,
 	count: c.size_t,
@@ -814,23 +552,15 @@ Character_List :: struct {
 	count: c.size_t,
 }
 
-Character_List :: struct {}
-
-Constraint_List :: struct {}
-
 Constraint_List :: struct {
 	data:  ^^Constraint,
 	count: c.size_t,
 }
 
-Audio_Layer_List :: struct {}
-
 Audio_Layer_List :: struct {
 	data:  ^^Audio_Layer,
 	count: c.size_t,
 }
-
-Audio_Clip_List :: struct {}
 
 Audio_Clip_List :: struct {
 	data:  ^^Audio_Clip,
@@ -842,14 +572,10 @@ Pose_List :: struct {
 	count: c.size_t,
 }
 
-Pose_List :: struct {}
-
 Metadata_Object_List :: struct {
 	data:  ^^Metadata_Object,
 	count: c.size_t,
 }
-
-Metadata_Object_List :: struct {}
 
 Element_Type :: enum i32 {
 	UNKNOWN             = 0,  // < `ufbx_unknown`
@@ -899,10 +625,6 @@ Element_Type :: enum i32 {
 	TYPE_FORCE_32BIT    = 2147483647,
 }
 
-Element_Type :: Enum_Ufbx_Element_Type
-
-ELEMENT_TYPE_COUNT :: 42
-
 // Connection between two elements.
 // Source and destination are somewhat arbitrary but the destination is
 // often the "container" like a parent node or mesh containing a deformer.
@@ -913,17 +635,10 @@ Connection :: struct {
 	dst_prop: String,
 }
 
-// Connection between two elements.
-// Source and destination are somewhat arbitrary but the destination is
-// often the "container" like a parent node or mesh containing a deformer.
-Connection :: struct {}
-
 Connection_List :: struct {
 	data:  ^Connection,
 	count: c.size_t,
 }
-
-Connection_List :: struct {}
 
 // Element "base-class" common to each element.
 // Some fields (like `connections_src`) are advanced and not visible
@@ -997,15 +712,6 @@ Inherit_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Inherit type specifies how hierarchial node transforms are combined.
-// This only affects the final scaling, as rotation and translation are always
-// inherited correctly.
-// NOTE: These don't map to `"InheritType"` property as there may be new ones for
-// compatibility with various exporters.
-Inherit_Mode :: Enum_Ufbx_Inherit_Mode
-
-INHERIT_MODE_COUNT :: 3
-
 // Axis used to mirror transformations for handedness conversion.
 Mirror_Axis :: enum i32 {
 	NONE        = 0,
@@ -1014,11 +720,6 @@ Mirror_Axis :: enum i32 {
 	Z           = 3,
 	FORCE_32BIT = 2147483647,
 }
-
-// Axis used to mirror transformations for handedness conversion.
-Mirror_Axis :: Enum_Ufbx_Mirror_Axis
-
-MIRROR_AXIS_COUNT :: 4
 
 // Nodes form the scene transformation hierarchy and can contain attached
 // elements such as meshes or lights. In normal cases a single `ufbx_node`
@@ -1204,17 +905,6 @@ Vertex_Attrib :: struct {
 	values_w: Real_List,
 }
 
-// Vertex attribute: All attributes are stored in a consistent indexed format
-// regardless of how it's actually stored in the file.
-//
-// `values` is a contiguous array of attribute values.
-// `indices` maps each mesh index into a value in the `values` array.
-//
-// If `unique_per_vertex` is set then the attribute is guaranteed to have a
-// single defined value per vertex accessible via:
-//   attrib.values.data[attrib.indices.data[mesh->vertex_first_index[vertex_ix]]
-Vertex_Attrib :: struct {}
-
 // 1D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Real :: struct {
 	exists:            bool,
@@ -1224,9 +914,6 @@ Vertex_Real :: struct {
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
-
-// 1D vertex attribute, see `ufbx_vertex_attrib` for information
-Vertex_Real :: struct {}
 
 // 2D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec2 :: struct {
@@ -1238,9 +925,6 @@ Vertex_Vec2 :: struct {
 	values_w:          Real_List,
 }
 
-// 2D vertex attribute, see `ufbx_vertex_attrib` for information
-Vertex_Vec2 :: struct {}
-
 // 3D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec3 :: struct {
 	exists:            bool,
@@ -1250,9 +934,6 @@ Vertex_Vec3 :: struct {
 	unique_per_vertex: bool,
 	values_w:          Real_List,
 }
-
-// 3D vertex attribute, see `ufbx_vertex_attrib` for information
-Vertex_Vec3 :: struct {}
 
 // 4D vertex attribute, see `ufbx_vertex_attrib` for information
 Vertex_Vec4 :: struct {
@@ -1264,9 +945,6 @@ Vertex_Vec4 :: struct {
 	values_w:          Real_List,
 }
 
-// 4D vertex attribute, see `ufbx_vertex_attrib` for information
-Vertex_Vec4 :: struct {}
-
 // Vertex UV set/layer
 Uv_Set :: struct {
 	name:             String,
@@ -1276,9 +954,6 @@ Uv_Set :: struct {
 	vertex_bitangent: Vertex_Vec3, // < (optional) Tangent vector in UV.y direction
 }
 
-// Vertex UV set/layer
-Uv_Set :: struct {}
-
 // Vertex color set/layer
 Color_Set :: struct {
 	name:         String,
@@ -1286,17 +961,10 @@ Color_Set :: struct {
 	vertex_color: Vertex_Vec4, // < Per-vertex RGBA color
 }
 
-// Vertex color set/layer
-Color_Set :: struct {}
-
-Uv_Set_List :: struct {}
-
 Uv_Set_List :: struct {
 	data:  ^Uv_Set,
 	count: c.size_t,
 }
-
-Color_Set_List :: struct {}
 
 Color_Set_List :: struct {
 	data:  ^Color_Set,
@@ -1313,15 +981,10 @@ Edge :: struct {
 	},
 }
 
-// Edge between two _indices_ in a mesh
-Edge :: struct {}
-
 Edge_List :: struct {
 	data:  ^Edge,
 	count: c.size_t,
 }
-
-Edge_List :: struct {}
 
 // Polygonal face with arbitrary number vertices, a single face contains a
 // contiguous range of mesh indices, eg. `{5,3}` would have indices 5, 6, 7
@@ -1332,15 +995,6 @@ Face :: struct {
 	index_begin: u32,
 	num_indices: u32,
 }
-
-// Polygonal face with arbitrary number vertices, a single face contains a
-// contiguous range of mesh indices, eg. `{5,3}` would have indices 5, 6, 7
-//
-// NOTE: `num_indices` maybe less than 3 in which case the face is invalid!
-// [TODO #23: should probably remove the bad faces at load time]
-Face :: struct {}
-
-Face_List :: struct {}
 
 Face_List :: struct {
 	data:  ^Face,
@@ -1362,38 +1016,25 @@ Mesh_Part :: struct {
 	face_indices: Uint32_List,
 }
 
-// Subset of mesh faces used by a single material or group.
-Mesh_Part :: struct {}
-
 Mesh_Part_List :: struct {
 	data:  ^Mesh_Part,
 	count: c.size_t,
 }
-
-Mesh_Part_List :: struct {}
 
 Face_Group :: struct {
 	id:   i32,    // < Numerical ID for this group.
 	name: String, // < Name for the face group.
 }
 
-Face_Group :: struct {}
-
 Face_Group_List :: struct {
 	data:  ^Face_Group,
 	count: c.size_t,
 }
 
-Face_Group_List :: struct {}
-
 Subdivision_Weight_Range :: struct {
 	weight_begin: u32,
 	num_weights:  u32,
 }
-
-Subdivision_Weight_Range :: struct {}
-
-Subdivision_Weight_Range_List :: struct {}
 
 Subdivision_Weight_Range_List :: struct {
 	data:  ^Subdivision_Weight_Range,
@@ -1404,10 +1045,6 @@ Subdivision_Weight :: struct {
 	weight: Real,
 	index:  u32,
 }
-
-Subdivision_Weight :: struct {}
-
-Subdivision_Weight_List :: struct {}
 
 Subdivision_Weight_List :: struct {
 	data:  ^Subdivision_Weight,
@@ -1431,8 +1068,6 @@ Subdivision_Result :: struct {
 	skin_cluster_weights:  Subdivision_Weight_List,
 }
 
-Subdivision_Result :: struct {}
-
 Subdivision_Display_Mode :: enum i32 {
 	DISABLED         = 0,
 	HULL             = 1,
@@ -1440,10 +1075,6 @@ Subdivision_Display_Mode :: enum i32 {
 	SMOOTH           = 3,
 	MODE_FORCE_32BIT = 2147483647,
 }
-
-Subdivision_Display_Mode :: Enum_Ufbx_Subdivision_Display_Mode
-
-SUBDIVISION_DISPLAY_MODE_COUNT :: 4
 
 Subdivision_Boundary :: enum i32 {
 	DEFAULT        = 0,
@@ -1464,10 +1095,6 @@ Subdivision_Boundary :: enum i32 {
 	// OpenSubdiv: `FVAR_LINEAR_ALL`
 	FORCE_32BIT = 2147483647,
 }
-
-Subdivision_Boundary :: Enum_Ufbx_Subdivision_Boundary
-
-SUBDIVISION_BOUNDARY_COUNT :: 6
 
 // Polygonal mesh geometry.
 //
@@ -1653,11 +1280,6 @@ Light_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-// The kind of light source
-Light_Type :: Enum_Ufbx_Light_Type
-
-LIGHT_TYPE_COUNT :: 5
-
 // How fast does the light intensity decay at a distance
 Light_Decay :: enum i32 {
 	NONE        = 0, // < 1 (no decay)
@@ -1667,20 +1289,11 @@ Light_Decay :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// How fast does the light intensity decay at a distance
-Light_Decay :: Enum_Ufbx_Light_Decay
-
-LIGHT_DECAY_COUNT :: 4
-
 Light_Area_Shape :: enum i32 {
 	RECTANGLE   = 0,
 	SPHERE      = 1,
 	FORCE_32BIT = 2147483647,
 }
-
-Light_Area_Shape :: Enum_Ufbx_Light_Area_Shape
-
-LIGHT_AREA_SHAPE_COUNT :: 2
 
 // Light source attached to a `ufbx_node`
 Light :: struct {
@@ -1725,10 +1338,6 @@ Projection_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Projection_Mode :: Enum_Ufbx_Projection_Mode
-
-PROJECTION_MODE_COUNT :: 2
-
 // Method of specifying the rendering resolution from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aspect_Mode :: enum i32 {
@@ -1751,12 +1360,6 @@ Aspect_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Method of specifying the rendering resolution from properties
-// NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aspect_Mode :: Enum_Ufbx_Aspect_Mode
-
-ASPECT_MODE_COUNT :: 5
-
 // Method of specifying the field of view from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Mode :: enum i32 {
@@ -1775,12 +1378,6 @@ Aperture_Mode :: enum i32 {
 	// Compute the field of view from the render gate size and focal length
 	FORCE_32BIT = 2147483647,
 }
-
-// Method of specifying the field of view from properties
-// NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aperture_Mode :: Enum_Ufbx_Aperture_Mode
-
-APERTURE_MODE_COUNT :: 4
 
 // Method of specifying the render gate size from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1809,12 +1406,6 @@ Gate_Fit :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Method of specifying the render gate size from properties
-// NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Gate_Fit :: Enum_Ufbx_Gate_Fit
-
-GATE_FIT_COUNT :: 6
-
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Format :: enum i32 {
@@ -1833,12 +1424,6 @@ Aperture_Format :: enum i32 {
 	FORCE_32BIT         = 2147483647,
 }
 
-// Camera film/aperture size defaults
-// NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aperture_Format :: Enum_Ufbx_Aperture_Format
-
-APERTURE_FORMAT_COUNT :: 12
-
 Coordinate_Axis :: enum i32 {
 	POSITIVE_X  = 0,
 	NEGATIVE_X  = 1,
@@ -1850,10 +1435,6 @@ Coordinate_Axis :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Coordinate_Axis :: Enum_Ufbx_Coordinate_Axis
-
-COORDINATE_AXIS_COUNT :: 7
-
 // Coordinate axes the scene is represented in.
 // NOTE: `front` is the _opposite_ from forward!
 Coordinate_Axes :: struct {
@@ -1861,10 +1442,6 @@ Coordinate_Axes :: struct {
 	up:    Coordinate_Axis,
 	front: Coordinate_Axis,
 }
-
-// Coordinate axes the scene is represented in.
-// NOTE: `front` is the _opposite_ from forward!
-Coordinate_Axes :: struct {}
 
 // Camera attached to a `ufbx_node`
 Camera :: struct {
@@ -1979,15 +1556,10 @@ Line_Segment :: struct {
 	num_indices: u32,
 }
 
-// Segment of a `ufbx_line_curve`, indices refer to `ufbx_line_curve.point_indices[]`
-Line_Segment :: struct {}
-
 Line_Segment_List :: struct {
 	data:  ^Line_Segment,
 	count: c.size_t,
 }
-
-Line_Segment_List :: struct {}
 
 Line_Curve :: struct {
 	using _: struct #raw_union {
@@ -2023,10 +1595,6 @@ Nurbs_Topology :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Nurbs_Topology :: Enum_Ufbx_Nurbs_Topology
-
-NURBS_TOPOLOGY_COUNT :: 3
-
 // NURBS basis functions for an axis
 Nurbs_Basis :: struct {
 	// Number of control points influencing a point on the curve/surface.
@@ -2060,9 +1628,6 @@ Nurbs_Basis :: struct {
 	// `true` if the parametrization is well defined.
 	valid: bool,
 }
-
-// NURBS basis functions for an axis
-Nurbs_Basis :: struct {}
 
 Nurbs_Curve :: struct {
 	using _: struct #raw_union {
@@ -2198,10 +1763,6 @@ Marker_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-Marker_Type :: Enum_Ufbx_Marker_Type
-
-MARKER_TYPE_COUNT :: 3
-
 // Tracking marker for effectors
 Marker :: struct {
 	using _: struct #raw_union {
@@ -2227,11 +1788,6 @@ Lod_Display :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// LOD level display mode.
-Lod_Display :: Enum_Ufbx_Lod_Display
-
-LOD_DISPLAY_COUNT :: 3
-
 // Single LOD level within an LOD group.
 // Specifies properties of the Nth child of the _node_ containing the LOD group.
 Lod_Level :: struct {
@@ -2245,12 +1801,6 @@ Lod_Level :: struct {
 	// unless making a modeling program.
 	display: Lod_Display,
 }
-
-// Single LOD level within an LOD group.
-// Specifies properties of the Nth child of the _node_ containing the LOD group.
-Lod_Level :: struct {}
-
-Lod_Level_List :: struct {}
 
 Lod_Level_List :: struct {
 	data:  ^Lod_Level,
@@ -2309,11 +1859,6 @@ Skinning_Method :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Method to evaluate the skinning on a per-vertex level
-Skinning_Method :: Enum_Ufbx_Skinning_Method
-
-SKINNING_METHOD_COUNT :: 4
-
 // Skin weight information for a single mesh vertex
 Skin_Vertex :: struct {
 	weight_begin: u32, // < Index to start from in the `weights[]` array
@@ -2323,11 +1868,6 @@ Skin_Vertex :: struct {
 	// Should be used if `skinning_method == UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
 	dq_weight: Real,
 }
-
-// Skin weight information for a single mesh vertex
-Skin_Vertex :: struct {}
-
-Skin_Vertex_List :: struct {}
 
 Skin_Vertex_List :: struct {
 	data:  ^Skin_Vertex,
@@ -2340,15 +1880,10 @@ Skin_Weight :: struct {
 	weight:        Real, // < Amount this bone influence the vertex
 }
 
-// Single per-vertex per-cluster weight, see `ufbx_skin_vertex`
-Skin_Weight :: struct {}
-
 Skin_Weight_List :: struct {
 	data:  ^Skin_Weight,
 	count: c.size_t,
 }
-
-Skin_Weight_List :: struct {}
 
 // Skin deformer specifies a binding between a logical set of bones (a skeleton)
 // and a mesh. Each bone is represented by a `ufbx_skin_cluster` that contains
@@ -2449,11 +1984,6 @@ Blend_Keyframe :: struct {
 	effective_weight: Real,
 }
 
-// Blend shape associated with a target weight in a series of morphs
-Blend_Keyframe :: struct {}
-
-Blend_Keyframe_List :: struct {}
-
 Blend_Keyframe_List :: struct {
 	data:  ^Blend_Keyframe,
 	count: c.size_t,
@@ -2507,10 +2037,6 @@ Cache_File_Format :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Cache_File_Format :: Enum_Ufbx_Cache_File_Format
-
-CACHE_FILE_FORMAT_COUNT :: 3
-
 Cache_Data_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown data format
 	REAL_FLOAT  = 1, // < `float data[]`
@@ -2520,20 +2046,12 @@ Cache_Data_Format :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Cache_Data_Format :: Enum_Ufbx_Cache_Data_Format
-
-CACHE_DATA_FORMAT_COUNT :: 5
-
 Cache_Data_Encoding :: enum i32 {
 	UNKNOWN       = 0, // < Unknown data encoding
 	LITTLE_ENDIAN = 1, // < Contiguous little-endian array
 	BIG_ENDIAN    = 2, // < Contiguous big-endian array
 	FORCE_32BIT   = 2147483647,
 }
-
-Cache_Data_Encoding :: Enum_Ufbx_Cache_Data_Encoding
-
-CACHE_DATA_ENCODING_COUNT :: 3
 
 // Known interpretations of geometry cache data.
 Cache_Interpretation :: enum i32 {
@@ -2553,11 +2071,6 @@ Cache_Interpretation :: enum i32 {
 	// Vertex normals.
 	FORCE_32BIT = 2147483647,
 }
-
-// Known interpretations of geometry cache data.
-Cache_Interpretation :: Enum_Ufbx_Cache_Interpretation
-
-CACHE_INTERPRETATION_COUNT :: 4
 
 Cache_Frame :: struct {
 	// Name of the channel this frame belongs to.
@@ -2587,10 +2100,6 @@ Cache_Frame :: struct {
 	data_total_bytes:   u64,                 // < Size of the whole data blob in bytes
 }
 
-Cache_Frame :: struct {}
-
-Cache_Frame_List :: struct {}
-
 Cache_Frame_List :: struct {
 	data:  ^Cache_Frame,
 	count: c.size_t,
@@ -2618,10 +2127,6 @@ Cache_Channel :: struct {
 	scale_factor: Real,
 }
 
-Cache_Channel :: struct {}
-
-Cache_Channel_List :: struct {}
-
 Cache_Channel_List :: struct {
 	data:  ^Cache_Channel,
 	count: c.size_t,
@@ -2633,8 +2138,6 @@ Geometry_Cache :: struct {
 	frames:        Cache_Frame_List,
 	extra_info:    String_List,
 }
-
-Geometry_Cache :: struct {}
 
 Cache_Deformer :: struct {
 	using _: struct #raw_union {
@@ -2727,9 +2230,6 @@ Material_Map :: struct {
 	value_components: u8,
 }
 
-// Material property, either specified with a constant value or a mapped texture
-Material_Map :: struct {}
-
 // Material feature
 Material_Feature_Info :: struct {
 	// Whether the material model uses this feature or not.
@@ -2740,9 +2240,6 @@ Material_Feature_Info :: struct {
 	is_explicit: bool,
 }
 
-// Material feature
-Material_Feature_Info :: struct {}
-
 // Texture attached to an FBX property
 Material_Texture :: struct {
 	material_prop: String, // < Name of the property in `ufbx_material.props`
@@ -2751,11 +2248,6 @@ Material_Texture :: struct {
 	// Texture attached to the property.
 	texture: ^Texture,
 }
-
-// Texture attached to an FBX property
-Material_Texture :: struct {}
-
-Material_Texture_List :: struct {}
 
 Material_Texture_List :: struct {
 	data:  ^Material_Texture,
@@ -2817,11 +2309,6 @@ Shader_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-// Shading model type
-Shader_Type :: Enum_Ufbx_Shader_Type
-
-SHADER_TYPE_COUNT :: 13
-
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum i32 {
 	DIFFUSE_FACTOR             = 0,
@@ -2846,11 +2333,6 @@ Material_Fbx_Map :: enum i32 {
 	VECTOR_DISPLACEMENT        = 19,
 	MAP_FORCE_32BIT            = 2147483647,
 }
-
-// FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
-Material_Fbx_Map :: Enum_Ufbx_Material_Fbx_Map
-
-MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
 Material_Pbr_Map :: enum i32 {
@@ -2913,11 +2395,6 @@ Material_Pbr_Map :: enum i32 {
 	MAP_FORCE_32BIT                 = 2147483647,
 }
 
-// Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
-Material_Pbr_Map :: Enum_Ufbx_Material_Pbr_Map
-
-MATERIAL_PBR_MAP_COUNT :: 56
-
 // Known material features
 Material_Feature :: enum i32 {
 	PBR                                  = 0,
@@ -2946,11 +2423,6 @@ Material_Feature :: enum i32 {
 	FORCE_32BIT                          = 2147483647,
 }
 
-// Known material features
-Material_Feature :: Enum_Ufbx_Material_Feature
-
-MATERIAL_FEATURE_COUNT :: 23
-
 Material_Fbx_Maps :: struct {
 	using _: struct #raw_union {
 		maps: [20]Material_Map,
@@ -2978,8 +2450,6 @@ Material_Fbx_Maps :: struct {
 		},
 	},
 }
-
-Material_Fbx_Maps :: struct {}
 
 Material_Pbr_Maps :: struct {
 	using _: struct #raw_union {
@@ -3045,8 +2515,6 @@ Material_Pbr_Maps :: struct {
 	},
 }
 
-Material_Pbr_Maps :: struct {}
-
 Material_Features :: struct {
 	using _: struct #raw_union {
 		features: [23]Material_Feature_Info,
@@ -3077,8 +2545,6 @@ Material_Features :: struct {
 		},
 	},
 }
-
-Material_Features :: struct {}
 
 // Surface material properties such as color, roughness, etc. Each property may
 // be optionally bound to an `ufbx_texture`.
@@ -3137,10 +2603,6 @@ Texture_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-Texture_Type :: Enum_Ufbx_Texture_Type
-
-TEXTURE_TYPE_COUNT :: 4
-
 // Blend modes to combine layered textures with, compatible with common blend
 // mode definitions in many art programs. Simpler blend modes have equations
 // specified below where `src` is the layer to composite over `dst`.
@@ -3181,24 +2643,11 @@ Blend_Mode :: enum i32 {
 }
 
 // Blend modes to combine layered textures with, compatible with common blend
-// mode definitions in many art programs. Simpler blend modes have equations
-// specified below where `src` is the layer to composite over `dst`.
-// See eg. https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingseparable
-Blend_Mode :: Enum_Ufbx_Blend_Mode
-
-BLEND_MODE_COUNT :: 31
-
-// Blend modes to combine layered textures with, compatible with common blend
 Wrap_Mode :: enum i32 {
 	REPEAT           = 0, // < Repeat the texture past the [0,1] range
 	CLAMP            = 1, // < Clamp the normalized texture coordinates to [0,1]
 	MODE_FORCE_32BIT = 2147483647,
 }
-
-// Blend modes to combine layered textures with, compatible with common blend
-Wrap_Mode :: Enum_Ufbx_Wrap_Mode
-
-WRAP_MODE_COUNT :: 2
 
 // Single layer in a layered texture
 Texture_Layer :: struct {
@@ -3206,11 +2655,6 @@ Texture_Layer :: struct {
 	blend_mode: Blend_Mode, // < Equation to combine the layer to the background
 	alpha:      Real,       // < Blend weight of this layer
 }
-
-// Single layer in a layered texture
-Texture_Layer :: struct {}
-
-Texture_Layer_List :: struct {}
 
 Texture_Layer_List :: struct {
 	data:  ^Texture_Layer,
@@ -3233,10 +2677,6 @@ Shader_Texture_Type :: enum i32 {
 	// https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
 	TYPE_FORCE_32BIT = 2147483647,
 }
-
-Shader_Texture_Type :: Enum_Ufbx_Shader_Texture_Type
-
-SHADER_TEXTURE_TYPE_COUNT :: 3
 
 // Input to a shader texture, see `ufbx_shader_texture`.
 Shader_Texture_Input :: struct {
@@ -3273,11 +2713,6 @@ Shader_Texture_Input :: struct {
 	// Property representing `texture_enabled`.
 	texture_enabled_prop: ^Prop,
 }
-
-// Input to a shader texture, see `ufbx_shader_texture`.
-Shader_Texture_Input :: struct {}
-
-Shader_Texture_Input_List :: struct {}
 
 Shader_Texture_Input_List :: struct {
 	data:  ^Shader_Texture_Input,
@@ -3322,15 +2757,6 @@ Shader_Texture :: struct {
 	prop_prefix: String,
 }
 
-// Texture that emulates a shader graph node.
-// 3ds Max exports some materials as node graphs serialized to textures.
-// ufbx can parse a small subset of these, as normal maps are often hidden behind
-// some kind of bump node.
-// NOTE: These encode a lot of details of 3ds Max internals, not recommended for direct use.
-// HINT: `ufbx_texture.file_textures[]` contains a list of "real" textures that are connected
-// to the `ufbx_texture` that is pretending to be a shader node.
-Shader_Texture :: struct {}
-
 // Unique texture within the file.
 Texture_File :: struct {
 	// Index in `ufbx_scene.texture_files[]`.
@@ -3363,11 +2789,6 @@ Texture_File :: struct {
 	// Optional embedded content blob, eg. raw .png format data
 	content: Blob,
 }
-
-// Unique texture within the file.
-Texture_File :: struct {}
-
-Texture_File_List :: struct {}
 
 Texture_File_List :: struct {
 	data:  ^Texture_File,
@@ -3516,11 +2937,6 @@ Shader_Prop_Binding :: struct {
 	material_prop: String, // < Property name inside `ufbx_material.props`
 }
 
-// Binding from a material property to shader implementation
-Shader_Prop_Binding :: struct {}
-
-Shader_Prop_Binding_List :: struct {}
-
 Shader_Prop_Binding_List :: struct {
 	data:  ^Shader_Prop_Binding,
 	count: c.size_t,
@@ -3550,24 +2966,15 @@ Prop_Override :: struct {
 	value_int:     i64,
 }
 
-// -- Animation
-Prop_Override :: struct {}
-
 Prop_Override_List :: struct {
 	data:  ^Prop_Override,
 	count: c.size_t,
 }
 
-Prop_Override_List :: struct {}
-
 Transform_Override :: struct {
 	node_id:   u32,
 	transform: Transform,
 }
-
-Transform_Override :: struct {}
-
-Transform_Override_List :: struct {}
 
 Transform_Override_List :: struct {
 	data:  ^Transform_Override,
@@ -3604,14 +3011,6 @@ Anim :: struct {
 	custom: bool,
 }
 
-// Animation descriptor used for evaluating animation.
-// Usually obtained from `ufbx_scene` via either global animation `ufbx_scene.anim`,
-// per-stack animation `ufbx_anim_stack.anim` or per-layer animation `ufbx_anim_layer.anim`.
-//
-// For advanced usage you can use `ufbx_create_anim()` to create animation descriptors
-// with custom layers, property overrides, special flags, etc.
-Anim :: struct {}
-
 Anim_Stack :: struct {
 	using _: struct #raw_union {
 		element: Element,
@@ -3635,14 +3034,10 @@ Anim_Prop :: struct {
 	anim_value:    ^Anim_Value,
 }
 
-Anim_Prop :: struct {}
-
 Anim_Prop_List :: struct {
 	data:  ^Anim_Prop,
 	count: c.size_t,
 }
-
-Anim_Prop_List :: struct {}
 
 Anim_Layer :: struct {
 	using _: struct #raw_union {
@@ -3691,11 +3086,6 @@ Interpolation :: enum i32 {
 	FORCE_32BIT   = 2147483647,
 }
 
-// Animation curve segment interpolation mode between two keyframes
-Interpolation :: Enum_Ufbx_Interpolation
-
-INTERPOLATION_COUNT :: 4
-
 Extrapolation_Mode :: enum i32 {
 	CONSTANT        = 0, // < Use the value of the first/last keyframe
 	REPEAT          = 1, // < Repeat the whole animation curve
@@ -3705,10 +3095,6 @@ Extrapolation_Mode :: enum i32 {
 	FORCE_32BIT     = 2147483647,
 }
 
-Extrapolation_Mode :: Enum_Ufbx_Extrapolation_Mode
-
-EXTRAPOLATION_MODE_COUNT :: 5
-
 Extrapolation :: struct {
 	mode: Extrapolation_Mode,
 
@@ -3717,16 +3103,11 @@ Extrapolation :: struct {
 	repeat_count: i32,
 }
 
-Extrapolation :: struct {}
-
 // Tangent vector at a keyframe, may be split into left/right
 Tangent :: struct {
 	dx: f32, // < Derivative in the time axis
 	dy: f32, // < Derivative in the (curve specific) value axis
 }
-
-// Tangent vector at a keyframe, may be split into left/right
-Tangent :: struct {}
 
 // Single real `value` at a specified `time`, interpolation between two keyframes
 // is determined by the `interpolation` field of the _previous_ key.
@@ -3747,22 +3128,6 @@ Keyframe :: struct {
 	left:          Tangent,
 	right:         Tangent,
 }
-
-// Single real `value` at a specified `time`, interpolation between two keyframes
-// is determined by the `interpolation` field of the _previous_ key.
-// If `interpolation == UFBX_INTERPOLATION_CUBIC` the span is evaluated as a
-// cubic bezier curve through the following points:
-//
-//   (prev->time, prev->value)
-//   (prev->time + prev->right.dx, prev->value + prev->right.dy)
-//   (next->time - next->left.dx, next->value - next->left.dy)
-//   (next->time, next->value)
-//
-// HINT: You can use `ufbx_evaluate_curve(ufbx_anim_curve *curve, double time)`
-// rather than trying to manually handle all the interpolation modes.
-Keyframe :: struct {}
-
-Keyframe_List :: struct {}
 
 Keyframe_List :: struct {
 	data:  ^Keyframe,
@@ -3885,22 +3250,12 @@ Constraint_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-// Type of property constrain eg. position or look-at
-Constraint_Type :: Enum_Ufbx_Constraint_Type
-
-CONSTRAINT_TYPE_COUNT :: 7
-
 // Target to follow with a constraint
 Constraint_Target :: struct {
 	node:      ^Node,     // < Target node reference
 	weight:    Real,      // < Relative weight to other targets (does not always sum to 1)
 	transform: Transform, // < Offset from the actual target
 }
-
-// Target to follow with a constraint
-Constraint_Target :: struct {}
-
-Constraint_Target_List :: struct {}
 
 Constraint_Target_List :: struct {
 	data:  ^Constraint_Target,
@@ -3918,21 +3273,11 @@ Constraint_Aim_Up_Type :: enum i32 {
 }
 
 // Method to determine the up vector in aim constraints
-Constraint_Aim_Up_Type :: Enum_Ufbx_Constraint_Aim_Up_Type
-
-CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
-
-// Method to determine the up vector in aim constraints
 Constraint_Ik_Pole_Type :: enum i32 {
 	VECTOR           = 0, // < Use towards calculated from `ufbx_constraint.targets`
 	NODE             = 1, // < Use `ufbx_constraint.ik_pole_vector` directly
 	TYPE_FORCE_32BIT = 2147483647,
 }
-
-// Method to determine the up vector in aim constraints
-Constraint_Ik_Pole_Type :: Enum_Ufbx_Constraint_Ik_Pole_Type
-
-CONSTRAINT_IK_POLE_TYPE_COUNT :: 2
 
 Constraint :: struct {
 	using _: struct #raw_union {
@@ -4048,15 +3393,10 @@ Bone_Pose :: struct {
 	bone_to_parent: Matrix,
 }
 
-// -- Miscellaneous
-Bone_Pose :: struct {}
-
 Bone_Pose_List :: struct {
 	data:  ^Bone_Pose,
 	count: c.size_t,
 }
-
-Bone_Pose_List :: struct {}
 
 Pose :: struct {
 	using _: struct #raw_union {
@@ -4097,15 +3437,10 @@ Name_Element :: struct {
 	element:       ^Element,
 }
 
-// -- Named elements
-Name_Element :: struct {}
-
 Name_Element_List :: struct {
 	data:  ^Name_Element,
 	count: c.size_t,
 }
-
-Name_Element_List :: struct {}
 
 // Scene is the root object loaded by ufbx that everything is accessed from.
 Exporter :: enum i32 {
@@ -4117,18 +3452,11 @@ Exporter :: enum i32 {
 	FORCE_32BIT    = 2147483647,
 }
 
-// Scene is the root object loaded by ufbx that everything is accessed from.
-Exporter :: Enum_Ufbx_Exporter
-
-EXPORTER_COUNT :: 5
-
 Application :: struct {
 	vendor:  String,
 	name:    String,
 	version: String,
 }
-
-Application :: struct {}
 
 File_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown file format
@@ -4137,10 +3465,6 @@ File_Format :: enum i32 {
 	MTL         = 3, // < .mtl Wavefront MTL (Material template library) file
 	FORCE_32BIT = 2147483647,
 }
-
-File_Format :: Enum_Ufbx_File_Format
-
-FILE_FORMAT_COUNT :: 4
 
 Warning_Type :: enum i32 {
 	// Missing external file file (for example .mtl for Wavefront .obj file or a
@@ -4203,10 +3527,6 @@ Warning_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-Warning_Type :: Enum_Ufbx_Warning_Type
-
-WARNING_TYPE_COUNT :: 15
-
 // Warning about a non-fatal issue in the file.
 // Often contains information about issues that ufbx has corrected about the
 // file but it might indicate something is not working properly.
@@ -4224,17 +3544,10 @@ Warning :: struct {
 	count: c.size_t,
 }
 
-// Warning about a non-fatal issue in the file.
-// Often contains information about issues that ufbx has corrected about the
-// file but it might indicate something is not working properly.
-Warning :: struct {}
-
 Warning_List :: struct {
 	data:  ^Warning,
 	count: c.size_t,
 }
-
-Warning_List :: struct {}
 
 Thumbnail_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown format
@@ -4242,10 +3555,6 @@ Thumbnail_Format :: enum i32 {
 	RGBA_32     = 2, // < 8-bit RGBA pixels, in memory R,G,B,A
 	FORCE_32BIT = 2147483647,
 }
-
-Thumbnail_Format :: Enum_Ufbx_Thumbnail_Format
-
-THUMBNAIL_FORMAT_COUNT :: 3
 
 // Specify how unit / coordinate system conversion should be performed.
 // Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
@@ -4272,13 +3581,6 @@ Space_Conversion :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// Specify how unit / coordinate system conversion should be performed.
-// Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
-// has no effect if neither is specified.
-Space_Conversion :: Enum_Ufbx_Space_Conversion
-
-SPACE_CONVERSION_COUNT :: 3
-
 // Embedded thumbnail in the file, valid if the dimensions are non-zero.
 Thumbnail :: struct {
 	props:  Props,
@@ -4294,9 +3596,6 @@ Thumbnail :: struct {
 	// See `ufbx_thumbnail.format` for the pixel format.
 	data: Blob,
 }
-
-// Embedded thumbnail in the file, valid if the dimensions are non-zero.
-Thumbnail :: struct {}
 
 // Miscellaneous data related to the loaded file
 Metadata :: struct {
@@ -4378,9 +3677,6 @@ Metadata :: struct {
 	geometry_scale: Real,
 }
 
-// Miscellaneous data related to the loaded file
-Metadata :: struct {}
-
 Time_Mode :: enum i32 {
 	DEFAULT         = 0,
 	_120_FPS        = 1,
@@ -4403,20 +3699,12 @@ Time_Mode :: enum i32 {
 	FORCE_32BIT     = 2147483647,
 }
 
-Time_Mode :: Enum_Ufbx_Time_Mode
-
-TIME_MODE_COUNT :: 18
-
 Time_Protocol :: enum i32 {
 	SMPTE       = 0,
 	FRAME_COUNT = 1,
 	DEFAULT     = 2,
 	FORCE_32BIT = 2147483647,
 }
-
-Time_Protocol :: Enum_Ufbx_Time_Protocol
-
-TIME_PROTOCOL_COUNT :: 3
 
 Snap_Mode :: enum i32 {
 	NONE          = 0,
@@ -4425,10 +3713,6 @@ Snap_Mode :: enum i32 {
 	SNAP_AND_PLAY = 3,
 	FORCE_32BIT   = 2147483647,
 }
-
-Snap_Mode :: Enum_Ufbx_Snap_Mode
-
-SNAP_MODE_COUNT :: 4
 
 // Global settings: Axes and time/unit scales
 Scene_Settings :: struct {
@@ -4459,9 +3743,6 @@ Scene_Settings :: struct {
 	original_axis_up: Coordinate_Axis,
 	original_unit_meters: Real,
 }
-
-// Global settings: Axes and time/unit scales
-Scene_Settings :: struct {}
 
 Scene :: struct {
 	metadata:        Metadata,
@@ -4564,9 +3845,6 @@ Curve_Point :: struct {
 	derivative: Vec3,
 }
 
-// -- Curves
-Curve_Point :: struct {}
-
 Surface_Point :: struct {
 	valid:        bool,
 	position:     Vec3,
@@ -4574,16 +3852,11 @@ Surface_Point :: struct {
 	derivative_v: Vec3,
 }
 
-Surface_Point :: struct {}
-
 // -- Mesh topology
 Topo_Flags :: enum i32 {
 	NON_MANIFOLD      = 1, // < Edge with three or more faces
 	FLAGS_FORCE_32BIT = 2147483647,
 }
-
-// -- Mesh topology
-Topo_Flags :: Enum_Ufbx_Topo_Flags
 
 Topo_Edge :: struct {
 	index: u32, // < Starting index of the edge, always defined
@@ -4595,8 +3868,6 @@ Topo_Edge :: struct {
 	flags: Topo_Flags,
 }
 
-Topo_Edge :: struct {}
-
 // Vertex data array for `ufbx_generate_indices()`.
 // NOTE: `ufbx_generate_indices()` compares the vertices using `memcmp()`, so
 // any padding should be cleared to zero.
@@ -4605,11 +3876,6 @@ Vertex_Stream :: struct {
 	vertex_count: c.size_t, // < Number of vertices in this stream, for sanity checking.
 	vertex_size:  c.size_t, // < Size of a vertex in bytes.
 }
-
-// Vertex data array for `ufbx_generate_indices()`.
-// NOTE: `ufbx_generate_indices()` compares the vertices using `memcmp()`, so
-// any padding should be cleared to zero.
-Vertex_Stream :: struct {}
 
 // Allocate `size` bytes, must be at least 8 byte aligned
 Alloc_Fn :: proc "c" () -> rawptr
@@ -4638,12 +3904,6 @@ Allocator :: struct {
 	free_allocator_fn: ^Free_Allocator_Fn,
 	user:              rawptr,
 }
-
-// Allocator callbacks and user context
-// NOTE: The allocator will be stored to the loaded scene and will be called
-// again from `ufbx_free_scene()` so make sure `user` outlives that!
-// You can use `free_allocator_fn()` to free the allocator yourself.
-Allocator :: struct {}
 
 Allocator_Opts :: struct {
 	// Allocator callbacks
@@ -4674,8 +3934,6 @@ Allocator_Opts :: struct {
 	max_chunk_size: c.size_t,
 }
 
-Allocator_Opts :: struct {}
-
 // Try to read up to `size` bytes to `data`, return the amount of read bytes.
 // Return `SIZE_MAX` to indicate an IO error.
 Read_Fn :: proc "c" () -> c.size_t
@@ -4700,18 +3958,12 @@ Stream :: struct {
 	user: rawptr,
 }
 
-Stream :: struct {}
-
 Open_File_Type :: enum i32 {
 	MAIN_MODEL       = 0, // < Main model file
 	GEOMETRY_CACHE   = 1, // < Unknown geometry cache file
 	OBJ_MTL          = 2, // < .mtl material library file
 	TYPE_FORCE_32BIT = 2147483647,
 }
-
-Open_File_Type :: Enum_Ufbx_Open_File_Type
-
-OPEN_FILE_TYPE_COUNT :: 3
 
 Open_File_Context :: c.uintptr_t
 
@@ -4729,8 +3981,6 @@ Open_File_Info :: struct {
 	original_filename: Blob,
 }
 
-Open_File_Info :: struct {}
-
 // Callback for opening an external file from the filesystem
 Open_File_Fn :: proc "c" () -> bool
 
@@ -4738,8 +3988,6 @@ Open_File_Cb :: struct {
 	fn:   ^Open_File_Fn,
 	user: rawptr,
 }
-
-Open_File_Cb :: struct {}
 
 // Options for `ufbx_open_file()`.
 Open_File_Opts :: struct {
@@ -4753,9 +4001,6 @@ Open_File_Opts :: struct {
 	_end_zero:   u32,
 }
 
-// Options for `ufbx_open_file()`.
-Open_File_Opts :: struct {}
-
 // Memory stream options
 Close_Memory_Fn :: proc "c" ()
 
@@ -4763,8 +4008,6 @@ Close_Memory_Cb :: struct {
 	fn:   ^Close_Memory_Fn,
 	user: rawptr,
 }
-
-Close_Memory_Cb :: struct {}
 
 // Options for `ufbx_open_memory()`.
 Open_Memory_Opts :: struct {
@@ -4785,9 +4028,6 @@ Open_Memory_Opts :: struct {
 	_end_zero:   u32,
 }
 
-// Options for `ufbx_open_memory()`.
-Open_Memory_Opts :: struct {}
-
 // Detailed error stack frame.
 // NOTE: You must compile `ufbx.c` with `UFBX_ENABLE_ERROR_STACK` to enable the error stack.
 Error_Frame :: struct {
@@ -4795,10 +4035,6 @@ Error_Frame :: struct {
 	function:    String,
 	description: String,
 }
-
-// Detailed error stack frame.
-// NOTE: You must compile `ufbx.c` with `UFBX_ENABLE_ERROR_STACK` to enable the error stack.
-Error_Frame :: struct {}
 
 // Error causes (and `UFBX_ERROR_NONE` for no error).
 Error_Type :: enum i32 {
@@ -4891,11 +4127,6 @@ Error_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
-// Error causes (and `UFBX_ERROR_NONE` for no error).
-Error_Type :: Enum_Ufbx_Error_Type
-
-ERROR_TYPE_COUNT :: 24
-
 // Error description with detailed stack trace
 // HINT: You can use `ufbx_format_error()` for formatting the error
 Error :: struct {
@@ -4916,18 +4147,11 @@ Error :: struct {
 	info:  [256]i8,
 }
 
-// Error description with detailed stack trace
-// HINT: You can use `ufbx_format_error()` for formatting the error
-Error :: struct {}
-
 // Loading progress information.
 Progress :: struct {
 	bytes_read:  u64,
 	bytes_total: u64,
 }
-
-// Loading progress information.
-Progress :: struct {}
 
 // Progress result returned from `ufbx_progress_fn()` callback.
 // Determines whether ufbx should continue or abort the loading.
@@ -4942,10 +4166,6 @@ Progress_Result :: enum i32 {
 	RESULT_FORCE_32BIT = 2147483647,
 }
 
-// Progress result returned from `ufbx_progress_fn()` callback.
-// Determines whether ufbx should continue or abort the loading.
-Progress_Result :: Enum_Ufbx_Progress_Result
-
 // Called periodically with the current progress.
 // Return `UFBX_PROGRESS_CANCEL` to cancel further processing.
 Progress_Fn :: proc "c" () -> Progress_Result
@@ -4954,13 +4174,6 @@ Progress_Cb :: struct {
 	fn:   ^Progress_Fn,
 	user: rawptr,
 }
-
-Progress_Cb :: struct {}
-
-// -- Inflate
-Inflate_Input :: struct {}
-
-Inflate_Retain :: struct {}
 
 // Source data/stream to decompress with `ufbx_inflate()`
 Inflate_Input :: struct {
@@ -5030,10 +4243,6 @@ Index_Error_Handling :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-Index_Error_Handling :: Enum_Ufbx_Index_Error_Handling
-
-INDEX_ERROR_HANDLING_COUNT :: 4
-
 Unicode_Error_Handling :: enum i32 {
 	// Replace errors with U+FFFD "Replacement Character"
 	REPLACEMENT_CHARACTER = 0,
@@ -5060,10 +4269,6 @@ Unicode_Error_Handling :: enum i32 {
 	// UNSAFE: Breaks API guarantee that `ufbx_string` is UTF-8 encoded.
 	FORCE_32BIT = 2147483647,
 }
-
-Unicode_Error_Handling :: Enum_Ufbx_Unicode_Error_Handling
-
-UNICODE_ERROR_HANDLING_COUNT :: 6
 
 // How to handle FBX node geometry transforms.
 // FBX nodes can have "geometry transforms" that affect only the attached meshes,
@@ -5097,16 +4302,6 @@ Geometry_Transform_Handling :: enum i32 {
 	// NOTE: This will not work correctly for instanced geometry.
 	FORCE_32BIT = 2147483647,
 }
-
-// How to handle FBX node geometry transforms.
-// FBX nodes can have "geometry transforms" that affect only the attached meshes,
-// but not the children. This is not allowed in many scene representations so
-// ufbx provides some ways to simplify them.
-// Geometry transforms can also be used to transform any other attributes such
-// as lights or cameras.
-Geometry_Transform_Handling :: Enum_Ufbx_Geometry_Transform_Handling
-
-GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
 
 // How to handle FBX transform inherit modes.
 Inherit_Mode_Handling :: enum i32 {
@@ -5143,11 +4338,6 @@ Inherit_Mode_Handling :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
-// How to handle FBX transform inherit modes.
-Inherit_Mode_Handling :: Enum_Ufbx_Inherit_Mode_Handling
-
-INHERIT_MODE_HANDLING_COUNT :: 5
-
 // How to handle FBX transform pivots.
 Pivot_Handling :: enum i32 {
 	// Take pivots into account when computing the transform.
@@ -5165,11 +4355,6 @@ Pivot_Handling :: enum i32 {
 	// to interpret these in a standard scene graph.
 	FORCE_32BIT = 2147483647,
 }
-
-// How to handle FBX transform pivots.
-Pivot_Handling :: Enum_Ufbx_Pivot_Handling
-
-PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum i32 {
 	// This keyframe represents a constant step from the left side
@@ -5194,17 +4379,11 @@ Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; i32]
 
 BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
-Baked_Key_Flag :: Enum_Ufbx_Baked_Key_Flags
-
 Baked_Vec3 :: struct {
 	time:  f64,            // < Time of the keyframe, in seconds
 	value: Vec3,           // < Value at `time`, can be linearly interpolated
 	flags: Baked_Key_Flag, // < Additional information about the keyframe
 }
-
-Baked_Vec3 :: struct {}
-
-Baked_Vec3_List :: struct {}
 
 Baked_Vec3_List :: struct {
 	data:  ^Baked_Vec3,
@@ -5216,10 +4395,6 @@ Baked_Quat :: struct {
 	value: Quat,           // < Value at `time`, can be (spherically) linearly interpolated
 	flags: Baked_Key_Flag, // < Additional information about the keyframe
 }
-
-Baked_Quat :: struct {}
-
-Baked_Quat_List :: struct {}
 
 Baked_Quat_List :: struct {
 	data:  ^Baked_Quat,
@@ -5253,11 +4428,6 @@ Baked_Node :: struct {
 	scale_keys: Baked_Vec3_List,
 }
 
-// Baked transform animation for a single node.
-Baked_Node :: struct {}
-
-Baked_Node_List :: struct {}
-
 Baked_Node_List :: struct {
 	data:  ^Baked_Node,
 	count: c.size_t,
@@ -5275,11 +4445,6 @@ Baked_Prop :: struct {
 	keys: Baked_Vec3_List,
 }
 
-// Baked property animation.
-Baked_Prop :: struct {}
-
-Baked_Prop_List :: struct {}
-
 Baked_Prop_List :: struct {
 	data:  ^Baked_Prop,
 	count: c.size_t,
@@ -5294,11 +4459,6 @@ Baked_Element :: struct {
 	props: Baked_Prop_List,
 }
 
-// Baked property animation for a single element.
-Baked_Element :: struct {}
-
-Baked_Element_List :: struct {}
-
 Baked_Element_List :: struct {
 	data:  ^Baked_Element,
 	count: c.size_t,
@@ -5311,8 +4471,6 @@ Baked_Anim_Metadata :: struct {
 	result_allocs:    c.size_t,
 	temp_allocs:      c.size_t,
 }
-
-Baked_Anim_Metadata :: struct {}
 
 // Animation baked into linearly interpolated keyframes.
 // See `ufbx_bake_anim()`.
@@ -5339,10 +4497,6 @@ Baked_Anim :: struct {
 	metadata: Baked_Anim_Metadata,
 }
 
-// Animation baked into linearly interpolated keyframes.
-// See `ufbx_bake_anim()`.
-Baked_Anim :: struct {}
-
 // Internal thread pool handle.
 // Passed to `ufbx_thread_pool_run_task()` from an user thread to run ufbx tasks.
 // HINT: This context can store a user pointer via `ufbx_thread_pool_set_user_ptr()`.
@@ -5352,9 +4506,6 @@ Thread_Pool_Context :: c.uintptr_t
 Thread_Pool_Info :: struct {
 	max_concurrent_tasks: u32,
 }
-
-// Thread pool creation information from ufbx.
-Thread_Pool_Info :: struct {}
 
 // Initialize the thread pool.
 // Return `true` on success.
@@ -5393,20 +4544,6 @@ Thread_Pool :: struct {
 	user:    rawptr,
 }
 
-// Thread pool interface.
-// See functions above for more information.
-//
-// Hypothetical example of calls, where `UFBX_THREAD_GROUP_COUNT=2` for simplicity:
-//
-//   run_fn(group=0, start_index=0, count=4)   -> t0 := threaded { ufbx_thread_pool_run_task(0..3) }
-//   run_fn(group=1, start_index=4, count=10)  -> t1 := threaded { ufbx_thread_pool_run_task(4..10) }
-//   wait_fn(group=0, max_index=4)             -> wait_threads(t0)
-//   run_fn(group=0, start_index=10, count=15) -> t0 := threaded { ufbx_thread_pool_run_task(10..14) }
-//   wait_fn(group=1, max_index=10)            -> wait_threads(t1)
-//   wait_fn(group=0, max_index=15)            -> wait_threads(t0)
-//
-Thread_Pool :: struct {}
-
 // Thread pool options.
 Thread_Opts :: struct {
 	// Thread pool interface.
@@ -5424,9 +4561,6 @@ Thread_Opts :: struct {
 	memory_limit: c.size_t,
 }
 
-// Thread pool options.
-Thread_Opts :: struct {}
-
 // Flags to control nanimation evaluation functions.
 Evaluate_Flags :: enum i32 {
 	// Do not extrapolate past the keyframes.
@@ -5435,9 +4569,6 @@ Evaluate_Flags :: enum i32 {
 	// Do not extrapolate past the keyframes.
 	ufbx_evaluate_flags_FORCE_32BIT = 2147483647,
 }
-
-// Flags to control nanimation evaluation functions.
-Evaluate_Flags :: Enum_Ufbx_Evaluate_Flags
 
 // Options for `ufbx_load_file/memory/stream/stdio()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
@@ -5683,10 +4814,6 @@ Load_Opts :: struct {
 	_end_zero:              u32,
 }
 
-// Options for `ufbx_load_file/memory/stream/stdio()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Load_Opts :: struct {}
-
 // Options for `ufbx_evaluate_scene()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Evaluate_Opts :: struct {
@@ -5708,12 +4835,6 @@ Evaluate_Opts :: struct {
 	_end_zero:         u32,
 }
 
-// Options for `ufbx_evaluate_scene()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Evaluate_Opts :: struct {}
-
-Const_Uint32_List :: struct {}
-
 Const_Uint32_List :: struct {
 	data:  ^u32,
 	count: c.size_t,
@@ -5723,8 +4844,6 @@ Const_Real_List :: struct {
 	data:  ^Real,
 	count: c.size_t,
 }
-
-Const_Real_List :: struct {}
 
 Prop_Override_Desc :: struct {
 	// Element (`ufbx_element.element_id`) to override the property from
@@ -5740,16 +4859,10 @@ Prop_Override_Desc :: struct {
 	value_int: i64,
 }
 
-Prop_Override_Desc :: struct {}
-
-Const_Prop_Override_Desc_List :: struct {}
-
 Const_Prop_Override_Desc_List :: struct {
 	data:  ^Prop_Override_Desc,
 	count: c.size_t,
 }
-
-Const_Transform_Override_List :: struct {}
 
 Const_Transform_Override_List :: struct {
 	data:  ^Transform_Override,
@@ -5780,8 +4893,6 @@ Anim_Opts :: struct {
 	_end_zero:        u32,
 }
 
-Anim_Opts :: struct {}
-
 // Specifies how to handle stepped tangents.
 Bake_Step_Handling :: enum i32 {
 	// One millisecond default step duration, with potential extra slack for converting to `float`.
@@ -5809,11 +4920,6 @@ Bake_Step_Handling :: enum i32 {
 	// Treat all stepped tangents as linearly interpolated.
 	ufbx_bake_step_handling_FORCE_32BIT = 2147483647,
 }
-
-// Specifies how to handle stepped tangents.
-Bake_Step_Handling :: Enum_Ufbx_Bake_Step_Handling
-
-BAKE_STEP_HANDLING_COUNT :: 5
 
 Bake_Opts :: struct {
 	_begin_zero:      u32,
@@ -5891,8 +4997,6 @@ Bake_Opts :: struct {
 	_end_zero:        u32,
 }
 
-Bake_Opts :: struct {}
-
 // Options for `ufbx_tessellate_nurbs_curve()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Tessellate_Curve_Opts :: struct {
@@ -5904,10 +5008,6 @@ Tessellate_Curve_Opts :: struct {
 	span_subdivision: c.size_t,
 	_end_zero:        u32,
 }
-
-// Options for `ufbx_tessellate_nurbs_curve()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Tessellate_Curve_Opts :: struct {}
 
 // Options for `ufbx_tessellate_nurbs_surface()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
@@ -5928,10 +5028,6 @@ Tessellate_Surface_Opts :: struct {
 	skip_mesh_parts: bool,
 	_end_zero:          u32,
 }
-
-// Options for `ufbx_tessellate_nurbs_surface()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Tessellate_Surface_Opts :: struct {}
 
 // Options for `ufbx_subdivide_mesh()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
@@ -5971,10 +5067,6 @@ Subdivide_Opts :: struct {
 	_end_zero:        u32,
 }
 
-// Options for `ufbx_subdivide_mesh()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Subdivide_Opts :: struct {}
-
 // Options for `ufbx_load_geometry_cache()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Opts :: struct {
@@ -5999,10 +5091,6 @@ Geometry_Cache_Opts :: struct {
 	_end_zero:        u32,
 }
 
-// Options for `ufbx_load_geometry_cache()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Geometry_Cache_Opts :: struct {}
-
 // Options for `ufbx_read_geometry_cache_TYPE()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Data_Opts :: struct {
@@ -6019,17 +5107,11 @@ Geometry_Cache_Data_Opts :: struct {
 	_end_zero:   u32,
 }
 
-// Options for `ufbx_read_geometry_cache_TYPE()`
-// NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
-Geometry_Cache_Data_Opts :: struct {}
-
 Panic :: struct {
 	did_panic:      bool,
 	message_length: c.size_t,
 	message:        [128]i8,
 }
-
-Panic :: struct {}
 
 // Flags to control `ufbx_evaluate_transform_flags()`.
 Transform_Flag :: enum i32 {
@@ -6061,9 +5143,6 @@ Transform_Flag :: enum i32 {
 Transform_Flags :: distinct bit_set[Transform_Flag; i32]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
-
-// Flags to control `ufbx_evaluate_transform_flags()`.
-Transform_Flag :: Enum_Ufbx_Transform_Flags
 
 // bindgen-enable
 
