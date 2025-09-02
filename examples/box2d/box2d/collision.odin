@@ -346,7 +346,7 @@ Manifold :: struct {
 /// It is placed here for performance reasons.
 DynamicTree :: struct {
 	/// The tree nodes
-	nodes: ^TreeNode,
+	nodes: [^]TreeNode,
 
 	/// The root index
 	root: i32,

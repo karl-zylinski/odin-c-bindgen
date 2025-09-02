@@ -213,18 +213,6 @@ translate_name :: proc(s: ^Gen_State, name: string) -> string {
 	return ret
 }
 
-parse_record :: proc(s: ^Gen_State, cursor: clang.Cursor) -> string {
-	return translate_name(s, clang_string_to_string(clang.getCursorSpelling(cursor)))
-}
-
-parse_enum :: proc(s: ^Gen_State, cursor: clang.Cursor) -> string {
-	return translate_name(s, clang_string_to_string(clang.getCursorSpelling(cursor)))
-}
-
-parse_typedef :: proc(s: ^Gen_State, cursor: clang.Cursor) -> string {
-	return translate_name(s, clang_string_to_string(clang.getCursorSpelling(cursor)))
-}
-
 parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	type_string := clang_string_to_string(clang.getTypeSpelling(type))
 	if c_type, exists := c_type_mapping[type_string]; exists {
@@ -298,23 +286,8 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 			return strings.to_string(builder)
 		}
 		panic("Unreachable!")
-	case .Record:
-		cursor := clang.getTypeDeclaration(type)
-		type_name := translate_name(s, clang_string_to_string(clang.getCursorSpelling(cursor)))
-		if type_name not_in s.created_types {
-			return parse_record(s, cursor)
-		}
-		return type_name
-	case .Enum:
+	case .Record, .Enum, .Typedef:
 		return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
-	case .Typedef:
-		cursor := clang.getTypeDeclaration(type)
-
-		if bool(clang.Cursor_isAnonymous(cursor)) {
-			return parse_typedef(s, cursor)
-		}
-
-		return translate_name(s, type_string)
 	case .ConstantArray, .Vector:
 		// I'm not sure if this is correct for vectors.
 		builder := strings.builder_make()
@@ -1492,7 +1465,7 @@ gen :: proc(input: string, c: Config) {
 				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; override_key != "" && has_field_type_override {
 					if field_type_override == "[^]" {
 						// Change first `^` for `[^]`
-						field_type = parse_type(s, field.type)
+						field_type = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(s, field.type), "^"))
 					} else {
 						field_type = field_type_override
 					}
@@ -2361,7 +2334,7 @@ gen :: proc(input: string, c: Config) {
 							type = strings.trim_prefix(parse_type(&s, clang.getCursorType(p)), "^")
 							w(&b, "#by_ptr ")
 						case "[^]":
-							type = parse_type(&s, clang.getCursorType(p))
+							type = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(&s, clang.getCursorType(p)), "^"))
 						case:
 							type = type_override
 						}
@@ -2398,7 +2371,7 @@ gen :: proc(input: string, c: Config) {
 					if override, override_ok := s.procedure_type_overrides[d.original_name]; override_ok {
 						switch override {
 						case "[^]":
-							return_type_string = parse_type(&s, return_type)
+							return_type_string = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(&s, return_type), "^"))
 						case:
 							return_type_string = override
 						}

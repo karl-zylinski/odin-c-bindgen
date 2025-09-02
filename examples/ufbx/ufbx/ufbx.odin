@@ -131,37 +131,37 @@ Void_List :: struct {
 }
 
 Bool_List :: struct {
-	data:  ^bool,
+	data:  [^]bool,
 	count: c.size_t,
 }
 
 Uint32_List :: struct {
-	data:  ^u32,
+	data:  [^]u32,
 	count: c.size_t,
 }
 
 Real_List :: struct {
-	data:  ^f32,
+	data:  [^]f32,
 	count: c.size_t,
 }
 
 Vec2_List :: struct {
-	data:  ^Vec2,
+	data:  [^]Vec2,
 	count: c.size_t,
 }
 
 Vec3_List :: struct {
-	data:  ^Vec3,
+	data:  [^]Vec3,
 	count: c.size_t,
 }
 
 Vec4_List :: struct {
-	data:  ^Vec4,
+	data:  [^]Vec4,
 	count: c.size_t,
 }
 
 String_List :: struct {
-	data:  ^String,
+	data:  [^]String,
 	count: c.size_t,
 }
 
@@ -196,7 +196,7 @@ Dom_Node_List :: struct {
 }
 
 Dom_Value_List :: struct {
-	data:  ^Dom_Value,
+	data:  [^]Dom_Value,
 	count: c.size_t,
 }
 
@@ -373,7 +373,7 @@ Unknown_List :: struct {
 }
 
 Node_List :: struct {
-	data:  ^^Node,
+	data:  [^]^Node,
 	count: c.size_t,
 }
 
@@ -997,7 +997,7 @@ Face :: struct {
 }
 
 Face_List :: struct {
-	data:  ^Face,
+	data:  [^]Face,
 	count: c.size_t,
 }
 
@@ -5584,7 +5584,7 @@ foreign lib {
 	// Generate an index buffer for a flat vertex buffer.
 	// `streams` specifies one or more vertex data arrays, each stream must contain `num_indices` vertices.
 	// This function compacts the data within `streams` in-place, writing the deduplicated indices to `indices`.
-	generate_indices :: proc(streams: ^Vertex_Stream, num_streams: c.size_t, indices: ^u32, num_indices: c.size_t, allocator: ^Allocator_Opts, error: ^Error) -> c.size_t ---
+	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: c.size_t, indices: ^u32, num_indices: c.size_t, allocator: ^Allocator_Opts, error: ^Error) -> c.size_t ---
 
 	// Run a single thread pool task.
 	// See `ufbx_thread_pool_run_fn` for more information.

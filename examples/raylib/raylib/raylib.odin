@@ -263,29 +263,29 @@ Camera2D :: struct {
 
 // Mesh, vertex data and vao/vbo
 Mesh :: struct {
-	vertexCount:   i32,     // Number of vertices stored in arrays
-	triangleCount: i32,     // Number of triangles stored (indexed or not)
-	vertices:      ^f32,    // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-	texcoords:     ^f32,    // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-	texcoords2:    ^f32,    // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
-	normals:       ^f32,    // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-	tangents:      ^f32,    // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
-	colors:        ^u8,     // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-	indices:       ^u16,    // Vertex indices (in case vertex data comes indexed)
-	animVertices:  ^f32,    // Animated vertex positions (after bones transformations)
-	animNormals:   ^f32,    // Animated normals (after bones transformations)
-	boneIds:       ^u8,     // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
-	boneWeights:   ^f32,    // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
-	boneMatrices:  ^Matrix, // Bones animated transformation matrices
-	boneCount:     i32,     // Number of bones
-	vaoId:         u32,     // OpenGL Vertex Array Object id
-	vboId:         ^u32,    // OpenGL Vertex Buffer Objects id (default vertex data)
+	vertexCount:   i32,       // Number of vertices stored in arrays
+	triangleCount: i32,       // Number of triangles stored (indexed or not)
+	vertices:      [^]f32,    // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+	texcoords:     [^]f32,    // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+	texcoords2:    [^]f32,    // Vertex texture second coordinates (UV - 2 components per vertex) (shader-location = 5)
+	normals:       [^]f32,    // Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
+	tangents:      [^]f32,    // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
+	colors:        [^]u8,     // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+	indices:       [^]u16,    // Vertex indices (in case vertex data comes indexed)
+	animVertices:  [^]f32,    // Animated vertex positions (after bones transformations)
+	animNormals:   [^]f32,    // Animated normals (after bones transformations)
+	boneIds:       [^]u8,     // Vertex bone ids, max 255 bone ids, up to 4 bones influence by vertex (skinning) (shader-location = 6)
+	boneWeights:   [^]f32,    // Vertex bone weight, up to 4 bones influence by vertex (skinning) (shader-location = 7)
+	boneMatrices:  [^]Matrix, // Bones animated transformation matrices
+	boneCount:     i32,       // Number of bones
+	vaoId:         u32,       // OpenGL Vertex Array Object id
+	vboId:         [^]u32,    // OpenGL Vertex Buffer Objects id (default vertex data)
 }
 
 // Shader
 Shader :: struct {
-	id:   u32,  // Shader program id
-	locs: ^i32, // Shader locations array (RL_MAX_SHADER_LOCATIONS)
+	id:   u32,    // Shader program id
+	locs: [^]i32, // Shader locations array (RL_MAX_SHADER_LOCATIONS)
 }
 
 // MaterialMap
@@ -297,9 +297,9 @@ MaterialMap :: struct {
 
 // Material, includes shader and maps
 Material :: struct {
-	shader: Shader,       // Material shader
-	maps:   ^MaterialMap, // Material maps array (MAX_MATERIAL_MAPS)
-	params: [4]f32,       // Material generic parameters (if required)
+	shader: Shader,         // Material shader
+	maps:   [^]MaterialMap, // Material maps array (MAX_MATERIAL_MAPS)
+	params: [4]f32,         // Material generic parameters (if required)
 }
 
 // Transform, vertex transformation data
@@ -317,22 +317,22 @@ BoneInfo :: struct {
 
 // Model, meshes, materials and animation data
 Model :: struct {
-	transform:     Matrix,     // Local transform matrix
-	meshCount:     i32,        // Number of meshes
-	materialCount: i32,        // Number of materials
-	meshes:        ^Mesh,      // Meshes array
-	materials:     ^Material,  // Materials array
-	meshMaterial:  ^i32,       // Mesh material number
-	boneCount:     i32,        // Number of bones
-	bones:         ^BoneInfo,  // Bones information (skeleton)
-	bindPose:      ^Transform, // Bones base transformation (pose)
+	transform:     Matrix,       // Local transform matrix
+	meshCount:     i32,          // Number of meshes
+	materialCount: i32,          // Number of materials
+	meshes:        [^]Mesh,      // Meshes array
+	materials:     [^]Material,  // Materials array
+	meshMaterial:  ^i32,         // Mesh material number
+	boneCount:     i32,          // Number of bones
+	bones:         [^]BoneInfo,  // Bones information (skeleton)
+	bindPose:      [^]Transform, // Bones base transformation (pose)
 }
 
 // ModelAnimation
 ModelAnimation :: struct {
 	boneCount:  i32,             // Number of bones
 	frameCount: i32,             // Number of animation frames
-	bones:      ^BoneInfo,       // Bones information (skeleton)
+	bones:      [^]BoneInfo,     // Bones information (skeleton)
 	framePoses: [^][^]Transform, // Poses array by frame
 	name:       [32]i8,          // Animation name
 }

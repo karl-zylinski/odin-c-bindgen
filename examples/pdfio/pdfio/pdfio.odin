@@ -126,7 +126,7 @@ foreign lib {
 	// Functions...
 	//
 	ArrayAppendArray    :: proc(a: ^pdfio_array_s, value: ^pdfio_array_s) -> bool ---
-	ArrayAppendBinary   :: proc(a: ^pdfio_array_s, value: ^u8, valuelen: c.size_t) -> bool ---
+	ArrayAppendBinary   :: proc(a: ^pdfio_array_s, value: [^]u8, valuelen: c.size_t) -> bool ---
 	ArrayAppendBoolean  :: proc(a: ^pdfio_array_s, value: bool) -> bool ---
 	ArrayAppendDate     :: proc(a: ^pdfio_array_s, value: libc.time_t) -> bool ---
 	ArrayAppendDict     :: proc(a: ^pdfio_array_s, value: ^pdfio_dict_s) -> bool ---
@@ -137,7 +137,7 @@ foreign lib {
 	ArrayCopy           :: proc(pdf: ^pdfio_file_s, a: ^pdfio_array_s) -> ^pdfio_array_s ---
 	ArrayCreate         :: proc(pdf: ^pdfio_file_s) -> ^pdfio_array_s ---
 	ArrayGetArray       :: proc(a: ^pdfio_array_s, n: c.size_t) -> ^pdfio_array_s ---
-	ArrayGetBinary      :: proc(a: ^pdfio_array_s, n: c.size_t, length: ^c.size_t) -> ^u8 ---
+	ArrayGetBinary      :: proc(a: ^pdfio_array_s, n: c.size_t, length: ^c.size_t) -> [^]u8 ---
 	ArrayGetBoolean     :: proc(a: ^pdfio_array_s, n: c.size_t) -> bool ---
 	ArrayGetDate        :: proc(a: ^pdfio_array_s, n: c.size_t) -> libc.time_t ---
 	ArrayGetDict        :: proc(a: ^pdfio_array_s, n: c.size_t) -> ^pdfio_dict_s ---
