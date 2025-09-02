@@ -355,6 +355,11 @@ parse_function_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		param_type := clang.getArgType(type, u32(i))
 		strings.write_string(&builder, parse_type(s, param_type))
 	}
+
+	if bool(clang.isFunctionTypeVariadic(type)) {
+		strings.write_string(&builder, ", #c_vararg ..any")
+	}
+
 	strings.write_string(&builder, ")")
 
 	if return_type := clang.getResultType(type); return_type.kind != .Void {
@@ -2362,7 +2367,6 @@ gen :: proc(input: string, c: Config) {
 						type = parse_type(&s, clang.getCursorType(p))
 					}
 
-					// Empty name means unnamed parameter. Drop the colon.
 					if len(n) != 0 {
 						w(&b, n)
 						w(&b, ": ")

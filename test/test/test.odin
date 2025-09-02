@@ -1,77 +1,19 @@
 package test
 
-import "core:c"
-
-_ :: c
 
 
 
-FIVE_SUB_TWO :: (f32)(5)-(f32)(2)
-UNNEST :: (x)
 
-ARRAY :: {1}
-
-LIGHTGRAY :: (Color){200,200,200,255}
-
-// FUNC_TEST :: 1,2,3
-FUNC_TEST_RESULT :: (1+2+3)
-
-ARRAY_TEST :: {1,2,3}
-
-FALSE :: !true
-TRUE :: !false
-
-// MULT_VAL :: (10,20,30)
-
-UFBX_HEADER_VERSION :: ((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
-// FUNC_ALIAS :: ufbx_pack_version
-
-NO_INDEX :: (u32)0
-
-VALUE :: 20010
-// VALUE_STRING :: #VALUE
-
-CINDEX_VERSION_MAJOR :: 0
-CINDEX_VERSION_MINOR :: 64
-
-// CINDEX_VERSION_STRING :: #CINDEX_VERSION_MAJOR"."#CINDEX_VERSION_MINOR
-
-LINE_COMMENT_ONE :: 1
-
-LINE_COMMENT_TWO :: 2
-
-BLOCK_COMMENT_ONE :: 1
-
-BLOCK_COMMENT_TWO :: 2
-
-END_LINE_COMMENT :: 12
-END_LINE_BLOCK_COMMENT :: 34
-BELOW_BLOCK_COMMENT :: 56
-
-BLOCK_ABOVE_SECTION :: 78
-
-SECTIONED_ONE :: (1<<0)
-SECTIONED_TWO :: (1<<1)
-
-Color :: struct {
-	r: c.int,
-	g: c.int,
-	b: c.int,
-	a: c.int,
+MyVtable :: struct {
+	myLog: proc "c" (cstring, #c_vararg ..any),
 }
 
-HasBool :: struct {
-	a: bool,
+test_vtable :: struct {
+	listfiles: proc "c" (cstring, proc "c" (cstring, rawptr), rawptr, i32) -> i32,
 }
 
-my_time :: libc.time_t
-
-// Should add a bindgen.sjson with `remove_type_prefix = "test_"
-// typedef struct test_time_t {
-//   int seconds;
-// } test_time_t;
-simple_typedef :: c.int
-
-void_typedef :: void
-
-// MULTILINE_MACRO_TEST :: 3,1,2
+@(default_calling_convention="c", link_prefix="")
+foreign lib {
+	myLogImpl                          :: proc(fmt: cstring, #c_vararg _: ..any) ---
+	nppiYCCKToCMYK_JPEG_601_8u_P4R_Ctx :: proc(pSrc: [4]^i32, nSrcStep: i32, pDst: [4]^i32, nDstStep: i32, oSizeROI: i32, nppStreamCtx: i32) -> i32 ---
+}
