@@ -366,66 +366,6 @@ translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> strin
 	t := t
 	t = strings.trim_space(t)
 
-	// Treat as function typedef
-	if strings.contains(t, "(") && strings.contains(t, ")") && !strings.contains(t, ")[") {
-		delimiter := strings.index(t, "(*)(")
-		remainder_start := delimiter + 4
-
-		if delimiter == -1 {
-			delimiter = strings.index(t, "(")
-			remainder_start = delimiter + 1
-		}
-
-		return_type := translate_type_string(s, t[:delimiter], false)
-
-		func_builder := strings.builder_make()
-
-		strings.write_string(&func_builder, `proc "c" (`)
-
-		// We find the closing parenthesis for the function parameters.
-		// We assume anything after the closing parenthesis is a compiler
-		// attribute or something else that we don't care about.
-		paren_count := 1
-		remainder_end := remainder_start
-		for i := remainder_start; i < len(t); i += 1 {
-			if t[i] == '(' {
-				paren_count += 1
-			} else if t[i] == ')' {
-				paren_count -= 1
-			}
-
-			if paren_count == 0 {
-				remainder_end = i
-				break
-			}
-		}
-
-		if paren_count != 0 {
-			fmt.panicf("Unmatched parentheses in type: %v", t)
-		}
-
-		remainder := t[remainder_start:remainder_end]
-
-		first := true
-
-		for param_type in strings.split_iterator(&remainder, ",") {
-			if first {
-				first = false
-			} else {
-				strings.write_string(&func_builder, ", ")
-			}
-			strings.write_string(&func_builder, translate_type_string(s, strings.trim_space(param_type), false))
-		}
-
-		if return_type == "void" {
-			strings.write_string(&func_builder, ")")
-		} else {
-			strings.write_string(&func_builder, fmt.tprintf(") -> %v", return_type))
-		}
-
-		return strings.to_string(func_builder)
-	}
-
 	// This type usually means "an array of strings"
 	if t == "const char *const *" || t == "char *const *" || t == "const char **" || t == "char **" {
 		return "[^]cstring"
@@ -890,13 +830,18 @@ gen :: proc(input: string, c: Config) {
 			#partial switch kind := clang.getCursorKind(cursor); kind {
 			case .FieldDecl:
 				type := clang.getCursorType(cursor)
+				field_name := clang_string_to_string(clang.getCursorSpelling(cursor))
+				if field_name == "" {
+					field_name = "_"
+				}
+
 				if prev_idx := len(data.out_fields) - 1; prev_idx >= 0 && bool(clang.equalTypes(data.out_fields[prev_idx].type, type)) \
 				  && data.out_fields[prev_idx].original_line == int(line) {
-					append(&data.out_fields[len(data.out_fields) - 1].names, clang_string_to_string(clang.getCursorSpelling(cursor)))
+					append(&data.out_fields[len(data.out_fields) - 1].names, field_name)
 				} else {
 					vet_type(data.state, type)
 					append(&data.out_fields, Struct_Field {
-						names = [dynamic]string {clang_string_to_string(clang.getCursorSpelling(cursor))},
+						names = [dynamic]string {field_name},
 						type = type,
 						anon_using = false,
 						comment = comment,
@@ -1444,7 +1389,6 @@ gen :: proc(input: string, c: Config) {
 						if nidx != 0 {
 							strings.write_string(&b, ", ")
 						}
-
 						strings.write_string(&b, vet_name(fn))
 					}
 
