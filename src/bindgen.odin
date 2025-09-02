@@ -229,9 +229,11 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	type_string := clang_string_to_string(clang.getTypeSpelling(type))
 	if c_type, exists := c_type_mapping[type_string]; exists {
 		return c_type
-	} else if posix_type, exists := posix_type_mapping[type_string]; exists {
+	} 
+	if posix_type, exists := posix_type_mapping[type_string]; exists {
 		return posix_type
-	} else if libc_type, exists := libc_type_mapping[type_string]; exists {
+	}
+	if libc_type, exists := libc_type_mapping[type_string]; exists {
 		return libc_type
 	}
 
@@ -523,12 +525,12 @@ translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> strin
 
 	t = strings.trim_space(t)
 
-	if name, exists := c_type_mapping[t_prefixed]; exists {
-		t = name
-	} else if name, exists := libc_type_mapping[t_prefixed]; exists {
-		t = name
-	} else if name, exists := posix_type_mapping[t_prefixed]; exists {
-		t = name
+	if name_c, exists_c := c_type_mapping[t_prefixed]; exists_c {
+		t = name_c
+	} else if name_libc, exists_libc := libc_type_mapping[t_prefixed]; exists_libc {
+		t = name_libc
+	} else if name_posix, exists_posix := posix_type_mapping[t_prefixed]; exists_posix {
+		t = name_posix
 	} else if rename, exists := s.rename[t_prefixed]; exists {
 		t = vet_name(rename)
 	} else if s.force_ada_case_types && t != "void" {
@@ -1187,8 +1189,8 @@ gen :: proc(input: string, c: Config) {
 		state := (^Gen_State)(state)
 
 		file: clang.File
-		line := get_cursor_location(cursor, &file)
-		if clang.File_isEqual(file, state.file) == 0 {
+		_ = get_cursor_location(cursor, &file)
+		if !bool(clang.File_isEqual(file, state.file)) {
 			return .Continue // This cursor is not in the file we are interested in.
 		}
 
