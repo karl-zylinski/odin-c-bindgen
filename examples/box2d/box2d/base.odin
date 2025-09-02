@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-import "core:c"
 
-_ :: c
 
 foreign import lib "box2d.lib"
 
@@ -17,14 +15,14 @@ foreign import lib "box2d.lib"
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
-AllocFcn :: proc "c" (c.uint, c.int) -> rawptr
+AllocFcn :: proc "c" (u32, i32) -> rawptr
 
 /// Prototype for user free function
 /// @param mem the memory previously allocated through `b2AllocFcn`
 FreeFcn :: proc "c" (rawptr)
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
-AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
+AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
 
 // BREAKPOINT :: __debugbreak()
 
@@ -32,13 +30,13 @@ AssertFcn :: proc "c" (cstring, cstring, c.int) -> c.int
 /// See https://semver.org/
 Version :: struct {
 	/// Significant changes
-	major: c.int,
+	major: i32,
 
 	/// Incremental changes
-	minor: c.int,
+	minor: i32,
 
 	/// Bug fixes
-	revision: c.int,
+	revision: i32,
 }
 
 HASH_INIT :: 5381
@@ -47,15 +45,15 @@ HASH_INIT :: 5381
 foreign lib {
 	/// This allows the user to override the allocation functions. These should be
 	/// set during application startup.
-	SetAllocator :: proc(allocFcn: AllocFcn, freeFcn: FreeFcn) ---
+	SetAllocator :: proc(allocFcn: ^proc "c" (u32, i32) -> rawptr, freeFcn: ^proc "c" (rawptr)) ---
 
 	/// @return the total bytes allocated by Box2D
-	GetByteCount :: proc() -> c.int ---
+	GetByteCount :: proc() -> i32 ---
 
 	/// Override the default assert callback
 	/// @param assertFcn a non-null assert callback
-	SetAssertFcn      :: proc(assertFcn: AssertFcn) ---
-	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: c.int) -> c.int ---
+	SetAssertFcn      :: proc(assertFcn: ^proc "c" (cstring, cstring, i32) -> i32) ---
+	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: i32) -> i32 ---
 
 	/// Get the current version of Box2D
 	GetVersion :: proc() -> Version ---
@@ -71,5 +69,5 @@ foreign lib {
 
 	/// Yield to be used in a busy loop.
 	Yield :: proc() ---
-	Hash  :: proc(hash: u32, data: ^u8, count: c.int) -> u32 ---
+	Hash  :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
 }

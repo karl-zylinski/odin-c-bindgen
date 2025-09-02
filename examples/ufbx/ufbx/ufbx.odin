@@ -115,13 +115,13 @@ Transform :: struct {
 Matrix :: struct {
 	using _: struct #raw_union {
 		using _: struct {
-			m00, m10, m20: Real,
-			m01, m11, m21: Real,
-			m02, m12, m22: Real,
-			m03, m13, m23: Real,
+			m00, m10, m20: f32,
+			m01, m11, m21: f32,
+			m02, m12, m22: f32,
+			m03, m13, m23: f32,
 		},
 		cols: [4]Vec3,
-		v:    [12]Real,
+		v:    [12]f32,
 	},
 }
 
@@ -141,7 +141,7 @@ Uint32_List :: struct {
 }
 
 Real_List :: struct {
-	data:  ^Real,
+	data:  ^f32,
 	count: c.size_t,
 }
 
@@ -340,8 +340,8 @@ Prop :: struct {
 	value_blob:    Blob,
 	value_int:     i64,
 	using _: struct #raw_union {
-		value_real_arr: [4]Real,
-		value_real:     Real,
+		value_real_arr: [4]f32,
+		value_real:     f32,
 		value_vec2:     Vec2,
 		value_vec3:     Vec3,
 		value_vec4:     Vec4,
@@ -824,10 +824,10 @@ Node :: struct {
 	unscaled_node_to_world: Matrix,
 	adjust_pre_translation:   Vec3,        // < Translation applied between parent and self
 	adjust_pre_rotation:      Quat,        // < Rotation applied between parent and self
-	adjust_pre_scale:         Real,        // < Scaling applied between parent and self
+	adjust_pre_scale:         f32,         // < Scaling applied between parent and self
 	adjust_post_rotation:     Quat,        // < Rotation applied in local space at the end
-	adjust_post_scale:        Real,        // < Scaling applied in local space at the end
-	adjust_translation_scale: Real,        // < Scaling applied to translation only
+	adjust_post_scale:        f32,         // < Scaling applied in local space at the end
+	adjust_translation_scale: f32,         // < Scaling applied to translation only
 	adjust_mirror_axis:       Mirror_Axis, // < Mirror translation and rotation on this axis
 
 	// Materials used by `mesh` or other `attrib`.
@@ -1042,7 +1042,7 @@ Subdivision_Weight_Range_List :: struct {
 }
 
 Subdivision_Weight :: struct {
-	weight: Real,
+	weight: f32,
 	index:  u32,
 }
 
@@ -1312,7 +1312,7 @@ Light :: struct {
 	// NOTE: `intensity` is 0.01x of the property `"Intensity"` as that matches
 	// matches values in DCC programs before exporting.
 	color: Vec3,
-	intensity:    Real,
+	intensity:    f32,
 
 	// Direction the light is aimed at in node's local space, usually -Y
 	local_direction: Vec3,
@@ -1321,8 +1321,8 @@ Light :: struct {
 	type: Light_Type,
 	decay:        Light_Decay,
 	area_shape:   Light_Area_Shape,
-	inner_angle:  Real,
-	outer_angle:  Real,
+	inner_angle:  f32,
+	outer_angle:  f32,
 	cast_light:   bool,
 	cast_shadows: bool,
 }
@@ -1477,7 +1477,7 @@ Camera :: struct {
 
 	// Orthographic camera extents.
 	// Valid if `projection_mode == UFBX_PROJECTION_MODE_ORTHOGRAPHIC`.
-	orthographic_extent: Real,
+	orthographic_extent: f32,
 
 	// Orthographic camera size.
 	// Valid if `projection_mode == UFBX_PROJECTION_MODE_ORTHOGRAPHIC`.
@@ -1488,13 +1488,13 @@ Camera :: struct {
 	projection_plane: Vec2,
 
 	// Aspect ratio of the camera.
-	aspect_ratio: Real,
+	aspect_ratio: f32,
 
 	// Near plane of the frustum in units from the camera.
-	near_plane: Real,
+	near_plane: f32,
 
 	// Far plane of the frustum in units from the camera.
-	far_plane: Real,
+	far_plane: f32,
 
 	// Coordinate system that the projection uses.
 	// FBX saves cameras with +X forward and +Y up, but you can override this using
@@ -1506,10 +1506,10 @@ Camera :: struct {
 	aperture_mode:      Aperture_Mode,
 	gate_fit:           Gate_Fit,
 	aperture_format:    Aperture_Format,
-	focal_length_mm:    Real, // < Focal length in millimeters
+	focal_length_mm:    f32,  // < Focal length in millimeters
 	film_size_inch:     Vec2, // < Film size in inches
 	aperture_size_inch: Vec2, // < Aperture/film gate size in inches
-	squeeze_ratio:      Real, // < Anamoprhic stretch ratio
+	squeeze_ratio:      f32,  // < Anamoprhic stretch ratio
 }
 
 // Bone attached to a `ufbx_node`, provides the logical length of the bone
@@ -1527,10 +1527,10 @@ Bone :: struct {
 	},
 
 	// Visual radius of the bone
-	radius: Real,
+	radius: f32,
 
 	// Length of the bone relative to the distance between two nodes
-	relative_length: Real,
+	relative_length: f32,
 
 	// Is the bone a root bone
 	is_root: bool,
@@ -1608,8 +1608,8 @@ Nurbs_Basis :: struct {
 	knot_vector: Real_List,
 
 	// Range for the parameter value.
-	t_min: Real,
-	t_max: Real,
+	t_min: f32,
+	t_max: f32,
 
 	// Parameter values of control points.
 	spans: Real_List,
@@ -1794,7 +1794,7 @@ Lod_Level :: struct {
 	// Minimum distance to show this LOD level.
 	// NOTE: In world units by default, or in screen percentage if
 	// `ufbx_lod_group.relative_distances` is set.
-	distance: Real,
+	distance: f32,
 
 	// LOD display mode.
 	// NOTE: Mostly for editing, you should probably ignore this
@@ -1833,8 +1833,8 @@ Lod_Group :: struct {
 	// If `use_distance_limit` is enabled hide the group if the distance is not between
 	// `distance_limit_min` and `distance_limit_max`.
 	use_distance_limit: bool,
-	distance_limit_min: Real,
-	distance_limit_max: Real,
+	distance_limit_min: f32,
+	distance_limit_max: f32,
 }
 
 // Method to evaluate the skinning on a per-vertex level
@@ -1866,7 +1866,7 @@ Skin_Vertex :: struct {
 
 	// Blend weight between Linear Blend Skinning (0.0) and Dual Quaternion (1.0).
 	// Should be used if `skinning_method == UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
-	dq_weight: Real,
+	dq_weight: f32,
 }
 
 Skin_Vertex_List :: struct {
@@ -1876,8 +1876,8 @@ Skin_Vertex_List :: struct {
 
 // Single per-vertex per-cluster weight, see `ufbx_skin_vertex`
 Skin_Weight :: struct {
-	cluster_index: u32,  // < Index into `ufbx_skin_deformer.clusters[]`
-	weight:        Real, // < Amount this bone influence the vertex
+	cluster_index: u32, // < Index into `ufbx_skin_deformer.clusters[]`
+	weight:        f32, // < Amount this bone influence the vertex
 }
 
 Skin_Weight_List :: struct {
@@ -1978,10 +1978,10 @@ Blend_Keyframe :: struct {
 	shape: ^Blend_Shape,
 
 	// Weight value at which to apply the keyframe at full strength
-	target_weight: Real,
+	target_weight: f32,
 
 	// The weight the shape should be currently applied with
-	effective_weight: Real,
+	effective_weight: f32,
 }
 
 Blend_Keyframe_List :: struct {
@@ -2003,7 +2003,7 @@ Blend_Channel :: struct {
 	},
 
 	// Current weight of the channel
-	weight: Real,
+	weight: f32,
 
 	// Key morph targets to blend between depending on `weight`
 	// In usual cases there's only one target per channel
@@ -2091,7 +2091,7 @@ Cache_Frame :: struct {
 	mirror_axis: Mirror_Axis,
 
 	// Factor to scale the geometry by.
-	scale_factor: Real,
+	scale_factor: f32,
 	data_format:        Cache_Data_Format,   // < Format of the data in the file
 	data_encoding:      Cache_Data_Encoding, // < Binary encoding of the data
 	data_offset:        u64,                 // < Byte offset into the file
@@ -2124,7 +2124,7 @@ Cache_Channel :: struct {
 	mirror_axis: Mirror_Axis,
 
 	// Factor to scale the geometry by.
-	scale_factor: Real,
+	scale_factor: f32,
 }
 
 Cache_Channel_List :: struct {
@@ -2203,7 +2203,7 @@ Material_Map :: struct {
 	// May be specified simultaneously with a texture, in this case most shading models
 	// use multiplicative tinting of the texture values.
 	using _: struct #raw_union {
-		value_real: Real,
+		value_real: f32,
 		value_vec2: Vec2,
 		value_vec3: Vec3,
 		value_vec4: Vec4,
@@ -2653,7 +2653,7 @@ Wrap_Mode :: enum i32 {
 Texture_Layer :: struct {
 	texture:    ^Texture,   // < The inner texture to evaluate, never `NULL`
 	blend_mode: Blend_Mode, // < Equation to combine the layer to the background
-	alpha:      Real,       // < Blend weight of this layer
+	alpha:      f32,        // < Blend weight of this layer
 }
 
 Texture_Layer_List :: struct {
@@ -2685,7 +2685,7 @@ Shader_Texture_Input :: struct {
 
 	// Constant value of the input.
 	using _: struct #raw_union {
-		value_real: Real,
+		value_real: f32,
 		value_vec2: Vec2,
 		value_vec3: Vec3,
 		value_vec4: Vec4,
@@ -3049,7 +3049,7 @@ Anim_Layer :: struct {
 			typed_id:   u32,
 		},
 	},
-	weight:              Real,
+	weight:              f32,
 	weight_is_animated:  bool,
 	blended:             bool,
 	additive:            bool,
@@ -3123,7 +3123,7 @@ Tangent :: struct {
 // rather than trying to manually handle all the interpolation modes.
 Keyframe :: struct {
 	time:          f64,
-	value:         Real,
+	value:         f32,
 	interpolation: Interpolation,
 	left:          Tangent,
 	right:         Tangent,
@@ -3155,8 +3155,8 @@ Anim_Curve :: struct {
 	post_extrapolation: Extrapolation,
 
 	// Value range for all the keyframes.
-	min_value: Real,
-	max_value: Real,
+	min_value: f32,
+	max_value: f32,
 
 	// Time range for all the keyframes.
 	min_time: f64,
@@ -3253,7 +3253,7 @@ Constraint_Type :: enum i32 {
 // Target to follow with a constraint
 Constraint_Target :: struct {
 	node:      ^Node,     // < Target node reference
-	weight:    Real,      // < Relative weight to other targets (does not always sum to 1)
+	weight:    f32,       // < Relative weight to other targets (does not always sum to 1)
 	transform: Transform, // < Offset from the actual target
 }
 
@@ -3301,7 +3301,7 @@ Constraint :: struct {
 	targets: Constraint_Target_List,
 
 	// State of the constraint
-	weight: Real,
+	weight: f32,
 	active:             bool,
 
 	// Translation/rotation/scale axes the constraint is applied to
@@ -3654,9 +3654,9 @@ Metadata :: struct {
 	temp_allocs:                    c.size_t,
 	element_buffer_size:            c.size_t,
 	num_shader_textures:            c.size_t,
-	bone_prop_size_unit:            Real,
+	bone_prop_size_unit:            f32,
 	bone_prop_limb_length_relative: bool,
-	ortho_size_unit:                Real,
+	ortho_size_unit:                f32,
 	ktime_second:                   i64, // < One second in internal KTime units
 	original_file_path:             String,
 	raw_original_file_path:         Blob,
@@ -3666,7 +3666,7 @@ Metadata :: struct {
 
 	// Transform that has been applied to root for axis/unit conversion.
 	root_rotation: Quat,
-	root_scale:                     Real,
+	root_scale:                     f32,
 
 	// Axis that the scene has been mirrored by.
 	// All geometry has been mirrored in this axis.
@@ -3674,7 +3674,7 @@ Metadata :: struct {
 
 	// Amount geometry has been scaled.
 	// See `UFBX_SPACE_CONVERSION_MODIFY_GEOMETRY`.
-	geometry_scale: Real,
+	geometry_scale: f32,
 }
 
 Time_Mode :: enum i32 {
@@ -3726,7 +3726,7 @@ Scene_Settings :: struct {
 	// How many meters does a single world-space unit represent.
 	// FBX files usually default to centimeters, reported as `0.01` here.
 	// HINT: Use `ufbx_load_opts.target_unit_meters` to normalize this.
-	unit_meters: Real,
+	unit_meters: f32,
 
 	// Frames per second the animation is defined at.
 	frames_per_second: f64,
@@ -3741,7 +3741,7 @@ Scene_Settings :: struct {
 
 	// Original settings (?)
 	original_axis_up: Coordinate_Axis,
-	original_unit_meters: Real,
+	original_unit_meters: f32,
 }
 
 Scene :: struct {
@@ -3878,19 +3878,19 @@ Vertex_Stream :: struct {
 }
 
 // Allocate `size` bytes, must be at least 8 byte aligned
-Alloc_Fn :: proc "c" () -> rawptr
+Alloc_Fn :: proc "c" (rawptr, c.size_t) -> rawptr
 
 // Reallocate `old_ptr` from `old_size` to `new_size`
 // NOTE: If omit `alloc_fn` and `free_fn` they will be translated to:
 //   `alloc(size)` -> `realloc_fn(user, NULL, 0, size)`
 //   `free_fn(ptr, size)` ->  `realloc_fn(user, ptr, size, 0)`
-Realloc_Fn :: proc "c" () -> rawptr
+Realloc_Fn :: proc "c" (rawptr, rawptr, c.size_t, c.size_t) -> rawptr
 
 // Free pointer `ptr` (of `size` bytes) returned by `alloc_fn` or `realloc_fn`
-Free_Fn :: proc "c" ()
+Free_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 // Free the allocator itself
-Free_Allocator_Fn :: proc "c" ()
+Free_Allocator_Fn :: proc "c" (rawptr)
 
 // Allocator callbacks and user context
 // NOTE: The allocator will be stored to the loaded scene and will be called
@@ -3898,10 +3898,10 @@ Free_Allocator_Fn :: proc "c" ()
 // You can use `free_allocator_fn()` to free the allocator yourself.
 Allocator :: struct {
 	// Callback functions, see `typedef`s above for information
-	alloc_fn: ^Alloc_Fn,
-	realloc_fn:        ^Realloc_Fn,
-	free_fn:           ^Free_Fn,
-	free_allocator_fn: ^Free_Allocator_Fn,
+	alloc_fn: ^proc "c" (rawptr, u64) -> rawptr,
+	realloc_fn:        ^proc "c" (rawptr, rawptr, u64, u64) -> rawptr,
+	free_fn:           ^proc "c" (rawptr, rawptr, u64),
+	free_allocator_fn: ^proc "c" (rawptr),
 	user:              rawptr,
 }
 
@@ -3936,23 +3936,23 @@ Allocator_Opts :: struct {
 
 // Try to read up to `size` bytes to `data`, return the amount of read bytes.
 // Return `SIZE_MAX` to indicate an IO error.
-Read_Fn :: proc "c" () -> c.size_t
+Read_Fn :: proc "c" (rawptr, rawptr, c.size_t) -> c.size_t
 
 // Skip `size` bytes in the file.
-Skip_Fn :: proc "c" () -> bool
+Skip_Fn :: proc "c" (rawptr, c.size_t) -> bool
 
 // Get the size of the file.
 // Return `0` if unknown, `UINT64_MAX` if error.
-Size_Fn :: proc "c" () -> u64
+Size_Fn :: proc "c" (rawptr) -> u64
 
 // Close the file
-Close_Fn :: proc "c" ()
+Close_Fn :: proc "c" (rawptr)
 
 Stream :: struct {
-	read_fn:  ^Read_Fn,  // < Required
-	skip_fn:  ^Skip_Fn,  // < Optional: Will use `read_fn()` if missing
-	size_fn:  ^Size_Fn,  // < Optional
-	close_fn: ^Close_Fn, // < Optional
+	read_fn:  ^proc "c" (rawptr, rawptr, u64) -> u64, // < Required
+	skip_fn:  ^proc "c" (rawptr, u64) -> bool,        // < Optional: Will use `read_fn()` if missing
+	size_fn:  ^proc "c" (rawptr) -> u64,              // < Optional
+	close_fn: ^proc "c" (rawptr),                     // < Optional
 
 	// Context passed to other functions
 	user: rawptr,
@@ -3971,7 +3971,7 @@ Open_File_Info :: struct {
 	// Context that can be passed to the following functions to use a shared allocator:
 	//   ufbx_open_file_ctx()
 	//   ufbx_open_memory_ctx()
-	_context: Open_File_Context,
+	_context: u64,
 
 	// Kind of file to load.
 	type: Open_File_Type,
@@ -3982,10 +3982,10 @@ Open_File_Info :: struct {
 }
 
 // Callback for opening an external file from the filesystem
-Open_File_Fn :: proc "c" () -> bool
+Open_File_Fn :: proc "c" (rawptr, ^Stream, cstring, c.size_t, ^Open_File_Info) -> bool
 
 Open_File_Cb :: struct {
-	fn:   ^Open_File_Fn,
+	fn:   ^proc "c" (rawptr, ^Stream, cstring, u64, ^Open_File_Info) -> bool,
 	user: rawptr,
 }
 
@@ -4002,10 +4002,10 @@ Open_File_Opts :: struct {
 }
 
 // Memory stream options
-Close_Memory_Fn :: proc "c" ()
+Close_Memory_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 Close_Memory_Cb :: struct {
-	fn:   ^Close_Memory_Fn,
+	fn:   ^proc "c" (rawptr, rawptr, u64),
 	user: rawptr,
 }
 
@@ -4168,10 +4168,10 @@ Progress_Result :: enum i32 {
 
 // Called periodically with the current progress.
 // Return `UFBX_PROGRESS_CANCEL` to cancel further processing.
-Progress_Fn :: proc "c" () -> Progress_Result
+Progress_Fn :: proc "c" (rawptr, ^Progress) -> Progress_Result
 
 Progress_Cb :: struct {
-	fn:   ^Progress_Fn,
+	fn:   ^proc "c" (rawptr, ^Progress) -> Progress_Result,
 	user: rawptr,
 }
 
@@ -4189,7 +4189,7 @@ Inflate_Input :: struct {
 	buffer_size:            c.size_t,
 
 	// (optional) Streaming read function, concatenated after `data`
-	read_fn: ^Read_Fn,
+	read_fn: ^proc "c" (rawptr, rawptr, u64) -> u64,
 	read_user:              rawptr,
 
 	// (optional) Progress reporting
@@ -4509,20 +4509,20 @@ Thread_Pool_Info :: struct {
 
 // Initialize the thread pool.
 // Return `true` on success.
-Thread_Pool_Init_Fn :: proc "c" () -> bool
+Thread_Pool_Init_Fn :: proc "c" (rawptr, u64, ^Thread_Pool_Info) -> bool
 
 // Run tasks `count` tasks in threads.
 // You must call `ufbx_thread_pool_run_task()` with indices `[start_index, start_index + count)`.
 // The threads are launched in batches indicated by `group`, see `UFBX_THREAD_GROUP_COUNT` for more information.
 // Ideally, you should run all the task indices in parallel within each `ufbx_thread_pool_run_fn()` call.
-Thread_Pool_Run_Fn :: proc "c" ()
+Thread_Pool_Run_Fn :: proc "c" (rawptr, u64, u32, u32, u32)
 
 // Wait for previous tasks spawned in `ufbx_thread_pool_run_fn()` to finish.
 // `group` specifies the batch to wait for, `max_index` contains `start_index + count` from that group instance.
-Thread_Pool_Wait_Fn :: proc "c" ()
+Thread_Pool_Wait_Fn :: proc "c" (rawptr, u64, u32, u32)
 
 // Free the thread pool.
-Thread_Pool_Free_Fn :: proc "c" ()
+Thread_Pool_Free_Fn :: proc "c" (rawptr, u64)
 
 // Thread pool interface.
 // See functions above for more information.
@@ -4537,10 +4537,10 @@ Thread_Pool_Free_Fn :: proc "c" ()
 //   wait_fn(group=0, max_index=15)            -> wait_threads(t0)
 //
 Thread_Pool :: struct {
-	init_fn: ^Thread_Pool_Init_Fn, // < Optional
-	run_fn:  ^Thread_Pool_Run_Fn,  // < Required
-	wait_fn: ^Thread_Pool_Wait_Fn, // < Required
-	free_fn: ^Thread_Pool_Free_Fn, // < Optional
+	init_fn: ^proc "c" (rawptr, u64, ^Thread_Pool_Info) -> bool, // < Optional
+	run_fn:  ^proc "c" (rawptr, u64, u32, u32, u32),             // < Required
+	wait_fn: ^proc "c" (rawptr, u64, u32, u32),                  // < Required
+	free_fn: ^proc "c" (rawptr, u64),                            // < Optional
 	user:    rawptr,
 }
 
@@ -4720,7 +4720,7 @@ Load_Opts :: struct {
 
 	// Scale the scene so that one world-space unit is `target_unit_meters` meters.
 	// By default units are not scaled.
-	target_unit_meters: Real,
+	target_unit_meters: f32,
 
 	// Target space for camera.
 	// By default FBX cameras point towards the positive X axis.
@@ -4805,7 +4805,7 @@ Load_Opts :: struct {
 	// The world unit in meters that .obj files are assumed to be in.
 	// .obj files do not define the working units. By default the unit scale
 	// is read as zero, and no unit conversion is performed.
-	obj_unit_meters: Real,
+	obj_unit_meters: f32,
 
 	// Coordinate space .obj files are assumed to be in.
 	// .obj files do not define the coordinate space they use. By default no
@@ -4841,7 +4841,7 @@ Const_Uint32_List :: struct {
 }
 
 Const_Real_List :: struct {
-	data:  ^Real,
+	data:  ^f32,
 	count: c.size_t,
 }
 
@@ -5087,7 +5087,7 @@ Geometry_Cache_Opts :: struct {
 	use_scale_factor: bool,
 
 	// Factor to scale the geometry by.
-	scale_factor: Real,
+	scale_factor: f32,
 	_end_zero:        u32,
 }
 
@@ -5100,7 +5100,7 @@ Geometry_Cache_Data_Opts :: struct {
 	open_file_cb: Open_File_Cb,
 	additive:    bool,
 	use_weight:  bool,
-	weight:      Real,
+	weight:      f32,
 
 	// Ignore scene transform.
 	ignore_transform: bool,
@@ -5262,8 +5262,8 @@ foreign lib {
 	// Utility functions for finding the value of a property, returns `def` if not found.
 	// NOTE: For `ufbx_string` you need to ensure the lifetime of the default is
 	// sufficient as no copy is made.
-	find_real_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Real) -> Real ---
-	find_real       :: proc(props: ^Props, name: cstring, def: Real) -> Real ---
+	find_real_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: f32) -> f32 ---
+	find_real       :: proc(props: ^Props, name: cstring, def: f32) -> f32 ---
 	find_vec3_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Vec3) -> Vec3 ---
 	find_vec3       :: proc(props: ^Props, name: cstring, def: Vec3) -> Vec3 ---
 	find_int_len    :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: i64) -> i64 ---
@@ -5330,21 +5330,21 @@ foreign lib {
 	// Open a `ufbx_stream` from a file.
 	// Use `path_len == SIZE_MAX` for NULL terminated string.
 	open_file     :: proc(stream: ^Stream, path: cstring, path_len: c.size_t, opts: ^Open_File_Opts, error: ^Error) -> bool ---
-	open_file_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, path: cstring, path_len: c.size_t, opts: ^Open_File_Opts, error: ^Error) -> bool ---
+	open_file_ctx :: proc(stream: ^Stream, ctx: u64, path: cstring, path_len: c.size_t, opts: ^Open_File_Opts, error: ^Error) -> bool ---
 
 	// NOTE: Uses the default ufbx allocator!
 	open_memory     :: proc(stream: ^Stream, data: rawptr, data_size: c.size_t, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
-	open_memory_ctx :: proc(stream: ^Stream, ctx: Open_File_Context, data: rawptr, data_size: c.size_t, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
+	open_memory_ctx :: proc(stream: ^Stream, ctx: u64, data: rawptr, data_size: c.size_t, opts: ^Open_Memory_Opts, error: ^Error) -> bool ---
 
 	// Evaluate a single animation `curve` at a `time`.
 	// Returns `default_value` only if `curve == NULL` or it has no keyframes.
-	evaluate_curve       :: proc(curve: ^Anim_Curve, time: f64, default_value: Real) -> Real ---
-	evaluate_curve_flags :: proc(curve: ^Anim_Curve, time: f64, default_value: Real, flags: u32) -> Real ---
+	evaluate_curve       :: proc(curve: ^Anim_Curve, time: f64, default_value: f32) -> f32 ---
+	evaluate_curve_flags :: proc(curve: ^Anim_Curve, time: f64, default_value: f32, flags: u32) -> f32 ---
 
 	// Evaluate a value from bundled animation curves.
-	evaluate_anim_value_real       :: proc(anim_value: ^Anim_Value, time: f64) -> Real ---
+	evaluate_anim_value_real       :: proc(anim_value: ^Anim_Value, time: f64) -> f32 ---
 	evaluate_anim_value_vec3       :: proc(anim_value: ^Anim_Value, time: f64) -> Vec3 ---
-	evaluate_anim_value_real_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Real ---
+	evaluate_anim_value_real_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> f32 ---
 	evaluate_anim_value_vec3_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Vec3 ---
 
 	// Evaluate an animated property `name` from `element` at `time`.
@@ -5368,8 +5368,8 @@ foreign lib {
 
 	// Evaluate the blend shape weight of a blend channel.
 	// NOTE: Return value uses `1.0` for full weight, instead of `100.0` that the internal property `UFBX_Weight` uses.
-	evaluate_blend_weight       :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64) -> Real ---
-	evaluate_blend_weight_flags :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64, flags: u32) -> Real ---
+	evaluate_blend_weight       :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64) -> f32 ---
+	evaluate_blend_weight_flags :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64, flags: u32) -> f32 ---
 
 	// Evaluate the whole `scene` at a specific `time` in the animation `anim`.
 	// The returned scene behaves as if it had been exported at a specific time
@@ -5439,18 +5439,18 @@ foreign lib {
 	vec3_normalize :: proc(v: Vec3) -> Vec3 ---
 
 	// Quaternion math utility functions.
-	quat_dot           :: proc(a: Quat, b: Quat) -> Real ---
+	quat_dot           :: proc(a: Quat, b: Quat) -> f32 ---
 	quat_mul           :: proc(a: Quat, b: Quat) -> Quat ---
 	quat_normalize     :: proc(q: Quat) -> Quat ---
 	quat_fix_antipodal :: proc(q: Quat, reference: Quat) -> Quat ---
-	quat_slerp         :: proc(a: Quat, b: Quat, t: Real) -> Quat ---
+	quat_slerp         :: proc(a: Quat, b: Quat, t: f32) -> Quat ---
 	quat_rotate_vec3   :: proc(q: Quat, v: Vec3) -> Vec3 ---
 	quat_to_euler      :: proc(q: Quat, order: Rotation_Order) -> Vec3 ---
 	euler_to_quat      :: proc(v: Vec3, order: Rotation_Order) -> Quat ---
 
 	// Matrix math utility functions.
 	matrix_mul         :: proc(a: ^Matrix, b: ^Matrix) -> Matrix ---
-	matrix_determinant :: proc(m: ^Matrix) -> Real ---
+	matrix_determinant :: proc(m: ^Matrix) -> f32 ---
 	matrix_invert      :: proc(m: ^Matrix) -> Matrix ---
 
 	// Get a matrix that can be used to transform geometry normals.
@@ -5484,20 +5484,20 @@ foreign lib {
 	get_blend_vertex_offset :: proc(blend: ^Blend_Deformer, vertex: c.size_t) -> Vec3 ---
 
 	// Apply the blend shape with `weight` to given vertices.
-	add_blend_shape_vertex_offsets :: proc(shape: ^Blend_Shape, vertices: ^Vec3, num_vertices: c.size_t, weight: Real) ---
+	add_blend_shape_vertex_offsets :: proc(shape: ^Blend_Shape, vertices: ^Vec3, num_vertices: c.size_t, weight: f32) ---
 
 	// Apply the blend deformer with `weight` to given vertices.
 	// NOTE: This depends on the current animated blend weight of the deformer.
-	add_blend_vertex_offsets :: proc(blend: ^Blend_Deformer, vertices: ^Vec3, num_vertices: c.size_t, weight: Real) ---
+	add_blend_vertex_offsets :: proc(blend: ^Blend_Deformer, vertices: ^Vec3, num_vertices: c.size_t, weight: f32) ---
 
 	// Low-level utility to evaluate NURBS the basis functions.
-	evaluate_nurbs_basis :: proc(basis: ^Nurbs_Basis, u: Real, weights: ^Real, num_weights: c.size_t, derivatives: ^Real, num_derivatives: c.size_t) -> c.size_t ---
+	evaluate_nurbs_basis :: proc(basis: ^Nurbs_Basis, u: f32, weights: ^f32, num_weights: c.size_t, derivatives: ^f32, num_derivatives: c.size_t) -> c.size_t ---
 
 	// Evaluate a point on a NURBS curve given the parameter `u`.
-	evaluate_nurbs_curve :: proc(curve: ^Nurbs_Curve, u: Real) -> Curve_Point ---
+	evaluate_nurbs_curve :: proc(curve: ^Nurbs_Curve, u: f32) -> Curve_Point ---
 
 	// Evaluate a point on a NURBS surface given the parameter `u` and `v`.
-	evaluate_nurbs_surface :: proc(surface: ^Nurbs_Surface, u: Real, v: Real) -> Surface_Point ---
+	evaluate_nurbs_surface :: proc(surface: ^Nurbs_Surface, u: f32, v: f32) -> Surface_Point ---
 
 	// Tessellate a NURBS curve into a polyline.
 	tessellate_nurbs_curve :: proc(curve: ^Nurbs_Curve, opts: ^Tessellate_Curve_Opts, error: ^Error) -> ^Line_Curve ---
@@ -5570,11 +5570,11 @@ foreign lib {
 	retain_geometry_cache :: proc(cache: ^Geometry_Cache) ---
 
 	// Read a frame from a geometry cache.
-	read_geometry_cache_real :: proc(frame: ^Cache_Frame, data: ^Real, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
+	read_geometry_cache_real :: proc(frame: ^Cache_Frame, data: ^f32, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 	read_geometry_cache_vec3 :: proc(frame: ^Cache_Frame, data: ^Vec3, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 
 	// Sample the a geometry cache channel, linearly blending between adjacent frames.
-	sample_geometry_cache_real :: proc(channel: ^Cache_Channel, time: f64, data: ^Real, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
+	sample_geometry_cache_real :: proc(channel: ^Cache_Channel, time: f64, data: ^f32, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 	sample_geometry_cache_vec3 :: proc(channel: ^Cache_Channel, time: f64, data: ^Vec3, num_data: c.size_t, opts: ^Geometry_Cache_Data_Opts) -> c.size_t ---
 
 	// Find a DOM node given a name.
@@ -5588,19 +5588,19 @@ foreign lib {
 
 	// Run a single thread pool task.
 	// See `ufbx_thread_pool_run_fn` for more information.
-	thread_pool_run_task :: proc(ctx: Thread_Pool_Context, index: u32) ---
+	thread_pool_run_task :: proc(ctx: u64, index: u32) ---
 
 	// Get or set an arbitrary user pointer for the thread pool context.
 	// `ufbx_thread_pool_get_user_ptr()` returns `NULL` if unset.
-	thread_pool_set_user_ptr :: proc(ctx: Thread_Pool_Context, user_ptr: rawptr) ---
-	thread_pool_get_user_ptr :: proc(ctx: Thread_Pool_Context) -> rawptr ---
+	thread_pool_set_user_ptr :: proc(ctx: u64, user_ptr: rawptr) ---
+	thread_pool_get_user_ptr :: proc(ctx: u64) -> rawptr ---
 
 	// Utility functions for reading geometry data for a single index.
-	catch_get_vertex_real   :: proc(panic: ^Panic, v: ^Vertex_Real, index: c.size_t) -> Real ---
+	catch_get_vertex_real   :: proc(panic: ^Panic, v: ^Vertex_Real, index: c.size_t) -> f32 ---
 	catch_get_vertex_vec2   :: proc(panic: ^Panic, v: ^Vertex_Vec2, index: c.size_t) -> Vec2 ---
 	catch_get_vertex_vec3   :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Vec3 ---
 	catch_get_vertex_vec4   :: proc(panic: ^Panic, v: ^Vertex_Vec4, index: c.size_t) -> Vec4 ---
-	catch_get_vertex_w_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> Real ---
+	catch_get_vertex_w_vec3 :: proc(panic: ^Panic, v: ^Vertex_Vec3, index: c.size_t) -> f32 ---
 
 	// Functions for converting an untyped `ufbx_element` to a concrete type.
 	// Returns `NULL` if the element is not that type.

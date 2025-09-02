@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-import "core:c"
 
-_ :: c
 
 foreign import lib "box2d.lib"
 
@@ -27,7 +25,7 @@ DEFAULT_CATEGORY_BITS :: 0x0001
 /// }
 /// @endcode
 /// @ingroup world
-TaskCallback :: proc "c" (c.int, c.int, u32, rawptr)
+TaskCallback :: proc "c" (i32, i32, u32, rawptr)
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -40,7 +38,7 @@ TaskCallback :: proc "c" (c.int, c.int, u32, rawptr)
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-EnqueueTaskCallback :: proc "c" (TaskCallback, c.int, c.int, rawptr, rawptr) -> rawptr
+EnqueueTaskCallback :: proc "c" (^proc "c" (i32, i32, u32, rawptr), i32, i32, rawptr, rawptr) -> rawptr
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
@@ -49,12 +47,12 @@ FinishTaskCallback :: proc "c" (rawptr, rawptr)
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-FrictionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
+FrictionCallback :: proc "c" (f32, i32, f32, i32) -> f32
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-RestitutionCallback :: proc "c" (f32, c.int, f32, c.int) -> f32
+RestitutionCallback :: proc "c" (f32, i32, f32, i32) -> f32
 
 /// Result from b2World_RayCastClosest
 /// @ingroup world
@@ -63,8 +61,8 @@ RayResult :: struct {
 	point:      Vec2,
 	normal:     Vec2,
 	fraction:   f32,
-	nodeVisits: c.int,
-	leafVisits: c.int,
+	nodeVisits: i32,
+	leafVisits: i32,
 	hit:        bool,
 }
 
@@ -104,10 +102,10 @@ WorldDef :: struct {
 	maximumLinearSpeed: f32,
 
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
-	frictionCallback: FrictionCallback,
+	frictionCallback: ^proc "c" (f32, i32, f32, i32) -> f32,
 
 	/// Optional mixing callback for restitution. The default uses max(restitutionA, restitutionB).
-	restitutionCallback: RestitutionCallback,
+	restitutionCallback: ^proc "c" (f32, i32, f32, i32) -> f32,
 
 	/// Can bodies go to sleep to improve performance
 	enableSleep: bool,
@@ -122,13 +120,13 @@ WorldDef :: struct {
 	/// that you are allocating to b2World_Step.
 	/// @warning Do not modify the default value unless you are also providing a task system and providing
 	/// task callbacks (enqueueTask and finishTask).
-	workerCount: c.int,
+	workerCount: i32,
 
 	/// Function to spawn tasks
-	enqueueTask: EnqueueTaskCallback,
+	enqueueTask: ^proc "c" (proc "c" (i32, i32, u32, rawptr), i32, i32, rawptr, rawptr) -> rawptr,
 
 	/// Function to finish a task
-	finishTask: FinishTaskCallback,
+	finishTask: ^proc "c" (rawptr, rawptr),
 
 	/// User context that is provided to enqueueTask and finishTask
 	userTaskContext: rawptr,
@@ -137,13 +135,13 @@ WorldDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// The body simulation type.
 /// Each body is one of these three types. The type determines how the body behaves in the simulation.
 /// @ingroup body
-BodyType :: enum c.int {
+BodyType :: enum i32 {
 	/// zero mass, zero velocity, may be manually moved
 	staticBody,
 
@@ -228,7 +226,7 @@ BodyDef :: struct {
 	allowFastRotation: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// This is used to filter collision on shapes. It affects shape-vs-shape collision
@@ -264,7 +262,7 @@ Filter :: struct {
 	/// For example, you may want ragdolls to collide with other ragdolls but you don't want
 	/// ragdoll self-collision. In this case you would give each ragdoll a unique negative group index
 	/// and apply that group index to all shapes on the ragdoll.
-	groupIndex: c.int,
+	groupIndex: i32,
 }
 
 /// The query filter is used to filter collisions between queries and shapes. For example,
@@ -282,7 +280,7 @@ QueryFilter :: struct {
 
 /// Shape type
 /// @ingroup shape
-ShapeType :: enum c.int {
+ShapeType :: enum i32 {
 	/// A circle with an offset
 	circleShape,
 
@@ -326,7 +324,7 @@ ShapeDef :: struct {
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
-	material: c.int,
+	material: i32,
 
 	/// The density, usually in kg/m^2.
 	density: f32,
@@ -362,7 +360,7 @@ ShapeDef :: struct {
 	updateBodyMass: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// Surface materials allow chain shapes to have per segment surface properties.
@@ -383,7 +381,7 @@ SurfaceMaterial :: struct {
 
 	/// User material identifier. This is passed with query results and to friction and restitution
 	/// combining functions. It is not used internally.
-	material: c.int,
+	material: i32,
 
 	/// Custom debug draw color.
 	customColor: u32,
@@ -409,17 +407,17 @@ ChainDef :: struct {
 	userData: rawptr,
 
 	/// An array of at least 4 points. These are cloned and may be temporary.
-	points: [^]Vec2,
+	points: ^Vec2,
 
 	/// The point count, must be 4 or more.
-	count: c.int,
+	count: i32,
 
 	/// Surface materials for each segment. These are cloned.
-	materials: [^]SurfaceMaterial,
+	materials: ^SurfaceMaterial,
 
 	/// The material count. Must be 1 or count. This allows you to provide one
 	/// material for all segments or a unique material per segment.
-	materialCount: c.int,
+	materialCount: i32,
 
 	/// Contact filtering data.
 	filter: Filter,
@@ -428,7 +426,7 @@ ChainDef :: struct {
 	isLoop: bool,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 //! @cond
@@ -460,17 +458,17 @@ Profile :: struct {
 
 /// Counters that give details of the simulation size.
 Counters :: struct {
-	bodyCount:        c.int,
-	shapeCount:       c.int,
-	contactCount:     c.int,
-	jointCount:       c.int,
-	islandCount:      c.int,
-	stackUsed:        c.int,
-	staticTreeHeight: c.int,
-	treeHeight:       c.int,
-	byteCount:        c.int,
-	taskCount:        c.int,
-	colorCounts:      [12]c.int,
+	bodyCount:        i32,
+	shapeCount:       i32,
+	contactCount:     i32,
+	jointCount:       i32,
+	islandCount:      i32,
+	stackUsed:        i32,
+	staticTreeHeight: i32,
+	treeHeight:       i32,
+	byteCount:        i32,
+	taskCount:        i32,
+	colorCounts:      [12]i32,
 }
 
 /// Joint type enumeration
@@ -478,7 +476,7 @@ Counters :: struct {
 /// This is useful because all joint types use b2JointId and sometimes you
 /// want to get the type of a joint.
 /// @ingroup joint
-JointType :: enum c.int {
+JointType :: enum i32 {
 	distanceJoint,
 	motorJoint,
 	mouseJoint,
@@ -547,7 +545,7 @@ DistanceJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// A motor joint is used to control the relative motion between two bodies
@@ -583,7 +581,7 @@ MotorJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// A mouse joint is used to make a point on a body track a specified world point.
@@ -617,7 +615,7 @@ MouseJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// A null joint is used to disable collision between two specific bodies.
@@ -634,7 +632,7 @@ NullJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// Prismatic joint definition
@@ -697,7 +695,7 @@ PrismaticJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// Revolute joint definition
@@ -766,7 +764,7 @@ RevoluteJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// Weld joint definition
@@ -810,7 +808,7 @@ WeldJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// Wheel joint definition
@@ -870,7 +868,7 @@ WheelJointDef :: struct {
 	userData: rawptr,
 
 	/// Used internally to detect a valid definition. DO NOT SET.
-	internalValue: c.int,
+	internalValue: i32,
 }
 
 /// The explosion definition is used to configure options for explosions. Explosions
@@ -931,10 +929,10 @@ SensorEvents :: struct {
 	endEvents: ^SensorEndTouchEvent,
 
 	/// The number of begin touch events
-	beginCount: c.int,
+	beginCount: i32,
 
 	/// The number of end touch events
-	endCount: c.int,
+	endCount: i32,
 }
 
 /// A begin touch event is generated when two shapes begin touching.
@@ -998,13 +996,13 @@ ContactEvents :: struct {
 	hitEvents: ^ContactHitEvent,
 
 	/// Number of begin touch events
-	beginCount: c.int,
+	beginCount: i32,
 
 	/// Number of end touch events
-	endCount: c.int,
+	endCount: i32,
 
 	/// Number of hit events
-	hitCount: c.int,
+	hitCount: i32,
 }
 
 /// Body move events triggered when a body moves.
@@ -1032,7 +1030,7 @@ BodyEvents :: struct {
 	moveEvents: ^BodyMoveEvent,
 
 	/// Number of move events
-	moveCount: c.int,
+	moveCount: i32,
 }
 
 /// The contact data for two shapes. By convention the manifold normal points
@@ -1101,7 +1099,7 @@ CastResultFcn :: proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32
 /// See https://www.rapidtables.com/web/color/index.html
 /// https://johndecember.com/html/spec/colorsvg.html
 /// https://upload.wikimedia.org/wikipedia/commons/2/2b/SVG_Recognized_color_keyword_names.svg
-HexColor :: enum c.int {
+HexColor :: enum i32 {
 	AliceBlue            = 15792383,
 	AntiqueWhite         = 16444375,
 	Aqua                 = 65535,
@@ -1254,10 +1252,10 @@ HexColor :: enum c.int {
 /// @ingroup world
 DebugDraw :: struct {
 	/// Draw a closed polygon provided in CCW order.
-	DrawPolygon: proc "c" (^Vec2, c.int, HexColor, rawptr),
+	DrawPolygon: proc "c" (^Vec2, i32, HexColor, rawptr),
 
 	/// Draw a solid closed polygon provided in CCW order.
-	DrawSolidPolygon: proc "c" (Transform, ^Vec2, c.int, f32, HexColor, rawptr),
+	DrawSolidPolygon: proc "c" (Transform, ^Vec2, i32, f32, HexColor, rawptr),
 
 	/// Draw a circle.
 	DrawCircle: proc "c" (Vec2, f32, HexColor, rawptr),

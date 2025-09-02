@@ -226,8 +226,13 @@ parse_typedef :: proc(s: ^Gen_State, cursor: clang.Cursor) -> string {
 }
 
 parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
-	if c_type, exists := c_type_mapping[clang_string_to_string(clang.getTypeSpelling(type))]; exists {
+	type_string := clang_string_to_string(clang.getTypeSpelling(type))
+	if c_type, exists := c_type_mapping[type_string]; exists {
 		return c_type
+	} else if posix_type, exists := posix_type_mapping[type_string]; exists {
+		return posix_type
+	} else if libc_type, exists := libc_type_mapping[type_string]; exists {
+		return libc_type
 	}
 
 	#partial switch type.kind {
@@ -274,15 +279,12 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	case .Pointer:
 		#partial switch pointee_type := clang.getPointeeType(type); pointee_type.kind {
 		case .FunctionProto, .FunctionNoProto:
-			builder := strings.builder_make()
-			strings.write_byte(&builder, '^')
-			strings.write_string(&builder, parse_function_type(s, pointee_type))
-			return strings.to_string(builder)
+			return parse_function_type(s, pointee_type)
 		case:
 			pointee_string := parse_nonfunction_type(s, pointee_type)
 			if pointee_string == "" {
 				return "rawptr"
-			} else if pointee_string == "u8" || pointee_string == "i8" {
+			} else if pointee_string == "i8" {
 				return "cstring"
 			} else if pointee_string == "cstring" {
 				return "[^]cstring"
@@ -296,23 +298,21 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		panic("Unreachable!")
 	case .Record:
 		cursor := clang.getTypeDeclaration(type)
-		if bool(clang.Cursor_isAnonymous(cursor)) {
+		type_name := translate_name(s, clang_string_to_string(clang.getCursorSpelling(cursor)))
+		if type_name not_in s.created_types {
 			return parse_record(s, cursor)
 		}
-		return translate_name(s, clang_string_to_string(clang.getTypeSpelling(type)))
+		return type_name
 	case .Enum:
-		// I'm assumming we will never have an anonymous enum
-		return translate_name(s, clang_string_to_string(clang.getTypeSpelling(type)))
+		return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
 	case .Typedef:
 		cursor := clang.getTypeDeclaration(type)
 
 		if bool(clang.Cursor_isAnonymous(cursor)) {
 			return parse_typedef(s, cursor)
-		} else if type_name := translate_name(s, clang_string_to_string(clang.getTypeSpelling(type))); type_name in s.created_types {
-			return type_name
 		}
 
-		return parse_type(s, clang.getTypedefDeclUnderlyingType(cursor))
+		return translate_name(s, type_string)
 	case .ConstantArray, .Vector:
 		// I'm not sure if this is correct for vectors.
 		builder := strings.builder_make()
@@ -330,7 +330,7 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		strings.write_string(&builder, parse_type(s, clang.getArrayElementType(type)))
 		return strings.to_string(builder)
 	case .Elaborated:
-		return parse_type(s, clang.Type_getNamedType(type))
+		return parse_type(s, clang.getCanonicalType(type))
 	}
 	// If we get here then we need to add a new case.
 	panic("Unreachable!")
@@ -348,24 +348,16 @@ parse_function_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		strings.write_string(&builder, "\"c\" (")
 	}
 
-	cursor := clang.getTypeDeclaration(type)
-	for i: i32 = 0; i < clang.Cursor_getNumArguments(cursor); i += 1 {
-		param_cursor := clang.Cursor_getArgument(cursor, u32(i))
-		param_name := clang_string_to_string(clang.getCursorSpelling(param_cursor))
-		
-		if param_name == "" {
-			strings.write_string(&builder, "_: ")
-		} else {
-			strings.write_string(&builder, param_name)
-			strings.write_string(&builder, ": ")
+	for i: i32 = 0; i < clang.getNumArgTypes(type); i += 1 {
+		if i != 0 {
+			strings.write_string(&builder, ", ")
 		}
-
-		strings.write_string(&builder, parse_type(s, clang.getCursorType(param_cursor)))
+		param_type := clang.getArgType(type, u32(i))
+		strings.write_string(&builder, parse_type(s, param_type))
 	}
 	strings.write_string(&builder, ")")
 
-	return_type := clang.getResultType(type)
-	if return_type.kind != .Void {
+	if return_type := clang.getResultType(type); return_type.kind != .Void {
 		strings.write_string(&builder, " -> ")
 		strings.write_string(&builder, parse_type(s, return_type))
 	}
@@ -377,6 +369,12 @@ parse_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	#partial switch type.kind {
 	case .FunctionProto, .FunctionNoProto:
 		return parse_function_type(s, type)
+	case .Pointer:
+		#partial switch pointee_type := clang.getPointeeType(type); pointee_type.kind {
+		case .FunctionProto, .FunctionNoProto:
+			return parse_function_type(s, pointee_type)
+		}
+		fallthrough
 	case:
 		return parse_nonfunction_type(s, type)
 	}
