@@ -594,6 +594,68 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 	return "", 0
 }
 
+dump_ast :: proc(root_cursor: clang.Cursor, source_file: clang.File, out_file: string) {
+    indent :: proc(file: ^os2.File, indent_level: u32) {
+        for i in 0 ..< indent_level {
+            os2.write_string(file, "  ")
+        }
+    }
+
+    visitor_proc: clang.Cursor_Visitor : proc "c" (
+        cursor, parent: clang.Cursor,
+        state: clang.Client_Data,
+    ) -> clang.Child_Visit_Result {
+        context = runtime.default_context()
+        data := (^Data)(state)
+
+        file: clang.File
+        clang.getExpansionLocation(clang.getCursorLocation(cursor), &file, nil, nil, nil)
+        if !bool(clang.File_isEqual(file, data.clang_file)) {
+            return .Continue
+        }
+
+        indent(data.file, data.indent - 1)
+        os2.write_string(data.file, fmt.tprintln("- Visiting:", clang_string_to_string(clang.getCursorSpelling(cursor))))
+
+        indent(data.file, data.indent)
+        os2.write_string(data.file, fmt.tprintln("Parent:", clang_string_to_string(clang.getCursorSpelling(parent))))
+
+        indent(data.file, data.indent)
+        os2.write_string(data.file, fmt.tprintln("Kind:", cursor.kind))
+
+        indent(data.file, data.indent)
+        os2.write_string(data.file, fmt.tprintln("TypeKind:", clang.getCursorType(cursor).kind))
+
+        indent(data.file, data.indent)
+        os2.write_string(data.file, "Children:\n")
+        
+        new_state := Data {
+            file       = data.file,
+            clang_file = data.clang_file,
+            indent     = data.indent + 1,
+        }
+        clang.visitChildren(cursor, visitor_proc, &new_state)
+
+        return .Continue
+    }
+
+	file, _ := os2.open(out_file, flags = {.Create, .Write})
+    os2.write_string(file, fmt.tprintln("File:", clang_string_to_string(clang.getFileName(source_file))))
+    os2.write_string(file, "Cursors:\n")
+
+    Data :: struct {
+        file:       ^os2.File,
+        clang_file: clang.File,
+        indent:     u32,
+    }
+	userData := Data {
+		file       = file,
+		clang_file = source_file,
+		indent     = 1,
+	}
+
+	clang.visitChildren(root_cursor, visitor_proc, &userData)
+}
 
 fp :: fmt.fprint
 fpln :: fmt.fprintln
@@ -1162,7 +1224,12 @@ gen :: proc(input: string, c: Config) {
 		return .Continue
 	}
 
-	clang.visitChildren(clang.getTranslationUnitCursor(unit), root_cursor_visitor_proc, &s)
+	root_cursor := clang.getTranslationUnitCursor(unit)
+
+	// For debugging purposes.
+	// Maybe we add back the ast dump setting in the config file?
+	// dump_ast(root_cursor, s.file)
+	clang.visitChildren(root_cursor, root_cursor_visitor_proc, &s)
 
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)
