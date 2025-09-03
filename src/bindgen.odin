@@ -286,7 +286,7 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 			return strings.to_string(builder)
 		}
 		panic("Unreachable!")
-	case .Record, .Enum, .Typedef:
+	case .Record, .Enum, .Typedef, .Elaborated:
 		return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
 	case .ConstantArray, .Vector:
 		// I'm not sure if this is correct for vectors.
@@ -304,8 +304,8 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		strings.write_string(&builder, "[^]")
 		strings.write_string(&builder, parse_type(s, clang.getArrayElementType(type)))
 		return strings.to_string(builder)
-	case .Elaborated:
-		return parse_type(s, clang.getCanonicalType(type))
+	// case .Elaborated:
+	// 	return parse_type(s, clang.getTypedefDeclUnderlyingType(type))
 	}
 	// If we get here then we need to add a new case.
 	panic("Unreachable!")
@@ -1162,8 +1162,7 @@ gen :: proc(input: string, c: Config) {
 		return .Continue
 	}
 
-	cursor := clang.getTranslationUnitCursor(unit)
-	clang.visitChildren(cursor, root_cursor_visitor_proc, &s)
+	clang.visitChildren(clang.getTranslationUnitCursor(unit), root_cursor_visitor_proc, &s)
 
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)

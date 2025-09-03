@@ -38,19 +38,19 @@ foreign lib {
 	World_GetContactEvents :: proc(worldId: WorldId) -> ContactEvents ---
 
 	/// Overlap test for all shapes that *potentially* overlap the provided AABB
-	World_OverlapAABB :: proc(worldId: WorldId, aabb: AABB, filter: QueryFilter, fcn: ^proc "c" (ShapeId, rawptr) -> bool, _context: rawptr) -> TreeStats ---
+	World_OverlapAABB :: proc(worldId: WorldId, aabb: AABB, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for for all shapes that overlap the provided point.
-	World_OverlapPoint :: proc(worldId: WorldId, point: Vec2, transform: Transform, filter: QueryFilter, fcn: ^proc "c" (ShapeId, rawptr) -> bool, _context: rawptr) -> TreeStats ---
+	World_OverlapPoint :: proc(worldId: WorldId, point: Vec2, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-	World_OverlapCircle :: proc(worldId: WorldId, circle: ^Circle, transform: Transform, filter: QueryFilter, fcn: ^proc "c" (ShapeId, rawptr) -> bool, _context: rawptr) -> TreeStats ---
+	World_OverlapCircle :: proc(worldId: WorldId, circle: ^Circle, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for all shapes that overlap the provided capsule
-	World_OverlapCapsule :: proc(worldId: WorldId, capsule: ^Capsule, transform: Transform, filter: QueryFilter, fcn: ^proc "c" (ShapeId, rawptr) -> bool, _context: rawptr) -> TreeStats ---
+	World_OverlapCapsule :: proc(worldId: WorldId, capsule: ^Capsule, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for all shapes that overlap the provided polygon
-	World_OverlapPolygon :: proc(worldId: WorldId, polygon: ^Polygon, transform: Transform, filter: QueryFilter, fcn: ^proc "c" (ShapeId, rawptr) -> bool, _context: rawptr) -> TreeStats ---
+	World_OverlapPolygon :: proc(worldId: WorldId, polygon: ^Polygon, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a ray into the world to collect shapes in the path of the ray.
 	/// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -63,7 +63,7 @@ foreign lib {
 	/// @param fcn A user implemented callback function
 	/// @param context A user context that is passed along to the callback function
 	///	@return traversal performance counters
-	World_CastRay :: proc(worldId: WorldId, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ^proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32, _context: rawptr) -> TreeStats ---
+	World_CastRay :: proc(worldId: WorldId, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a ray into the world to collect the closest hit. This is a convenience function.
 	/// This is less general than b2World_CastRay() and does not allow for custom filtering.
@@ -71,15 +71,15 @@ foreign lib {
 
 	/// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastCircle :: proc(worldId: WorldId, circle: ^Circle, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32, _context: rawptr) -> TreeStats ---
+	World_CastCircle :: proc(worldId: WorldId, circle: ^Circle, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastCapsule :: proc(worldId: WorldId, capsule: ^Capsule, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32, _context: rawptr) -> TreeStats ---
+	World_CastCapsule :: proc(worldId: WorldId, capsule: ^Capsule, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastPolygon :: proc(worldId: WorldId, polygon: ^Polygon, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32, _context: rawptr) -> TreeStats ---
+	World_CastPolygon :: proc(worldId: WorldId, polygon: ^Polygon, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 	/// by disabling sleep completely at the world level.
@@ -115,10 +115,10 @@ foreign lib {
 	World_GetHitEventThreshold :: proc(worldId: WorldId) -> f32 ---
 
 	/// Register the custom filter callback. This is optional.
-	World_SetCustomFilterCallback :: proc(worldId: WorldId, fcn: ^proc "c" (ShapeId, ShapeId, rawptr) -> bool, _context: rawptr) ---
+	World_SetCustomFilterCallback :: proc(worldId: WorldId, fcn: ^CustomFilterFcn, _context: rawptr) ---
 
 	/// Register the pre-solve callback. This is optional.
-	World_SetPreSolveCallback :: proc(worldId: WorldId, fcn: ^proc "c" (ShapeId, ShapeId, ^Manifold, rawptr) -> bool, _context: rawptr) ---
+	World_SetPreSolveCallback :: proc(worldId: WorldId, fcn: ^PreSolveFcn, _context: rawptr) ---
 
 	/// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 	/// is left as a decision for the application. Usually in m/s^2.
@@ -177,10 +177,10 @@ foreign lib {
 	World_GetUserData :: proc(worldId: WorldId) -> rawptr ---
 
 	/// Set the friction callback. Passing NULL resets to default.
-	World_SetFrictionCallback :: proc(worldId: WorldId, callback: ^proc "c" (f32, i32, f32, i32) -> f32) ---
+	World_SetFrictionCallback :: proc(worldId: WorldId, callback: ^FrictionCallback) ---
 
 	/// Set the restitution callback. Passing NULL resets to default.
-	World_SetRestitutionCallback :: proc(worldId: WorldId, callback: ^proc "c" (f32, i32, f32, i32) -> f32) ---
+	World_SetRestitutionCallback :: proc(worldId: WorldId, callback: ^RestitutionCallback) ---
 
 	/// Dump memory stats to box2d_memory.txt
 	World_DumpMemoryStats :: proc(worldId: WorldId) ---

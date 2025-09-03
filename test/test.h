@@ -36,17 +36,14 @@ typedef struct CXIndexOptions {
   unsigned /*Reserved*/ : 13;
 } CXIndexOptions;
 
-struct MyVtable {
-        void (*myLog)(const char *fmt, ...);
-};
 
 typedef void (*myLogImpl)(const char *fmt, ...);
 
-void test (const char *fmt, myLogImpl log);
-
-struct test_vtable {
-    int (*listfiles)(const char* path, void (*callback)(const char* path, void* userdata), void* userdata, int showhidden);
+struct MyVtable {
+  myLogImpl logger;
 };
+
+void test (const char *fmt, myLogImpl log);
 
 int nppiYCCKToCMYK(const int * pSrc[4], int nSrcStep, int * pDst[4], int nDstStep, int oSizeROI, int nppStreamCtx);
 

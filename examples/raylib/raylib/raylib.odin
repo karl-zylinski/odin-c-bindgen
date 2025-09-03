@@ -237,7 +237,7 @@ Font :: struct {
 	baseSize:     i32,        // Base size (default chars height)
 	glyphCount:   i32,        // Number of glyph characters
 	glyphPadding: i32,        // Padding around the glyph characters
-	texture:      Texture,    // Texture atlas containing the glyphs
+	texture:      Texture2D,  // Texture atlas containing the glyphs
 	recs:         ^Rectangle, // Rectangles in texture for the glyphs
 	glyphs:       ^GlyphInfo, // Glyphs info data
 }
@@ -290,9 +290,9 @@ Shader :: struct {
 
 // MaterialMap
 MaterialMap :: struct {
-	texture: Texture, // Material map texture
-	color:   Color,   // Material map color
-	value:   f32,     // Material map value
+	texture: Texture2D, // Material map texture
+	color:   Color,     // Material map color
+	value:   f32,       // Material map value
 }
 
 // Material, includes shader and maps
@@ -304,9 +304,9 @@ Material :: struct {
 
 // Transform, vertex transformation data
 Transform :: struct {
-	translation: Vector3, // Translation
-	rotation:    Vector4, // Rotation
-	scale:       Vector3, // Scale
+	translation: Vector3,    // Translation
+	rotation:    Quaternion, // Rotation
+	scale:       Vector3,    // Scale
 }
 
 // Bone, skeletal animation bone
@@ -940,7 +940,7 @@ foreign lib {
 	EndMode2D         :: proc() ---                                        // Ends 2D mode with custom camera
 	BeginMode3D       :: proc(camera: Camera3D) ---                        // Begin 3D mode with custom camera (3D)
 	EndMode3D         :: proc() ---                                        // Ends 3D mode and returns to default 2D orthographic mode
-	BeginTextureMode  :: proc(target: RenderTexture) ---                   // Begin drawing to render texture
+	BeginTextureMode  :: proc(target: RenderTexture2D) ---                 // Begin drawing to render texture
 	EndTextureMode    :: proc() ---                                        // Ends drawing to render texture
 	BeginShaderMode   :: proc(shader: Shader) ---                          // Begin custom shader drawing
 	EndShaderMode     :: proc() ---                                        // End custom shader drawing (use default shader)
@@ -965,15 +965,15 @@ foreign lib {
 	SetShaderValue          :: proc(shader: Shader, locIndex: i32, value: rawptr, uniformType: ShaderUniformDataType) --- // Set shader uniform value
 	SetShaderValueV         :: proc(shader: Shader, locIndex: i32, value: rawptr, uniformType: ShaderUniformDataType, count: i32) --- // Set shader uniform value vector
 	SetShaderValueMatrix    :: proc(shader: Shader, locIndex: i32, mat: Matrix) ---         // Set shader uniform value (matrix 4x4)
-	SetShaderValueTexture   :: proc(shader: Shader, locIndex: i32, texture: Texture) ---    // Set shader uniform value and bind the texture (sampler2d)
+	SetShaderValueTexture   :: proc(shader: Shader, locIndex: i32, texture: Texture2D) ---  // Set shader uniform value and bind the texture (sampler2d)
 	UnloadShader            :: proc(shader: Shader) ---                                     // Unload shader from GPU memory (VRAM)
-	GetScreenToWorldRay     :: proc(position: Vector2, camera: Camera3D) -> Ray ---         // Get a ray trace from screen position (i.e mouse)
-	GetScreenToWorldRayEx   :: proc(position: Vector2, camera: Camera3D, width: i32, height: i32) -> Ray --- // Get a ray trace from screen position (i.e mouse) in a viewport
-	GetWorldToScreen        :: proc(position: Vector3, camera: Camera3D) -> Vector2 ---     // Get the screen space position for a 3d world space position
-	GetWorldToScreenEx      :: proc(position: Vector3, camera: Camera3D, width: i32, height: i32) -> Vector2 --- // Get size position for a 3d world space position
+	GetScreenToWorldRay     :: proc(position: Vector2, camera: Camera) -> Ray ---           // Get a ray trace from screen position (i.e mouse)
+	GetScreenToWorldRayEx   :: proc(position: Vector2, camera: Camera, width: i32, height: i32) -> Ray --- // Get a ray trace from screen position (i.e mouse) in a viewport
+	GetWorldToScreen        :: proc(position: Vector3, camera: Camera) -> Vector2 ---       // Get the screen space position for a 3d world space position
+	GetWorldToScreenEx      :: proc(position: Vector3, camera: Camera, width: i32, height: i32) -> Vector2 --- // Get size position for a 3d world space position
 	GetWorldToScreen2D      :: proc(position: Vector2, camera: Camera2D) -> Vector2 ---     // Get the screen space position for a 2d camera world space position
 	GetScreenToWorld2D      :: proc(position: Vector2, camera: Camera2D) -> Vector2 ---     // Get the world space position for a 2d camera screen space position
-	GetCameraMatrix         :: proc(camera: Camera3D) -> Matrix ---                         // Get camera transform matrix (view matrix)
+	GetCameraMatrix         :: proc(camera: Camera) -> Matrix ---                           // Get camera transform matrix (view matrix)
 	GetCameraMatrix2D       :: proc(camera: Camera2D) -> Matrix ---                         // Get camera 2d transform matrix
 
 	// Timing-related functions
@@ -1011,11 +1011,11 @@ foreign lib {
 
 	// Set custom callbacks
 	// WARNING: Callbacks setup is intended for advanced users
-	SetTraceLogCallback     :: proc(callback: proc "c" (i32, cstring, cstring)) ---        // Set custom trace log
-	SetLoadFileDataCallback :: proc(callback: proc "c" (cstring, ^i32) -> ^u8) ---         // Set custom file binary data loader
-	SetSaveFileDataCallback :: proc(callback: proc "c" (cstring, rawptr, i32) -> bool) --- // Set custom file binary data saver
-	SetLoadFileTextCallback :: proc(callback: proc "c" (cstring) -> cstring) ---           // Set custom file text data loader
-	SetSaveFileTextCallback :: proc(callback: proc "c" (cstring, cstring) -> bool) ---     // Set custom file text data saver
+	SetTraceLogCallback     :: proc(callback: TraceLogCallback) ---     // Set custom trace log
+	SetLoadFileDataCallback :: proc(callback: LoadFileDataCallback) --- // Set custom file binary data loader
+	SetSaveFileDataCallback :: proc(callback: SaveFileDataCallback) --- // Set custom file binary data saver
+	SetLoadFileTextCallback :: proc(callback: LoadFileTextCallback) --- // Set custom file text data loader
+	SetSaveFileTextCallback :: proc(callback: SaveFileTextCallback) --- // Set custom file text data saver
 
 	// Files management functions
 	LoadFileData     :: proc(fileName: cstring, dataSize: ^i32) -> ^u8 ---               // Load file data as byte array (read)
@@ -1131,8 +1131,8 @@ foreign lib {
 	//------------------------------------------------------------------------------------
 	// Camera System Functions (Module: rcamera)
 	//------------------------------------------------------------------------------------
-	UpdateCamera    :: proc(camera: ^Camera3D, mode: i32) --- // Update camera position for selected mode
-	UpdateCameraPro :: proc(camera: ^Camera3D, movement: Vector3, rotation: Vector3, zoom: f32) --- // Update camera movement/rotation
+	UpdateCamera    :: proc(camera: ^Camera, mode: i32) --- // Update camera position for selected mode
+	UpdateCameraPro :: proc(camera: ^Camera, movement: Vector3, rotation: Vector3, zoom: f32) --- // Update camera movement/rotation
 
 	//------------------------------------------------------------------------------------
 	// Basic Shapes Drawing Functions (Module: shapes)
@@ -1140,9 +1140,9 @@ foreign lib {
 	// Set texture and rectangle to be used on shapes drawing
 	// NOTE: It can be useful when using basic shapes and one single font,
 	// defining a font char white rectangle would allow drawing everything in a single draw call
-	SetShapesTexture          :: proc(texture: Texture, source: Rectangle) --- // Set texture and rectangle to be used on shapes drawing
-	GetShapesTexture          :: proc() -> Texture ---                         // Get texture that is used for shapes drawing
-	GetShapesTextureRectangle :: proc() -> Rectangle ---                       // Get texture source rectangle that is used for shapes drawing
+	SetShapesTexture          :: proc(texture: Texture2D, source: Rectangle) --- // Set texture and rectangle to be used on shapes drawing
+	GetShapesTexture          :: proc() -> Texture2D ---                         // Get texture that is used for shapes drawing
+	GetShapesTextureRectangle :: proc() -> Rectangle ---                         // Get texture source rectangle that is used for shapes drawing
 
 	// Basic shapes drawing functions
 	DrawPixel                   :: proc(posX: i32, posY: i32, color: Color) ---               // Draw a pixel using geometry [Can be slow, use with care]
@@ -1222,7 +1222,7 @@ foreign lib {
 	LoadImageAnim           :: proc(fileName: cstring, frames: ^i32) -> Image --- // Load image sequence from file (frames appended to image.data)
 	LoadImageAnimFromMemory :: proc(fileType: cstring, fileData: ^u8, dataSize: i32, frames: ^i32) -> Image --- // Load image sequence from memory buffer
 	LoadImageFromMemory     :: proc(fileType: cstring, fileData: ^u8, dataSize: i32) -> Image --- // Load image from memory buffer, fileType refers to extension: i.e. '.png'
-	LoadImageFromTexture    :: proc(texture: Texture) -> Image ---                // Load image from GPU texture data
+	LoadImageFromTexture    :: proc(texture: Texture2D) -> Image ---              // Load image from GPU texture data
 	LoadImageFromScreen     :: proc() -> Image ---                                // Load image from screen buffer and (screenshot)
 	IsImageValid            :: proc(image: Image) -> bool ---                     // Check if an image is valid (data and parameters)
 	UnloadImage             :: proc(image: Image) ---                             // Unload image from CPU memory (RAM)
@@ -1306,29 +1306,29 @@ foreign lib {
 
 	// Texture loading functions
 	// NOTE: These functions require GPU access
-	LoadTexture          :: proc(fileName: cstring) -> Texture ---                     // Load texture from file into GPU memory (VRAM)
-	LoadTextureFromImage :: proc(image: Image) -> Texture ---                          // Load texture from image data
-	LoadTextureCubemap   :: proc(image: Image, layout: i32) -> Texture ---             // Load cubemap from image, multiple image cubemap layouts supported
-	LoadRenderTexture    :: proc(width: i32, height: i32) -> RenderTexture ---         // Load texture for rendering (framebuffer)
-	IsTextureValid       :: proc(texture: Texture) -> bool ---                         // Check if a texture is valid (loaded in GPU)
-	UnloadTexture        :: proc(texture: Texture) ---                                 // Unload texture from GPU memory (VRAM)
-	IsRenderTextureValid :: proc(target: RenderTexture) -> bool ---                    // Check if a render texture is valid (loaded in GPU)
-	UnloadRenderTexture  :: proc(target: RenderTexture) ---                            // Unload render texture from GPU memory (VRAM)
-	UpdateTexture        :: proc(texture: Texture, pixels: rawptr) ---                 // Update GPU texture with new data
-	UpdateTextureRec     :: proc(texture: Texture, rec: Rectangle, pixels: rawptr) --- // Update GPU texture rectangle with new data
+	LoadTexture          :: proc(fileName: cstring) -> Texture2D ---                     // Load texture from file into GPU memory (VRAM)
+	LoadTextureFromImage :: proc(image: Image) -> Texture2D ---                          // Load texture from image data
+	LoadTextureCubemap   :: proc(image: Image, layout: i32) -> TextureCubemap ---        // Load cubemap from image, multiple image cubemap layouts supported
+	LoadRenderTexture    :: proc(width: i32, height: i32) -> RenderTexture2D ---         // Load texture for rendering (framebuffer)
+	IsTextureValid       :: proc(texture: Texture2D) -> bool ---                         // Check if a texture is valid (loaded in GPU)
+	UnloadTexture        :: proc(texture: Texture2D) ---                                 // Unload texture from GPU memory (VRAM)
+	IsRenderTextureValid :: proc(target: RenderTexture2D) -> bool ---                    // Check if a render texture is valid (loaded in GPU)
+	UnloadRenderTexture  :: proc(target: RenderTexture2D) ---                            // Unload render texture from GPU memory (VRAM)
+	UpdateTexture        :: proc(texture: Texture2D, pixels: rawptr) ---                 // Update GPU texture with new data
+	UpdateTextureRec     :: proc(texture: Texture2D, rec: Rectangle, pixels: rawptr) --- // Update GPU texture rectangle with new data
 
 	// Texture configuration functions
-	GenTextureMipmaps :: proc(texture: ^Texture) ---             // Generate GPU mipmaps for a texture
-	SetTextureFilter  :: proc(texture: Texture, filter: i32) --- // Set texture scaling filter mode
-	SetTextureWrap    :: proc(texture: Texture, wrap: i32) ---   // Set texture wrapping mode
+	GenTextureMipmaps :: proc(texture: ^Texture2D) ---             // Generate GPU mipmaps for a texture
+	SetTextureFilter  :: proc(texture: Texture2D, filter: i32) --- // Set texture scaling filter mode
+	SetTextureWrap    :: proc(texture: Texture2D, wrap: i32) ---   // Set texture wrapping mode
 
 	// Texture drawing functions
-	DrawTexture       :: proc(texture: Texture, posX: i32, posY: i32, tint: Color) --- // Draw a Texture2D
-	DrawTextureV      :: proc(texture: Texture, position: Vector2, tint: Color) ---    // Draw a Texture2D with position defined as Vector2
-	DrawTextureEx     :: proc(texture: Texture, position: Vector2, rotation: f32, scale: f32, tint: Color) --- // Draw a Texture2D with extended parameters
-	DrawTextureRec    :: proc(texture: Texture, source: Rectangle, position: Vector2, tint: Color) --- // Draw a part of a texture defined by a rectangle
-	DrawTexturePro    :: proc(texture: Texture, source: Rectangle, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) --- // Draw a part of a texture defined by a rectangle with 'pro' parameters
-	DrawTextureNPatch :: proc(texture: Texture, nPatchInfo: NPatchInfo, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) --- // Draws a texture (or part of it) that stretches or shrinks nicely
+	DrawTexture       :: proc(texture: Texture2D, posX: i32, posY: i32, tint: Color) --- // Draw a Texture2D
+	DrawTextureV      :: proc(texture: Texture2D, position: Vector2, tint: Color) ---    // Draw a Texture2D with position defined as Vector2
+	DrawTextureEx     :: proc(texture: Texture2D, position: Vector2, rotation: f32, scale: f32, tint: Color) --- // Draw a Texture2D with extended parameters
+	DrawTextureRec    :: proc(texture: Texture2D, source: Rectangle, position: Vector2, tint: Color) --- // Draw a part of a texture defined by a rectangle
+	DrawTexturePro    :: proc(texture: Texture2D, source: Rectangle, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) --- // Draw a part of a texture defined by a rectangle with 'pro' parameters
+	DrawTextureNPatch :: proc(texture: Texture2D, nPatchInfo: NPatchInfo, dest: Rectangle, origin: Vector2, rotation: f32, tint: Color) --- // Draws a texture (or part of it) that stretches or shrinks nicely
 
 	// Color/pixel related functions
 	ColorIsEqual        :: proc(col1: Color, col2: Color) -> bool ---                   // Check if two colors are equal
@@ -1449,9 +1449,9 @@ foreign lib {
 	DrawModelPoints   :: proc(model: Model, position: Vector3, scale: f32, tint: Color) --- // Draw a model as points
 	DrawModelPointsEx :: proc(model: Model, position: Vector3, rotationAxis: Vector3, rotationAngle: f32, scale: Vector3, tint: Color) --- // Draw a model as points with extended parameters
 	DrawBoundingBox   :: proc(box: BoundingBox, color: Color) ---                           // Draw bounding box (wires)
-	DrawBillboard     :: proc(camera: Camera3D, texture: Texture, position: Vector3, scale: f32, tint: Color) --- // Draw a billboard texture
-	DrawBillboardRec  :: proc(camera: Camera3D, texture: Texture, source: Rectangle, position: Vector3, size: Vector2, tint: Color) --- // Draw a billboard texture defined by source
-	DrawBillboardPro  :: proc(camera: Camera3D, texture: Texture, source: Rectangle, position: Vector3, up: Vector3, size: Vector2, origin: Vector2, rotation: f32, tint: Color) --- // Draw a billboard texture defined by source and rotation
+	DrawBillboard     :: proc(camera: Camera, texture: Texture2D, position: Vector3, scale: f32, tint: Color) --- // Draw a billboard texture
+	DrawBillboardRec  :: proc(camera: Camera, texture: Texture2D, source: Rectangle, position: Vector3, size: Vector2, tint: Color) --- // Draw a billboard texture defined by source
+	DrawBillboardPro  :: proc(camera: Camera, texture: Texture2D, source: Rectangle, position: Vector3, up: Vector3, size: Vector2, origin: Vector2, rotation: f32, tint: Color) --- // Draw a billboard texture defined by source and rotation
 
 	// Mesh management functions
 	UploadMesh         :: proc(mesh: ^Mesh, _dynamic: bool) ---                       // Upload mesh vertex data in GPU and provide VAO/VBO ids
@@ -1478,12 +1478,12 @@ foreign lib {
 	GenMeshCubicmap   :: proc(cubicmap: Image, cubeSize: Vector3) -> Mesh ---              // Generate cubes-based map mesh from image data
 
 	// Material loading/unloading functions
-	LoadMaterials        :: proc(fileName: cstring, materialCount: ^i32) -> ^Material --- // Load materials from model file
-	LoadMaterialDefault  :: proc() -> Material ---                                        // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-	IsMaterialValid      :: proc(material: Material) -> bool ---                          // Check if a material is valid (shader assigned, map textures loaded in GPU)
-	UnloadMaterial       :: proc(material: Material) ---                                  // Unload material from GPU memory (VRAM)
-	SetMaterialTexture   :: proc(material: ^Material, mapType: i32, texture: Texture) --- // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
-	SetModelMeshMaterial :: proc(model: ^Model, meshId: i32, materialId: i32) ---         // Set material for a mesh
+	LoadMaterials        :: proc(fileName: cstring, materialCount: ^i32) -> ^Material ---   // Load materials from model file
+	LoadMaterialDefault  :: proc() -> Material ---                                          // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+	IsMaterialValid      :: proc(material: Material) -> bool ---                            // Check if a material is valid (shader assigned, map textures loaded in GPU)
+	UnloadMaterial       :: proc(material: Material) ---                                    // Unload material from GPU memory (VRAM)
+	SetMaterialTexture   :: proc(material: ^Material, mapType: i32, texture: Texture2D) --- // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
+	SetModelMeshMaterial :: proc(model: ^Model, meshId: i32, materialId: i32) ---           // Set material for a mesh
 
 	// Model animations loading/unloading functions
 	LoadModelAnimations       :: proc(fileName: cstring, animCount: ^i32) -> ^ModelAnimation --- // Load model animations from file
@@ -1560,22 +1560,22 @@ foreign lib {
 
 	// AudioStream management functions
 	LoadAudioStream                 :: proc(sampleRate: u32, sampleSize: u32, channels: u32) -> AudioStream --- // Load audio stream (to stream raw audio pcm data)
-	IsAudioStreamValid              :: proc(stream: AudioStream) -> bool ---       // Checks if an audio stream is valid (buffers initialized)
-	UnloadAudioStream               :: proc(stream: AudioStream) ---               // Unload audio stream and free memory
+	IsAudioStreamValid              :: proc(stream: AudioStream) -> bool ---                  // Checks if an audio stream is valid (buffers initialized)
+	UnloadAudioStream               :: proc(stream: AudioStream) ---                          // Unload audio stream and free memory
 	UpdateAudioStream               :: proc(stream: AudioStream, data: rawptr, frameCount: i32) --- // Update audio stream buffers with data
-	IsAudioStreamProcessed          :: proc(stream: AudioStream) -> bool ---       // Check if any audio stream buffers requires refill
-	PlayAudioStream                 :: proc(stream: AudioStream) ---               // Play audio stream
-	PauseAudioStream                :: proc(stream: AudioStream) ---               // Pause audio stream
-	ResumeAudioStream               :: proc(stream: AudioStream) ---               // Resume audio stream
-	IsAudioStreamPlaying            :: proc(stream: AudioStream) -> bool ---       // Check if audio stream is playing
-	StopAudioStream                 :: proc(stream: AudioStream) ---               // Stop audio stream
-	SetAudioStreamVolume            :: proc(stream: AudioStream, volume: f32) ---  // Set volume for audio stream (1.0 is max level)
-	SetAudioStreamPitch             :: proc(stream: AudioStream, pitch: f32) ---   // Set pitch for audio stream (1.0 is base level)
-	SetAudioStreamPan               :: proc(stream: AudioStream, pan: f32) ---     // Set pan for audio stream (0.5 is centered)
-	SetAudioStreamBufferSizeDefault :: proc(size: i32) ---                         // Default size for new audio streams
-	SetAudioStreamCallback          :: proc(stream: AudioStream, callback: proc "c" (rawptr, u32)) --- // Audio thread callback to request new data
-	AttachAudioStreamProcessor      :: proc(stream: AudioStream, processor: proc "c" (rawptr, u32)) --- // Attach audio stream processor to stream, receives the samples as 'float'
-	DetachAudioStreamProcessor      :: proc(stream: AudioStream, processor: proc "c" (rawptr, u32)) --- // Detach audio stream processor from stream
-	AttachAudioMixedProcessor       :: proc(processor: proc "c" (rawptr, u32)) --- // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
-	DetachAudioMixedProcessor       :: proc(processor: proc "c" (rawptr, u32)) --- // Detach audio stream processor from the entire audio pipeline
+	IsAudioStreamProcessed          :: proc(stream: AudioStream) -> bool ---                  // Check if any audio stream buffers requires refill
+	PlayAudioStream                 :: proc(stream: AudioStream) ---                          // Play audio stream
+	PauseAudioStream                :: proc(stream: AudioStream) ---                          // Pause audio stream
+	ResumeAudioStream               :: proc(stream: AudioStream) ---                          // Resume audio stream
+	IsAudioStreamPlaying            :: proc(stream: AudioStream) -> bool ---                  // Check if audio stream is playing
+	StopAudioStream                 :: proc(stream: AudioStream) ---                          // Stop audio stream
+	SetAudioStreamVolume            :: proc(stream: AudioStream, volume: f32) ---             // Set volume for audio stream (1.0 is max level)
+	SetAudioStreamPitch             :: proc(stream: AudioStream, pitch: f32) ---              // Set pitch for audio stream (1.0 is base level)
+	SetAudioStreamPan               :: proc(stream: AudioStream, pan: f32) ---                // Set pan for audio stream (0.5 is centered)
+	SetAudioStreamBufferSizeDefault :: proc(size: i32) ---                                    // Default size for new audio streams
+	SetAudioStreamCallback          :: proc(stream: AudioStream, callback: AudioCallback) --- // Audio thread callback to request new data
+	AttachAudioStreamProcessor      :: proc(stream: AudioStream, processor: AudioCallback) --- // Attach audio stream processor to stream, receives the samples as 'float'
+	DetachAudioStreamProcessor      :: proc(stream: AudioStream, processor: AudioCallback) --- // Detach audio stream processor from stream
+	AttachAudioMixedProcessor       :: proc(processor: AudioCallback) ---                     // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
+	DetachAudioMixedProcessor       :: proc(processor: AudioCallback) ---                     // Detach audio stream processor from the entire audio pipeline
 }

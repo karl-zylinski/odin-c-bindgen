@@ -25,7 +25,7 @@ DEFAULT_CATEGORY_BITS :: 0x0001
 /// }
 /// @endcode
 /// @ingroup world
-TaskCallback :: proc "c" (i32, i32, u32, rawptr)
+TaskCallback :: proc "c" (i32, i32, uint32_t, rawptr)
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -38,7 +38,7 @@ TaskCallback :: proc "c" (i32, i32, u32, rawptr)
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-EnqueueTaskCallback :: proc "c" (^proc "c" (i32, i32, u32, rawptr), i32, i32, rawptr, rawptr) -> rawptr
+EnqueueTaskCallback :: proc "c" (^TaskCallback, i32, i32, rawptr, rawptr) -> rawptr
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
@@ -102,10 +102,10 @@ WorldDef :: struct {
 	maximumLinearSpeed: f32,
 
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
-	frictionCallback: ^proc "c" (f32, i32, f32, i32) -> f32,
+	frictionCallback: ^FrictionCallback,
 
 	/// Optional mixing callback for restitution. The default uses max(restitutionA, restitutionB).
-	restitutionCallback: ^proc "c" (f32, i32, f32, i32) -> f32,
+	restitutionCallback: ^RestitutionCallback,
 
 	/// Can bodies go to sleep to improve performance
 	enableSleep: bool,
@@ -123,10 +123,10 @@ WorldDef :: struct {
 	workerCount: i32,
 
 	/// Function to spawn tasks
-	enqueueTask: ^proc "c" (proc "c" (i32, i32, u32, rawptr), i32, i32, rawptr, rawptr) -> rawptr,
+	enqueueTask: ^EnqueueTaskCallback,
 
 	/// Function to finish a task
-	finishTask: ^proc "c" (rawptr, rawptr),
+	finishTask: ^FinishTaskCallback,
 
 	/// User context that is provided to enqueueTask and finishTask
 	userTaskContext: rawptr,
@@ -245,7 +245,7 @@ Filter :: struct {
 	///    // etc
 	/// };
 	/// @endcode
-	categoryBits: u64,
+	categoryBits: uint64_t,
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
@@ -254,7 +254,7 @@ Filter :: struct {
 	/// @code{.c}
 	/// maskBits = Static | Player;
 	/// @endcode
-	maskBits: u64,
+	maskBits: uint64_t,
 
 	/// Collision groups allow a certain group of objects to never collide (negative)
 	/// or always collide (positive). A group index of zero has no effect. Non-zero group filtering
@@ -271,11 +271,11 @@ Filter :: struct {
 /// @ingroup shape
 QueryFilter :: struct {
 	/// The collision category bits of this query. Normally you would just set one bit.
-	categoryBits: u64,
+	categoryBits: uint64_t,
 
 	/// The collision mask bits. This states the shape categories that this
 	/// query would accept for collision.
-	maskBits: u64,
+	maskBits: uint64_t,
 }
 
 /// Shape type
@@ -333,7 +333,7 @@ ShapeDef :: struct {
 	filter: Filter,
 
 	/// Custom debug draw color.
-	customColor: u32,
+	customColor: uint32_t,
 
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not collide with other sensors and do not have continuous collision.
@@ -384,7 +384,7 @@ SurfaceMaterial :: struct {
 	material: i32,
 
 	/// Custom debug draw color.
-	customColor: u32,
+	customColor: uint32_t,
 }
 
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
@@ -876,7 +876,7 @@ WheelJointDef :: struct {
 /// @ingroup world
 ExplosionDef :: struct {
 	/// Mask bits to filter shapes
-	maskBits: u64,
+	maskBits: uint64_t,
 
 	/// The center of the explosion in world space
 	position: Vec2,

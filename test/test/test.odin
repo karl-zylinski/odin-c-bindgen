@@ -42,18 +42,14 @@ CXIndexOptions :: struct {
 	_: u32, /*Reserved*/
 }
 
-MyVtable :: struct {
-	myLog: proc "c" (cstring, #c_vararg ..any),
-}
-
 myLogImpl :: proc "c" (cstring, #c_vararg ..any)
 
-test_vtable :: struct {
-	listfiles: proc "c" (cstring, proc "c" (cstring, rawptr), rawptr, i32) -> i32,
+MyVtable :: struct {
+	logger: myLogImpl,
 }
 
 @(default_calling_convention="c", link_prefix="")
 foreign lib {
-	test           :: proc(fmt: cstring, log: proc "c" (cstring, #c_vararg ..any)) ---
+	test           :: proc(fmt: cstring, log: myLogImpl) ---
 	nppiYCCKToCMYK :: proc(pSrc: [4]^i32, nSrcStep: i32, pDst: [4]^i32, nDstStep: i32, oSizeROI: i32, nppStreamCtx: i32) -> i32 ---
 }

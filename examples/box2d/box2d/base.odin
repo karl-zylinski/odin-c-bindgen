@@ -45,29 +45,29 @@ HASH_INIT :: 5381
 foreign lib {
 	/// This allows the user to override the allocation functions. These should be
 	/// set during application startup.
-	SetAllocator :: proc(allocFcn: ^proc "c" (u32, i32) -> rawptr, freeFcn: ^proc "c" (rawptr)) ---
+	SetAllocator :: proc(allocFcn: ^AllocFcn, freeFcn: ^FreeFcn) ---
 
 	/// @return the total bytes allocated by Box2D
 	GetByteCount :: proc() -> i32 ---
 
 	/// Override the default assert callback
 	/// @param assertFcn a non-null assert callback
-	SetAssertFcn      :: proc(assertFcn: ^proc "c" (cstring, cstring, i32) -> i32) ---
+	SetAssertFcn      :: proc(assertFcn: ^AssertFcn) ---
 	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: i32) -> i32 ---
 
 	/// Get the current version of Box2D
 	GetVersion :: proc() -> Version ---
 
 	/// Get the absolute number of system ticks. The value is platform specific.
-	GetTicks :: proc() -> u64 ---
+	GetTicks :: proc() -> uint64_t ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMilliseconds :: proc(ticks: u64) -> f32 ---
+	GetMilliseconds :: proc(ticks: uint64_t) -> f32 ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMillisecondsAndReset :: proc(ticks: ^u64) -> f32 ---
+	GetMillisecondsAndReset :: proc(ticks: ^uint64_t) -> f32 ---
 
 	/// Yield to be used in a busy loop.
 	Yield :: proc() ---
-	Hash  :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
+	Hash  :: proc(hash: uint32_t, data: ^uint8_t, count: i32) -> uint32_t ---
 }
