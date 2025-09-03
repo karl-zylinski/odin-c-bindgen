@@ -136,7 +136,7 @@ Bool_List :: struct {
 }
 
 Uint32_List :: struct {
-	data:  [^]Uint32_T,
+	data:  [^]u32,
 	count: c.size_t,
 }
 
@@ -186,7 +186,7 @@ Dom_Value :: struct {
 	type:        Dom_Value_Type,
 	value_str:   String,
 	value_blob:  Blob,
-	value_int:   Int64_T,
+	value_int:   i64,
 	value_float: f64,
 }
 
@@ -333,12 +333,12 @@ PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOC
 // Single property with name/type/value.
 Prop :: struct {
 	name:          String,
-	_internal_key: Uint32_T,
+	_internal_key: u32,
 	type:          Prop_Type,
 	flags:         Prop_Flag,
 	value_str:     String,
 	value_blob:    Blob,
-	value_int:     Int64_T,
+	value_int:     i64,
 	using _: struct #raw_union {
 		value_real_arr: [4]Real,
 		value_real:     Real,
@@ -648,8 +648,8 @@ Connection_List :: struct {
 Element :: struct {
 	name:            String,
 	props:           Props,
-	element_id:      Uint32_T,
-	typed_id:        Uint32_T,
+	element_id:      u32,
+	typed_id:        u32,
 	instances:       Node_List,
 	type:            Element_Type,
 	connections_src: Connection_List,
@@ -666,8 +666,8 @@ Unknown :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -730,8 +730,8 @@ Node :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -868,7 +868,7 @@ Node :: struct {
 
 	// How deep is this node in the parent hierarchy. Root node is at depth `0`
 	// and the immediate children of root at `1`.
-	node_depth: Uint32_T,
+	node_depth: u32,
 }
 
 // Vertex attribute: All attributes are stored in a consistent indexed format
@@ -948,7 +948,7 @@ Vertex_Vec4 :: struct {
 // Vertex UV set/layer
 Uv_Set :: struct {
 	name:             String,
-	index:            Uint32_T,
+	index:            u32,
 	vertex_uv:        Vertex_Vec2, // < UV / texture coordinates
 	vertex_tangent:   Vertex_Vec3, // < (optional) Tangent vector in UV.x direction
 	vertex_bitangent: Vertex_Vec3, // < (optional) Tangent vector in UV.y direction
@@ -957,7 +957,7 @@ Uv_Set :: struct {
 // Vertex color set/layer
 Color_Set :: struct {
 	name:         String,
-	index:        Uint32_T,
+	index:        u32,
 	vertex_color: Vertex_Vec4, // < Per-vertex RGBA color
 }
 
@@ -975,9 +975,9 @@ Color_Set_List :: struct {
 Edge :: struct {
 	using _: struct #raw_union {
 		using _: struct {
-			a, b: Uint32_T,
+			a, b: u32,
 		},
-		indices: [2]Uint32_T,
+		indices: [2]u32,
 	},
 }
 
@@ -992,8 +992,8 @@ Edge_List :: struct {
 // NOTE: `num_indices` maybe less than 3 in which case the face is invalid!
 // [TODO #23: should probably remove the bad faces at load time]
 Face :: struct {
-	index_begin: Uint32_T,
-	num_indices: Uint32_T,
+	index_begin: u32,
+	num_indices: u32,
 }
 
 Face_List :: struct {
@@ -1004,7 +1004,7 @@ Face_List :: struct {
 // Subset of mesh faces used by a single material or group.
 Mesh_Part :: struct {
 	// Index of the mesh part.
-	index: Uint32_T,
+	index: u32,
 	num_faces:       c.size_t, // < Number of faces (polygons)
 	num_triangles:   c.size_t, // < Number of triangles if triangulated
 	num_empty_faces: c.size_t, // < Number of faces with zero vertices
@@ -1022,8 +1022,8 @@ Mesh_Part_List :: struct {
 }
 
 Face_Group :: struct {
-	id:   Int32_T, // < Numerical ID for this group.
-	name: String,  // < Name for the face group.
+	id:   i32,    // < Numerical ID for this group.
+	name: String, // < Name for the face group.
 }
 
 Face_Group_List :: struct {
@@ -1032,8 +1032,8 @@ Face_Group_List :: struct {
 }
 
 Subdivision_Weight_Range :: struct {
-	weight_begin: Uint32_T,
-	num_weights:  Uint32_T,
+	weight_begin: u32,
+	num_weights:  u32,
 }
 
 Subdivision_Weight_Range_List :: struct {
@@ -1043,7 +1043,7 @@ Subdivision_Weight_Range_List :: struct {
 
 Subdivision_Weight :: struct {
 	weight: Real,
-	index:  Uint32_T,
+	index:  u32,
 }
 
 Subdivision_Weight_List :: struct {
@@ -1150,8 +1150,8 @@ Mesh :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1232,8 +1232,8 @@ Mesh :: struct {
 	all_deformers:             Element_List,
 
 	// Subdivision
-	subdivision_preview_levels: Uint32_T,
-	subdivision_render_levels: Uint32_T,
+	subdivision_preview_levels: u32,
+	subdivision_render_levels: u32,
 	subdivision_display_mode:  Subdivision_Display_Mode,
 	subdivision_boundary:      Subdivision_Boundary,
 	subdivision_uv_boundary:   Subdivision_Boundary,
@@ -1302,8 +1302,8 @@ Light :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1450,8 +1450,8 @@ Camera :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1520,8 +1520,8 @@ Bone :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1543,8 +1543,8 @@ Empty :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1552,8 +1552,8 @@ Empty :: struct {
 
 // Segment of a `ufbx_line_curve`, indices refer to `ufbx_line_curve.point_indices[]`
 Line_Segment :: struct {
-	index_begin: Uint32_T,
-	num_indices: Uint32_T,
+	index_begin: u32,
+	num_indices: u32,
 }
 
 Line_Segment_List :: struct {
@@ -1567,8 +1567,8 @@ Line_Curve :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1599,7 +1599,7 @@ Nurbs_Topology :: enum i32 {
 Nurbs_Basis :: struct {
 	// Number of control points influencing a point on the curve/surface.
 	// Equal to the degree plus one.
-	order: Uint32_T,
+	order: u32,
 
 	// Topology (periodicity) of the dimension.
 	topology: Nurbs_Topology,
@@ -1635,8 +1635,8 @@ Nurbs_Curve :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1656,8 +1656,8 @@ Nurbs_Surface :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1677,8 +1677,8 @@ Nurbs_Surface :: struct {
 	control_points: Vec4_List,
 
 	// How many segments tessellate each span in `ufbx_nurbs_basis.spans`.
-	span_subdivision_u: Uint32_T,
-	span_subdivision_v:   Uint32_T,
+	span_subdivision_u: u32,
+	span_subdivision_v:   u32,
 
 	// If `true` the resulting normals should be flipped when evaluated.
 	flip_normals: bool,
@@ -1694,8 +1694,8 @@ Nurbs_Trim_Surface :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1707,8 +1707,8 @@ Nurbs_Trim_Boundary :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1721,8 +1721,8 @@ Procedural_Geometry :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1734,8 +1734,8 @@ Stereo_Camera :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1749,8 +1749,8 @@ Camera_Switcher :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1770,8 +1770,8 @@ Marker :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1815,8 +1815,8 @@ Lod_Group :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 			instances:  Node_List,
 		},
 	},
@@ -1861,8 +1861,8 @@ Skinning_Method :: enum i32 {
 
 // Skin weight information for a single mesh vertex
 Skin_Vertex :: struct {
-	weight_begin: Uint32_T, // < Index to start from in the `weights[]` array
-	num_weights:  Uint32_T, // < Number of weights influencing the vertex
+	weight_begin: u32, // < Index to start from in the `weights[]` array
+	num_weights:  u32, // < Number of weights influencing the vertex
 
 	// Blend weight between Linear Blend Skinning (0.0) and Dual Quaternion (1.0).
 	// Should be used if `skinning_method == UFBX_SKINNING_METHOD_BLENDED_DQ_LINEAR`
@@ -1876,8 +1876,8 @@ Skin_Vertex_List :: struct {
 
 // Single per-vertex per-cluster weight, see `ufbx_skin_vertex`
 Skin_Weight :: struct {
-	cluster_index: Uint32_T, // < Index into `ufbx_skin_deformer.clusters[]`
-	weight:        Real,     // < Amount this bone influence the vertex
+	cluster_index: u32,  // < Index into `ufbx_skin_deformer.clusters[]`
+	weight:        Real, // < Amount this bone influence the vertex
 }
 
 Skin_Weight_List :: struct {
@@ -1894,8 +1894,8 @@ Skin_Deformer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	skinning_method: Skinning_Method,
@@ -1925,8 +1925,8 @@ Skin_Cluster :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -1963,8 +1963,8 @@ Blend_Deformer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -1997,8 +1997,8 @@ Blend_Channel :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2020,8 +2020,8 @@ Blend_Shape :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	num_offsets:      c.size_t,    // < Number of vertex offsets in the following arrays
@@ -2094,10 +2094,10 @@ Cache_Frame :: struct {
 	scale_factor: Real,
 	data_format:        Cache_Data_Format,   // < Format of the data in the file
 	data_encoding:      Cache_Data_Encoding, // < Binary encoding of the data
-	data_offset:        Uint64_T,            // < Byte offset into the file
-	data_count:         Uint32_T,            // < Number of data elements
-	data_element_bytes: Uint32_T,            // < Size of a single data element in bytes
-	data_total_bytes:   Uint64_T,            // < Size of the whole data blob in bytes
+	data_offset:        u64,                 // < Byte offset into the file
+	data_count:         u32,                 // < Number of data elements
+	data_element_bytes: u32,                 // < Size of a single data element in bytes
+	data_total_bytes:   u64,                 // < Size of the whole data blob in bytes
 }
 
 Cache_Frame_List :: struct {
@@ -2145,8 +2145,8 @@ Cache_Deformer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	channel:          String,
@@ -2163,8 +2163,8 @@ Cache_File :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2208,7 +2208,7 @@ Material_Map :: struct {
 		value_vec3: Vec3,
 		value_vec4: Vec4,
 	},
-	value_int: Int64_T,
+	value_int: i64,
 
 	// Texture if connected, otherwise `NULL`.
 	// May be valid but "disabled" (application specific) if `texture_enabled == false`.
@@ -2227,7 +2227,7 @@ Material_Map :: struct {
 	feature_disabled: bool,
 
 	// Number of components in the value from 1 to 4 if defined, 0 if not.
-	value_components: Uint8_T,
+	value_components: u8,
 }
 
 // Material feature
@@ -2554,8 +2554,8 @@ Material :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2690,7 +2690,7 @@ Shader_Texture_Input :: struct {
 		value_vec3: Vec3,
 		value_vec4: Vec4,
 	},
-	value_int:  Int64_T,
+	value_int:  i64,
 	value_str:  String,
 	value_blob: Blob,
 
@@ -2698,7 +2698,7 @@ Shader_Texture_Input :: struct {
 	texture: ^Texture,
 
 	// Index of the output to use if `texture` is a multi-output shader node.
-	texture_output_index: Int64_T,
+	texture_output_index: i64,
 
 	// Controls whether shading should use `texture`.
 	// NOTE: Some shading models allow this to be `true` even if `texture == NULL`.
@@ -2734,7 +2734,7 @@ Shader_Texture :: struct {
 	shader_name: String,
 
 	// 64-bit opaque identifier for the shader type.
-	shader_type_id: Uint64_T,
+	shader_type_id: u64,
 
 	// Input values/textures (possibly further shader textures) to the shader.
 	// Sorted by `ufbx_shader_texture_input.name`.
@@ -2750,7 +2750,7 @@ Shader_Texture :: struct {
 	main_texture: ^Texture,
 
 	// Output index of `main_texture` if it is a multi-output shader.
-	main_texture_output_index: Int64_T,
+	main_texture_output_index: i64,
 
 	// Prefix for properties related to this shader in `ufbx_texture`.
 	// NOTE: Contains the trailing '|' if not empty.
@@ -2760,7 +2760,7 @@ Shader_Texture :: struct {
 // Unique texture within the file.
 Texture_File :: struct {
 	// Index in `ufbx_scene.texture_files[]`.
-	index: Uint32_T,
+	index: u32,
 
 	// Filename relative to the currently loaded file.
 	// HINT: If using functions other than `ufbx_load_file()`, you can provide
@@ -2802,8 +2802,8 @@ Texture :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2841,7 +2841,7 @@ Texture :: struct {
 	video: ^Video,
 
 	// FILE: Index into `ufbx_scene.texture_files[]` or `UFBX_NO_INDEX`.
-	file_index: Uint32_T,
+	file_index: u32,
 
 	// FILE: True if `file_index` has a valid value.
 	has_file: bool,
@@ -2877,8 +2877,8 @@ Video :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2918,8 +2918,8 @@ Shader :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -2949,8 +2949,8 @@ Shader_Binding :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	prop_bindings: Shader_Prop_Binding_List, // < Sorted by `shader_prop`
@@ -2958,12 +2958,12 @@ Shader_Binding :: struct {
 
 // -- Animation
 Prop_Override :: struct {
-	element_id:    Uint32_T,
-	_internal_key: Uint32_T,
+	element_id:    u32,
+	_internal_key: u32,
 	prop_name:     String,
 	value:         Vec4,
 	value_str:     String,
-	value_int:     Int64_T,
+	value_int:     i64,
 }
 
 Prop_Override_List :: struct {
@@ -2972,7 +2972,7 @@ Prop_Override_List :: struct {
 }
 
 Transform_Override :: struct {
-	node_id:   Uint32_T,
+	node_id:   u32,
 	transform: Transform,
 }
 
@@ -3017,8 +3017,8 @@ Anim_Stack :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	time_begin: f64,
@@ -3029,7 +3029,7 @@ Anim_Stack :: struct {
 
 Anim_Prop :: struct {
 	element:       ^Element,
-	_internal_key: Uint32_T,
+	_internal_key: u32,
 	prop_name:     String,
 	anim_value:    ^Anim_Value,
 }
@@ -3045,8 +3045,8 @@ Anim_Layer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	weight:              Real,
@@ -3058,9 +3058,9 @@ Anim_Layer :: struct {
 	anim_values:         Anim_Value_List,
 	anim_props:          Anim_Prop_List, // < Sorted by `element,prop_name`
 	anim:                ^Anim,
-	_min_element_id:     Uint32_T,
-	_max_element_id:     Uint32_T,
-	_element_id_bitmask: [4]Uint32_T,
+	_min_element_id:     u32,
+	_max_element_id:     u32,
+	_element_id_bitmask: [4]u32,
 }
 
 Anim_Value :: struct {
@@ -3069,8 +3069,8 @@ Anim_Value :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 	default_value: Vec3,
@@ -3100,7 +3100,7 @@ Extrapolation :: struct {
 
 	// Count used for repeating modes.
 	// Negative values mean infinite repetition.
-	repeat_count: Int32_T,
+	repeat_count: i32,
 }
 
 // Tangent vector at a keyframe, may be split into left/right
@@ -3140,8 +3140,8 @@ Anim_Curve :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3170,8 +3170,8 @@ Display_Layer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3189,8 +3189,8 @@ Selection_Set :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3205,8 +3205,8 @@ Selection_Node :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3226,8 +3226,8 @@ Character :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 }
@@ -3285,8 +3285,8 @@ Constraint :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3331,8 +3331,8 @@ Audio_Layer :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3346,8 +3346,8 @@ Audio_Clip :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3404,8 +3404,8 @@ Pose :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 
@@ -3423,8 +3423,8 @@ Metadata_Object :: struct {
 		using _: struct {
 			name:       String,
 			props:      Props,
-			element_id: Uint32_T,
-			typed_id:   Uint32_T,
+			element_id: u32,
+			typed_id:   u32,
 		},
 	},
 }
@@ -3433,7 +3433,7 @@ Metadata_Object :: struct {
 Name_Element :: struct {
 	name:          String,
 	type:          Element_Type,
-	_internal_key: Uint32_T,
+	_internal_key: u32,
 	element:       ^Element,
 }
 
@@ -3538,7 +3538,7 @@ Warning :: struct {
 	description: String,
 
 	// The element related to this warning or `UFBX_NO_INDEX` if not related to a specific element.
-	element_id: Uint32_T,
+	element_id: u32,
 
 	// Number of times this warning was encountered.
 	count: c.size_t,
@@ -3586,8 +3586,8 @@ Thumbnail :: struct {
 	props:  Props,
 
 	// Extents of the thumbnail
-	width: Uint32_T,
-	height: Uint32_T,
+	width: u32,
+	height: u32,
 
 	// Format of `ufbx_thumbnail.data`.
 	format: Thumbnail_Format,
@@ -3608,7 +3608,7 @@ Metadata :: struct {
 	ascii: bool,
 
 	// FBX version in integer format, eg. 7400 for 7.4.
-	version: Uint32_T,
+	version: u32,
 
 	// File format of the source file.
 	file_format: File_Format,
@@ -3639,7 +3639,7 @@ Metadata :: struct {
 	raw_filename:                   Blob,
 	raw_relative_root:              Blob,
 	exporter:                       Exporter,
-	exporter_version:               Uint32_T,
+	exporter_version:               u32,
 	scene_props:                    Props,
 	original_application:           Application,
 	latest_application:             Application,
@@ -3657,7 +3657,7 @@ Metadata :: struct {
 	bone_prop_size_unit:            Real,
 	bone_prop_limb_length_relative: bool,
 	ortho_size_unit:                Real,
-	ktime_second:                   Int64_T, // < One second in internal KTime units
+	ktime_second:                   i64, // < One second in internal KTime units
 	original_file_path:             String,
 	raw_original_file_path:         Blob,
 
@@ -3859,12 +3859,12 @@ Topo_Flags :: enum i32 {
 }
 
 Topo_Edge :: struct {
-	index: Uint32_T, // < Starting index of the edge, always defined
-	next:  Uint32_T, // < Ending index of the edge / next per-face `ufbx_topo_edge`, always defined
-	prev:  Uint32_T, // < Previous per-face `ufbx_topo_edge`, always defined
-	twin:  Uint32_T, // < `ufbx_topo_edge` on the opposite side, `UFBX_NO_INDEX` if not found
-	face:  Uint32_T, // < Index into `mesh->faces[]`, always defined
-	edge:  Uint32_T, // < Index into `mesh->edges[]`, `UFBX_NO_INDEX` if not found
+	index: u32, // < Starting index of the edge, always defined
+	next:  u32, // < Ending index of the edge / next per-face `ufbx_topo_edge`, always defined
+	prev:  u32, // < Previous per-face `ufbx_topo_edge`, always defined
+	twin:  u32, // < `ufbx_topo_edge` on the opposite side, `UFBX_NO_INDEX` if not found
+	face:  u32, // < Index into `mesh->faces[]`, always defined
+	edge:  u32, // < Index into `mesh->edges[]`, `UFBX_NO_INDEX` if not found
 	flags: Topo_Flags,
 }
 
@@ -3943,7 +3943,7 @@ Skip_Fn :: proc "c" (rawptr, c.size_t) -> bool
 
 // Get the size of the file.
 // Return `0` if unknown, `UINT64_MAX` if error.
-Size_Fn :: proc "c" (rawptr) -> Uint64_T
+Size_Fn :: proc "c" (rawptr) -> u64
 
 // Close the file
 Close_Fn :: proc "c" (rawptr)
@@ -3991,14 +3991,14 @@ Open_File_Cb :: struct {
 
 // Options for `ufbx_open_file()`.
 Open_File_Opts :: struct {
-	_begin_zero: Uint32_T,
+	_begin_zero: u32,
 
 	// Allocator to allocate the memory with.
 	allocator: Allocator_Opts,
 
 	// The filename is guaranteed to be NULL-terminated.
 	filename_null_terminated: bool,
-	_end_zero:   Uint32_T,
+	_end_zero:   u32,
 }
 
 // Memory stream options
@@ -4011,7 +4011,7 @@ Close_Memory_Cb :: struct {
 
 // Options for `ufbx_open_memory()`.
 Open_Memory_Opts :: struct {
-	_begin_zero: Uint32_T,
+	_begin_zero: u32,
 
 	// Allocator to allocate the memory with.
 	// NOTE: Used even if no copy is made to allocate a small metadata block.
@@ -4025,13 +4025,13 @@ Open_Memory_Opts :: struct {
 
 	// Callback to free the memory blob.
 	close_cb: Close_Memory_Cb,
-	_end_zero:   Uint32_T,
+	_end_zero:   u32,
 }
 
 // Detailed error stack frame.
 // NOTE: You must compile `ufbx.c` with `UFBX_ENABLE_ERROR_STACK` to enable the error stack.
 Error_Frame :: struct {
-	source_line: Uint32_T,
+	source_line: u32,
 	function:    String,
 	description: String,
 }
@@ -4138,7 +4138,7 @@ Error :: struct {
 
 	// Internal error stack.
 	// NOTE: You must compile `ufbx.c` with `UFBX_ENABLE_ERROR_STACK` to enable the error stack.
-	stack_size: Uint32_T,
+	stack_size: u32,
 	stack: [8]Error_Frame,
 
 	// Additional error information, such as missing file filename.
@@ -4149,8 +4149,8 @@ Error :: struct {
 
 // Loading progress information.
 Progress :: struct {
-	bytes_read:  Uint64_T,
-	bytes_total: Uint64_T,
+	bytes_read:  u64,
+	bytes_total: u64,
 }
 
 // Progress result returned from `ufbx_progress_fn()` callback.
@@ -4194,11 +4194,11 @@ Inflate_Input :: struct {
 
 	// (optional) Progress reporting
 	progress_cb: Progress_Cb,
-	progress_interval_hint: Uint64_T, // < Bytes between progress report calls
+	progress_interval_hint: u64, // < Bytes between progress report calls
 
 	// (optional) Change the progress scope
-	progress_size_before: Uint64_T,
-	progress_size_after:    Uint64_T,
+	progress_size_before: u64,
+	progress_size_after:    u64,
 
 	// (optional) No the DEFLATE header
 	no_header: bool,
@@ -4214,7 +4214,7 @@ Inflate_Input :: struct {
 // NOTE: You must set `initialized` to `false`, but `data` may be uninitialized
 Inflate_Retain :: struct {
 	initialized: bool,
-	data:        [1024]Uint64_T,
+	data:        [1024]u64,
 }
 
 Index_Error_Handling :: enum i32 {
@@ -4404,10 +4404,10 @@ Baked_Quat_List :: struct {
 // Baked transform animation for a single node.
 Baked_Node :: struct {
 	// Typed ID of the node, maps to `ufbx_scene.nodes[]`.
-	typed_id: Uint32_T,
+	typed_id: u32,
 
 	// Element ID of the element, maps to `ufbx_scene.elements[]`.
-	element_id: Uint32_T,
+	element_id: u32,
 
 	// The translation channel has constant values for the whole animation.
 	constant_translation: bool,
@@ -4453,7 +4453,7 @@ Baked_Prop_List :: struct {
 // Baked property animation for a single element.
 Baked_Element :: struct {
 	// Element ID of the element, maps to `ufbx_scene.elements[]`.
-	element_id: Uint32_T,
+	element_id: u32,
 
 	// List of properties the animation modifies.
 	props: Baked_Prop_List,
@@ -4504,7 +4504,7 @@ Thread_Pool_Context :: c.uintptr_t
 
 // Thread pool creation information from ufbx.
 Thread_Pool_Info :: struct {
-	max_concurrent_tasks: Uint32_T,
+	max_concurrent_tasks: u32,
 }
 
 // Initialize the thread pool.
@@ -4515,11 +4515,11 @@ Thread_Pool_Init_Fn :: proc "c" (rawptr, Thread_Pool_Context, ^Thread_Pool_Info)
 // You must call `ufbx_thread_pool_run_task()` with indices `[start_index, start_index + count)`.
 // The threads are launched in batches indicated by `group`, see `UFBX_THREAD_GROUP_COUNT` for more information.
 // Ideally, you should run all the task indices in parallel within each `ufbx_thread_pool_run_fn()` call.
-Thread_Pool_Run_Fn :: proc "c" (rawptr, Thread_Pool_Context, Uint32_T, Uint32_T, Uint32_T)
+Thread_Pool_Run_Fn :: proc "c" (rawptr, Thread_Pool_Context, u32, u32, u32)
 
 // Wait for previous tasks spawned in `ufbx_thread_pool_run_fn()` to finish.
 // `group` specifies the batch to wait for, `max_index` contains `start_index + count` from that group instance.
-Thread_Pool_Wait_Fn :: proc "c" (rawptr, Thread_Pool_Context, Uint32_T, Uint32_T)
+Thread_Pool_Wait_Fn :: proc "c" (rawptr, Thread_Pool_Context, u32, u32)
 
 // Free the thread pool.
 Thread_Pool_Free_Fn :: proc "c" (rawptr, Thread_Pool_Context)
@@ -4573,7 +4573,7 @@ Evaluate_Flags :: enum i32 {
 // Options for `ufbx_load_file/memory/stream/stdio()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Load_Opts :: struct {
-	_begin_zero:            Uint32_T,
+	_begin_zero:            u32,
 	temp_allocator:         Allocator_Opts, // < Allocator used during loading
 	result_allocator:       Allocator_Opts, // < Allocator used for the final scene
 	thread_opts:            Thread_Opts,    // < Threading options
@@ -4663,10 +4663,10 @@ Load_Opts :: struct {
 	// Will fail with `UFBX_ERROR_NODE_DEPTH_LIMIT` if a node is deeper than this limit.
 	// NOTE: The default of 0 allows arbitrarily deep hierarchies. Be careful if using
 	// recursive algorithms without setting this limit.
-	node_depth_limit: Uint32_T,
+	node_depth_limit: u32,
 
 	// Estimated file size for progress reporting
-	file_size_estimate: Uint64_T,
+	file_size_estimate: u64,
 
 	// Buffer size in bytes to use for reading from files or IO callbacks
 	read_buffer_size: c.size_t,
@@ -4682,7 +4682,7 @@ Load_Opts :: struct {
 
 	// Progress reporting
 	progress_cb: Progress_Cb,
-	progress_interval_hint: Uint64_T,       // < Bytes between progress report calls
+	progress_interval_hint: u64,            // < Bytes between progress report calls
 
 	// External file callbacks (defaults to stdio.h)
 	open_file_cb: Open_File_Cb,
@@ -4811,13 +4811,13 @@ Load_Opts :: struct {
 	// .obj files do not define the coordinate space they use. By default no
 	// coordinate space is assumed and no conversion is performed.
 	obj_axes: Coordinate_Axes,
-	_end_zero:              Uint32_T,
+	_end_zero:              u32,
 }
 
 // Options for `ufbx_evaluate_scene()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Evaluate_Opts :: struct {
-	_begin_zero:       Uint32_T,
+	_begin_zero:       u32,
 	temp_allocator:    Allocator_Opts, // < Allocator used during evaluation
 	result_allocator:  Allocator_Opts, // < Allocator used for the final scene
 	evaluate_skinning: bool,           // < Evaluate skinning (see ufbx_mesh.skinned_vertices)
@@ -4825,18 +4825,18 @@ Evaluate_Opts :: struct {
 
 	// Evaluation flags.
 	// See `ufbx_evaluate_flags` for information.
-	evaluate_flags: Uint32_T,
+	evaluate_flags: u32,
 
 	// WARNING: Potentially unsafe! Try to open external files such as geometry caches
 	load_external_files: bool,
 
 	// External file callbacks (defaults to stdio.h)
 	open_file_cb: Open_File_Cb,
-	_end_zero:         Uint32_T,
+	_end_zero:         u32,
 }
 
 Const_Uint32_List :: struct {
-	data:  ^Uint32_T,
+	data:  ^u32,
 	count: c.size_t,
 }
 
@@ -4847,7 +4847,7 @@ Const_Real_List :: struct {
 
 Prop_Override_Desc :: struct {
 	// Element (`ufbx_element.element_id`) to override the property from
-	element_id: Uint32_T,
+	element_id: u32,
 
 	// Property name to override.
 	prop_name: String,
@@ -4856,7 +4856,7 @@ Prop_Override_Desc :: struct {
 	// from `value.x` if zero so keep `value` zeroed even if you don't need it!
 	value: Vec4,
 	value_str: String,
-	value_int: Int64_T,
+	value_int: i64,
 }
 
 Const_Prop_Override_Desc_List :: struct {
@@ -4870,7 +4870,7 @@ Const_Transform_Override_List :: struct {
 }
 
 Anim_Opts :: struct {
-	_begin_zero:      Uint32_T,
+	_begin_zero:      u32,
 
 	// Animation layers indices.
 	// Corresponding to `ufbx_scene.anim_layers[]`, aka `ufbx_anim_layer.typed_id`.
@@ -4890,7 +4890,7 @@ Anim_Opts :: struct {
 	// Ignore connected properties
 	ignore_connections: bool,
 	result_allocator: Allocator_Opts, // < Allocator used to create the `ufbx_anim`
-	_end_zero:        Uint32_T,
+	_end_zero:        u32,
 }
 
 // Specifies how to handle stepped tangents.
@@ -4922,7 +4922,7 @@ Bake_Step_Handling :: enum i32 {
 }
 
 Bake_Opts :: struct {
-	_begin_zero:      Uint32_T,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during loading
 	result_allocator: Allocator_Opts, // < Allocator used for the final baked animation
 
@@ -4977,7 +4977,7 @@ Bake_Opts :: struct {
 
 	// Flags passed to animation evaluation functions.
 	// See `ufbx_evaluate_flags`.
-	evaluate_flags: Uint32_T,
+	evaluate_flags: u32,
 
 	// Enable key reduction.
 	key_reduction_enabled: bool,
@@ -4994,25 +4994,25 @@ Bake_Opts :: struct {
 	// Every pass can potentially halve the the amount of keys.
 	// Default: `4`
 	key_reduction_passes: c.size_t,
-	_end_zero:        Uint32_T,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_tessellate_nurbs_curve()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Tessellate_Curve_Opts :: struct {
-	_begin_zero:      Uint32_T,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during tessellation
 	result_allocator: Allocator_Opts, // < Allocator used for the final line curve
 
 	// How many segments tessellate each span in `ufbx_nurbs_basis.spans`.
 	span_subdivision: c.size_t,
-	_end_zero:        Uint32_T,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_tessellate_nurbs_surface()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Tessellate_Surface_Opts :: struct {
-	_begin_zero:        Uint32_T,
+	_begin_zero:        u32,
 	temp_allocator:     Allocator_Opts, // < Allocator used during tessellation
 	result_allocator:   Allocator_Opts, // < Allocator used for the final mesh
 
@@ -5026,13 +5026,13 @@ Tessellate_Surface_Opts :: struct {
 
 	// Skip computing `ufbx_mesh.material_parts[]`
 	skip_mesh_parts: bool,
-	_end_zero:          Uint32_T,
+	_end_zero:          u32,
 }
 
 // Options for `ufbx_subdivide_mesh()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Subdivide_Opts :: struct {
-	_begin_zero:      Uint32_T,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during subdivision
 	result_allocator: Allocator_Opts, // < Allocator used for the final mesh
 	boundary:         Subdivision_Boundary,
@@ -5064,13 +5064,13 @@ Subdivide_Opts :: struct {
 
 	// Index of the skin deformer to use for `evaluate_skin_weights`.
 	skin_deformer_index: c.size_t,
-	_end_zero:        Uint32_T,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_load_geometry_cache()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Opts :: struct {
-	_begin_zero:      Uint32_T,
+	_begin_zero:      u32,
 	temp_allocator:   Allocator_Opts, // < Allocator used during loading
 	result_allocator: Allocator_Opts, // < Allocator used for the final scene
 
@@ -5088,13 +5088,13 @@ Geometry_Cache_Opts :: struct {
 
 	// Factor to scale the geometry by.
 	scale_factor: Real,
-	_end_zero:        Uint32_T,
+	_end_zero:        u32,
 }
 
 // Options for `ufbx_read_geometry_cache_TYPE()`
 // NOTE: Initialize to zero with `{ 0 }` (C) or `{ }` (C++)
 Geometry_Cache_Data_Opts :: struct {
-	_begin_zero: Uint32_T,
+	_begin_zero: u32,
 
 	// External file callbacks (defaults to stdio.h)
 	open_file_cb: Open_File_Cb,
@@ -5104,7 +5104,7 @@ Geometry_Cache_Data_Opts :: struct {
 
 	// Ignore scene transform.
 	ignore_transform: bool,
-	_end_zero:   Uint32_T,
+	_end_zero:   u32,
 }
 
 Panic :: struct {
@@ -5266,8 +5266,8 @@ foreign lib {
 	find_real       :: proc(props: ^Props, name: cstring, def: Real) -> Real ---
 	find_vec3_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Vec3) -> Vec3 ---
 	find_vec3       :: proc(props: ^Props, name: cstring, def: Vec3) -> Vec3 ---
-	find_int_len    :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: Int64_T) -> Int64_T ---
-	find_int        :: proc(props: ^Props, name: cstring, def: Int64_T) -> Int64_T ---
+	find_int_len    :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: i64) -> i64 ---
+	find_int        :: proc(props: ^Props, name: cstring, def: i64) -> i64 ---
 	find_bool_len   :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: bool) -> bool ---
 	find_bool       :: proc(props: ^Props, name: cstring, def: bool) -> bool ---
 	find_string_len :: proc(props: ^Props, name: cstring, name_len: c.size_t, def: String) -> String ---
@@ -5339,37 +5339,37 @@ foreign lib {
 	// Evaluate a single animation `curve` at a `time`.
 	// Returns `default_value` only if `curve == NULL` or it has no keyframes.
 	evaluate_curve       :: proc(curve: ^Anim_Curve, time: f64, default_value: Real) -> Real ---
-	evaluate_curve_flags :: proc(curve: ^Anim_Curve, time: f64, default_value: Real, flags: Uint32_T) -> Real ---
+	evaluate_curve_flags :: proc(curve: ^Anim_Curve, time: f64, default_value: Real, flags: u32) -> Real ---
 
 	// Evaluate a value from bundled animation curves.
 	evaluate_anim_value_real       :: proc(anim_value: ^Anim_Value, time: f64) -> Real ---
 	evaluate_anim_value_vec3       :: proc(anim_value: ^Anim_Value, time: f64) -> Vec3 ---
-	evaluate_anim_value_real_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: Uint32_T) -> Real ---
-	evaluate_anim_value_vec3_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: Uint32_T) -> Vec3 ---
+	evaluate_anim_value_real_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Real ---
+	evaluate_anim_value_vec3_flags :: proc(anim_value: ^Anim_Value, time: f64, flags: u32) -> Vec3 ---
 
 	// Evaluate an animated property `name` from `element` at `time`.
 	// NOTE: If the property is not found it will have the flag `UFBX_PROP_FLAG_NOT_FOUND`.
 	evaluate_prop_len       :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: c.size_t, time: f64) -> Prop ---
 	evaluate_prop           :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64) -> Prop ---
-	evaluate_prop_len_flags :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: c.size_t, time: f64, flags: Uint32_T) -> Prop ---
-	evaluate_prop_flags     :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64, flags: Uint32_T) -> Prop ---
+	evaluate_prop_len_flags :: proc(anim: ^Anim, element: ^Element, name: cstring, name_len: c.size_t, time: f64, flags: u32) -> Prop ---
+	evaluate_prop_flags     :: proc(anim: ^Anim, element: ^Element, name: cstring, time: f64, flags: u32) -> Prop ---
 
 	// Evaluate all _animated_ properties of `element`.
 	// HINT: This function returns an `ufbx_props` structure with the original properties as
 	// `ufbx_props.defaults`. This lets you use `ufbx_find_prop/value()` for the results.
 	evaluate_props       :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: c.size_t) -> Props ---
-	evaluate_props_flags :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: c.size_t, flags: Uint32_T) -> Props ---
+	evaluate_props_flags :: proc(anim: ^Anim, element: ^Element, time: f64, buffer: ^Prop, buffer_size: c.size_t, flags: u32) -> Props ---
 
 	// Evaluate the animated transform of a node given a time.
 	// The returned transform is the local transform of the node (ie. relative to the parent),
 	// comparable to `ufbx_node.local_transform`.
 	evaluate_transform       :: proc(anim: ^Anim, node: ^Node, time: f64) -> Transform ---
-	evaluate_transform_flags :: proc(anim: ^Anim, node: ^Node, time: f64, flags: Uint32_T) -> Transform ---
+	evaluate_transform_flags :: proc(anim: ^Anim, node: ^Node, time: f64, flags: u32) -> Transform ---
 
 	// Evaluate the blend shape weight of a blend channel.
 	// NOTE: Return value uses `1.0` for full weight, instead of `100.0` that the internal property `UFBX_Weight` uses.
 	evaluate_blend_weight       :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64) -> Real ---
-	evaluate_blend_weight_flags :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64, flags: Uint32_T) -> Real ---
+	evaluate_blend_weight_flags :: proc(anim: ^Anim, channel: ^Blend_Channel, time: f64, flags: u32) -> Real ---
 
 	// Evaluate the whole `scene` at a specific `time` in the animation `anim`.
 	// The returned scene behaves as if it had been exported at a specific time
@@ -5397,9 +5397,9 @@ foreign lib {
 	bake_anim                        :: proc(scene: ^Scene, anim: ^Anim, opts: ^Bake_Opts, error: ^Error) -> ^Baked_Anim ---
 	retain_baked_anim                :: proc(bake: ^Baked_Anim) ---
 	free_baked_anim                  :: proc(bake: ^Baked_Anim) ---
-	find_baked_node_by_typed_id      :: proc(bake: ^Baked_Anim, typed_id: Uint32_T) -> ^Baked_Node ---
+	find_baked_node_by_typed_id      :: proc(bake: ^Baked_Anim, typed_id: u32) -> ^Baked_Node ---
 	find_baked_node                  :: proc(bake: ^Baked_Anim, node: ^Node) -> ^Baked_Node ---
-	find_baked_element_by_element_id :: proc(bake: ^Baked_Anim, element_id: Uint32_T) -> ^Baked_Element ---
+	find_baked_element_by_element_id :: proc(bake: ^Baked_Anim, element_id: u32) -> ^Baked_Element ---
 	find_baked_element               :: proc(bake: ^Baked_Anim, element: ^Element) -> ^Baked_Element ---
 
 	// Evaluate baked animation `keyframes` at `time`.
@@ -5473,7 +5473,7 @@ foreign lib {
 
 	// Resolve the index into `ufbx_blend_shape.position_offsets[]` given a vertex.
 	// Returns `UFBX_NO_INDEX` if the vertex is not included in the blend shape.
-	get_blend_shape_offset_index :: proc(shape: ^Blend_Shape, vertex: c.size_t) -> Uint32_T ---
+	get_blend_shape_offset_index :: proc(shape: ^Blend_Shape, vertex: c.size_t) -> u32 ---
 
 	// Get the offset for a given vertex in the blend shape.
 	// Returns `ufbx_zero_vec3` if the vertex is not a included in the blend shape.
@@ -5513,25 +5513,25 @@ foreign lib {
 
 	// Find the face that contains a given `index`.
 	// Returns `UFBX_NO_INDEX` if out of bounds.
-	find_face_index :: proc(mesh: ^Mesh, index: c.size_t) -> Uint32_T ---
+	find_face_index :: proc(mesh: ^Mesh, index: c.size_t) -> u32 ---
 
 	// Triangulate a mesh face, returning the number of triangles.
 	// NOTE: You need to space for `(face.num_indices - 2) * 3 - 1` indices!
 	// HINT: Using `ufbx_mesh.max_face_triangles * 3` is always safe.
-	catch_triangulate_face :: proc(panic: ^Panic, indices: ^Uint32_T, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> Uint32_T ---
-	triangulate_face       :: proc(indices: ^Uint32_T, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> Uint32_T ---
+	catch_triangulate_face :: proc(panic: ^Panic, indices: ^u32, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> u32 ---
+	triangulate_face       :: proc(indices: ^u32, num_indices: c.size_t, mesh: ^Mesh, face: Face) -> u32 ---
 
 	// Generate the half-edge representation of `mesh` to `topo[mesh->num_indices]`
 	catch_compute_topology :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t) ---
 	compute_topology       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t) ---
 
 	// Get the next half-edge in `topo`.
-	catch_topo_next_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: Uint32_T) -> Uint32_T ---
-	topo_next_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: Uint32_T) -> Uint32_T ---
+	catch_topo_next_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
+	topo_next_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
 
 	// Get the previous half-edge in `topo`.
-	catch_topo_prev_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: Uint32_T) -> Uint32_T ---
-	topo_prev_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: Uint32_T) -> Uint32_T ---
+	catch_topo_prev_vertex_edge :: proc(panic: ^Panic, topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
+	topo_prev_vertex_edge       :: proc(topo: ^Topo_Edge, num_topo: c.size_t, index: u32) -> u32 ---
 
 	// Calculate a normal for a given face.
 	// The returned normal is weighted by face area.
@@ -5540,13 +5540,13 @@ foreign lib {
 
 	// Generate indices for normals from the topology.
 	// Respects smoothing groups.
-	catch_generate_normal_mapping :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^Uint32_T, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
-	generate_normal_mapping       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^Uint32_T, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
+	catch_generate_normal_mapping :: proc(panic: ^Panic, mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^u32, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
+	generate_normal_mapping       :: proc(mesh: ^Mesh, topo: ^Topo_Edge, num_topo: c.size_t, normal_indices: ^u32, num_normal_indices: c.size_t, assume_smooth: bool) -> c.size_t ---
 
 	// Compute normals given normal indices.
 	// You can use `ufbx_generate_normal_mapping()` to generate the normal indices.
-	catch_compute_normals :: proc(panic: ^Panic, mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^Uint32_T, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
-	compute_normals       :: proc(mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^Uint32_T, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
+	catch_compute_normals :: proc(panic: ^Panic, mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
+	compute_normals       :: proc(mesh: ^Mesh, positions: ^Vertex_Vec3, normal_indices: ^u32, num_normal_indices: c.size_t, normals: ^Vec3, num_normals: c.size_t) ---
 
 	// Subdivide a mesh using the Catmull-Clark subdivision `level` times.
 	subdivide_mesh :: proc(mesh: ^Mesh, level: c.size_t, opts: ^Subdivide_Opts, error: ^Error) -> ^Mesh ---
@@ -5584,11 +5584,11 @@ foreign lib {
 	// Generate an index buffer for a flat vertex buffer.
 	// `streams` specifies one or more vertex data arrays, each stream must contain `num_indices` vertices.
 	// This function compacts the data within `streams` in-place, writing the deduplicated indices to `indices`.
-	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: c.size_t, indices: ^Uint32_T, num_indices: c.size_t, allocator: ^Allocator_Opts, error: ^Error) -> c.size_t ---
+	generate_indices :: proc(streams: [^]Vertex_Stream, num_streams: c.size_t, indices: ^u32, num_indices: c.size_t, allocator: ^Allocator_Opts, error: ^Error) -> c.size_t ---
 
 	// Run a single thread pool task.
 	// See `ufbx_thread_pool_run_fn` for more information.
-	thread_pool_run_task :: proc(ctx: Thread_Pool_Context, index: Uint32_T) ---
+	thread_pool_run_task :: proc(ctx: Thread_Pool_Context, index: u32) ---
 
 	// Get or set an arbitrary user pointer for the thread pool context.
 	// `ufbx_thread_pool_get_user_ptr()` returns `NULL` if unset.

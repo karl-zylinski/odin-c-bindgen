@@ -59,15 +59,15 @@ foreign lib {
 	GetVersion :: proc() -> Version ---
 
 	/// Get the absolute number of system ticks. The value is platform specific.
-	GetTicks :: proc() -> uint64_t ---
+	GetTicks :: proc() -> u64 ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMilliseconds :: proc(ticks: uint64_t) -> f32 ---
+	GetMilliseconds :: proc(ticks: u64) -> f32 ---
 
 	/// Get the milliseconds passed from an initial tick value.
-	GetMillisecondsAndReset :: proc(ticks: ^uint64_t) -> f32 ---
+	GetMillisecondsAndReset :: proc(ticks: ^u64) -> f32 ---
 
 	/// Yield to be used in a busy loop.
 	Yield :: proc() ---
-	Hash  :: proc(hash: uint32_t, data: ^uint8_t, count: i32) -> uint32_t ---
+	Hash  :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
 }

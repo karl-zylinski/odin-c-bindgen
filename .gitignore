@@ -1,7 +1,9 @@
 *.pdb
 *.rdi
 *.exe
+*.yml
 scrap
+compile_examples.bat
 .vscode
 libclang.dll
 libclang/libclang.lib

@@ -286,7 +286,7 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 			return strings.to_string(builder)
 		}
 		panic("Unreachable!")
-	case .Record, .Enum, .Typedef, .Elaborated:
+	case .Record, .Enum, .Typedef:
 		return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
 	case .ConstantArray, .Vector:
 		// I'm not sure if this is correct for vectors.
@@ -304,8 +304,39 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		strings.write_string(&builder, "[^]")
 		strings.write_string(&builder, parse_type(s, clang.getArrayElementType(type)))
 		return strings.to_string(builder)
-	// case .Elaborated:
-	// 	return parse_type(s, clang.getTypedefDeclUnderlyingType(type))
+	case .Elaborated:
+		#partial switch elaborated_type := clang.Type_getNamedType(type); elaborated_type.kind {
+		case .Typedef:
+			// This is an annoying edge case
+			c_typedef_types := map[string]string {
+				"uint8_t"  = "u8",
+				"int8_t"   = "i8",
+				"uint16_t" = "u16",
+				"int16_t"  = "i16",
+				"uint32_t" = "u32",
+				"int32_t"  = "i32",
+				"uint64_t" = "u64",
+				"int64_t"  = "i64",
+
+				"int_least8_t"   = "i8",
+				"uint_least8_t"  = "u8",
+				"int_least16_t"  = "i16",
+				"uint_least16_t" = "u16",
+				"int_least32_t"  = "i32",
+				"uint_least32_t" = "u32",
+				"int_least64_t"  = "i64",
+				"uint_least64_t" = "u64",
+			}
+			if replacement, exists := c_typedef_types[clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type)))]; exists {
+				return replacement
+			}
+			fallthrough
+		case .Record, .Enum, .FunctionNoProto, .FunctionProto:
+			return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
+		case:
+			return parse_type(s, elaborated_type)
+		}
+		panic("Unreachable!")
 	}
 	// If we get here then we need to add a new case.
 	panic("Unreachable!")
@@ -596,7 +627,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 
 dump_ast :: proc(root_cursor: clang.Cursor, source_file: clang.File, out_file: string) {
     indent :: proc(file: ^os2.File, indent_level: u32) {
-        for i in 0 ..< indent_level {
+        for _ in 0 ..< indent_level {
             os2.write_string(file, "  ")
         }
     }

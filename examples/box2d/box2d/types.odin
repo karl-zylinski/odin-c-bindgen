@@ -25,7 +25,7 @@ DEFAULT_CATEGORY_BITS :: 0x0001
 /// }
 /// @endcode
 /// @ingroup world
-TaskCallback :: proc "c" (i32, i32, uint32_t, rawptr)
+TaskCallback :: proc "c" (i32, i32, u32, rawptr)
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -245,7 +245,7 @@ Filter :: struct {
 	///    // etc
 	/// };
 	/// @endcode
-	categoryBits: uint64_t,
+	categoryBits: u64,
 
 	/// The collision mask bits. This states the categories that this
 	/// shape would accept for collision.
@@ -254,7 +254,7 @@ Filter :: struct {
 	/// @code{.c}
 	/// maskBits = Static | Player;
 	/// @endcode
-	maskBits: uint64_t,
+	maskBits: u64,
 
 	/// Collision groups allow a certain group of objects to never collide (negative)
 	/// or always collide (positive). A group index of zero has no effect. Non-zero group filtering
@@ -271,11 +271,11 @@ Filter :: struct {
 /// @ingroup shape
 QueryFilter :: struct {
 	/// The collision category bits of this query. Normally you would just set one bit.
-	categoryBits: uint64_t,
+	categoryBits: u64,
 
 	/// The collision mask bits. This states the shape categories that this
 	/// query would accept for collision.
-	maskBits: uint64_t,
+	maskBits: u64,
 }
 
 /// Shape type
@@ -333,7 +333,7 @@ ShapeDef :: struct {
 	filter: Filter,
 
 	/// Custom debug draw color.
-	customColor: uint32_t,
+	customColor: u32,
 
 	/// A sensor shape generates overlap events but never generates a collision response.
 	/// Sensors do not collide with other sensors and do not have continuous collision.
@@ -384,7 +384,7 @@ SurfaceMaterial :: struct {
 	material: i32,
 
 	/// Custom debug draw color.
-	customColor: uint32_t,
+	customColor: u32,
 }
 
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
@@ -876,7 +876,7 @@ WheelJointDef :: struct {
 /// @ingroup world
 ExplosionDef :: struct {
 	/// Mask bits to filter shapes
-	maskBits: uint64_t,
+	maskBits: u64,
 
 	/// The center of the explosion in world space
 	position: Vec2,
