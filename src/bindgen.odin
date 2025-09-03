@@ -1420,7 +1420,6 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			d.name = vet_name(name)
-			add_to_set(&s.created_types, d.name)
 		}
 	}
 
@@ -1849,7 +1848,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if bool(clang.Type_isTransparentTagTypedef(d.type)) {
+			if parse_type(&s, d.type) == d.name {
 				continue
 			}
 
