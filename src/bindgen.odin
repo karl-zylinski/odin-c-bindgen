@@ -267,25 +267,19 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 			return "complex128"
 		}
 	case .Pointer:
-		#partial switch pointee_type := clang.getPointeeType(type); pointee_type.kind {
-		case .FunctionProto, .FunctionNoProto:
-			return parse_function_type(s, pointee_type)
-		case:
-			pointee_string := parse_nonfunction_type(s, pointee_type)
-			if pointee_string == "" {
-				return "rawptr"
-			} else if pointee_string == "i8" {
-				return "cstring"
-			} else if pointee_string == "cstring" {
-				return "[^]cstring"
-			}
-
-			builder := strings.builder_make()
-			strings.write_byte(&builder, '^')
-			strings.write_string(&builder, pointee_string)
-			return strings.to_string(builder)
+		pointee_string := parse_type(s, clang.getPointeeType(type))
+		if pointee_string == "" {
+			return "rawptr"
+		} else if pointee_string == "i8" {
+			return "cstring"
+		} else if pointee_string == "cstring" {
+			return "[^]cstring"
 		}
-		panic("Unreachable!")
+
+		builder := strings.builder_make()
+		strings.write_byte(&builder, '^')
+		strings.write_string(&builder, pointee_string)
+		return strings.to_string(builder)
 	case .Record, .Enum, .Typedef:
 		return translate_name(s, clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type))))
 	case .ConstantArray, .Vector:
@@ -1855,7 +1849,7 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if parse_type(&s, d.type) == d.name {
+			if bool(clang.Type_isTransparentTagTypedef(d.type)) {
 				continue
 			}
 
