@@ -33,7 +33,7 @@ CPP11 :: 0
 
 // ufbx_abi_data_def :: 
 
-// REAL_TYPE :: 
+REAL_TYPE :: f32
 
 // Limits for embedded arrays within structures.
 ERROR_STACK_MAX_DEPTH :: 8

@@ -2179,9 +2179,9 @@ gen :: proc(input: string, c: Config) {
 					case .Keyword:
 						tokens_str := token_str
 						tokens_count := 0
-						for token in macro.tokens[index + 1:] {
-							if clang.getTokenKind(token) == .Keyword {
-								tokens_str = fmt.tprint(tokens_str, clang_string_to_string(clang.getTokenSpelling(tu, token)))
+						for t in macro.tokens[index + 1:] {
+							if clang.getTokenKind(t) == .Keyword {
+								tokens_str = fmt.tprint(tokens_str, clang_string_to_string(clang.getTokenSpelling(tu, t)))
 								tokens_count += 1
 							} else {
 								break
@@ -2192,7 +2192,7 @@ gen :: proc(input: string, c: Config) {
 							strings.write_string(&builder, keyword_string)
 							index += tokens_count
 						} else {
-							if keyword_string := translate_type_string(state, token_str); keyword_string != "" {
+							if keyword_string = translate_type_string(state, token_str); keyword_string != "" {
 								strings.write_string(&builder, keyword_string)
 							}
 						}
