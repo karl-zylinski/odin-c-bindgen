@@ -133,10 +133,30 @@ clang_string_to_string :: proc(str: clang.String) -> string {
 	return ret
 }
 
+c_typedef_types := map[string]string {
+	"uint8_t"  = "u8",
+	"int8_t"   = "i8",
+	"uint16_t" = "u16",
+	"int16_t"  = "i16",
+	"uint32_t" = "u32",
+	"int32_t"  = "i32",
+	"uint64_t" = "u64",
+	"int64_t"  = "i64",
+
+	"int_least8_t"   = "i8",
+	"uint_least8_t"  = "u8",
+	"int_least16_t"  = "i16",
+	"uint_least16_t" = "u16",
+	"int_least32_t"  = "i32",
+	"uint_least32_t" = "u32",
+	"int_least64_t"  = "i64",
+	"uint_least64_t" = "u64",
+}
+
 c_type_mapping := map[string]string {
 	// Platform dependent
-	"long"    = "c.long",
-	"ulong"   = "c.ulong",
+	"long"          = "c.long",
+	"unsigned long" = "c.ulong",
 
 	// Size & wchar
 	"size_t"  = "c.size_t",
@@ -301,26 +321,6 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	case .Elaborated:
 		#partial switch elaborated_type := clang.Type_getNamedType(type); elaborated_type.kind {
 		case .Typedef:
-			// This is an annoying edge case
-			c_typedef_types := map[string]string {
-				"uint8_t"  = "u8",
-				"int8_t"   = "i8",
-				"uint16_t" = "u16",
-				"int16_t"  = "i16",
-				"uint32_t" = "u32",
-				"int32_t"  = "i32",
-				"uint64_t" = "u64",
-				"int64_t"  = "i64",
-
-				"int_least8_t"   = "i8",
-				"uint_least8_t"  = "u8",
-				"int_least16_t"  = "i16",
-				"uint_least16_t" = "u16",
-				"int_least32_t"  = "i32",
-				"uint_least32_t" = "u32",
-				"int_least64_t"  = "i64",
-				"uint_least64_t" = "u64",
-			}
 			if replacement, exists := c_typedef_types[clang_string_to_string(clang.getCursorSpelling(clang.getTypeDeclaration(type)))]; exists {
 				return replacement
 			}
@@ -386,39 +386,50 @@ parse_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 	panic("Unreachable!")
 }
 
-// For translating type names in procedure parameters and struct fields.
-translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> string {
-	t := t
-	t = strings.trim_space(t)
-
-	// This type usually means "an array of strings"
-	if t == "const char *const *" || t == "char *const *" || t == "const char **" || t == "char **" {
-		return "[^]cstring"
+// Only used for parsing types in macros
+translate_type_string :: proc(s: ^Gen_State, t: string) -> string {
+	if type, exists := c_type_mapping[t]; exists {
+		return type
 	}
 
-	if t == "const char *" || t == "char *" {
-		return "cstring"
+	if replacement, exists := c_typedef_types[t]; exists {
+		return replacement
 	}
 
-	if t == "va_list" || t == "struct __va_list_tag *" {
-		return "^c.va_list"
+	c_types := map[string]string {
+		"char" = "i8",
+		"short" = "i16",
+		"int" = "i32",
+		"long long" = "i64",
+
+		"unsigned char" = "u8",
+		"unsigned short" = "u16",
+		"unsigned int" = "u32",
+		"unsigned long long" = "u64",
+
+		"float" = "f32",
+		"double" = "f64",
+
+		"bool" = "bool",
+	}
+	if type, exists := c_types[t]; exists {
+		return type
 	}
 
 	// Tokenize the type and skip over some parameter type keywords that have no meaning in Odin.
 	type_tokens: [dynamic]string
 	token_start := 0
-	num_ptrs := 0
 
+	t := t
 	for s, idx in t {
 		tok: string
 
 		if strings.is_space(s) {
 			tok = t[token_start:idx]
 			token_start = idx + utf8.rune_size(s)
-		} else if s == '*' {
-			tok = t[token_start:idx]
-			token_start = idx + utf8.rune_size(s)
-			num_ptrs += 1
+		} else if s == '*' || s == '(' || s == ')' {
+			// Any type with a *, ( or ) is non trivial and shouldn't be used in a macro.
+			return ""
 		} else if idx == len(t) - 1{
 			tok = t[token_start:idx + 1]
 		}
@@ -428,12 +439,8 @@ translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> strin
 				continue
 			}
 
-			if tok == "struct" {
-				continue
-			}
-
-			if tok == "enum" {
-				continue
+			if tok == "struct" || tok == "enum" {
+				return ""
 			}
 
 			append(&type_tokens, tok)
@@ -445,13 +452,10 @@ translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> strin
 	// A hack to check if something is an array of arrays. Then it will appear as `(*)[3] etc. But
 	// the code above removes the `*`, so we check for `( )[`
 	t_original := t
-	multi_array := strings.index(t_original, "( )[")
 	array_start := strings.index(t_original, "[")
 	array_end := strings.last_index(t_original, "]")
 
-	if multi_array != -1 {
-		t = t[:multi_array]
-	} else if array_start != -1 {
+	if array_start != -1 {
 		t = t[:array_start]
 	}
 
@@ -471,46 +475,17 @@ translate_type_string :: proc(s: ^Gen_State, t: string, override: bool) -> strin
 		t = name_posix
 	} else if rename, exists := s.rename[t_prefixed]; exists {
 		t = vet_name(rename)
-	} else if s.force_ada_case_types && t != "void" {
-		// It makes sense, in the case we can't find the type, to just follow our naming rules and
-		// hope the type is defined somewhere else.
-		t = vet_name(strings.to_ada_case(t))
 	} else {
-		t = vet_name(t)
+		t = translate_name(s, t)
+		if t not_in s.created_types {
+			return ""
+		}
 	}
 
 	b := strings.builder_make()
 
 	if array_start != -1 {
-		if multi_array != -1 {
-			strings.write_string(&b, "[^]")
-		}
 		strings.write_string(&b, t_original[array_start:array_end + 1])
-	}
-
-	if num_ptrs > 0 {
-		if t == "void" {
-			t = "rawptr"
-			num_ptrs -= 1
-		}
-
-		if t in s.type_is_proc {
-			num_ptrs -= 1
-		}
-
-		if multi_array != -1 {
-			num_ptrs -= 1
-		}
-	}
-
-	if num_ptrs > 0 && override {
-		strings.write_string(&b, "[^]")
-		num_ptrs -= 1
-	}
-
-	for num_ptrs > 0 {
-		strings.write_string(&b, "^")
-		num_ptrs -= 1
 	}
 
 	strings.write_string(&b, t)
@@ -1943,18 +1918,24 @@ gen :: proc(input: string, c: Config) {
 				tu := clang.Cursor_getTranslationUnit(cursor)
 				token := macro.tokens[index]
 				token_str := clang_string_to_string(clang.getTokenSpelling(tu, token))
-				if token_str in c_type_mapping {
-					return translate_type_string(state, token_str, false), 0
-				} else if decl_index, exists := state.macro_defines[token_str]; exists {
+
+				if token_str == "true" || token_str == "false" {
+					return token_str, 0
+				}
+
+				if token_str in state.created_types {
+					return token_str, 0
+			    }
+
+				if decl_index, exists := state.macro_defines[token_str]; exists {
 					val, offset := expand_inner_macro(state, cursor, macro, &state.decls[decl_index], index)
 					if !state.decls[decl_index].variant.(Macro).should_not_output {
 						val = state.decls[decl_index].variant.(Macro).name
 					}
 					return val, offset
-				} else if token_str == "true" || token_str == "false" {
-					return token_str, 0	
 				}
-				return "", 0
+
+				return translate_type_string(state, token_str), 0
 			}
 
 			parse_format_string :: proc(str: string, args: []string) -> string {
@@ -2017,7 +1998,7 @@ gen :: proc(input: string, c: Config) {
 						}
 					case .Keyword:
 						if token_str in c_type_mapping {
-							strings.write_string(&builder, translate_type_string(state, token_str, false))
+							strings.write_string(&builder, translate_type_string(state, token_str))
 						}
 					case .Identifier:
 						val, offset := parse_identifier(state, cursor, macro, loop_index)
@@ -2126,7 +2107,7 @@ gen :: proc(input: string, c: Config) {
 						}
 					case .Keyword:
 						if token_str in c_type_mapping {
-							strings.write_string(&builder, translate_type_string(state, token_str, false))
+							strings.write_string(&builder, translate_type_string(state, token_str))
 						}
 					case .Identifier:
 						val, offset2 := parse_identifier(state, cursor, macro, index)
@@ -2196,8 +2177,24 @@ gen :: proc(input: string, c: Config) {
 							strings.write_string(&builder, token_str)
 						}
 					case .Keyword:
-						if token_str in c_type_mapping {
-							strings.write_string(&builder, translate_type_string(state, token_str, false))
+						tokens_str := token_str
+						tokens_count := 0
+						for token in macro.tokens[index + 1:] {
+							if clang.getTokenKind(token) == .Keyword {
+								tokens_str = fmt.tprint(tokens_str, clang_string_to_string(clang.getTokenSpelling(tu, token)))
+								tokens_count += 1
+							} else {
+								break
+							}
+						}
+
+						if keyword_string := translate_type_string(state, tokens_str); keyword_string != "" {
+							strings.write_string(&builder, keyword_string)
+							index += tokens_count
+						} else {
+							if keyword_string := translate_type_string(state, token_str); keyword_string != "" {
+								strings.write_string(&builder, keyword_string)
+							}
 						}
 					}
 				}

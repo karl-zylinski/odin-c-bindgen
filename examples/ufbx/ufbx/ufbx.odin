@@ -54,7 +54,7 @@ HAS_FORCE_32BIT :: 1
 // `ufbx_source_version` contains the version of the corresponding source file.
 // HINT: The version can be compared numerically to the result of `ufbx_pack_version()`,
 // for example `#if UFBX_VERSION >= ufbx_pack_version(0, 12, 0)`.
-HEADER_VERSION :: ((uint32_t)(0)*1000000+(uint32_t)(18)*1000+(uint32_t)(0))
+HEADER_VERSION :: ((u32)(0)*1000000+(u32)(18)*1000+(u32)(0))
 VERSION :: HEADER_VERSION
 
 // Main floating point type used everywhere in ufbx, defaults to `double`.
@@ -166,7 +166,7 @@ String_List :: struct {
 }
 
 // Sentinel value used to represent a missing index.
-// NO_INDEX :: ((uint32_t)~0)
+// NO_INDEX :: ((u32)~0)
 
 // -- Document object model
 Dom_Value_Type :: enum i32 {

@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+#define TEST unsigned char
+
 typedef struct CXIndexOptions {
   /**
    * The size of struct CXIndexOptions used for option versioning.

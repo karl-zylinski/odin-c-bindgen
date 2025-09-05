@@ -4,6 +4,8 @@ package test
 
 
 
+TEST :: u8
+
 CXIndexOptions :: struct {
 	/**
 	* The size of struct CXIndexOptions used for option versioning.
