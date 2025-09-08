@@ -6335,7 +6335,7 @@ foreign lib {
 	* exist. The returned pointer must be freed with clang_disposeTokens before the
 	* translation unit is destroyed.
 	*/
-	getToken :: proc(TU: Translation_Unit, Location: Source_Location) -> ^Token ---
+	getToken :: proc(TU: Translation_Unit, Location: Source_Location) -> [^]Token ---
 
 	/**
 	* Determine the kind of the given token.
@@ -6377,7 +6377,7 @@ foreign lib {
 	* array.
 	*
 	*/
-	tokenize :: proc(TU: Translation_Unit, Range: Source_Range, Tokens: ^[^]Token, NumTokens: ^c.uint) ---
+	tokenize :: proc(TU: Translation_Unit, Range: Source_Range, Tokens: ^[^]Token, NumTokens: [^]c.uint) ---
 
 	/**
 	* Annotate the given set of tokens by providing cursors for each token
@@ -6409,7 +6409,7 @@ foreign lib {
 	* \param Cursors an array of \p NumTokens cursors, whose contents will be
 	* replaced with the cursors corresponding to each token.
 	*/
-	annotateTokens :: proc(TU: Translation_Unit, Tokens: ^Token, NumTokens: c.uint, Cursors: ^Cursor) ---
+	annotateTokens :: proc(TU: Translation_Unit, Tokens: [^]Token, NumTokens: c.uint, Cursors: [^]Cursor) ---
 
 	/**
 	* Free the given set of tokens.
