@@ -126,6 +126,9 @@ clang_include_paths = [
 remove_macros = [
 	// "SOME_BROKEN_MACRO"
 ]
+
+// Output a YAML file containing C AST info for debugging.
+debug_dump_ast = false
 ```
 
 ## FAQ and common problems

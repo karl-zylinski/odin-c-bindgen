@@ -695,7 +695,7 @@ dump_ast :: proc(root_cursor: clang.Cursor, source_file: clang.File, out_file: s
         return .Continue
     }
 
-	file, _ := os2.open(out_file, flags = {.Create, .Write})
+	file, _ := os2.open(out_file, flags = {.Create, .Write, .Trunc})
     os2.write_string(file, fmt.tprintln("File:", clang_string_to_string(clang.getFileName(source_file))))
     os2.write_string(file, "Cursors:\n")
 
@@ -738,6 +738,7 @@ Config :: struct {
 	opaque_types: []string,
 	rename: map[string]string,
 	remove_macros: []string,
+	debug_dump_ast: bool,
 
 	// deprecated: use rename
 	rename_types: map[string]string,
@@ -902,7 +903,7 @@ gen :: proc(input: string, c: Config) {
 				break
 			}
 			
-			token_string := clang_string_to_string(clang.getTokenSpelling(translation_unit, token[0]))
+			token_string := token_string(translation_unit, token[0])
 			if clang.getTokenKind(token[0]) == .Comment {
 				side_comment = token_string
 				break
@@ -1278,14 +1279,14 @@ gen :: proc(input: string, c: Config) {
 
 	root_cursor := clang.getTranslationUnitCursor(unit)
 
-	// For debugging purposes.
-	// Maybe we add back the ast dump setting in the config file?
-	// dump_ast(root_cursor, s.file)
-	clang.visitChildren(root_cursor, root_cursor_visitor_proc, &s)
-
 	input_filename := filepath.base(input)
 	output_stem := filepath.stem(input_filename)
 	output_filename := fmt.tprintf("%v/%v.odin", s.output_folder, output_stem)
+
+	if c.debug_dump_ast {
+		dump_ast(root_cursor, s.file, fmt.tprintf("%v/%v.yml", s.output_folder, output_stem))
+	}
+	clang.visitChildren(root_cursor, root_cursor_visitor_proc, &s)
 
 	slice.sort_by(s.decls[:], proc(i, j: Declaration) -> bool {
 		// This should work but I get a linker error. Is the version of libclang from VS dev tools outdated?
