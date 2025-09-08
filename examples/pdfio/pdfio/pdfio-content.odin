@@ -65,7 +65,7 @@ textrendering_t :: textrendering_e // Text rendering modes
 foreign lib {
 	// Color array functions...
 	ArrayCreateColorFromICCObj    :: proc(pdf: ^file_t, icc_object: ^obj_t) -> ^array_t ---
-	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, _matrix: [3][3]f64, white_point: [3]f64) -> ^array_t ---
+	ArrayCreateColorFromMatrix    :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, #by_ptr _matrix: [3][3]f64, #by_ptr white_point: [3]f64) -> ^array_t ---
 	ArrayCreateColorFromPalette   :: proc(pdf: ^file_t, num_colors: c.size_t, colors: ^u8) -> ^array_t ---
 	ArrayCreateColorFromPrimaries :: proc(pdf: ^file_t, num_colors: c.size_t, gamma: f64, wx: f64, wy: f64, rx: f64, ry: f64, gx: f64, gy: f64, bx: f64, by: f64) -> ^array_t ---
 	ArrayCreateColorFromStandard  :: proc(pdf: ^file_t, num_colors: c.size_t, cs: cs_t) -> ^array_t ---

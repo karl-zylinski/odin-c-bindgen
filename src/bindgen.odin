@@ -256,108 +256,121 @@ translate_name :: proc(s: ^Gen_State, name: string) -> string {
 	return ret
 }
 
-parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
+parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsing_Options) -> (string, bool) {
 	type_string := type_spelling(type)
 	if c_type, exists := c_type_mapping[type_string]; exists {
-		return c_type
+		return c_type, false
 	}
 	if posix_type, exists := posix_type_mapping[type_string]; exists {
-		return posix_type
+		return posix_type, false
 	}
 	if libc_type, exists := libc_type_mapping[type_string]; exists {
-		return libc_type
+		return libc_type, false
 	}
 
 	#partial switch type.kind {
 	case .Invalid, .Unexposed, .Void:
-		return ""
+		return "", false
 	case .Long, .ULong, .WChar:
 		// We handle these with c_type_mapping
-		return ""
+		return "", false
 	case .Bool:
-		return "bool"
+		return "bool", false
 	case .Char_U, .UChar:
-		return "u8"
+		return "u8", false
 	case .UShort:
-		return "u16"
+		return "u16", false
 	case .UInt:
-		return "u32"
+		return "u32", false
 	case .ULongLong:
-		return "u64"
+		return "u64", false
 	case .UInt128:
-		return "u128"
+		return "u128", false
 	case .Char_S, .SChar:
-		return "i8"
+		return "i8", false
 	case .Short:
-		return "i16"
+		return "i16", false
 	case .Int:
-		return "i32"
+		return "i32", false
 	case .LongLong:
-		return "i64"
+		return "i64", false
 	case .Int128:
-		return "i128"
+		return "i128", false
 	case .Float:
-		return "f32"
+		return "f32", false
 	case .Double, .LongDouble:
-		return "f64"
+		return "f64", false
 	case .NullPtr:
-		return "rawptr"
+		return "rawptr", false
 	case .Complex:
 		#partial switch clang.getElementType(type).kind {
 		case .Float:
-			return "complex64"
+			return "complex64", false
 		case .Double, .LongDouble:
-			return "complex128"
+			return "complex128", false
 		}
 	case .Pointer:
-		pointee_string := parse_type(s, clang.getPointeeType(type))
+		pointee_string, _ := parse_type(s, clang.getPointeeType(type), opts - {.Pointer_To_Array, .By_Pointer})
 		if pointee_string == "" {
-			return "rawptr"
-		} else if pointee_string == "i8" {
-			return "cstring"
-		} else if pointee_string == "cstring" {
-			return "[^]cstring"
+			return "rawptr", false
 		}
 
 		builder := strings.builder_make()
-		strings.write_byte(&builder, '^')
+
+		if .Pointer_To_Array in opts {
+			strings.write_string(&builder, "[^]")
+		} else if .By_Pointer in opts {
+			// We need to handle this outside of the type parsing because it needs to go infront of the parameter name.
+			// strings.write_string(&builder, "#by_ptr ")
+		} else {
+			if pointee_string == "i8" {
+				return "cstring", false
+			} else if pointee_string == "cstring" {
+				return "[^]cstring", false
+			}
+			strings.write_byte(&builder, '^')
+		}
+
 		strings.write_string(&builder, pointee_string)
-		return strings.to_string(builder)
+		return strings.to_string(builder), .By_Pointer in opts
 	case .Record, .Enum, .Typedef:
-		return translate_name(s, cursor_spelling(clang.getTypeDeclaration(type)))
+		return translate_name(s, cursor_spelling(clang.getTypeDeclaration(type))), false
 	case .ConstantArray:
 		builder := strings.builder_make()
+
 		strings.write_byte(&builder, '[')
 
 		str_conv_buf: [20]byte // 20 == base_10_digit_count(c.SIZE_MAX)
 		strings.write_string(&builder, strconv.itoa(str_conv_buf[:], int(clang.getArraySize(type))))
 
 		strings.write_byte(&builder, ']')
-		strings.write_string(&builder, parse_type(s, clang.getArrayElementType(type)))
-		return strings.to_string(builder)
+		str, _ := parse_type(s, clang.getArrayElementType(type), opts)
+		strings.write_string(&builder, str)
+		return strings.to_string(builder), true
 	case .IncompleteArray, .VariableArray:
 		builder := strings.builder_make()
 		strings.write_string(&builder, "[^]")
-		strings.write_string(&builder, parse_type(s, clang.getArrayElementType(type)))
-		return strings.to_string(builder)
+		str, _ := parse_type(s, clang.getArrayElementType(type), opts)
+		strings.write_string(&builder, str)
+		return strings.to_string(builder), false
 	case .Elaborated:
 		elaborated_type := clang.Type_getNamedType(type)
 		#partial switch elaborated_type.kind {
 		case .Typedef:
 			if replacement, exists := c_typedef_types[cursor_spelling(clang.getTypeDeclaration(type))]; exists {
-				return replacement
+				return replacement, false
 			}
 			fallthrough
 		case .Record, .Enum, .FunctionNoProto, .FunctionProto:
-			return translate_name(s, cursor_spelling(clang.getTypeDeclaration(type)))
+			return translate_name(s, cursor_spelling(clang.getTypeDeclaration(type))), false
 		}
-		return parse_type(s, elaborated_type)
+		return parse_type(s, elaborated_type, opts)
 	}
 	// If we get here then we need to add a new case.
 	panic("Unreachable!")
 }
 
-parse_function_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
+parse_function_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsing_Options) -> (string, bool) {
 	builder := strings.builder_make()
 	strings.write_string(&builder, "proc ")
 	#partial switch clang.getFunctionTypeCallingConv(type) {
@@ -369,12 +382,15 @@ parse_function_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 		strings.write_string(&builder, "\"c\" (")
 	}
 
-	for i: i32 = 0; i < clang.getNumArgTypes(type); i += 1 {
+	for i: u32 = 0; i < u32(clang.getNumArgTypes(type)); i += 1 {
 		if i != 0 {
 			strings.write_string(&builder, ", ")
 		}
-		param_type := clang.getArgType(type, u32(i))
-		strings.write_string(&builder, parse_type(s, param_type))
+		type_string, by_ptr := parse_type(s, clang.getArgType(type, i), nil)
+		if by_ptr {
+			strings.write_string(&builder, "#by_ptr ")
+		}
+		strings.write_string(&builder, type_string)
 	}
 
 	if bool(clang.isFunctionTypeVariadic(type)) {
@@ -385,30 +401,38 @@ parse_function_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
 
 	if return_type := clang.getResultType(type); return_type.kind != .Void {
 		strings.write_string(&builder, " -> ")
-		strings.write_string(&builder, parse_type(s, return_type))
+		str, _ := parse_type(s, return_type, nil)
+		strings.write_string(&builder, str)
 	}
 
-	return strings.to_string(builder)
+	return strings.to_string(builder), false
 }
 
-parse_type :: proc(s: ^Gen_State, type: clang.Type) -> string {
+Type_Parsing_Option :: enum {
+	Pointer_To_Array,
+	By_Pointer,
+}
+
+Type_Parsing_Options :: bit_set[Type_Parsing_Option]
+
+parse_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsing_Options) -> (string, bool) {
 	#partial switch type.kind {
 	case .FunctionProto, .FunctionNoProto:
-		return parse_function_type(s, type)
+		return parse_function_type(s, type, opts)
 	case .Pointer:
 		#partial switch pointee_type := clang.getPointeeType(type); pointee_type.kind {
 		case .FunctionProto, .FunctionNoProto:
-			return parse_function_type(s, pointee_type)
+			return parse_function_type(s, pointee_type, opts)
 		case .Elaborated:
 			if elaborated_type := clang.Type_getNamedType(pointee_type); elaborated_type.kind == .Typedef {
 				#partial switch clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(elaborated_type)).kind {
 				case .FunctionNoProto, .FunctionProto:
-					return translate_name(s, cursor_spelling(clang.getTypeDeclaration(elaborated_type)))
+					return translate_name(s, cursor_spelling(clang.getTypeDeclaration(elaborated_type))), false
 				}
 			}
 		}
 	}
-	return parse_nonfunction_type(s, type)
+	return parse_nonfunction_type(s, type, opts)
 }
 
 // Only used for parsing types in macros
@@ -1496,13 +1520,12 @@ gen :: proc(input: string, c: Config) {
 				
 				if field_type_override, has_field_type_override := s.struct_field_overrides[override_key]; override_key != "" && has_field_type_override {
 					if field_type_override == "[^]" {
-						// Change first `^` for `[^]`
-						field_type = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(s, field.type), "^"))
+						field_type, _ = parse_type(s, field.type, {.Pointer_To_Array})
 					} else {
 						field_type = field_type_override
 					}
 				} else {
-					field_type = parse_type(s, field.type)
+					field_type, _ = parse_type(s, field.type, nil)
 				}
 
 				comment := field.comment
@@ -1643,7 +1666,10 @@ gen :: proc(input: string, c: Config) {
 			}
 
 			fp(f, name)
-			fpf(f, " :: enum %v {{\n", parse_type(&s, d.backing_type))
+			{
+				str, _ := parse_type(&s, d.backing_type, nil)
+				fpf(f, " :: enum %v {{\n", str)
+			}
 
 			bit_set_name, bit_setify := s.bit_setify[d.original_name]
 			make_constant: map[string]int
@@ -1784,7 +1810,8 @@ gen :: proc(input: string, c: Config) {
 			fp(f, "}\n\n")
 
 			if bit_setify {
-				fpf(f, "%v :: distinct bit_set[%v; %v]\n\n", bit_set_name, name, parse_type(&s, d.backing_type))
+				str, _ := parse_type(&s, d.backing_type, nil)
+				fpf(f, "%v :: distinct bit_set[%v; %v]\n\n", bit_set_name, name, str)
 
 				// In case there is a typedef for this in the code.
 				add_to_set(&s.created_symbols, bit_set_name)
@@ -1846,7 +1873,8 @@ gen :: proc(input: string, c: Config) {
 				continue
 			}
 
-			if parse_type(&s, d.type) == d.name {
+			parsed_type, _ := parse_type(&s, d.type, nil)
+			if parsed_type == d.name {
 				continue
 			}
 
@@ -1876,10 +1904,10 @@ gen :: proc(input: string, c: Config) {
 				fp(f, "struct {}")
 			} else if strings.contains(type_string, "(") && strings.contains(type_string, ")") {
 				// function pointer typedef
-				fp(f, parse_type(&s, d.type))
+				fp(f, parsed_type)
 				add_to_set(&s.type_is_proc, n)
 			} else {
-				fpf(f, "%v", parse_type(&s, d.type))
+				fpf(f, "%v", parsed_type)
 			}
 
 			if d.side_comment != "" {
@@ -2385,15 +2413,23 @@ gen :: proc(input: string, c: Config) {
 					if type_override, type_override_ok := s.procedure_type_overrides[type_override_key]; type_override_ok {
 						switch type_override {
 						case "#by_ptr":
-							type = strings.trim_prefix(parse_type(&s, clang.getCursorType(p)), "^")
 							w(&b, "#by_ptr ")
+							type, _ = parse_type(&s, clang.getCursorType(p), {.By_Pointer})
 						case "[^]":
-							type = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(&s, clang.getCursorType(p)), "^"))
+							by_ptr := false
+							type, by_ptr = parse_type(&s, clang.getCursorType(p), {.Pointer_To_Array})
+							if by_ptr {
+								w(&b, "#by_ptr ")
+							}
 						case:
 							type = type_override
 						}
 					} else {
-						type = parse_type(&s, clang.getCursorType(p))
+						by_ptr := false
+						type, by_ptr = parse_type(&s, clang.getCursorType(p), nil)
+						if by_ptr {
+							w(&b, "#by_ptr ")
+						}
 					}
 
 					if len(n) != 0 {
@@ -2425,12 +2461,12 @@ gen :: proc(input: string, c: Config) {
 					if override, override_ok := s.procedure_type_overrides[d.original_name]; override_ok {
 						switch override {
 						case "[^]":
-							return_type_string = fmt.tprintf("[^]%v", strings.trim_prefix(parse_type(&s, return_type), "^"))
+							return_type_string, _ = parse_type(&s, return_type, {.Pointer_To_Array})
 						case:
 							return_type_string = override
 						}
 					} else {
-						return_type_string = parse_type(&s, return_type)
+						return_type_string, _ = parse_type(&s, return_type, nil)
 					}
 
 					w(&b, return_type_string)

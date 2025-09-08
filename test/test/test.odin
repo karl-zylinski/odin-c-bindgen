@@ -61,5 +61,6 @@ foreign lib {
 	test2          :: proc(log: myLogImpl2) ---
 	test3          :: proc(log: ^myLogImpl) ---
 	test4          :: proc(log: ^myLogImpl2) ---
-	nppiYCCKToCMYK :: proc(pSrc: [4]^i32, nSrcStep: i32, pDst: [4]^i32, nDstStep: i32, oSizeROI: i32, nppStreamCtx: i32) -> i32 ---
+	nppiYCCKToCMYK :: proc(#by_ptr pSrc: [4]^i32, nSrcStep: i32, #by_ptr pDst: [4]^i32, nDstStep: i32, oSizeROI: i32, nppStreamCtx: i32) -> i32 ---
+	constArray     :: proc(#by_ptr arr: [4]i32) ---
 }

@@ -59,4 +59,6 @@ void test4(myLogImpl2** log);
 
 int nppiYCCKToCMYK(const int * pSrc[4], int nSrcStep, int * pDst[4], int nDstStep, int oSizeROI, int nppStreamCtx);
 
+void constArray(int arr[4]);
+
 #pragma GCC pop_options
