@@ -3898,10 +3898,10 @@ Free_Allocator_Fn :: proc "c" (rawptr)
 // You can use `free_allocator_fn()` to free the allocator yourself.
 Allocator :: struct {
 	// Callback functions, see `typedef`s above for information
-	alloc_fn: ^Alloc_Fn,
-	realloc_fn:        ^Realloc_Fn,
-	free_fn:           ^Free_Fn,
-	free_allocator_fn: ^Free_Allocator_Fn,
+	alloc_fn: Alloc_Fn,
+	realloc_fn:        Realloc_Fn,
+	free_fn:           Free_Fn,
+	free_allocator_fn: Free_Allocator_Fn,
 	user:              rawptr,
 }
 
@@ -3949,10 +3949,10 @@ Size_Fn :: proc "c" (rawptr) -> u64
 Close_Fn :: proc "c" (rawptr)
 
 Stream :: struct {
-	read_fn:  ^Read_Fn,  // < Required
-	skip_fn:  ^Skip_Fn,  // < Optional: Will use `read_fn()` if missing
-	size_fn:  ^Size_Fn,  // < Optional
-	close_fn: ^Close_Fn, // < Optional
+	read_fn:  Read_Fn,  // < Required
+	skip_fn:  Skip_Fn,  // < Optional: Will use `read_fn()` if missing
+	size_fn:  Size_Fn,  // < Optional
+	close_fn: Close_Fn, // < Optional
 
 	// Context passed to other functions
 	user: rawptr,
@@ -3985,7 +3985,7 @@ Open_File_Info :: struct {
 Open_File_Fn :: proc "c" (rawptr, ^Stream, cstring, c.size_t, ^Open_File_Info) -> bool
 
 Open_File_Cb :: struct {
-	fn:   ^Open_File_Fn,
+	fn:   Open_File_Fn,
 	user: rawptr,
 }
 
@@ -4005,7 +4005,7 @@ Open_File_Opts :: struct {
 Close_Memory_Fn :: proc "c" (rawptr, rawptr, c.size_t)
 
 Close_Memory_Cb :: struct {
-	fn:   ^Close_Memory_Fn,
+	fn:   Close_Memory_Fn,
 	user: rawptr,
 }
 
@@ -4171,7 +4171,7 @@ Progress_Result :: enum i32 {
 Progress_Fn :: proc "c" (rawptr, ^Progress) -> Progress_Result
 
 Progress_Cb :: struct {
-	fn:   ^Progress_Fn,
+	fn:   Progress_Fn,
 	user: rawptr,
 }
 
@@ -4189,7 +4189,7 @@ Inflate_Input :: struct {
 	buffer_size:            c.size_t,
 
 	// (optional) Streaming read function, concatenated after `data`
-	read_fn: ^Read_Fn,
+	read_fn: Read_Fn,
 	read_user:              rawptr,
 
 	// (optional) Progress reporting
@@ -4537,10 +4537,10 @@ Thread_Pool_Free_Fn :: proc "c" (rawptr, Thread_Pool_Context)
 //   wait_fn(group=0, max_index=15)            -> wait_threads(t0)
 //
 Thread_Pool :: struct {
-	init_fn: ^Thread_Pool_Init_Fn, // < Optional
-	run_fn:  ^Thread_Pool_Run_Fn,  // < Required
-	wait_fn: ^Thread_Pool_Wait_Fn, // < Required
-	free_fn: ^Thread_Pool_Free_Fn, // < Optional
+	init_fn: Thread_Pool_Init_Fn, // < Optional
+	run_fn:  Thread_Pool_Run_Fn,  // < Required
+	wait_fn: Thread_Pool_Wait_Fn, // < Required
+	free_fn: Thread_Pool_Free_Fn, // < Optional
 	user:    rawptr,
 }
 

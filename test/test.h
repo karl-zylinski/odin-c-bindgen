@@ -38,14 +38,24 @@ typedef struct CXIndexOptions {
   unsigned /*Reserved*/ : 13;
 } CXIndexOptions;
 
+typedef void (*myLogImpl)(const char* fmt, ...);
 
-typedef void (*myLogImpl)(const char *fmt, ...);
+typedef void (myLogImpl2)(const char* fmt, ...);
 
 struct MyVtable {
-  myLogImpl logger;
+  myLogImpl    logger;
+  myLogImpl2*  logger2;
+  myLogImpl*   logger3;
+  myLogImpl2** logger4;
 };
 
-void test (const char *fmt, myLogImpl log);
+void test (myLogImpl log);
+
+void test2 (myLogImpl2* log);
+
+void test3(myLogImpl* log);
+
+void test4(myLogImpl2** log);
 
 int nppiYCCKToCMYK(const int * pSrc[4], int nSrcStep, int * pDst[4], int nDstStep, int oSizeROI, int nppStreamCtx);
 

@@ -38,7 +38,7 @@ TaskCallback :: proc "c" (i32, i32, u32, rawptr)
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-EnqueueTaskCallback :: proc "c" (^TaskCallback, i32, i32, rawptr, rawptr) -> rawptr
+EnqueueTaskCallback :: proc "c" (TaskCallback, i32, i32, rawptr, rawptr) -> rawptr
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
@@ -102,10 +102,10 @@ WorldDef :: struct {
 	maximumLinearSpeed: f32,
 
 	/// Optional mixing callback for friction. The default uses sqrt(frictionA * frictionB).
-	frictionCallback: ^FrictionCallback,
+	frictionCallback: FrictionCallback,
 
 	/// Optional mixing callback for restitution. The default uses max(restitutionA, restitutionB).
-	restitutionCallback: ^RestitutionCallback,
+	restitutionCallback: RestitutionCallback,
 
 	/// Can bodies go to sleep to improve performance
 	enableSleep: bool,
@@ -123,10 +123,10 @@ WorldDef :: struct {
 	workerCount: i32,
 
 	/// Function to spawn tasks
-	enqueueTask: ^EnqueueTaskCallback,
+	enqueueTask: EnqueueTaskCallback,
 
 	/// Function to finish a task
-	finishTask: ^FinishTaskCallback,
+	finishTask: FinishTaskCallback,
 
 	/// User context that is provided to enqueueTask and finishTask
 	userTaskContext: rawptr,

@@ -609,7 +609,7 @@ foreign lib {
 
 	/// Query an AABB for overlapping proxies. The callback class is called for each proxy that overlaps the supplied AABB.
 	///	@return performance data
-	DynamicTree_Query :: proc(tree: ^DynamicTree, aabb: AABB, maskBits: u64, callback: ^TreeQueryCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_Query :: proc(tree: ^DynamicTree, aabb: AABB, maskBits: u64, callback: TreeQueryCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Ray cast against the proxies in the tree. This relies on the callback
 	/// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -624,7 +624,7 @@ foreign lib {
 	/// @param callback a callback class that is called for each proxy that is hit by the ray
 	/// @param context user context that is passed to the callback
 	///	@return performance data
-	DynamicTree_RayCast :: proc(tree: ^DynamicTree, input: ^RayCastInput, maskBits: u64, callback: ^TreeRayCastCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_RayCast :: proc(tree: ^DynamicTree, input: ^RayCastInput, maskBits: u64, callback: TreeRayCastCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Ray cast against the proxies in the tree. This relies on the callback
 	/// to perform a exact ray cast in the case were the proxy contains a shape.
@@ -637,7 +637,7 @@ foreign lib {
 	/// @param callback a callback class that is called for each proxy that is hit by the shape
 	/// @param context user context that is passed to the callback
 	///	@return performance data
-	DynamicTree_ShapeCast :: proc(tree: ^DynamicTree, input: ^ShapeCastInput, maskBits: u64, callback: ^TreeShapeCastCallbackFcn, _context: rawptr) -> TreeStats ---
+	DynamicTree_ShapeCast :: proc(tree: ^DynamicTree, input: ^ShapeCastInput, maskBits: u64, callback: TreeShapeCastCallbackFcn, _context: rawptr) -> TreeStats ---
 
 	/// Get the height of the binary tree.
 	DynamicTree_GetHeight :: proc(tree: ^DynamicTree) -> i32 ---

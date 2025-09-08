@@ -45,14 +45,14 @@ HASH_INIT :: 5381
 foreign lib {
 	/// This allows the user to override the allocation functions. These should be
 	/// set during application startup.
-	SetAllocator :: proc(allocFcn: ^AllocFcn, freeFcn: ^FreeFcn) ---
+	SetAllocator :: proc(allocFcn: AllocFcn, freeFcn: FreeFcn) ---
 
 	/// @return the total bytes allocated by Box2D
 	GetByteCount :: proc() -> i32 ---
 
 	/// Override the default assert callback
 	/// @param assertFcn a non-null assert callback
-	SetAssertFcn      :: proc(assertFcn: ^AssertFcn) ---
+	SetAssertFcn      :: proc(assertFcn: AssertFcn) ---
 	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: i32) -> i32 ---
 
 	/// Get the current version of Box2D
