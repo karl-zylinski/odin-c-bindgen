@@ -102,6 +102,8 @@ Rotation_Order :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+ROTATION_ORDER_COUNT :: 7
+
 // Explicit translation+rotation+scale transformation.
 // NOTE: Rotation is a quaternion, not Euler angles!
 Transform :: struct {
@@ -182,6 +184,8 @@ Dom_Value_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+DOM_VALUE_TYPE_COUNT :: 9
+
 Dom_Value :: struct {
 	type:        Dom_Value_Type,
 	value_str:   String,
@@ -229,6 +233,8 @@ Prop_Type :: enum i32 {
 	REFERENCE        = 15,
 	TYPE_FORCE_32BIT = 2147483647,
 }
+
+PROP_TYPE_COUNT :: 16
 
 // Property flags: Advanced information about properties, not usually needed.
 Prop_Flag :: enum i32 {
@@ -625,6 +631,8 @@ Element_Type :: enum i32 {
 	TYPE_FORCE_32BIT    = 2147483647,
 }
 
+ELEMENT_TYPE_COUNT :: 42
+
 // Connection between two elements.
 // Source and destination are somewhat arbitrary but the destination is
 // often the "container" like a parent node or mesh containing a deformer.
@@ -712,6 +720,8 @@ Inherit_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+INHERIT_MODE_COUNT :: 3
+
 // Axis used to mirror transformations for handedness conversion.
 Mirror_Axis :: enum i32 {
 	NONE        = 0,
@@ -720,6 +730,8 @@ Mirror_Axis :: enum i32 {
 	Z           = 3,
 	FORCE_32BIT = 2147483647,
 }
+
+MIRROR_AXIS_COUNT :: 4
 
 // Nodes form the scene transformation hierarchy and can contain attached
 // elements such as meshes or lights. In normal cases a single `ufbx_node`
@@ -1076,6 +1088,8 @@ Subdivision_Display_Mode :: enum i32 {
 	MODE_FORCE_32BIT = 2147483647,
 }
 
+SUBDIVISION_DISPLAY_MODE_COUNT :: 4
+
 Subdivision_Boundary :: enum i32 {
 	DEFAULT        = 0,
 	LEGACY         = 1,
@@ -1095,6 +1109,8 @@ Subdivision_Boundary :: enum i32 {
 	// OpenSubdiv: `FVAR_LINEAR_ALL`
 	FORCE_32BIT = 2147483647,
 }
+
+SUBDIVISION_BOUNDARY_COUNT :: 6
 
 // Polygonal mesh geometry.
 //
@@ -1280,6 +1296,8 @@ Light_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+LIGHT_TYPE_COUNT :: 5
+
 // How fast does the light intensity decay at a distance
 Light_Decay :: enum i32 {
 	NONE        = 0, // < 1 (no decay)
@@ -1289,11 +1307,15 @@ Light_Decay :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+LIGHT_DECAY_COUNT :: 4
+
 Light_Area_Shape :: enum i32 {
 	RECTANGLE   = 0,
 	SPHERE      = 1,
 	FORCE_32BIT = 2147483647,
 }
+
+LIGHT_AREA_SHAPE_COUNT :: 2
 
 // Light source attached to a `ufbx_node`
 Light :: struct {
@@ -1338,6 +1360,8 @@ Projection_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+PROJECTION_MODE_COUNT :: 2
+
 // Method of specifying the rendering resolution from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aspect_Mode :: enum i32 {
@@ -1360,6 +1384,8 @@ Aspect_Mode :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+ASPECT_MODE_COUNT :: 5
+
 // Method of specifying the field of view from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Mode :: enum i32 {
@@ -1378,6 +1404,8 @@ Aperture_Mode :: enum i32 {
 	// Compute the field of view from the render gate size and focal length
 	FORCE_32BIT = 2147483647,
 }
+
+APERTURE_MODE_COUNT :: 4
 
 // Method of specifying the render gate size from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
@@ -1406,6 +1434,8 @@ Gate_Fit :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+GATE_FIT_COUNT :: 6
+
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
 Aperture_Format :: enum i32 {
@@ -1424,6 +1454,8 @@ Aperture_Format :: enum i32 {
 	FORCE_32BIT         = 2147483647,
 }
 
+APERTURE_FORMAT_COUNT :: 12
+
 Coordinate_Axis :: enum i32 {
 	POSITIVE_X  = 0,
 	NEGATIVE_X  = 1,
@@ -1434,6 +1466,8 @@ Coordinate_Axis :: enum i32 {
 	UNKNOWN     = 6,
 	FORCE_32BIT = 2147483647,
 }
+
+COORDINATE_AXIS_COUNT :: 7
 
 // Coordinate axes the scene is represented in.
 // NOTE: `front` is the _opposite_ from forward!
@@ -1594,6 +1628,8 @@ Nurbs_Topology :: enum i32 {
 	// Repeats the first control point after the end.
 	FORCE_32BIT = 2147483647,
 }
+
+NURBS_TOPOLOGY_COUNT :: 3
 
 // NURBS basis functions for an axis
 Nurbs_Basis :: struct {
@@ -1763,6 +1799,8 @@ Marker_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+MARKER_TYPE_COUNT :: 3
+
 // Tracking marker for effectors
 Marker :: struct {
 	using _: struct #raw_union {
@@ -1787,6 +1825,8 @@ Lod_Display :: enum i32 {
 	HIDE        = 2, // < Never display the LOD level.
 	FORCE_32BIT = 2147483647,
 }
+
+LOD_DISPLAY_COUNT :: 3
 
 // Single LOD level within an LOD group.
 // Specifies properties of the Nth child of the _node_ containing the LOD group.
@@ -1858,6 +1898,8 @@ Skinning_Method :: enum i32 {
 	// or in `ufbx_skin_deformer.dq_vertices/dq_weights` (indexed by vertex).
 	FORCE_32BIT = 2147483647,
 }
+
+SKINNING_METHOD_COUNT :: 4
 
 // Skin weight information for a single mesh vertex
 Skin_Vertex :: struct {
@@ -2037,6 +2079,8 @@ Cache_File_Format :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+CACHE_FILE_FORMAT_COUNT :: 3
+
 Cache_Data_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown data format
 	REAL_FLOAT  = 1, // < `float data[]`
@@ -2046,12 +2090,16 @@ Cache_Data_Format :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+CACHE_DATA_FORMAT_COUNT :: 5
+
 Cache_Data_Encoding :: enum i32 {
 	UNKNOWN       = 0, // < Unknown data encoding
 	LITTLE_ENDIAN = 1, // < Contiguous little-endian array
 	BIG_ENDIAN    = 2, // < Contiguous big-endian array
 	FORCE_32BIT   = 2147483647,
 }
+
+CACHE_DATA_ENCODING_COUNT :: 3
 
 // Known interpretations of geometry cache data.
 Cache_Interpretation :: enum i32 {
@@ -2071,6 +2119,8 @@ Cache_Interpretation :: enum i32 {
 	// Vertex normals.
 	FORCE_32BIT = 2147483647,
 }
+
+CACHE_INTERPRETATION_COUNT :: 4
 
 Cache_Frame :: struct {
 	// Name of the channel this frame belongs to.
@@ -2309,6 +2359,8 @@ Shader_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+SHADER_TYPE_COUNT :: 13
+
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
 Material_Fbx_Map :: enum i32 {
 	DIFFUSE_FACTOR             = 0,
@@ -2333,6 +2385,8 @@ Material_Fbx_Map :: enum i32 {
 	VECTOR_DISPLACEMENT        = 19,
 	MAP_FORCE_32BIT            = 2147483647,
 }
+
+MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
 Material_Pbr_Map :: enum i32 {
@@ -2395,6 +2449,8 @@ Material_Pbr_Map :: enum i32 {
 	MAP_FORCE_32BIT                 = 2147483647,
 }
 
+MATERIAL_PBR_MAP_COUNT :: 56
+
 // Known material features
 Material_Feature :: enum i32 {
 	PBR                                  = 0,
@@ -2422,6 +2478,8 @@ Material_Feature :: enum i32 {
 	TRANSMISSION_ROUGHNESS_AS_GLOSSINESS = 22,
 	FORCE_32BIT                          = 2147483647,
 }
+
+MATERIAL_FEATURE_COUNT :: 23
 
 Material_Fbx_Maps :: struct {
 	using _: struct #raw_union {
@@ -2603,6 +2661,8 @@ Texture_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+TEXTURE_TYPE_COUNT :: 4
+
 // Blend modes to combine layered textures with, compatible with common blend
 // mode definitions in many art programs. Simpler blend modes have equations
 // specified below where `src` is the layer to composite over `dst`.
@@ -2642,12 +2702,16 @@ Blend_Mode :: enum i32 {
 	MODE_FORCE_32BIT = 2147483647,
 }
 
+BLEND_MODE_COUNT :: 31
+
 // Blend modes to combine layered textures with, compatible with common blend
 Wrap_Mode :: enum i32 {
 	REPEAT           = 0, // < Repeat the texture past the [0,1] range
 	CLAMP            = 1, // < Clamp the normalized texture coordinates to [0,1]
 	MODE_FORCE_32BIT = 2147483647,
 }
+
+WRAP_MODE_COUNT :: 2
 
 // Single layer in a layered texture
 Texture_Layer :: struct {
@@ -2677,6 +2741,8 @@ Shader_Texture_Type :: enum i32 {
 	// https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
 	TYPE_FORCE_32BIT = 2147483647,
 }
+
+SHADER_TEXTURE_TYPE_COUNT :: 3
 
 // Input to a shader texture, see `ufbx_shader_texture`.
 Shader_Texture_Input :: struct {
@@ -3086,6 +3152,8 @@ Interpolation :: enum i32 {
 	FORCE_32BIT   = 2147483647,
 }
 
+INTERPOLATION_COUNT :: 4
+
 Extrapolation_Mode :: enum i32 {
 	CONSTANT        = 0, // < Use the value of the first/last keyframe
 	REPEAT          = 1, // < Repeat the whole animation curve
@@ -3094,6 +3162,8 @@ Extrapolation_Mode :: enum i32 {
 	REPEAT_RELATIVE = 4, // < Repeat the animation curve but connect the first and last keyframe values
 	FORCE_32BIT     = 2147483647,
 }
+
+EXTRAPOLATION_MODE_COUNT :: 5
 
 Extrapolation :: struct {
 	mode: Extrapolation_Mode,
@@ -3250,6 +3320,8 @@ Constraint_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+CONSTRAINT_TYPE_COUNT :: 7
+
 // Target to follow with a constraint
 Constraint_Target :: struct {
 	node:      ^Node,     // < Target node reference
@@ -3272,12 +3344,16 @@ Constraint_Aim_Up_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
+
 // Method to determine the up vector in aim constraints
 Constraint_Ik_Pole_Type :: enum i32 {
 	VECTOR           = 0, // < Use towards calculated from `ufbx_constraint.targets`
 	NODE             = 1, // < Use `ufbx_constraint.ik_pole_vector` directly
 	TYPE_FORCE_32BIT = 2147483647,
 }
+
+CONSTRAINT_IK_POLE_TYPE_COUNT :: 2
 
 Constraint :: struct {
 	using _: struct #raw_union {
@@ -3452,6 +3528,8 @@ Exporter :: enum i32 {
 	FORCE_32BIT    = 2147483647,
 }
 
+EXPORTER_COUNT :: 5
+
 Application :: struct {
 	vendor:  String,
 	name:    String,
@@ -3465,6 +3543,8 @@ File_Format :: enum i32 {
 	MTL         = 3, // < .mtl Wavefront MTL (Material template library) file
 	FORCE_32BIT = 2147483647,
 }
+
+FILE_FORMAT_COUNT :: 4
 
 Warning_Type :: enum i32 {
 	// Missing external file file (for example .mtl for Wavefront .obj file or a
@@ -3527,6 +3607,8 @@ Warning_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+WARNING_TYPE_COUNT :: 15
+
 // Warning about a non-fatal issue in the file.
 // Often contains information about issues that ufbx has corrected about the
 // file but it might indicate something is not working properly.
@@ -3556,6 +3638,8 @@ Thumbnail_Format :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+THUMBNAIL_FORMAT_COUNT :: 3
+
 // Specify how unit / coordinate system conversion should be performed.
 // Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
 // has no effect if neither is specified.
@@ -3580,6 +3664,8 @@ Space_Conversion :: enum i32 {
 	// applies scaling to geometry as well.
 	FORCE_32BIT = 2147483647,
 }
+
+SPACE_CONVERSION_COUNT :: 3
 
 // Embedded thumbnail in the file, valid if the dimensions are non-zero.
 Thumbnail :: struct {
@@ -3699,12 +3785,16 @@ Time_Mode :: enum i32 {
 	FORCE_32BIT     = 2147483647,
 }
 
+TIME_MODE_COUNT :: 18
+
 Time_Protocol :: enum i32 {
 	SMPTE       = 0,
 	FRAME_COUNT = 1,
 	DEFAULT     = 2,
 	FORCE_32BIT = 2147483647,
 }
+
+TIME_PROTOCOL_COUNT :: 3
 
 Snap_Mode :: enum i32 {
 	NONE          = 0,
@@ -3713,6 +3803,8 @@ Snap_Mode :: enum i32 {
 	SNAP_AND_PLAY = 3,
 	FORCE_32BIT   = 2147483647,
 }
+
+SNAP_MODE_COUNT :: 4
 
 // Global settings: Axes and time/unit scales
 Scene_Settings :: struct {
@@ -3965,6 +4057,8 @@ Open_File_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+OPEN_FILE_TYPE_COUNT :: 3
+
 Open_File_Context :: c.uintptr_t
 
 Open_File_Info :: struct {
@@ -4127,6 +4221,8 @@ Error_Type :: enum i32 {
 	TYPE_FORCE_32BIT = 2147483647,
 }
 
+ERROR_TYPE_COUNT :: 24
+
 // Error description with detailed stack trace
 // HINT: You can use `ufbx_format_error()` for formatting the error
 Error :: struct {
@@ -4243,6 +4339,8 @@ Index_Error_Handling :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+INDEX_ERROR_HANDLING_COUNT :: 4
+
 Unicode_Error_Handling :: enum i32 {
 	// Replace errors with U+FFFD "Replacement Character"
 	REPLACEMENT_CHARACTER = 0,
@@ -4269,6 +4367,8 @@ Unicode_Error_Handling :: enum i32 {
 	// UNSAFE: Breaks API guarantee that `ufbx_string` is UTF-8 encoded.
 	FORCE_32BIT = 2147483647,
 }
+
+UNICODE_ERROR_HANDLING_COUNT :: 6
 
 // How to handle FBX node geometry transforms.
 // FBX nodes can have "geometry transforms" that affect only the attached meshes,
@@ -4302,6 +4402,8 @@ Geometry_Transform_Handling :: enum i32 {
 	// NOTE: This will not work correctly for instanced geometry.
 	FORCE_32BIT = 2147483647,
 }
+
+GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
 
 // How to handle FBX transform inherit modes.
 Inherit_Mode_Handling :: enum i32 {
@@ -4338,6 +4440,8 @@ Inherit_Mode_Handling :: enum i32 {
 	FORCE_32BIT = 2147483647,
 }
 
+INHERIT_MODE_HANDLING_COUNT :: 5
+
 // How to handle FBX transform pivots.
 Pivot_Handling :: enum i32 {
 	// Take pivots into account when computing the transform.
@@ -4355,6 +4459,8 @@ Pivot_Handling :: enum i32 {
 	// to interpret these in a standard scene graph.
 	FORCE_32BIT = 2147483647,
 }
+
+PIVOT_HANDLING_COUNT :: 2
 
 Baked_Key_Flag :: enum i32 {
 	// This keyframe represents a constant step from the left side
@@ -4920,6 +5026,8 @@ Bake_Step_Handling :: enum i32 {
 	// Treat all stepped tangents as linearly interpolated.
 	ufbx_bake_step_handling_FORCE_32BIT = 2147483647,
 }
+
+BAKE_STEP_HANDLING_COUNT :: 5
 
 Bake_Opts :: struct {
 	_begin_zero:      u32,

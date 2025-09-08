@@ -1254,7 +1254,7 @@ gen :: proc(input: string, c: Config) {
 		}
 
 		// Stops forward declarations from being parsed.
-		if !bool(clang.isCursorDefinition(cursor)) || bool(clang.Cursor_isAnonymous(cursor)){
+		if !bool(clang.isCursorDefinition(cursor)) {
 			return .Continue // Skip forward declarations.
 		}
 
