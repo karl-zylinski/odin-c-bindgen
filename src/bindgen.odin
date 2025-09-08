@@ -1053,7 +1053,7 @@ gen :: proc(input: string, c: Config) {
 				})
 			case:
 				// For debugging purposes.
-				fmt.printf("Unexpected cursor kind for enum member: %v\n", kind)
+				fmt.println("Unexpected cursor kind for enum member:", kind)
 			}
 
 			return .Continue
@@ -2054,8 +2054,24 @@ gen :: proc(input: string, c: Config) {
 							}
 						}
 					case .Keyword:
-						if token_str in c_type_mapping {
-							strings.write_string(&builder, translate_type_string(state, token_str))
+						tokens_str := token_str
+						tokens_count := 0
+						for t in macro.tokens[index + 1:] {
+							if clang.getTokenKind(t) == .Keyword {
+								tokens_str = fmt.tprint(tokens_str, token_string(tu, t))
+								tokens_count += 1
+							} else {
+								break
+							}
+						}
+
+						if keyword_string := translate_type_string(state, tokens_str); keyword_string != "" {
+							strings.write_string(&builder, keyword_string)
+							loop_index += tokens_count
+						} else {
+							if keyword_string = translate_type_string(state, token_str); keyword_string != "" {
+								strings.write_string(&builder, keyword_string)
+							}
 						}
 					case .Identifier:
 						val, offset := parse_identifier(state, cursor, macro, loop_index)
@@ -2163,8 +2179,24 @@ gen :: proc(input: string, c: Config) {
 							strings.write_string(&builder, token_str)
 						}
 					case .Keyword:
-						if token_str in c_type_mapping {
-							strings.write_string(&builder, translate_type_string(state, token_str))
+						tokens_str := token_str
+						tokens_count := 0
+						for t in macro.tokens[index + 1:] {
+							if clang.getTokenKind(t) == .Keyword {
+								tokens_str = fmt.tprint(tokens_str, token_string(tu, t))
+								tokens_count += 1
+							} else {
+								break
+							}
+						}
+
+						if keyword_string := translate_type_string(state, tokens_str); keyword_string != "" {
+							strings.write_string(&builder, keyword_string)
+							index += tokens_count
+						} else {
+							if keyword_string = translate_type_string(state, token_str); keyword_string != "" {
+								strings.write_string(&builder, keyword_string)
+							}
 						}
 					case .Identifier:
 						val, offset2 := parse_identifier(state, cursor, macro, index)
