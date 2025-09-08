@@ -38,6 +38,8 @@ typedef struct CXIndexOptions {
   unsigned /*Reserved*/ : 13;
 } CXIndexOptions;
 
+typedef int testType[4];
+
 typedef void (*myLogImpl)(const char* fmt, ...);
 
 typedef void (myLogImpl2)(const char* fmt, ...);
@@ -49,9 +51,9 @@ struct MyVtable {
   myLogImpl2** logger4;
 };
 
-void test (myLogImpl log);
+void test1(myLogImpl log);
 
-void test2 (myLogImpl2* log);
+void test2(myLogImpl2* log);
 
 void test3(myLogImpl* log);
 
@@ -59,6 +61,8 @@ void test4(myLogImpl2** log);
 
 int nppiYCCKToCMYK(const int * pSrc[4], int nSrcStep, int * pDst[4], int nDstStep, int oSizeROI, int nppStreamCtx);
 
-void constArray(int arr[4]);
+int constArray(const int arr[4]);
+
+int tt(testType arr);
 
 #pragma GCC pop_options

@@ -75,7 +75,7 @@ foreign lib {
 	ContentDrawImage                :: proc(st: ^stream_t, name: cstring, x: f64, y: f64, w: f64, h: f64) -> bool ---
 	ContentFill                     :: proc(st: ^stream_t, even_odd: bool) -> bool ---
 	ContentFillAndStroke            :: proc(st: ^stream_t, even_odd: bool) -> bool ---
-	ContentMatrixConcat             :: proc(st: ^stream_t, m: matrix_t) -> bool ---
+	ContentMatrixConcat             :: proc(st: ^stream_t, #by_ptr m: matrix_t) -> bool ---
 	ContentMatrixRotate             :: proc(st: ^stream_t, degrees: f64) -> bool ---
 	ContentMatrixScale              :: proc(st: ^stream_t, sx: f64, sy: f64) -> bool ---
 	ContentMatrixTranslate          :: proc(st: ^stream_t, tx: f64, ty: f64) -> bool ---
@@ -110,7 +110,7 @@ foreign lib {
 	ContentSetTextCharacterSpacing  :: proc(st: ^stream_t, spacing: f64) -> bool ---
 	ContentSetTextFont              :: proc(st: ^stream_t, name: cstring, size: f64) -> bool ---
 	ContentSetTextLeading           :: proc(st: ^stream_t, leading: f64) -> bool ---
-	ContentSetTextMatrix            :: proc(st: ^stream_t, m: matrix_t) -> bool ---
+	ContentSetTextMatrix            :: proc(st: ^stream_t, #by_ptr m: matrix_t) -> bool ---
 	ContentSetTextRenderingMode     :: proc(st: ^stream_t, mode: textrendering_t) -> bool ---
 	ContentSetTextRise              :: proc(st: ^stream_t, rise: f64) -> bool ---
 	ContentSetTextWordSpacing       :: proc(st: ^stream_t, spacing: f64) -> bool ---

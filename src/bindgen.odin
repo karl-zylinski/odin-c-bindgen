@@ -356,13 +356,18 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsi
 	case .Elaborated:
 		elaborated_type := clang.Type_getNamedType(type)
 		#partial switch elaborated_type.kind {
-		case .Typedef:
-			if replacement, exists := c_typedef_types[cursor_spelling(clang.getTypeDeclaration(type))]; exists {
-				return replacement, false
-			}
-			fallthrough
 		case .Record, .Enum, .FunctionNoProto, .FunctionProto:
 			return translate_name(s, cursor_spelling(clang.getTypeDeclaration(type))), false
+		case .Typedef:
+			cursor_decl := clang.getTypeDeclaration(elaborated_type)
+			cursor_name := cursor_spelling(cursor_decl)
+			if replacement, exists := c_typedef_types[cursor_name]; exists {
+				return replacement, false
+			}
+			if clang.getTypedefDeclUnderlyingType(cursor_decl).kind == .ConstantArray {
+				return translate_name(s, cursor_name), true
+			}
+			return translate_name(s, cursor_name), false
 		}
 		return parse_type(s, elaborated_type, opts)
 	}
