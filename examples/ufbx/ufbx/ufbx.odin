@@ -91,7 +91,7 @@ Quat :: quaternion128
 // NOTE: The order in the name refers to the order of axes *applied*,
 // not the multiplication order: eg. `UFBX_ROTATION_ORDER_XYZ` is `Z*Y*X`
 // [TODO: Figure out what the spheric rotation order is...]
-Rotation_Order :: enum c.int {
+Rotation_Order :: enum i32 {
 	XYZ         = 0,
 	XZY         = 1,
 	YZX         = 2,
@@ -171,7 +171,7 @@ String_List :: struct {
 // NO_INDEX :: ((u32)~0)
 
 // -- Document object model
-Dom_Value_Type :: enum c.int {
+Dom_Value_Type :: enum i32 {
 	NUMBER           = 0,
 	STRING           = 1,
 	ARRAY_I8         = 2,
@@ -214,7 +214,7 @@ Dom_Node :: struct {
 // populated regardless of type, so there's no need to switch by type usually
 // eg. `prop->value_real` and `prop->value_int` have the same value (well, close)
 // if `prop->type == UFBX_PROP_INTEGER`. String values are not converted from/to.
-Prop_Type :: enum c.int {
+Prop_Type :: enum i32 {
 	UNKNOWN          = 0,
 	BOOLEAN          = 1,
 	INTEGER          = 2,
@@ -237,7 +237,7 @@ Prop_Type :: enum c.int {
 PROP_TYPE_COUNT :: 16
 
 // Property flags: Advanced information about properties, not usually needed.
-Prop_Flag :: enum c.int {
+Prop_Flag :: enum i32 {
 	// Supports animation.
 	// NOTE: ufbx ignores this and allows animations on non-animatable properties.
 	ANIMATABLE = 0,
@@ -332,7 +332,7 @@ Prop_Flag :: enum c.int {
 	VALUE_BLOB = 26,
 }
 
-Prop_Flags :: distinct bit_set[Prop_Flag; c.int]
+Prop_Flags :: distinct bit_set[Prop_Flag; i32]
 
 PROP_FLAGS_FORCE_32BIT :: Prop_Flags { .ANIMATABLE, .USER_DEFINED, .HIDDEN, .LOCK_X, .LOCK_Y, .LOCK_Z, .LOCK_W, .MUTE_X, .MUTE_Y, .MUTE_Z, .MUTE_W, .SYNTHETIC, .ANIMATED, .NOT_FOUND, .CONNECTED, .NO_VALUE, .OVERRIDDEN, .VALUE_REAL, .VALUE_VEC2, .VALUE_VEC3, .VALUE_VEC4, .VALUE_INT, .VALUE_STR, .VALUE_BLOB }
 
@@ -583,7 +583,7 @@ Metadata_Object_List :: struct {
 	count: c.size_t,
 }
 
-Element_Type :: enum c.int {
+Element_Type :: enum i32 {
 	UNKNOWN             = 0,  // < `ufbx_unknown`
 	NODE                = 1,  // < `ufbx_node`
 	MESH                = 2,  // < `ufbx_mesh`
@@ -692,7 +692,7 @@ Unknown :: struct {
 // inherited correctly.
 // NOTE: These don't map to `"InheritType"` property as there may be new ones for
 // compatibility with various exporters.
-Inherit_Mode :: enum c.int {
+Inherit_Mode :: enum i32 {
 	// Normal matrix composition of hierarchy: `R*S*r*s`.
 	//   child.node_to_world = parent.node_to_world * child.node_to_parent;
 	NORMAL = 0,
@@ -723,7 +723,7 @@ Inherit_Mode :: enum c.int {
 INHERIT_MODE_COUNT :: 3
 
 // Axis used to mirror transformations for handedness conversion.
-Mirror_Axis :: enum c.int {
+Mirror_Axis :: enum i32 {
 	NONE        = 0,
 	X           = 1,
 	Y           = 2,
@@ -1080,7 +1080,7 @@ Subdivision_Result :: struct {
 	skin_cluster_weights:  Subdivision_Weight_List,
 }
 
-Subdivision_Display_Mode :: enum c.int {
+Subdivision_Display_Mode :: enum i32 {
 	DISABLED         = 0,
 	HULL             = 1,
 	HULL_AND_SMOOTH  = 2,
@@ -1090,7 +1090,7 @@ Subdivision_Display_Mode :: enum c.int {
 
 SUBDIVISION_DISPLAY_MODE_COUNT :: 4
 
-Subdivision_Boundary :: enum c.int {
+Subdivision_Boundary :: enum i32 {
 	DEFAULT        = 0,
 	LEGACY         = 1,
 
@@ -1271,7 +1271,7 @@ Mesh :: struct {
 }
 
 // The kind of light source
-Light_Type :: enum c.int {
+Light_Type :: enum i32 {
 	// Single point at local origin, at `node->world_transform.position`
 	POINT = 0,
 
@@ -1299,7 +1299,7 @@ Light_Type :: enum c.int {
 LIGHT_TYPE_COUNT :: 5
 
 // How fast does the light intensity decay at a distance
-Light_Decay :: enum c.int {
+Light_Decay :: enum i32 {
 	NONE        = 0, // < 1 (no decay)
 	LINEAR      = 1, // < 1 / d
 	QUADRATIC   = 2, // < 1 / d^2 (physically accurate)
@@ -1309,7 +1309,7 @@ Light_Decay :: enum c.int {
 
 LIGHT_DECAY_COUNT :: 4
 
-Light_Area_Shape :: enum c.int {
+Light_Area_Shape :: enum i32 {
 	RECTANGLE   = 0,
 	SPHERE      = 1,
 	FORCE_32BIT = 2147483647,
@@ -1349,7 +1349,7 @@ Light :: struct {
 	cast_shadows: bool,
 }
 
-Projection_Mode :: enum c.int {
+Projection_Mode :: enum i32 {
 	// Perspective projection.
 	PERSPECTIVE = 0,
 
@@ -1364,7 +1364,7 @@ PROJECTION_MODE_COUNT :: 2
 
 // Method of specifying the rendering resolution from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aspect_Mode :: enum c.int {
+Aspect_Mode :: enum i32 {
 	// No defined resolution
 	WINDOW_SIZE = 0,
 
@@ -1388,7 +1388,7 @@ ASPECT_MODE_COUNT :: 5
 
 // Method of specifying the field of view from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aperture_Mode :: enum c.int {
+Aperture_Mode :: enum i32 {
 	// Use separate `"FieldOfViewX"` and `"FieldOfViewY"` as horizontal/vertical FOV angles
 	HORIZONTAL_AND_VERTICAL = 0,
 
@@ -1409,7 +1409,7 @@ APERTURE_MODE_COUNT :: 4
 
 // Method of specifying the render gate size from properties
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Gate_Fit :: enum c.int {
+Gate_Fit :: enum i32 {
 	// Use the film/aperture size directly as the render gate
 	NONE = 0,
 
@@ -1438,7 +1438,7 @@ GATE_FIT_COUNT :: 6
 
 // Camera film/aperture size defaults
 // NOTE: Handled internally by ufbx, ignore unless you interpret `ufbx_props` directly!
-Aperture_Format :: enum c.int {
+Aperture_Format :: enum i32 {
 	CUSTOM              = 0,  // < Use `"FilmWidth"` and `"FilmHeight"`
 	_16MM_THEATRICAL    = 1,  // < 0.404 x 0.295 inches
 	SUPER_16MM          = 2,  // < 0.493 x 0.292 inches
@@ -1456,7 +1456,7 @@ Aperture_Format :: enum c.int {
 
 APERTURE_FORMAT_COUNT :: 12
 
-Coordinate_Axis :: enum c.int {
+Coordinate_Axis :: enum i32 {
 	POSITIVE_X  = 0,
 	NEGATIVE_X  = 1,
 	POSITIVE_Y  = 2,
@@ -1615,7 +1615,7 @@ Line_Curve :: struct {
 	from_tessellated_nurbs: bool,
 }
 
-Nurbs_Topology :: enum c.int {
+Nurbs_Topology :: enum i32 {
 	// The endpoints are not connected.
 	OPEN = 0,
 
@@ -1792,7 +1792,7 @@ Camera_Switcher :: struct {
 	},
 }
 
-Marker_Type :: enum c.int {
+Marker_Type :: enum i32 {
 	UNKNOWN          = 0, // < Unknown marker type
 	FK_EFFECTOR      = 1, // < FK (Forward Kinematics) effector
 	IK_EFFECTOR      = 2, // < IK (Inverse Kinematics) effector
@@ -1819,7 +1819,7 @@ Marker :: struct {
 }
 
 // LOD level display mode.
-Lod_Display :: enum c.int {
+Lod_Display :: enum i32 {
 	USE_LOD     = 0, // < Display the LOD level if the distance is appropriate.
 	SHOW        = 1, // < Always display the LOD level.
 	HIDE        = 2, // < Never display the LOD level.
@@ -1878,7 +1878,7 @@ Lod_Group :: struct {
 }
 
 // Method to evaluate the skinning on a per-vertex level
-Skinning_Method :: enum c.int {
+Skinning_Method :: enum i32 {
 	// Linear blend skinning: Blend transformation matrices by vertex weights
 	LINEAR = 0,
 
@@ -2072,7 +2072,7 @@ Blend_Shape :: struct {
 	normal_offsets:   Vec3_List,   // < Empty if not specified
 }
 
-Cache_File_Format :: enum c.int {
+Cache_File_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown cache file format
 	PC2         = 1, // < .pc2 Point cache file
 	MC          = 2, // < .mc/.mcx Maya cache file
@@ -2081,7 +2081,7 @@ Cache_File_Format :: enum c.int {
 
 CACHE_FILE_FORMAT_COUNT :: 3
 
-Cache_Data_Format :: enum c.int {
+Cache_Data_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown data format
 	REAL_FLOAT  = 1, // < `float data[]`
 	VEC3_FLOAT  = 2, // < `struct { float x, y, z; } data[]`
@@ -2092,7 +2092,7 @@ Cache_Data_Format :: enum c.int {
 
 CACHE_DATA_FORMAT_COUNT :: 5
 
-Cache_Data_Encoding :: enum c.int {
+Cache_Data_Encoding :: enum i32 {
 	UNKNOWN       = 0, // < Unknown data encoding
 	LITTLE_ENDIAN = 1, // < Contiguous little-endian array
 	BIG_ENDIAN    = 2, // < Contiguous big-endian array
@@ -2102,7 +2102,7 @@ Cache_Data_Encoding :: enum c.int {
 CACHE_DATA_ENCODING_COUNT :: 3
 
 // Known interpretations of geometry cache data.
-Cache_Interpretation :: enum c.int {
+Cache_Interpretation :: enum i32 {
 	// Unknown interpretation, see `ufbx_cache_channel.interpretation_name` for more information.
 	UNKNOWN = 0,
 
@@ -2305,7 +2305,7 @@ Material_Texture_List :: struct {
 }
 
 // Shading model type
-Shader_Type :: enum c.int {
+Shader_Type :: enum i32 {
 	// Unknown shading model
 	UNKNOWN = 0,
 
@@ -2362,7 +2362,7 @@ Shader_Type :: enum c.int {
 SHADER_TYPE_COUNT :: 13
 
 // FBX builtin material properties, matches maps in `ufbx_material_fbx_maps`
-Material_Fbx_Map :: enum c.int {
+Material_Fbx_Map :: enum i32 {
 	DIFFUSE_FACTOR             = 0,
 	DIFFUSE_COLOR              = 1,
 	SPECULAR_FACTOR            = 2,
@@ -2389,7 +2389,7 @@ Material_Fbx_Map :: enum c.int {
 MATERIAL_FBX_MAP_COUNT :: 20
 
 // Known PBR material properties, matches maps in `ufbx_material_pbr_maps`
-Material_Pbr_Map :: enum c.int {
+Material_Pbr_Map :: enum i32 {
 	BASE_FACTOR                     = 0,
 	BASE_COLOR                      = 1,
 	ROUGHNESS                       = 2,
@@ -2452,7 +2452,7 @@ Material_Pbr_Map :: enum c.int {
 MATERIAL_PBR_MAP_COUNT :: 56
 
 // Known material features
-Material_Feature :: enum c.int {
+Material_Feature :: enum i32 {
 	PBR                                  = 0,
 	METALNESS                            = 1,
 	DIFFUSE                              = 2,
@@ -2639,7 +2639,7 @@ Material :: struct {
 	textures:           Material_Texture_List, // < Sorted by `material_prop`
 }
 
-Texture_Type :: enum c.int {
+Texture_Type :: enum i32 {
 	// Texture associated with an image file/sequence. `texture->filename` and
 	// and `texture->relative_filename` contain the texture's path. If the file
 	// has embedded content `texture->content` may hold `texture->content_size`
@@ -2667,7 +2667,7 @@ TEXTURE_TYPE_COUNT :: 4
 // mode definitions in many art programs. Simpler blend modes have equations
 // specified below where `src` is the layer to composite over `dst`.
 // See eg. https://www.w3.org/TR/2013/WD-compositing-1-20131010/#blendingseparable
-Blend_Mode :: enum c.int {
+Blend_Mode :: enum i32 {
 	TRANSLUCENT      = 0,  // < `src` effects result alpha
 	ADDITIVE         = 1,  // < `src + dst`
 	MULTIPLY         = 2,  // < `src * dst`
@@ -2705,7 +2705,7 @@ Blend_Mode :: enum c.int {
 BLEND_MODE_COUNT :: 31
 
 // Blend modes to combine layered textures with, compatible with common blend
-Wrap_Mode :: enum c.int {
+Wrap_Mode :: enum i32 {
 	REPEAT           = 0, // < Repeat the texture past the [0,1] range
 	CLAMP            = 1, // < Clamp the normalized texture coordinates to [0,1]
 	MODE_FORCE_32BIT = 2147483647,
@@ -2725,7 +2725,7 @@ Texture_Layer_List :: struct {
 	count: c.size_t,
 }
 
-Shader_Texture_Type :: enum c.int {
+Shader_Texture_Type :: enum i32 {
 	UNKNOWN          = 0,
 
 	// Select an output of a multi-output shader.
@@ -3144,7 +3144,7 @@ Anim_Value :: struct {
 }
 
 // Animation curve segment interpolation mode between two keyframes
-Interpolation :: enum c.int {
+Interpolation :: enum i32 {
 	CONSTANT_PREV = 0, // < Hold previous key value
 	CONSTANT_NEXT = 1, // < Hold next key value
 	LINEAR        = 2, // < Linear interpolation between two keys
@@ -3154,7 +3154,7 @@ Interpolation :: enum c.int {
 
 INTERPOLATION_COUNT :: 4
 
-Extrapolation_Mode :: enum c.int {
+Extrapolation_Mode :: enum i32 {
 	CONSTANT        = 0, // < Use the value of the first/last keyframe
 	REPEAT          = 1, // < Repeat the whole animation curve
 	MIRROR          = 2, // < Repeat with mirroring
@@ -3303,7 +3303,7 @@ Character :: struct {
 }
 
 // Type of property constrain eg. position or look-at
-Constraint_Type :: enum c.int {
+Constraint_Type :: enum i32 {
 	UNKNOWN          = 0,
 	AIM              = 1,
 	PARENT           = 2,
@@ -3335,7 +3335,7 @@ Constraint_Target_List :: struct {
 }
 
 // Method to determine the up vector in aim constraints
-Constraint_Aim_Up_Type :: enum c.int {
+Constraint_Aim_Up_Type :: enum i32 {
 	SCENE            = 0, // < Align the up vector to the scene global up vector
 	TO_NODE          = 1, // < Aim the up vector at `ufbx_constraint.aim_up_node`
 	ALIGN_NODE       = 2, // < Copy the up vector from `ufbx_constraint.aim_up_node`
@@ -3347,7 +3347,7 @@ Constraint_Aim_Up_Type :: enum c.int {
 CONSTRAINT_AIM_UP_TYPE_COUNT :: 5
 
 // Method to determine the up vector in aim constraints
-Constraint_Ik_Pole_Type :: enum c.int {
+Constraint_Ik_Pole_Type :: enum i32 {
 	VECTOR           = 0, // < Use towards calculated from `ufbx_constraint.targets`
 	NODE             = 1, // < Use `ufbx_constraint.ik_pole_vector` directly
 	TYPE_FORCE_32BIT = 2147483647,
@@ -3519,7 +3519,7 @@ Name_Element_List :: struct {
 }
 
 // Scene is the root object loaded by ufbx that everything is accessed from.
-Exporter :: enum c.int {
+Exporter :: enum i32 {
 	UNKNOWN        = 0,
 	FBX_SDK        = 1,
 	BLENDER_BINARY = 2,
@@ -3536,7 +3536,7 @@ Application :: struct {
 	version: String,
 }
 
-File_Format :: enum c.int {
+File_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown file format
 	FBX         = 1, // < .fbx Kaydara/Autodesk FBX file
 	OBJ         = 2, // < .obj Wavefront OBJ file
@@ -3546,7 +3546,7 @@ File_Format :: enum c.int {
 
 FILE_FORMAT_COUNT :: 4
 
-Warning_Type :: enum c.int {
+Warning_Type :: enum i32 {
 	// Missing external file file (for example .mtl for Wavefront .obj file or a
 	// geometry cache)
 	MISSING_EXTERNAL_FILE = 0,
@@ -3631,7 +3631,7 @@ Warning_List :: struct {
 	count: c.size_t,
 }
 
-Thumbnail_Format :: enum c.int {
+Thumbnail_Format :: enum i32 {
 	UNKNOWN     = 0, // < Unknown format
 	RGB_24      = 1, // < 8-bit RGB pixels, in memory R,G,B
 	RGBA_32     = 2, // < 8-bit RGBA pixels, in memory R,G,B,A
@@ -3643,7 +3643,7 @@ THUMBNAIL_FORMAT_COUNT :: 3
 // Specify how unit / coordinate system conversion should be performed.
 // Affects how `ufbx_load_opts.target_axes` and `ufbx_load_opts.target_unit_meters` work,
 // has no effect if neither is specified.
-Space_Conversion :: enum c.int {
+Space_Conversion :: enum i32 {
 	// Store the space conversion transform in the root node.
 	// Sets `ufbx_node.local_transform` of the root node.
 	TRANSFORM_ROOT = 0,
@@ -3763,7 +3763,7 @@ Metadata :: struct {
 	geometry_scale: Real,
 }
 
-Time_Mode :: enum c.int {
+Time_Mode :: enum i32 {
 	DEFAULT         = 0,
 	_120_FPS        = 1,
 	_100_FPS        = 2,
@@ -3787,7 +3787,7 @@ Time_Mode :: enum c.int {
 
 TIME_MODE_COUNT :: 18
 
-Time_Protocol :: enum c.int {
+Time_Protocol :: enum i32 {
 	SMPTE       = 0,
 	FRAME_COUNT = 1,
 	DEFAULT     = 2,
@@ -3796,7 +3796,7 @@ Time_Protocol :: enum c.int {
 
 TIME_PROTOCOL_COUNT :: 3
 
-Snap_Mode :: enum c.int {
+Snap_Mode :: enum i32 {
 	NONE          = 0,
 	SNAP          = 1,
 	PLAY          = 2,
@@ -3945,7 +3945,7 @@ Surface_Point :: struct {
 }
 
 // -- Mesh topology
-Topo_Flags :: enum c.int {
+Topo_Flags :: enum i32 {
 	NON_MANIFOLD      = 1, // < Edge with three or more faces
 	FLAGS_FORCE_32BIT = 2147483647,
 }
@@ -4050,7 +4050,7 @@ Stream :: struct {
 	user: rawptr,
 }
 
-Open_File_Type :: enum c.int {
+Open_File_Type :: enum i32 {
 	MAIN_MODEL       = 0, // < Main model file
 	GEOMETRY_CACHE   = 1, // < Unknown geometry cache file
 	OBJ_MTL          = 2, // < .mtl material library file
@@ -4131,7 +4131,7 @@ Error_Frame :: struct {
 }
 
 // Error causes (and `UFBX_ERROR_NONE` for no error).
-Error_Type :: enum c.int {
+Error_Type :: enum i32 {
 	// No error, operation has been performed successfully.
 	NONE = 0,
 
@@ -4240,7 +4240,7 @@ Error :: struct {
 	// Additional error information, such as missing file filename.
 	// `info` is a NULL-terminated UTF-8 string containing `info_length` bytes, excluding the trailing `'\0'`.
 	info_length: c.size_t,
-	info:  [256]c.char,
+	info:  [256]i8,
 }
 
 // Loading progress information.
@@ -4251,7 +4251,7 @@ Progress :: struct {
 
 // Progress result returned from `ufbx_progress_fn()` callback.
 // Determines whether ufbx should continue or abort the loading.
-Progress_Result :: enum c.int {
+Progress_Result :: enum i32 {
 	// Continue loading the file.
 	CONTINUE = 256,
 
@@ -4313,7 +4313,7 @@ Inflate_Retain :: struct {
 	data:        [1024]u64,
 }
 
-Index_Error_Handling :: enum c.int {
+Index_Error_Handling :: enum i32 {
 	// Clamp to a valid value.
 	CLAMP = 0,
 
@@ -4341,7 +4341,7 @@ Index_Error_Handling :: enum c.int {
 
 INDEX_ERROR_HANDLING_COUNT :: 4
 
-Unicode_Error_Handling :: enum c.int {
+Unicode_Error_Handling :: enum i32 {
 	// Replace errors with U+FFFD "Replacement Character"
 	REPLACEMENT_CHARACTER = 0,
 
@@ -4376,7 +4376,7 @@ UNICODE_ERROR_HANDLING_COUNT :: 6
 // ufbx provides some ways to simplify them.
 // Geometry transforms can also be used to transform any other attributes such
 // as lights or cameras.
-Geometry_Transform_Handling :: enum c.int {
+Geometry_Transform_Handling :: enum i32 {
 	// Preserve the geometry transforms as-is.
 	// To be correct for all files you have to use `ufbx_node.geometry_transform`,
 	// `ufbx_node.geometry_to_node`, or `ufbx_node.geometry_to_world` to compensate
@@ -4406,7 +4406,7 @@ Geometry_Transform_Handling :: enum c.int {
 GEOMETRY_TRANSFORM_HANDLING_COUNT :: 4
 
 // How to handle FBX transform inherit modes.
-Inherit_Mode_Handling :: enum c.int {
+Inherit_Mode_Handling :: enum i32 {
 	// Preserve inherit mode in `ufbx_node.inherit_mode`.
 	// NOTE: To correctly handle all scenes you would need to handle the
 	// non-standard inherit modes.
@@ -4443,7 +4443,7 @@ Inherit_Mode_Handling :: enum c.int {
 INHERIT_MODE_HANDLING_COUNT :: 5
 
 // How to handle FBX transform pivots.
-Pivot_Handling :: enum c.int {
+Pivot_Handling :: enum i32 {
 	// Take pivots into account when computing the transform.
 	RETAIN = 0,
 
@@ -4462,7 +4462,7 @@ Pivot_Handling :: enum c.int {
 
 PIVOT_HANDLING_COUNT :: 2
 
-Baked_Key_Flag :: enum c.int {
+Baked_Key_Flag :: enum i32 {
 	// This keyframe represents a constant step from the left side
 	STEP_LEFT,
 
@@ -4481,7 +4481,7 @@ Baked_Key_Flag :: enum c.int {
 	REDUCED,
 }
 
-Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; c.int]
+Baked_Key_Flags :: distinct bit_set[Baked_Key_Flag; i32]
 
 BAKED_KEY_FORCE_32BIT :: Baked_Key_Flags { .STEP_LEFT, .STEP_RIGHT, .STEP_KEY, .KEYFRAME, .REDUCED }
 
@@ -4668,7 +4668,7 @@ Thread_Opts :: struct {
 }
 
 // Flags to control nanimation evaluation functions.
-Evaluate_Flags :: enum c.int {
+Evaluate_Flags :: enum i32 {
 	// Do not extrapolate past the keyframes.
 	UFBX_EVALUATE_FLAG_NO_EXTRAPOLATION = 1,
 
@@ -4763,7 +4763,7 @@ Load_Opts :: struct {
 	open_main_file_with_default: bool,
 
 	// Path separator character, defaults to '\' on Windows and '/' otherwise.
-	path_separator: c.char,
+	path_separator: i8,
 
 	// Maximum depth of the node hirerachy.
 	// Will fail with `UFBX_ERROR_NODE_DEPTH_LIMIT` if a node is deeper than this limit.
@@ -5000,7 +5000,7 @@ Anim_Opts :: struct {
 }
 
 // Specifies how to handle stepped tangents.
-Bake_Step_Handling :: enum c.int {
+Bake_Step_Handling :: enum i32 {
 	// One millisecond default step duration, with potential extra slack for converting to `float`.
 	UFBX_BAKE_STEP_HANDLING_DEFAULT = 0,
 
@@ -5218,11 +5218,11 @@ Geometry_Cache_Data_Opts :: struct {
 Panic :: struct {
 	did_panic:      bool,
 	message_length: c.size_t,
-	message:        [128]c.char,
+	message:        [128]i8,
 }
 
 // Flags to control `ufbx_evaluate_transform_flags()`.
-Transform_Flag :: enum c.int {
+Transform_Flag :: enum i32 {
 	// Ignore parent scale helper.
 	IGNORE_SCALE_HELPER = 0,
 
@@ -5248,7 +5248,7 @@ Transform_Flag :: enum c.int {
 	NO_EXTRAPOLATION = 7,
 }
 
-Transform_Flags :: distinct bit_set[Transform_Flag; c.int]
+Transform_Flags :: distinct bit_set[Transform_Flag; i32]
 
 TRANSFORM_FLAGS_FORCE_32BIT :: Transform_Flags { .IGNORE_SCALE_HELPER, .IGNORE_COMPONENTWISE_SCALE, .EXPLICIT_INCLUDES, .INCLUDE_TRANSLATION, .INCLUDE_ROTATION, .INCLUDE_SCALE, .NO_EXTRAPOLATION }
 

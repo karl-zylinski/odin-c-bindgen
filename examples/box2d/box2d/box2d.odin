@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-import "core:c"
 
-_ :: c
 
 foreign import lib "box2d.lib"
 
@@ -25,7 +23,7 @@ foreign lib {
 	/// @param worldId The world to simulate
 	/// @param timeStep The amount of time to simulate, this should be a fixed number. Usually 1/60.
 	/// @param subStepCount The number of sub-steps, increasing the sub-step count can increase accuracy. Usually 4.
-	World_Step :: proc(worldId: WorldId, timeStep: f32, subStepCount: c.int) ---
+	World_Step :: proc(worldId: WorldId, timeStep: f32, subStepCount: i32) ---
 
 	/// Call this to draw shapes and other debug draw data
 	World_Draw :: proc(worldId: WorldId, draw: ^DebugDraw) ---
@@ -40,19 +38,19 @@ foreign lib {
 	World_GetContactEvents :: proc(worldId: WorldId) -> ContactEvents ---
 
 	/// Overlap test for all shapes that *potentially* overlap the provided AABB
-	World_OverlapAABB :: proc(worldId: WorldId, aabb: AABB, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
+	World_OverlapAABB :: proc(worldId: WorldId, aabb: AABB, filter: QueryFilter, fcn: OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for for all shapes that overlap the provided point.
-	World_OverlapPoint :: proc(worldId: WorldId, point: Vec2, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
+	World_OverlapPoint :: proc(worldId: WorldId, point: Vec2, transform: Transform, filter: QueryFilter, fcn: OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for for all shapes that overlap the provided circle. A zero radius may be used for a point query.
-	World_OverlapCircle :: proc(worldId: WorldId, circle: ^Circle, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
+	World_OverlapCircle :: proc(worldId: WorldId, circle: ^Circle, transform: Transform, filter: QueryFilter, fcn: OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for all shapes that overlap the provided capsule
-	World_OverlapCapsule :: proc(worldId: WorldId, capsule: ^Capsule, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
+	World_OverlapCapsule :: proc(worldId: WorldId, capsule: ^Capsule, transform: Transform, filter: QueryFilter, fcn: OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Overlap test for all shapes that overlap the provided polygon
-	World_OverlapPolygon :: proc(worldId: WorldId, polygon: ^Polygon, transform: Transform, filter: QueryFilter, fcn: ^OverlapResultFcn, _context: rawptr) -> TreeStats ---
+	World_OverlapPolygon :: proc(worldId: WorldId, polygon: ^Polygon, transform: Transform, filter: QueryFilter, fcn: OverlapResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a ray into the world to collect shapes in the path of the ray.
 	/// Your callback function controls whether you get the closest point, any point, or n-points.
@@ -65,7 +63,7 @@ foreign lib {
 	/// @param fcn A user implemented callback function
 	/// @param context A user context that is passed along to the callback function
 	///	@return traversal performance counters
-	World_CastRay :: proc(worldId: WorldId, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
+	World_CastRay :: proc(worldId: WorldId, origin: Vec2, translation: Vec2, filter: QueryFilter, fcn: CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a ray into the world to collect the closest hit. This is a convenience function.
 	/// This is less general than b2World_CastRay() and does not allow for custom filtering.
@@ -73,15 +71,15 @@ foreign lib {
 
 	/// Cast a circle through the world. Similar to a cast ray except that a circle is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastCircle :: proc(worldId: WorldId, circle: ^Circle, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
+	World_CastCircle :: proc(worldId: WorldId, circle: ^Circle, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a capsule through the world. Similar to a cast ray except that a capsule is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastCapsule :: proc(worldId: WorldId, capsule: ^Capsule, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
+	World_CastCapsule :: proc(worldId: WorldId, capsule: ^Capsule, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Cast a polygon through the world. Similar to a cast ray except that a polygon is cast instead of a point.
 	///	@see b2World_CastRay
-	World_CastPolygon :: proc(worldId: WorldId, polygon: ^Polygon, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: ^CastResultFcn, _context: rawptr) -> TreeStats ---
+	World_CastPolygon :: proc(worldId: WorldId, polygon: ^Polygon, originTransform: Transform, translation: Vec2, filter: QueryFilter, fcn: CastResultFcn, _context: rawptr) -> TreeStats ---
 
 	/// Enable/disable sleep. If your application does not need sleeping, you can gain some performance
 	/// by disabling sleep completely at the world level.
@@ -117,10 +115,10 @@ foreign lib {
 	World_GetHitEventThreshold :: proc(worldId: WorldId) -> f32 ---
 
 	/// Register the custom filter callback. This is optional.
-	World_SetCustomFilterCallback :: proc(worldId: WorldId, fcn: ^CustomFilterFcn, _context: rawptr) ---
+	World_SetCustomFilterCallback :: proc(worldId: WorldId, fcn: CustomFilterFcn, _context: rawptr) ---
 
 	/// Register the pre-solve callback. This is optional.
-	World_SetPreSolveCallback :: proc(worldId: WorldId, fcn: ^PreSolveFcn, _context: rawptr) ---
+	World_SetPreSolveCallback :: proc(worldId: WorldId, fcn: PreSolveFcn, _context: rawptr) ---
 
 	/// Set the gravity vector for the entire world. Box2D has no concept of an up direction and this
 	/// is left as a decision for the application. Usually in m/s^2.
@@ -164,7 +162,7 @@ foreign lib {
 	World_IsWarmStartingEnabled :: proc(worldId: WorldId) -> bool ---
 
 	/// Get the number of awake bodies.
-	World_GetAwakeBodyCount :: proc(worldId: WorldId) -> c.int ---
+	World_GetAwakeBodyCount :: proc(worldId: WorldId) -> i32 ---
 
 	/// Get the current world performance profile
 	World_GetProfile :: proc(worldId: WorldId) -> Profile ---
@@ -179,10 +177,10 @@ foreign lib {
 	World_GetUserData :: proc(worldId: WorldId) -> rawptr ---
 
 	/// Set the friction callback. Passing NULL resets to default.
-	World_SetFrictionCallback :: proc(worldId: WorldId, callback: ^FrictionCallback) ---
+	World_SetFrictionCallback :: proc(worldId: WorldId, callback: FrictionCallback) ---
 
 	/// Set the restitution callback. Passing NULL resets to default.
-	World_SetRestitutionCallback :: proc(worldId: WorldId, callback: ^RestitutionCallback) ---
+	World_SetRestitutionCallback :: proc(worldId: WorldId, callback: RestitutionCallback) ---
 
 	/// Dump memory stats to box2d_memory.txt
 	World_DumpMemoryStats :: proc(worldId: WorldId) ---
@@ -426,27 +424,27 @@ foreign lib {
 	Body_GetWorld :: proc(bodyId: BodyId) -> WorldId ---
 
 	/// Get the number of shapes on this body
-	Body_GetShapeCount :: proc(bodyId: BodyId) -> c.int ---
+	Body_GetShapeCount :: proc(bodyId: BodyId) -> i32 ---
 
 	/// Get the shape ids for all shapes on this body, up to the provided capacity.
 	/// @returns the number of shape ids stored in the user array
-	Body_GetShapes :: proc(bodyId: BodyId, shapeArray: ^ShapeId, capacity: c.int) -> c.int ---
+	Body_GetShapes :: proc(bodyId: BodyId, shapeArray: ^ShapeId, capacity: i32) -> i32 ---
 
 	/// Get the number of joints on this body
-	Body_GetJointCount :: proc(bodyId: BodyId) -> c.int ---
+	Body_GetJointCount :: proc(bodyId: BodyId) -> i32 ---
 
 	/// Get the joint ids for all joints on this body, up to the provided capacity
 	/// @returns the number of joint ids stored in the user array
-	Body_GetJoints :: proc(bodyId: BodyId, jointArray: ^JointId, capacity: c.int) -> c.int ---
+	Body_GetJoints :: proc(bodyId: BodyId, jointArray: ^JointId, capacity: i32) -> i32 ---
 
 	/// Get the maximum capacity required for retrieving all the touching contacts on a body
-	Body_GetContactCapacity :: proc(bodyId: BodyId) -> c.int ---
+	Body_GetContactCapacity :: proc(bodyId: BodyId) -> i32 ---
 
 	/// Get the touching contact data for a body.
 	/// @note Box2D uses speculative collision so some contact points may be separated.
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
-	Body_GetContactData :: proc(bodyId: BodyId, contactData: ^ContactData, capacity: c.int) -> c.int ---
+	Body_GetContactData :: proc(bodyId: BodyId, contactData: ^ContactData, capacity: i32) -> i32 ---
 
 	/// Get the current world AABB that contains all the attached shapes. Note that this may not encompass the body origin.
 	/// If there are no shapes attached then the returned AABB is empty and centered on the body origin.
@@ -523,10 +521,10 @@ foreign lib {
 
 	/// Set the shape material identifier
 	/// @see b2ShapeDef::material
-	Shape_SetMaterial :: proc(shapeId: ShapeId, material: c.int) ---
+	Shape_SetMaterial :: proc(shapeId: ShapeId, material: i32) ---
 
 	/// Get the shape material identifier
-	Shape_GetMaterial :: proc(shapeId: ShapeId) -> c.int ---
+	Shape_GetMaterial :: proc(shapeId: ShapeId) -> i32 ---
 
 	/// Get the shape filter
 	Shape_GetFilter :: proc(shapeId: ShapeId) -> Filter ---
@@ -605,19 +603,19 @@ foreign lib {
 	Shape_GetParentChain :: proc(shapeId: ShapeId) -> ChainId ---
 
 	/// Get the maximum capacity required for retrieving all the touching contacts on a shape
-	Shape_GetContactCapacity :: proc(shapeId: ShapeId) -> c.int ---
+	Shape_GetContactCapacity :: proc(shapeId: ShapeId) -> i32 ---
 
 	/// Get the touching contact data for a shape. The provided shapeId will be either shapeIdA or shapeIdB on the contact data.
 	/// @note Box2D uses speculative collision so some contact points may be separated.
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
-	Shape_GetContactData :: proc(shapeId: ShapeId, contactData: ^ContactData, capacity: c.int) -> c.int ---
+	Shape_GetContactData :: proc(shapeId: ShapeId, contactData: ^ContactData, capacity: i32) -> i32 ---
 
 	/// Get the maximum capacity required for retrieving all the overlapped shapes on a sensor shape.
 	/// This returns 0 if the provided shape is not a sensor.
 	/// @param shapeId the id of a sensor shape
 	/// @returns the required capacity to get all the overlaps in b2Shape_GetSensorOverlaps
-	Shape_GetSensorCapacity :: proc(shapeId: ShapeId) -> c.int ---
+	Shape_GetSensorCapacity :: proc(shapeId: ShapeId) -> i32 ---
 
 	/// Get the overlapped shapes for a sensor shape.
 	/// @param shapeId the id of a sensor shape
@@ -626,7 +624,7 @@ foreign lib {
 	/// @returns the number of elements filled in the provided array
 	/// @warning do not ignore the return value, it specifies the valid number of elements
 	/// @warning overlaps may contain destroyed shapes so use b2Shape_IsValid to confirm each overlap
-	Shape_GetSensorOverlaps :: proc(shapeId: ShapeId, overlaps: ^ShapeId, capacity: c.int) -> c.int ---
+	Shape_GetSensorOverlaps :: proc(shapeId: ShapeId, overlaps: ^ShapeId, capacity: i32) -> i32 ---
 
 	/// Get the current world AABB
 	Shape_GetAABB :: proc(shapeId: ShapeId) -> AABB ---
@@ -649,11 +647,11 @@ foreign lib {
 	Chain_GetWorld :: proc(chainId: ChainId) -> WorldId ---
 
 	/// Get the number of segments on this chain
-	Chain_GetSegmentCount :: proc(chainId: ChainId) -> c.int ---
+	Chain_GetSegmentCount :: proc(chainId: ChainId) -> i32 ---
 
 	/// Fill a user array with chain segment shape ids up to the specified capacity. Returns
 	/// the actual number of segments returned.
-	Chain_GetSegments :: proc(chainId: ChainId, segmentArray: ^ShapeId, capacity: c.int) -> c.int ---
+	Chain_GetSegments :: proc(chainId: ChainId, segmentArray: ^ShapeId, capacity: i32) -> i32 ---
 
 	/// Set the chain friction
 	/// @see b2ChainDef::friction
@@ -671,10 +669,10 @@ foreign lib {
 
 	/// Set the chain material
 	/// @see b2ChainDef::material
-	Chain_SetMaterial :: proc(chainId: ChainId, material: c.int) ---
+	Chain_SetMaterial :: proc(chainId: ChainId, material: i32) ---
 
 	/// Get the chain material
-	Chain_GetMaterial :: proc(chainId: ChainId) -> c.int ---
+	Chain_GetMaterial :: proc(chainId: ChainId) -> i32 ---
 
 	/// Chain identifier validation. Provides validation for up to 64K allocations.
 	Chain_IsValid :: proc(id: ChainId) -> bool ---

@@ -1,0 +1,187 @@
+File: ./src/test.h
+Cursors:
+- Visiting: stdarg.h
+  Parent: ./src/test.h
+  Kind: InclusionDirective
+  TypeKind: Invalid
+  Children:
+- Visiting: TEST
+  Parent: ./src/test.h
+  Kind: MacroDefinition
+  TypeKind: Invalid
+  Children:
+- Visiting: testType
+  Parent: ./src/test.h
+  Kind: TypedefDecl
+  TypeKind: Typedef
+  Children:
+  - Visiting: 
+    Parent: testType
+    Kind: IntegerLiteral
+    TypeKind: Int
+    Children:
+- Visiting: myLogImpl
+  Parent: ./src/test.h
+  Kind: TypedefDecl
+  TypeKind: Typedef
+  Children:
+  - Visiting: fmt
+    Parent: myLogImpl
+    Kind: ParmDecl
+    TypeKind: Pointer
+    Children:
+- Visiting: myLogImpl2
+  Parent: ./src/test.h
+  Kind: TypedefDecl
+  TypeKind: Typedef
+  Children:
+  - Visiting: fmt
+    Parent: myLogImpl2
+    Kind: ParmDecl
+    TypeKind: Pointer
+    Children:
+- Visiting: MyVtable
+  Parent: ./src/test.h
+  Kind: StructDecl
+  TypeKind: Record
+  Children:
+  - Visiting: logger
+    Parent: MyVtable
+    Kind: FieldDecl
+    TypeKind: Elaborated
+    Children:
+    - Visiting: myLogImpl
+      Parent: logger
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+  - Visiting: logger2
+    Parent: MyVtable
+    Kind: FieldDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl2
+      Parent: logger2
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+  - Visiting: logger3
+    Parent: MyVtable
+    Kind: FieldDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl
+      Parent: logger3
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+  - Visiting: logger4
+    Parent: MyVtable
+    Kind: FieldDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl2
+      Parent: logger4
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: test1
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: log
+    Parent: test1
+    Kind: ParmDecl
+    TypeKind: Elaborated
+    Children:
+    - Visiting: myLogImpl
+      Parent: log
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: test2
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: log
+    Parent: test2
+    Kind: ParmDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl2
+      Parent: log
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: test3
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: log
+    Parent: test3
+    Kind: ParmDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl
+      Parent: log
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: test4
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: log
+    Parent: test4
+    Kind: ParmDecl
+    TypeKind: Pointer
+    Children:
+    - Visiting: myLogImpl2
+      Parent: log
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: constArray
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: arr
+    Parent: constArray
+    Kind: ParmDecl
+    TypeKind: ConstantArray
+    Children:
+    - Visiting: 
+      Parent: arr
+      Kind: IntegerLiteral
+      TypeKind: Int
+      Children:
+- Visiting: typedef_test
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:
+  - Visiting: arr
+    Parent: typedef_test
+    Kind: ParmDecl
+    TypeKind: Elaborated
+    Children:
+    - Visiting: testType
+      Parent: arr
+      Kind: TypeRef
+      TypeKind: Typedef
+      Children:
+- Visiting: functionNoProto
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionNoProto
+  Children:
+- Visiting: functionProto
+  Parent: ./src/test.h
+  Kind: FunctionDecl
+  TypeKind: FunctionProto
+  Children:

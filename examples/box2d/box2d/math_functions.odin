@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-import "core:c"
 
-_ :: c
 
 foreign import lib "box2d.lib"
 
