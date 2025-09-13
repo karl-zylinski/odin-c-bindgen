@@ -5,6 +5,9 @@
 
 #define TEST unsigned char
 
+typedef signed long   Int64;
+typedef unsigned long UInt64;
+
 typedef int testType[4];
 
 typedef void (*myLogImpl)(const char* fmt, ...);

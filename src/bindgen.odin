@@ -1012,6 +1012,7 @@ gen :: proc(input: string, c: Config) {
 
 	parse_typedef_decl :: proc(state: ^Gen_State, cursor: clang.Cursor) -> Typedef {
 		type := clang.getTypedefDeclUnderlyingType(cursor)
+		vet_type(state, type)
 
 		source_range := clang.getCursorExtent(cursor)
 		start := clang.getRangeStart(source_range)

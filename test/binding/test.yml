@@ -10,6 +10,16 @@ Cursors:
   Kind: MacroDefinition
   TypeKind: Invalid
   Children:
+- Visiting: Int64
+  Parent: ./src/test.h
+  Kind: TypedefDecl
+  TypeKind: Typedef
+  Children:
+- Visiting: UInt64
+  Parent: ./src/test.h
+  Kind: TypedefDecl
+  TypeKind: Typedef
+  Children:
 - Visiting: testType
   Parent: ./src/test.h
   Kind: TypedefDecl

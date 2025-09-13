@@ -1,10 +1,16 @@
 package test
 
+import "core:c"
 
+_ :: c
 
 foreign import lib "test.lib"
 
 TEST :: u8
+
+Int64 :: c.long
+
+UInt64 :: c.ulong
 
 testType :: [4]i32
 
