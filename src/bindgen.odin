@@ -975,7 +975,7 @@ gen :: proc(input: string, c: Config) {
 					variant = parse_record_decl(data.state, cursor),
 				})
 
-				if bool(clang.Cursor_isAnonymous(cursor)) {
+				if bool(clang.Cursor_isAnonymousRecordDecl(cursor)) {
 					append(&data.out_fields, Struct_Field {
 						names = [dynamic]string {cursor_spelling(cursor)},
 						type = clang.getCursorType(cursor),
