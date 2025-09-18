@@ -399,7 +399,11 @@ parse_function_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsing_
 	}
 
 	if bool(clang.isFunctionTypeVariadic(type)) {
-		strings.write_string(&builder, ", #c_vararg ..any")
+		if clang.getNumArgTypes(type) > 0 {
+			strings.write_string(&builder, ", ")
+		}
+
+		strings.write_string(&builder, "#c_vararg ..any")
 	}
 
 	strings.write_byte(&builder, ')')
