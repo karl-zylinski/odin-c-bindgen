@@ -379,8 +379,7 @@ DynamicTree :: struct {
 	rebuildCapacity: i32,
 }
 
-TreeNode :: struct {
-}
+TreeNode :: struct {}
 
 /// These are performance results returned by dynamic tree queries.
 TreeStats :: struct {

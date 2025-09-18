@@ -5313,6 +5313,7 @@ Weight :: "Weight"
 // Blend shape deformation weight (100.0 being full).
 // Used by: `ufbx_blend_channel`.
 DeformPercent :: "DeformPercent"
+
 @(default_calling_convention="c", link_prefix="ufbx_")
 foreign lib {
 	// Practically always `true` (see below), if not you need to be careful with threads.

@@ -969,11 +969,15 @@ gen :: proc(input: string, c: Config) {
 					})
 				}
 			case .StructDecl, .UnionDecl:
+				// This is a "forward declaration" of a struct directly on a field. We output a
+				// named opaque type for it. Not sure if it is the best idea, but it seems to "just work".
 				append(&data.state.decls, Declaration {
 					cursor = cursor,
 					original_idx = len(data.state.decls),
 					variant = parse_record_decl(data.state, cursor),
 				})
+
+				data.state.opaque_type_lookup[cursor_spelling(cursor)] = {}
 
 				if bool(clang.Cursor_isAnonymousRecordDecl(cursor)) {
 					append(&data.out_fields, Struct_Field {
@@ -1011,6 +1015,7 @@ gen :: proc(input: string, c: Config) {
 			comment = comment_text(cursor),
 			is_union = clang.getCursorKind(cursor) == .UnionDecl,
 			is_anon = bool(clang.Cursor_isAnonymous(cursor)),
+			is_forward_declare = !bool(clang.isCursorDefinition(cursor)),
 		}
 	}
 
@@ -1258,11 +1263,6 @@ gen :: proc(input: string, c: Config) {
 			return .Continue
 		}
 
-		// Stops forward declarations from being parsed.
-		if !bool(clang.isCursorDefinition(cursor)) {
-			return .Continue // Skip forward declarations.
-		}
-
 		def: Declaration_Variant
 		#partial switch kind {
 		case .StructDecl, .UnionDecl:
@@ -1468,6 +1468,11 @@ gen :: proc(input: string, c: Config) {
 
 			if d.is_union {
 				ws(&w, "#raw_union ")
+			}
+
+			if len(d.fields) == 0 {
+				ws(&w, "{}")
+				return strings.to_string(w)
 			}
 
 			ws(&w, "{\n")
