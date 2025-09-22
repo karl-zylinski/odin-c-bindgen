@@ -6,6 +6,7 @@ import "core:os/os2"
 import "core:fmt"
 import "core:strings"
 import "core:path/filepath"
+import "base:runtime"
 
 main :: proc() {
 	permanent_arena: vmem.Arena
@@ -38,15 +39,18 @@ main :: proc() {
 			gen_arena: vmem.Arena
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
+			gen_ctx = context
 			ir := parse(i)
-			process(&ir)
+			fr := process(&ir)
 			output_stem := filepath.stem(i)
 			output_filename := fmt.tprintf("%v/_output/%v.odin", dir, output_stem)
-			output(ir, output_filename)
+			output(fr, output_filename)
 			vmem.arena_destroy(&gen_arena)
 		}
 	}
 }
+
+gen_ctx: runtime.Context
 
 to_cstring :: proc(str: string) -> cstring {
 	return strings.clone_to_cstring(str)

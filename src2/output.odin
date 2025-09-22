@@ -6,7 +6,7 @@ import "core:fmt"
 import "core:strings"
 
 @(private="package")
-output :: proc(ir: IR, filename: string) {
+output :: proc(fr: Final_Representation, filename: string) {
 	builder := strings.builder_make()
 	sb := &builder
 
@@ -15,9 +15,15 @@ output :: proc(ir: IR, filename: string) {
 	pf :: fmt.sbprintf
 	pfln :: fmt.sbprintfln
 
-	for s in ir.structs {
+	for s in fr.structs {
 		p(sb, s.name)
-		p(sb, " :: struct{} \n")
+		pln(sb, " :: struct{")
+
+		for f in s.fields {
+			pfln(sb, "\t%s: %s,", f.name, f.type)	
+		}
+		
+		pln(sb, "}")
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
