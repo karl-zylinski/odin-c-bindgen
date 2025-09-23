@@ -40,7 +40,7 @@ main :: proc() {
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
-			ir := parse(i)
+			ir := collect(i)
 			fr := process(&ir)
 			output_stem := filepath.stem(i)
 			output_filename := fmt.tprintf("%v/_output/%v.odin", dir, output_stem)

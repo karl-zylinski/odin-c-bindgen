@@ -7,7 +7,7 @@ import "base:runtime"
 import "core:strings"
 
 @(private="package")
-parse :: proc(filename: string) -> Intermediate_Representation {
+collect :: proc(filename: string) -> Intermediate_Representation {
 	ir: Intermediate_Representation
 
 	clang_args := []cstring {
