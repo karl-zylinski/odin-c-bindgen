@@ -1,0 +1,96 @@
+// See README.md in root of repository for documentation and more configuration options.
+
+inputs = [
+	"input"
+]
+
+output_folder = "raylib"
+imports_file = "imports.odin"
+package_name = "raylib"
+
+// "Old_Name" = "New_Name"
+// We rename ConfigFlags to ConfigFlag so we can introduce a bit_set with the name ConfigFlags.
+rename = {
+	"ConfigFlags" = "ConfigFlag"
+}
+
+// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
+bit_setify = {
+	"Gesture" = "Gestures"
+	"ConfigFlags" = "ConfigFlags"
+}
+
+type_overrides = {
+	"Vector2" = "[2]f32"
+	"Vector3" = "[3]f32"
+	"Vector4" = "[4]f32"
+	"Matrix"  = "#row_major matrix[4, 4]f32"
+	"Color"   = "distinct [4]u8"
+}
+
+struct_field_overrides = {
+	"Image.format"      = "PixelFormat"
+	"Texture.format"    = "PixelFormat"
+	"NPatchInfo.layout" = "NPatchLayout"
+	"GlyphInfo.value"   = "rune"
+
+	"Mesh.vertices"     = "[^]"
+	"Mesh.texcoords"    = "[^]"
+	"Mesh.texcoords2"   = "[^]"
+	"Mesh.normals"      = "[^]"
+	"Mesh.tangents"     = "[^]"
+	"Mesh.colors"       = "[^]"
+	"Mesh.indices"      = "[^]"
+	"Mesh.animVertices" = "[^]"
+	"Mesh.animNormals"  = "[^]"
+	"Mesh.boneIds"      = "[^]"
+	"Mesh.boneWeights"  = "[^]"
+	"Mesh.boneMatrices" = "[^]"
+	"Mesh.vboId"        = "[^]"
+	"Shader.locs"       = "[^]"
+	"Material.maps"     = "[^]"
+	"Model.meshes"        = "[^]"
+	"Model.materials"     = "[^]"
+	"Model.meshMaterials" = "[^]"
+	"Model.bones"         = "[^]"
+	"Model.bindPose"      = "[^]"
+	"ModelAnimation.bones"      = "[^]"
+	"ModelAnimation.framePoses" = "[^][^]Transform"
+
+	"AudioStream.buffer"   = "rawptr"
+	"AudioStream.processor" = "rawptr"
+
+	// This is not a complete override list, it's just an example.
+}
+
+procedure_type_overrides = {
+	"SetConfigFlags.flags"         = "ConfigFlags"
+	"IsKeyPressed.key"             = "KeyboardKey"
+	"IsKeyPressedRepeat.key"       = "KeyboardKey"
+	"IsKeyDown.key"                = "KeyboardKey"
+	"IsKeyReleased.key"            = "KeyboardKey"
+	"IsKeyUp.key"                  = "KeyboardKey"
+	"GetKeyPressed"                = "KeyboardKey"
+	"IsMouseButtonPressed.button"  = "MouseButton"
+	"IsMouseButtonDown.button"     = "MouseButton"
+	"IsMouseButtonReleased.button" = "MouseButton"
+	"IsMouseButtonUp.button"       = "MouseButton"
+	"SetShaderValue.uniformType"   = "ShaderUniformDataType"
+	"SetShaderValueV.uniformType"  = "ShaderUniformDataType"
+	"SetExitKey.key"               = "KeyboardKey"
+	"GetKeyName.key"               = "KeyboardKey"
+	"IsGestureDetected.gesture"    = "Gestures"
+	"SetGesturesEnabled.flags"     = "Gestures"
+
+	// This is not a complete override list, it's just an example.
+}
+
+remove_macros = [
+	"MOUSE_LEFT_BUTTON",
+	"MOUSE_RIGHT_BUTTON",
+	"MOUSE_MIDDLE_BUTTON",
+	"SHADER_LOC_MAP_DIFFUSE",
+	"SHADER_LOC_MAP_SPECULAR",
+	"MATERIAL_MAP_DIFFUSE",
+	"MATERIAL_MAP_SPECULAR"
+]

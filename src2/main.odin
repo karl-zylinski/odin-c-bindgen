@@ -7,6 +7,14 @@ import "core:fmt"
 import "core:strings"
 import "core:path/filepath"
 import "base:runtime"
+import "core:encoding/json"
+import "core:slice"
+
+Config :: struct {
+	inputs: []string,
+	output_folder: string,
+	package_name: string,
+}
 
 main :: proc() {
 	permanent_arena: vmem.Arena
@@ -14,25 +22,93 @@ main :: proc() {
 	context.allocator = permanent_allocator
 	context.temp_allocator = permanent_allocator
 
-	ensure(len(os.args) == 2, "Usage: bindgen directory")
-	dir := os.args[1]
-	ensure(os.is_dir(dir), "Argument should be a directory")
+	ensure(len(os.args) == 2, "Usage: 'bindgen directory' or 'bindgen directory/bindgen.sjson'")
+	config_dir_or_file := os.args[1]
+
+	DEFAULT_CONFIG_FILENAME :: "bindgen.sjson"
+	
+	config_filename: string
+	dir: string
+
+	if strings.has_suffix(config_dir_or_file, ".sjson") && os.is_file(config_dir_or_file) {
+		config_filename = config_dir_or_file
+		dir = filepath.dir(config_dir_or_file)
+	} else if os.is_dir(config_dir_or_file) {
+		config_filename = filepath.join({config_dir_or_file, DEFAULT_CONFIG_FILENAME})
+		dir = config_dir_or_file
+	} else {
+		fmt.panicf("%v is not a directory nor a valid config file", config_dir_or_file)
+	}
+
+	default_output_folder := "output"
+	default_package_name := "pkg"
+
+	if config_dir_handle, config_dir_handle_err := os2.open(dir); config_dir_handle_err == nil {
+		if stat, stat_err := config_dir_handle.fstat(config_dir_handle, context.allocator); stat_err == nil {
+			default_output_folder = stat.name
+			default_package_name = stat.name
+		}
+	}
+
+	config: Config
+
+	if os.is_file(config_filename) {
+		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
+			config_err := json.unmarshal(config_data, &config, .SJSON)
+			fmt.ensuref(
+				config_err == nil,
+				"Failed parsing config %v: %v",
+				config_filename,
+				config_err,
+			)
+		} else {
+			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
+		}
+	} else {
+		config.inputs = slice.clone([]string{dir})
+	}
+
+	output_folder: string
+
+	if config.output_folder != "" {
+		output_folder = filepath.join({dir, config.output_folder})
+	} else {
+		output_folder = filepath.join({dir, default_output_folder})
+	}
+
+	if config.package_name == "" {
+		config.package_name = default_package_name
+	}
 
 	input_files: [dynamic]string
 
-	input_folder, input_folder_err := os2.open(fmt.tprintf("%v/%v", dir, "input"))
-	fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", dir, input_folder_err)
-	iter := os2.read_directory_iterator_create(input_folder)
+	for input_base in config.inputs {
+		input := filepath.join({dir, input_base})
+		if os.is_dir(input) {
+			input_folder, input_folder_err := os2.open(input)
+			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", input, input_folder_err)
+			iter := os2.read_directory_iterator_create(input_folder)
 
-	for f in os2.read_directory_iterator(&iter) {
-		if f.type != .Regular {
-			continue
+			for f in os2.read_directory_iterator(&iter) {
+				if f.type != .Regular {
+					continue
+				}
+
+				append(&input_files, filepath.join({input, f.name}))
+			}
+
+			os2.close(input_folder)
+		} else if os.is_file(input) {
+			append(&input_files, input)
+		} else {
+			fmt.eprintfln("%v is neither directory or .h file", input)
 		}
-
-		append(&input_files, fmt.tprintf("%v/input/%v", dir, f.name))
 	}
 
-	os2.close(input_folder)
+	if output_folder != "" && !os2.exists(output_folder) {
+		make_dir_err := os2.make_directory_all(output_folder)
+		fmt.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", output_folder, make_dir_err)
+	}
 
 	for i in input_files {
 		if filepath.ext(i) == ".h" {
@@ -43,7 +119,8 @@ main :: proc() {
 			ir := collect(i)
 			fr := process(&ir)
 			output_stem := filepath.stem(i)
-			output_filename := fmt.tprintf("%v/_output/%v.odin", dir, output_stem)
+			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
+			fmt.println(output_filename)
 			output(fr, output_filename)
 			vmem.arena_destroy(&gen_arena)
 		}
