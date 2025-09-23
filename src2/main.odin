@@ -68,17 +68,8 @@ main :: proc() {
 		config.inputs = slice.clone([]string{dir})
 	}
 
-	output_folder: string
-
-	if config.output_folder != "" {
-		output_folder = filepath.join({dir, config.output_folder})
-	} else {
-		output_folder = filepath.join({dir, default_output_folder})
-	}
-
-	if config.package_name == "" {
-		config.package_name = default_package_name
-	}
+	output_folder := filepath.join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
+	package_name := config.package_name != "" ? config.package_name : default_package_name
 
 	input_files: [dynamic]string
 
@@ -121,7 +112,7 @@ main :: proc() {
 			output_stem := filepath.stem(i)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			fmt.println(output_filename)
-			output(fr, output_filename)
+			output(fr, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
 		}
 	}

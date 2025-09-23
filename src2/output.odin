@@ -6,7 +6,9 @@ import "core:fmt"
 import "core:strings"
 
 @(private="package")
-output :: proc(fr: Final_Representation, filename: string) {
+output :: proc(fr: Final_Representation, filename: string, package_name: string) {
+	ensure(filename != "")
+	ensure(package_name != "")
 	builder := strings.builder_make()
 	sb := &builder
 
@@ -14,6 +16,9 @@ output :: proc(fr: Final_Representation, filename: string) {
 	pln :: fmt.sbprintln
 	pf :: fmt.sbprintf
 	pfln :: fmt.sbprintfln
+
+	pfln(sb, "package %v", package_name)
+	pln(sb, "")
 
 	for s in fr.structs {
 		p(sb, s.name)
@@ -24,6 +29,7 @@ output :: proc(fr: Final_Representation, filename: string) {
 		}
 		
 		pln(sb, "}")
+		pln(sb, "")
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
