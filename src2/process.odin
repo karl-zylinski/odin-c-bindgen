@@ -20,9 +20,27 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 				name := get_cursor_name(sc)
 				type := parse_type(clang.getCursorType(sc))
 
+				comment_line: u32
+				clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(sc)), nil, &comment_line, nil, nil)
+
+				field_line: u32
+				clang.getExpansionLocation(clang.getCursorLocation(sc), nil, &field_line, nil, nil)
+
+				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
+				comment_before: string
+				comment_on_right: string
+
+				if field_line == comment_line {
+					comment_on_right = comment
+				} else {
+					comment_before = comment
+				}
+
 				fr_sf := FR_Struct_Field {
 					name = name,
 					type = type,
+					comment_before = comment_before,
+					comment_on_right = comment_on_right,
 				}
 
 				append(&fields, fr_sf)
@@ -34,6 +52,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 		fr_s := FR_Struct {
 			name = name,
 			fields = fields[:],
+			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(s.cursor)),
 		}
 
 		append(&fr.structs, fr_s)

@@ -21,10 +21,24 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pln(sb, "")
 
 	for s in fr.structs {
+		if s.comment_before != "" {
+			pln(sb, s.comment_before)
+		}
+
 		pfln(sb, "%v :: struct {{", s.name)
 
 		for f in s.fields {
-			pfln(sb, "\t%s: %s,", f.name, f.type)	
+			if f.comment_before != "" {
+				pfln(sb, "\t%s", f.comment_before)
+			}
+			
+			pf(sb, "\t%s: %s,", f.name, f.type)	
+
+			if f.comment_on_right != "" {
+				pf(sb, " %v", f.comment_on_right)
+			}
+
+			pf(sb, "\n")
 		}
 		
 		pln(sb, "}")
