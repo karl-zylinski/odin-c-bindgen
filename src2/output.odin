@@ -21,14 +21,18 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pln(sb, "")
 
 	for s in fr.structs {
-		p(sb, s.name)
-		pln(sb, " :: struct{")
+		pfln(sb, "%v :: struct {{", s.name)
 
 		for f in s.fields {
 			pfln(sb, "\t%s: %s,", f.name, f.type)	
 		}
 		
 		pln(sb, "}")
+		pln(sb, "")
+	}
+
+	for a in fr.aliases {
+		pfln(sb, "%v :: %v", a.new_name, a.original_name)
 		pln(sb, "")
 	}
 

@@ -9,6 +9,7 @@ import "core:path/filepath"
 import "base:runtime"
 import "core:encoding/json"
 import "core:slice"
+import "core:log"
 
 Config :: struct {
 	inputs: []string,
@@ -21,6 +22,7 @@ main :: proc() {
 	permanent_allocator := vmem.arena_allocator(&permanent_arena)
 	context.allocator = permanent_allocator
 	context.temp_allocator = permanent_allocator
+	context.logger = log.create_console_logger()
 
 	ensure(len(os.args) == 2, "Usage: 'bindgen directory' or 'bindgen directory/bindgen.sjson'")
 	config_dir_or_file := os.args[1]

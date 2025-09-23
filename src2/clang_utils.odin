@@ -8,6 +8,10 @@ get_cursor_name :: proc(cursor: clang.Cursor) -> string {
 	return string_from_clang_string(clang.getCursorSpelling(cursor))
 }
 
+get_type_name :: proc(type: clang.Type) -> string {
+	return string_from_clang_string(clang.getTypeSpelling(type))
+}
+
 string_from_clang_string :: proc(str: clang.String) -> string {
 	ret := strings.clone_from_cstring(clang.getCString(str))
 	clang.disposeString(str)

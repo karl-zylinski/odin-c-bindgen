@@ -10,6 +10,12 @@ FR_Struct :: struct {
 	fields: []FR_Struct_Field,
 }
 
+FR_Alias :: struct {
+	new_name: string,
+	original_name: string,
+}
+
 Final_Representation :: struct {
 	structs: [dynamic]FR_Struct,
+	aliases: [dynamic]FR_Alias,
 }
