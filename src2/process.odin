@@ -3,10 +3,23 @@ package bindgen2
 
 import clang "../libclang"
 import "core:strings"
+import "core:slice"
 
 @(private="package")
 process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
-	fr: Final_Representation
+	Sortable_Declaration :: struct {
+		decl: FR_Declaration,
+		sort_key: int,
+	}
+
+	decls: [dynamic]Sortable_Declaration
+
+	sortable_decl :: proc(decl: FR_Declaration, sort_key: int) -> Sortable_Declaration {
+		return {
+			decl = decl,
+			sort_key = sort_key,
+		}
+	}
 
 	for &s in ir.structs {
 		fields: [dynamic]FR_Struct_Field
@@ -20,17 +33,14 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 				name := get_cursor_name(sc)
 				type := parse_type(clang.getCursorType(sc))
 
-				comment_line: u32
-				clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(sc)), nil, &comment_line, nil, nil)
-
-				field_line: u32
-				clang.getExpansionLocation(clang.getCursorLocation(sc), nil, &field_line, nil, nil)
+				field_loc := get_cursor_location(sc)
+				comment_loc := get_comment_location(sc)
 
 				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
 				comment_before: string
 				comment_on_right: string
 
-				if field_line == comment_line {
+				if field_loc.line == comment_loc.line {
 					comment_on_right = comment
 				} else {
 					comment_before = comment
@@ -48,6 +58,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 		}
 
 		name := get_cursor_name(s.cursor)
+		loc := get_cursor_location(s.cursor)
 
 		fr_s := FR_Struct {
 			name = name,
@@ -55,10 +66,12 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(s.cursor)),
 		}
 
-		append(&fr.structs, fr_s)
+		append(&decls, sortable_decl(fr_s, loc.line))
 	}
 
 	for &t in ir.typedefs {
+		loc := get_cursor_location(t.new_cursor)
+
 		fr_a := FR_Alias {
 			new_name = get_cursor_name(t.new_cursor),
 			original_name = parse_type(t.original_type),
@@ -70,7 +83,19 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			continue
 		}
 
-		append(&fr.aliases, fr_a)
+		append(&decls, sortable_decl(fr_a, loc.line))
+	}
+
+	slice.sort_by(decls[:], proc(i, j: Sortable_Declaration) -> bool {
+		return i.sort_key < j.sort_key
+	})
+
+	fr: Final_Representation
+
+	fr.decls = make([]FR_Declaration, len(decls))
+
+	for &d, i in decls {
+		fr.decls[i] = d.decl
 	}
 
 	return fr

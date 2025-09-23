@@ -113,7 +113,6 @@ main :: proc() {
 			fr := process(&ir)
 			output_stem := filepath.stem(i)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
-			fmt.println(output_filename)
 			output(fr, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
 		}

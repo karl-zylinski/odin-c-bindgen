@@ -20,34 +20,35 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
-	for s in fr.structs {
-		if s.comment_before != "" {
-			pln(sb, s.comment_before)
-		}
+	for &du in fr.decls {
+		switch &d in du {
+		case FR_Struct:
+			if d.comment_before != "" {
+				pln(sb, d.comment_before)
+			}
 
-		pfln(sb, "%v :: struct {{", s.name)
+			pfln(sb, "%v :: struct {{", d.name)
 
-		for f in s.fields {
-			if f.comment_before != "" {
-				pfln(sb, "\t%s", f.comment_before)
+			for f in d.fields {
+				if f.comment_before != "" {
+					pfln(sb, "\t%s", f.comment_before)
+				}
+
+				pf(sb, "\t%s: %s,", f.name, f.type)	
+
+				if f.comment_on_right != "" {
+					pf(sb, " %v", f.comment_on_right)
+				}
+
+				pf(sb, "\n")
 			}
 			
-			pf(sb, "\t%s: %s,", f.name, f.type)	
-
-			if f.comment_on_right != "" {
-				pf(sb, " %v", f.comment_on_right)
-			}
-
-			pf(sb, "\n")
+			pln(sb, "}")
+			pln(sb, "")
+		case FR_Alias:
+			pfln(sb, "%v :: %v", d.new_name, d.original_name)
+			pln(sb, "")
 		}
-		
-		pln(sb, "}")
-		pln(sb, "")
-	}
-
-	for a in fr.aliases {
-		pfln(sb, "%v :: %v", a.new_name, a.original_name)
-		pln(sb, "")
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))

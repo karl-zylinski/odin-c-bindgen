@@ -18,7 +18,11 @@ FR_Alias :: struct {
 	original_name: string,
 }
 
+FR_Declaration :: union {
+	FR_Struct,
+	FR_Alias,
+}
+
 Final_Representation :: struct {
-	structs: [dynamic]FR_Struct,
-	aliases: [dynamic]FR_Alias,
+	decls: []FR_Declaration,
 }

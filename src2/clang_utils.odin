@@ -35,20 +35,36 @@ get_cursor_children :: proc(cursor: clang.Cursor) -> []clang.Cursor {
 	return children[:]
 }
 
-Cursor_Location :: struct {
+Location :: struct {
 	file: clang.File,
 	offset: int,
 	line: int,
 	column: int,
 }
 
-get_cursor_location :: proc(cursor: clang.Cursor, file: ^clang.File = nil, offset: ^u32 = nil) -> Cursor_Location {
+get_cursor_location :: proc(cursor: clang.Cursor) -> Location {
 	file: clang.File
 	offset: u32
 	column: u32
 	line: u32
 
 	clang.getExpansionLocation(clang.getCursorLocation(cursor), &file, &line, &column, &offset)
+	
+	return {
+		file = file,
+		offset = int(offset),
+		line = int(line),
+		column = int(column),
+	}
+}
+
+get_comment_location :: proc(cursor: clang.Cursor) -> Location {
+	file: clang.File
+	offset: u32
+	column: u32
+	line: u32
+
+	clang.getExpansionLocation(clang.getRangeStart(clang.Cursor_getCommentRange(cursor)), &file, &line, &column, &offset)
 	
 	return {
 		file = file,

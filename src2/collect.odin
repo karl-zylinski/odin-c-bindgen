@@ -49,30 +49,10 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 			irs := IR_Struct {
 				cursor = c,
 			}
+			
 			append(&ir.structs, irs)
 		case .TypedefDecl:
 			typedeffed_type := clang.getTypedefDeclUnderlyingType(c)
-			typedeffed_type_cursor: clang.Cursor
-
-			#partial switch typedeffed_type.kind {
-			case .Elaborated:
-				elaborated_type := clang.Type_getNamedType(typedeffed_type)
-
-				#partial switch elaborated_type.kind {
-				case .Record:
-					typedeffed_type_cursor = clang.getTypeDeclaration(typedeffed_type)
-				}
-
-			case .Pointer:
-				typedeffed_type_cursor = clang.getTypeDeclaration(typedeffed_type)
-			}
-
-			fmt.println(typedeffed_type_cursor)
-
-			// TODO: This won't work for pointers.
-			if typedeffed_type_cursor.kind == clang.Cursor_Kind(0) || typedeffed_type_cursor.kind == .NoDeclFound {
-				log.errorf("Unhandled typedef kind: %v (%v)", get_cursor_name(c), typedeffed_type_cursor.kind)
-			}
 
 			irt := IR_Typedef {
 				new_cursor = c,
