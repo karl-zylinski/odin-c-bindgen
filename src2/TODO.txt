@@ -1,0 +1,50 @@
+A test struct:
+```
+struct Test {
+    int a;
+
+    struct { 
+        int baaa;
+    } x;
+
+    struct {
+        int Woo;
+    } *y;
+
+    enum {
+        Wa,
+        Wo,
+    } Wi;
+};
+
+typedef Test ***Waa;
+```
+
+To make all the types work, perhaps try this:
+
+Make FR_Type list in collect. We'll use that when we parse types later, to look up FR_Type_Name values. Don't think we can make the anon structs in collect, they wait until process. That way we can add it to types array and reference using type index.
+
+It's important to do all this so for example pointers work properly.
+
+(Perhaps this will just be "Type", not "FR_Type". These types should be indepndent of clang)
+
+```
+// Index into Final_Representation.types
+FR_Type_Index :: distinct int
+
+FR_Type_Name :: distinct string
+
+FR_Type_Pointer :: struct {
+	pointed_to_type: int,
+}
+
+FR_Type_Anonymous_Struct :: FR_Struct
+
+FR_Type :: union {
+	FR_Type_Name,
+	FR_Type_Pointer,
+	FR_Type_Anonymous_Struct,
+}
+
+types: []FR_Type,
+```
