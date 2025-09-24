@@ -26,7 +26,7 @@ Make FR_Type list in collect. We'll use that when we parse types later, to look 
 
 It's important to do all this so for example pointers work properly.
 
-(Perhaps this will just be "Type", not "FR_Type". These types should be indepndent of clang)
+(Perhaps this will just be "Type", not "FR_Type". These types should be indepndent of clang. Perhaps `collect` doesn't need to build the IR stuff at all, perhaps that stuff isn't needed. Perhaps it should just build the type stuff? We can keep the struct and typedefs etc in there for now, should be easy to move to process if needed.)
 
 ```
 // Index into Final_Representation.types
