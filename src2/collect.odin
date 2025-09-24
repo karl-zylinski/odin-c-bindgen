@@ -24,9 +24,11 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 		.KeepGoing, // Keep going on errors.
 	}
 
+	filename_cstr := to_cstring(filename)
+
 	err := clang.parseTranslationUnit2(
 		index,
-		to_cstring(filename),
+		filename_cstr,
 		raw_data(clang_args),
 		i32(len(clang_args)),
 		nil,
@@ -36,13 +38,19 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	)
 
 	fmt.ensuref(err == .Success, "Failed to parse translation unit for %s. Error code: %v", filename, err)
+
+	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
 
-	root_children := get_cursor_children(root_cursor)	
+	root_children := get_cursor_children(root_cursor)
 
 	for c in root_children {
 		kind := clang.getCursorKind(c)
 		loc := get_cursor_location(c)
+
+		if clang.File_isEqual(file, loc.file) == 0 {
+			continue
+		}
 
 		#partial switch kind {
 		case .StructDecl:
