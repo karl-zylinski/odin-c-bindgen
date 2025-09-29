@@ -8,6 +8,8 @@ import "core:strings"
 import "core:log"
 import "core:math/bits"
 
+named_types: map[string]struct{}
+
 @(private="package")
 collect :: proc(filename: string) -> Intermediate_Representation {
 	clang_args := []cstring {
@@ -48,8 +50,57 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	global_scope_decls: [dynamic]Typed_Cursor
 	append(&types, Type_Unknown {})
 
+	/*
+	For next time:
+
+	This doesn't really work! I think we need to traverse the tree from the root_children and
+	build just the types. Then we can replace the root types with their type names. That way we
+	always refer to them just by name.
+
+	Or perhaps like this:
+
+	Just go across root children and create those, don't recurse. Then swap out their lookup
+	for a named type.
+
+	Thereafter recurse into children and use the lookup to get the correct thing.
+
+	This way we don't need the weird 'defined_inline' stuff.
+
 	for c in root_children {
+		ct := clang.getCursorType(c)
+		t := get_type_name(c)
+
+		if t != "" {
+			type_lookup[ct] = Type_Name(t)
+		}
 	}
+	
+	get_type_name :: proc(cursor: clang.Cursor) -> string {
+		t := clang.getCursorType(cursor)
+		#partial switch t.kind {
+		case .Bool: return "bool"
+		case .Char_U, .UChar: return "u8"
+		case .UShort: return "u16"
+		case .UInt: return "u32"
+		case .ULongLong: return "u64"
+		case .UInt128: return "u128"
+		case .Char_S, .SChar: return "i8"
+		case .Short: return "i16"
+		case .Int: return "i32"
+		case .LongLong: return "i64"
+		case .Int128: return "i128"
+		case .Float: return "f32"
+		case .Double, .LongDouble: return "f64"
+		case .NullPtr: return "rawptr"
+		case .Record: return get_cursor_name(cursor)
+		case .Enum: return get_cursor_name(cursor)
+		case .Typedef: return get_cursor_name(cursor)
+		}
+
+		return ""
+	}
+
+*/
 
 	for c in root_children {
 		kind := clang.getCursorKind(c)
