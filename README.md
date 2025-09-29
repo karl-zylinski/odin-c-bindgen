@@ -8,6 +8,9 @@ Features:
 - Simplicity. The generator is simple enough that you can modify it, should the need arise.
 - Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
+> [!WARNING]
+> The 1.1 version has some issues, if you run into problems, please try the 1.0 release. I am working on a new version of the binding generator.
+
 ## Requirements
 - Odin
 - libclang
