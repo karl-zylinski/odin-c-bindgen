@@ -10,8 +10,6 @@ import "core:log"
 process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 	decls: [dynamic]FR_Declaration
 
-	log.info(ir.global_scope_declarations)
-
 	for &gsd in ir.global_scope_declarations {
 		c := gsd.cursor
 
@@ -24,26 +22,6 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			log.error("Can't have plain pointer at root level")
 
 		case Type_Struct:
-			for &f, f_idx in t.fields {
-				fc := f.cursor
-
-				field_loc := get_cursor_location(fc)
-				comment_loc := get_comment_location(fc)
-
-				comment := string_from_clang_string(clang.Cursor_getRawCommentText(fc))
-				comment_before: string
-				comment_on_right: string
-
-				if field_loc.line == comment_loc.line {
-					comment_on_right = comment
-				} else {
-					comment_before = comment
-				}
-
-				f.comment_before = comment_before
-				f.comment_on_right = comment_on_right
-			}
-
 			name := get_cursor_name(c)
 			loc := get_cursor_location(c)
 

@@ -138,10 +138,24 @@ build_cursor_type :: proc(type_lookup: ^map[clang.Type]Type_Index, types: ^[dyna
 					log.errorf("Unresolved struct field type: %v", sc)
 				}
 
+				field_loc := get_cursor_location(sc)
+				comment_loc := get_comment_location(sc)
+
+				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
+				comment_before: string
+				comment_on_right: string
+
+				if field_loc.line == comment_loc.line {
+					comment_on_right = comment
+				} else {
+					comment_before = comment
+				}
+
 				append(&fields, Type_Struct_Field {
-					cursor = sc,
 					name = name,
 					type = field_type,
+					comment_before = comment_before,
+					comment_on_right = comment_on_right,
 				})
 			}
 		}
