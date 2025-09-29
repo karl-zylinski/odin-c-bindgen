@@ -1,3 +1,8 @@
+// Type represents everything we need to know about a type. It is used during translation
+// and also during output.
+//
+// It is FORBIDDEN to import or use anything clang-related in here, as the outputter
+// should not know of clang.
 package bindgen2
 
 Type_Index :: distinct int
