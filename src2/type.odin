@@ -47,6 +47,11 @@ Type_Unknown :: struct {}
 
 Type_Raw_Pointer :: struct {}
 
+Type_Bit_Set :: struct {
+	name: string,
+	enum_type: Type_Index,
+}
+
 Type :: union #no_nil {
 	Type_Unknown,
 	Type_Name,
@@ -54,5 +59,6 @@ Type :: union #no_nil {
 	Type_Raw_Pointer,
 	Type_Struct,
 	Type_Enum,
+	Type_Bit_Set,
 	Type_Typedef,
 }

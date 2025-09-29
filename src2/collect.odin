@@ -6,6 +6,7 @@ import "core:fmt"
 import "base:runtime"
 import "core:strings"
 import "core:log"
+import "core:math/bits"
 
 @(private="package")
 collect :: proc(filename: string) -> Intermediate_Representation {
@@ -46,6 +47,9 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	types: [dynamic]Type
 	global_scope_decls: [dynamic]Typed_Cursor
 	append(&types, Type_Unknown {})
+
+	for c in root_children {
+	}
 
 	for c in root_children {
 		kind := clang.getCursorKind(c)
@@ -167,23 +171,42 @@ build_cursor_type :: proc(type_lookup: ^map[clang.Type]Type_Index, types: ^[dyna
 		}
 	case .Enum:
 		cursor := clang.getTypeDeclaration(ct)
+		name := get_cursor_name(cursor)
+
+		bit_set_name, bit_setify := bit_setify_lookup[name]
+
 		enum_children := get_cursor_children(cursor)
 		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(cursor)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
 
 		for ec, ec_i in enum_children {
-			name := get_cursor_name(ec)
+			member_name := get_cursor_name(ec)
 			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
 			
+			if bit_setify {
+				if value == 0 {
+					continue
+				}
+
+				value = int(bits.log2(uint(value)))
+			}
+
 			append(&members, Type_Enum_Member {
-				name = name,
+				name = member_name,
 				value = value,
 			})
 		}
 
+		if bit_setify {
+			append(types, Type_Bit_Set {
+				name = bit_set_name,
+				enum_type = Type_Index(len(types) + 1),
+			})
+		}
+
 		t = Type_Enum {
-			name = get_cursor_name(cursor),
+			name = name,
 			members = members[:],
 			defined_inline = clang.Cursor_isAnonymous(cursor) == 1,
 		}

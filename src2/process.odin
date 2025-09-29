@@ -52,6 +52,16 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 				},
 				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			})
+
+		case Type_Bit_Set:
+			append(&decls, FR_Declaration {
+				name = get_cursor_name(c),
+				variant = FR_Bit_Set {
+					enum_type = t.enum_type
+				}
+			})
+
+			log.info(t)
 		}
 
 	}

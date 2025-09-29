@@ -44,6 +44,13 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 			}
 
 			pfln(sb, "%v :: %v", d.name, type_str)
+
+		case FR_Bit_Set :
+			if d.comment_before != "" {
+				pln(sb, d.comment_before)
+			}
+
+			pf(sb, "%v :: %v", d.name, get_type_string(fr.types, v.enum_type))
 		}
 		
 		p(sb, "\n\n")
@@ -99,9 +106,15 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	t_enum := &t.(Type_Enum)
 
 	pln(b, "enum {")
-	for &m in t_enum.members {
+	for &m, m_idx in t_enum.members {
 		output_indent(b, indent + 1)
-		pfln(b, "%s,", m.name)
+		pf(b, "%s", m.name)
+
+		if m_idx != m.value {
+			pf(b, " = %v", m.value)
+		}
+
+		p(b, ",\n")
 	}
 	
 	output_indent(b, indent)
@@ -140,6 +153,11 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		} else {
 			p(b, tv.name)
 		}
+
+	case Type_Bit_Set:
+		e := types[tv.enum_type]
+
+		pf(b, "bit_set[%v]", e.(Type_Enum).name)
 	}
 }
 
