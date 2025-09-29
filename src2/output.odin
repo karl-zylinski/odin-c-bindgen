@@ -4,6 +4,7 @@ package bindgen2
 import "core:os"
 import "core:fmt"
 import "core:strings"
+import "core:log"
 
 @(private="package")
 output :: proc(fr: Final_Representation, filename: string, package_name: string) {
@@ -12,45 +13,141 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	builder := strings.builder_make()
 	sb := &builder
 
-	p :: fmt.sbprint
-	pln :: fmt.sbprintln
-	pf :: fmt.sbprintf
-	pfln :: fmt.sbprintfln
-
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
-	for &du in fr.decls {
-		switch &d in du {
+	for &d in fr.decls {
+		switch &v in d.variant {
 		case FR_Struct:
 			if d.comment_before != "" {
 				pln(sb, d.comment_before)
 			}
 
-			pfln(sb, "%v :: struct {{", d.name)
+			pf(sb, "%v :: ", d.name)
 
-			for f in d.fields {
-				if f.comment_before != "" {
-					pfln(sb, "\t%s", f.comment_before)
-				}
+			output_struct_declaration(fr.types, v.type, sb, 0)
 
-				pf(sb, "\t%s: %s,", f.name, f.type)	
-
-				if f.comment_on_right != "" {
-					pf(sb, " %v", f.comment_on_right)
-				}
-
-				pf(sb, "\n")
+		case FR_Enum:
+			if d.comment_before != "" {
+				pln(sb, d.comment_before)
 			}
-			
-			pln(sb, "}")
-			pln(sb, "")
-		case FR_Alias:
-			pfln(sb, "%v :: %v", d.new_name, d.original_name)
-			pln(sb, "")
+
+			pf(sb, "%v :: ", d.name)
+
+			output_enum_declaration(fr.types, v.type, sb, 0)
+
+		case FR_Typedef:
+			type_str := get_type_string(fr.types, v.typedeffed_type)
+
+			if type_str == d.name {
+				continue
+			}
+
+			pfln(sb, "%v :: %v", d.name, type_str)
 		}
+		
+		p(sb, "\n\n")
 	}
 
+	log.info(filename)
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
+}
+
+
+output_indent :: proc(b: ^strings.Builder, indent: int) {
+	for _ in 0..<indent {
+		pf(b, "\t")
+	}
+}
+
+p :: fmt.sbprint
+pfln :: fmt.sbprintfln
+pf :: fmt.sbprintf
+pln :: fmt.sbprintln
+
+output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+	t := types[idx]
+	t_struct := &t.(Type_Struct)
+
+	pln(b, "struct {")
+	for &f in t_struct.fields {
+		if f.comment_before != "" {
+			output_indent(b, indent + 1)
+			pfln(b, "%s", f.comment_before)
+		}
+
+		output_indent(b, indent + 1)
+		pf(b, "%s: ", f.name)	
+		parse_type_build(types, f.type, b, indent + 1)
+
+		pf(b, ",")
+
+		if f.comment_on_right != "" {
+			pf(b, " %v", f.comment_on_right)
+		}
+
+		pf(b, "\n")
+	}
+	
+	output_indent(b, indent)
+	p(b, "}")
+}
+
+output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+	t := types[idx]
+	t_enum := &t.(Type_Enum)
+
+	pln(b, "enum {")
+	for &m in t_enum.members {
+		output_indent(b, indent + 1)
+		pfln(b, "%s,", m.name)
+	}
+	
+	output_indent(b, indent)
+	p(b, "}")
+}
+
+
+parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+	t := types[idx]
+	switch &tv in t {
+	case Type_Unknown:
+		log.warn("Is this a bug?")
+
+	case Type_Name:
+		p(b, string(tv))
+
+	case Type_Pointer:
+		p(b, "^")
+		parse_type_build(types, tv.pointed_to_type, b, indent)
+
+	case Type_Raw_Pointer:
+		p(b, "rawptr")
+
+	case Type_Struct:
+		if tv.defined_inline {
+			output_struct_declaration(types, idx, b, indent)
+		} else {
+			p(b, tv.name)
+		}
+	case Type_Typedef:
+		parse_type_build(types, tv.typedeffed_to_type, b, indent)
+
+	case Type_Enum:
+		if tv.defined_inline {
+			output_enum_declaration(types, idx, b, indent)
+		} else {
+			p(b, tv.name)
+		}
+	}
+}
+
+get_type_string :: proc(types: []Type, idx: Type_Index) -> string {
+	// For getting function parameter names: https://stackoverflow.com/questions/79356416/how-can-i-get-the-argument-names-of-a-function-types-argument-list
+
+
+	b := strings.builder_make()
+	parse_type_build(types, idx, &b, 0)
+	return strings.to_string(b)
 }

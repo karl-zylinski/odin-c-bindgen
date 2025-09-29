@@ -1,28 +1,30 @@
 package bindgen2
 
-FR_Struct_Field :: struct {
+FR_Declaration :: struct {
 	name: string,
-	type: string,
+	variant: FR_Declaration_Variant,
 	comment_before: string,
-	comment_on_right: string,
 }
 
 FR_Struct :: struct {
-	name: string,
-	fields: []FR_Struct_Field,
-	comment_before: string,
+	type: Type_Index,
 }
 
-FR_Alias :: struct {
-	new_name: string,
-	original_name: string,
+FR_Typedef :: struct {
+	typedeffed_type: Type_Index,
 }
 
-FR_Declaration :: union {
+FR_Enum :: struct {
+	type: Type_Index,
+}
+
+FR_Declaration_Variant :: union {
 	FR_Struct,
-	FR_Alias,
+	FR_Typedef,
+	FR_Enum,
 }
 
 Final_Representation :: struct {
 	decls: []FR_Declaration,
+	types: []Type,
 }

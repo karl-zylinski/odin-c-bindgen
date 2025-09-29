@@ -4,39 +4,33 @@ package bindgen2
 import clang "../libclang"
 import "core:strings"
 import "core:slice"
+import "core:log"
 
 @(private="package")
 process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
-	Sortable_Declaration :: struct {
-		decl: FR_Declaration,
-		sort_key: int,
-	}
+	decls: [dynamic]FR_Declaration
 
-	decls: [dynamic]Sortable_Declaration
+	log.info(ir.global_scope_declarations)
 
-	sortable_decl :: proc(decl: FR_Declaration, sort_key: int) -> Sortable_Declaration {
-		return {
-			decl = decl,
-			sort_key = sort_key,
-		}
-	}
+	for &gsd in ir.global_scope_declarations {
+		c := gsd.cursor
 
-	for &s in ir.structs {
-		fields: [dynamic]FR_Struct_Field
+		switch &t in ir.types[gsd.type] {
+		case Type_Unknown:
+		case Type_Name:
+			log.error("Can't have plain name at root level")
 
-		struct_children := get_cursor_children(s.cursor)
+		case Type_Pointer:
+			log.error("Can't have plain pointer at root level")
 
-		for sc in struct_children {
-			sc_kind := clang.getCursorKind(sc)
-			#partial switch sc_kind {
-			case .FieldDecl:
-				name := get_cursor_name(sc)
-				type := parse_type(clang.getCursorType(sc))
+		case Type_Struct:
+			for &f, f_idx in t.fields {
+				fc := f.cursor
 
-				field_loc := get_cursor_location(sc)
-				comment_loc := get_comment_location(sc)
+				field_loc := get_cursor_location(fc)
+				comment_loc := get_comment_location(fc)
 
-				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
+				comment := string_from_clang_string(clang.Cursor_getRawCommentText(fc))
 				comment_before: string
 				comment_on_right: string
 
@@ -46,61 +40,51 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 					comment_before = comment
 				}
 
-				fr_sf := FR_Struct_Field {
-					name = name,
-					type = type,
-					comment_before = comment_before,
-					comment_on_right = comment_on_right,
-				}
-
-				append(&fields, fr_sf)
+				f.comment_before = comment_before
+				f.comment_on_right = comment_on_right
 			}
+
+			name := get_cursor_name(c)
+			loc := get_cursor_location(c)
+
+			append(&decls, FR_Declaration {
+				name = name,
+				variant = FR_Struct {
+					type = gsd.type,
+				},
+				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			})
+
+		case Type_Typedef:
+			append(&decls, FR_Declaration {
+				name = get_cursor_name(c),
+				variant = FR_Typedef {
+					typedeffed_type = t.typedeffed_to_type,
+				},
+				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			})
+
+		case Type_Raw_Pointer:
+
+		case Type_Enum:
+			append(&decls, FR_Declaration {
+				name = get_cursor_name(c),
+				variant = FR_Enum {
+					type = gsd.type,
+				},
+				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			})
 		}
 
-		name := get_cursor_name(s.cursor)
-		loc := get_cursor_location(s.cursor)
-
-		fr_s := FR_Struct {
-			name = name,
-			fields = fields[:],
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(s.cursor)),
-		}
-
-		append(&decls, sortable_decl(fr_s, loc.line))
 	}
 
-	for &t in ir.typedefs {
-		loc := get_cursor_location(t.new_cursor)
-
-		fr_a := FR_Alias {
-			new_name = get_cursor_name(t.new_cursor),
-			original_name = parse_type(t.original_type),
-		}
-
-		// TODO Should this be here or in collector? Should we compare types or names? I think names
-		// because in C the types / cursors will be different but they will be the same in Odin...
-		if fr_a.new_name == fr_a.original_name {
-			continue
-		}
-
-		append(&decls, sortable_decl(fr_a, loc.line))
+	return {
+		decls = decls[:],
+		types = ir.types,
 	}
-
-	slice.sort_by(decls[:], proc(i, j: Sortable_Declaration) -> bool {
-		return i.sort_key < j.sort_key
-	})
-
-	fr: Final_Representation
-
-	fr.decls = make([]FR_Declaration, len(decls))
-
-	for &d, i in decls {
-		fr.decls[i] = d.decl
-	}
-
-	return fr
 }
 
+/*
 parse_type :: proc(type: clang.Type) -> string {
 	// For getting function parameter names: https://stackoverflow.com/questions/79356416/how-can-i-get-the-argument-names-of-a-function-types-argument-list
 
@@ -164,4 +148,4 @@ parse_type :: proc(type: clang.Type) -> string {
 	b := strings.builder_make()
 	parse_type_build(type, &b)
 	return strings.to_string(b)
-}
+}*/
