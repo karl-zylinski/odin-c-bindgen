@@ -17,27 +17,28 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pln(sb, "")
 
 	fr_decls_loop: for &d in fr.decls {
-		switch &v in d.variant {
-		case FR_Struct:
+		t := fr.types[d.type]
+		#partial switch &v in t {
+		case Type_Struct:
 			if d.comment_before != "" {
 				pln(sb, d.comment_before)
 			}
 
 			pf(sb, "%v :: ", d.name)
 
-			output_struct_declaration(fr.types, v.type, sb, 0)
+			output_struct_declaration(fr.types, d.type, sb, 0)
 
-		case FR_Enum:
+		case Type_Enum:
 			if d.comment_before != "" {
 				pln(sb, d.comment_before)
 			}
 
 			pf(sb, "%v :: ", d.name)
 
-			output_enum_declaration(fr.types, v.type, sb, 0)
+			output_enum_declaration(fr.types, d.type, sb, 0)
 
-		case FR_Typedef:
-			type_str := get_type_string(fr.types, v.typedeffed_type)
+		case Type_Alias:
+			type_str := get_type_string(fr.types, v.aliased_type)
 			log.info(type_str)
 			log.info(d.name)
 			if type_str == d.name {
@@ -46,7 +47,7 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 
 			pfln(sb, "%v :: %v", d.name, type_str)
 
-		case FR_Bit_Set :
+		case Type_Bit_Set :
 			if d.comment_before != "" {
 				pln(sb, d.comment_before)
 			}

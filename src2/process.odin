@@ -13,55 +13,11 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 	for &d in ir.declarations {
 		c := d.cursor
 
-		switch &t in ir.types[d.type] {
-		case Type_Unknown:
-		case Type_Name:
-			log.error("Can't have plain name at root level")
-
-		case Type_Pointer:
-			log.error("Can't have plain pointer at root level")
-
-		case Type_Struct:
-			name := get_cursor_name(c)
-			loc := get_cursor_location(c)
-
-			append(&decls, FR_Declaration {
-				name = name,
-				variant = FR_Struct {
-					type = d.type,
-				},
-				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			})
-
-		case Type_Alias:
-			append(&decls, FR_Declaration {
-				name = get_cursor_name(c),
-				variant = FR_Typedef {
-					typedeffed_type = t.aliased_type,
-				},
-				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			})
-
-		case Type_Raw_Pointer:
-
-		case Type_Enum:
-			append(&decls, FR_Declaration {
-				name = get_cursor_name(c),
-				variant = FR_Enum {
-					type = d.type,
-				},
-				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			})
-
-		case Type_Bit_Set:
-			append(&decls, FR_Declaration {
-				name = get_cursor_name(c),
-				variant = FR_Bit_Set {
-					enum_type = t.enum_type
-				}
-			})
-		}
-
+		append(&decls, FR_Declaration {
+			name = get_cursor_name(c),
+			type = d.type,
+			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+		})
 	}
 
 	return {
