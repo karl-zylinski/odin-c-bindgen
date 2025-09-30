@@ -10,10 +10,10 @@ import "core:log"
 process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 	decls: [dynamic]FR_Declaration
 
-	for &gsd in ir.global_scope_declarations {
-		c := gsd.cursor
+	for &d in ir.declarations {
+		c := d.cursor
 
-		switch &t in ir.types[gsd.type] {
+		switch &t in ir.types[d.type] {
 		case Type_Unknown:
 		case Type_Name:
 			log.error("Can't have plain name at root level")
@@ -28,7 +28,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			append(&decls, FR_Declaration {
 				name = name,
 				variant = FR_Struct {
-					type = gsd.type,
+					type = d.type,
 				},
 				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			})
@@ -48,7 +48,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			append(&decls, FR_Declaration {
 				name = get_cursor_name(c),
 				variant = FR_Enum {
-					type = gsd.type,
+					type = d.type,
 				},
 				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			})
@@ -60,8 +60,6 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 					enum_type = t.enum_type
 				}
 			})
-
-			log.info(t)
 		}
 
 	}

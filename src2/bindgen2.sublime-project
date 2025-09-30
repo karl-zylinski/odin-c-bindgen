@@ -1,0 +1,34 @@
+{
+	"folders":
+	[
+		{
+			"path": ".."
+		},
+		{
+			"path": "C:\\sdk\\odin\\core"
+		},
+		{
+			"path": "C:\\sdk\\odin\\base"
+		}
+	],
+	"build_systems":
+	[
+		{
+			"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
+			"name": "Bindgen2",
+			"working_dir": "$project_path/..",
+			"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen src2/examples/tester",
+		}
+	],
+	"settings":
+	{
+		"auto_complete": false,
+		"LSP":
+		{
+			"odin":
+			{
+				"enabled": true,
+			},
+		},
+	},
+}

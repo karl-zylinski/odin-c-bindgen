@@ -47,35 +47,65 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 
 	type_lookup: map[clang.Type]Type_Index
 	types: [dynamic]Type
-	global_scope_decls: [dynamic]Typed_Cursor
+	declarations: [dynamic]Declaration
 	append(&types, Type_Unknown {})
 
+	// Create all types.
 	for c in root_children {
-		kind := clang.getCursorKind(c)
+		loc := get_cursor_location(c)
+		
+		if clang.File_isEqual(file, loc.file) == 0 {
+			continue
+		}
+
+		create_type_recursive(clang.getCursorType(c), &type_lookup, &types)
+	}
+
+	// Create all declarations, i.e. types and such to put into the bindings.
+
+	for c in root_children {
 		loc := get_cursor_location(c)
 
 		if clang.File_isEqual(file, loc.file) == 0 {
 			continue
 		}
 
-		// THIS IS SILLY. I should be looking at CursorKind and create structs from StructDecls. All this is wrong!!
-		type_index := create_type_recursive(clang.getCursorType(c), &type_lookup, &types)
-		log.info(kind)
-
-		if type_index == 0 {
-			log.errorf("Unknown type: %v", loc)
-			continue
-		}
-
-		append(&global_scope_decls, Typed_Cursor {
-			cursor = c,
-			type = type_index
-		})
+		add_declarations(&declarations, type_lookup, c)
 	}
 
 	return {
-		global_scope_declarations = global_scope_decls[:],
+		declarations = declarations[:],
 		types = types[:],
+	}
+}
+
+add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, c: clang.Cursor) {
+	ct := clang.getCursorType(c)
+	ti, ti_ok := type_lookup[ct]
+
+	if clang.Cursor_isAnonymous(c) == 1 {
+		return
+	}
+
+	if !ti_ok {
+		log.errorf("Unknown type: %v", ct)
+		return
+	}
+
+	kind := clang.getCursorKind(c)
+
+	#partial switch kind {
+	case .StructDecl, .TypedefDecl, .EnumDecl:
+		append(declarations, Declaration {
+			cursor = c,
+			type = ti,
+		})
+	}
+
+	children := get_cursor_children(c)
+
+	for cc in children {
+		add_declarations(declarations, type_lookup, cc)
 	}
 }
 

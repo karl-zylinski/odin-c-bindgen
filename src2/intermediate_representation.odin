@@ -2,12 +2,12 @@ package bindgen2
 
 import clang "../libclang"
 
-Typed_Cursor :: struct {
+Declaration :: struct {
 	cursor: clang.Cursor,
 	type: Type_Index,
 }
 
 Intermediate_Representation :: struct {
-	global_scope_declarations: []Typed_Cursor,
+	declarations: []Declaration,
 	types: []Type,
 }

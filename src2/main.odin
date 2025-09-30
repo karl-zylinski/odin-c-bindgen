@@ -71,7 +71,7 @@ main :: proc() {
 			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
 		}
 	} else {
-		config.inputs = slice.clone([]string{dir})
+		config.inputs = slice.clone([]string{"."})
 	}
 
 	// todo remove this and move to some context you send along
@@ -83,10 +83,11 @@ main :: proc() {
 	input_files: [dynamic]string
 
 	for input_base in config.inputs {
+		fmt.println(input_base)
 		input := filepath.join({dir, input_base})
 		if os.is_dir(input) {
 			input_folder, input_folder_err := os2.open(input)
-			fmt.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", input, input_folder_err)
+			log.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", input, input_folder_err)
 			iter := os2.read_directory_iterator_create(input_folder)
 
 			for f in os2.read_directory_iterator(&iter) {
@@ -101,13 +102,13 @@ main :: proc() {
 		} else if os.is_file(input) {
 			append(&input_files, input)
 		} else {
-			fmt.eprintfln("%v is neither directory or .h file", input)
+			log.errorf("%v is neither directory or .h file", input)
 		}
 	}
 
 	if output_folder != "" && !os2.exists(output_folder) {
 		make_dir_err := os2.make_directory_all(output_folder)
-		fmt.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", output_folder, make_dir_err)
+		log.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", output_folder, make_dir_err)
 	}
 
 	for i in input_files {
