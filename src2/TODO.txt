@@ -1,4 +1,3 @@
-- see the 'for next time' comment in collect.odin
 - test run on raylib again
 - add bitsetify support (good test that we have somewhere to slot it in)
 - think if we need need separation of collect and process. Perhaps combine to 'translate'.

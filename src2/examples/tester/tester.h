@@ -1,4 +1,8 @@
 #pragma once
+typedef struct {
+	int* z;
+} Test4;
+
 
 struct Test2 {
 	int y;
@@ -10,9 +14,7 @@ enum Wa {
 	Three,
 };
 
-struct Test1;
-
-struct Test1 {
+typedef struct Test1 {
 	int x;
 
 	struct Test1 *tt;
@@ -29,13 +31,6 @@ struct Test1 {
 		Didi,
 		Dodo,
 	} Ba;
-};
+} Test1;
 
 typedef struct Test1 Test3;
-
-// this seems bugged?
-// typedef Test1 Test3;
-
-typedef struct Test4 {
-	int* z;
-} Test4;

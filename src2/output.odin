@@ -16,7 +16,7 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
-	for &d in fr.decls {
+	fr_decls_loop: for &d in fr.decls {
 		switch &v in d.variant {
 		case FR_Struct:
 			if d.comment_before != "" {
@@ -38,9 +38,10 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 
 		case FR_Typedef:
 			type_str := get_type_string(fr.types, v.typedeffed_type)
-
+			log.info(type_str)
+			log.info(d.name)
 			if type_str == d.name {
-				continue
+				continue fr_decls_loop
 			}
 
 			pfln(sb, "%v :: %v", d.name, type_str)

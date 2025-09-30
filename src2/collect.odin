@@ -95,17 +95,29 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 	kind := clang.getCursorKind(c)
 
 	#partial switch kind {
-	case .StructDecl, .TypedefDecl, .EnumDecl:
+	case .StructDecl:
 		append(declarations, Declaration {
 			cursor = c,
 			type = ti,
 		})
-	}
 
-	children := get_cursor_children(c)
+		children := get_cursor_children(c)
 
-	for cc in children {
-		add_declarations(declarations, type_lookup, cc)
+		for cc in children {
+			add_declarations(declarations, type_lookup, cc)
+		}
+
+	case .TypedefDecl:
+		append(declarations, Declaration {
+			cursor = c,
+			type = ti,
+		})
+
+	case .EnumDecl:
+		append(declarations, Declaration {
+			cursor = c,
+			type = ti,
+		})
 	}
 }
 
@@ -257,7 +269,9 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 
 	case .Elaborated:
 		// Just return the type index here so we "short circuit" past `struct S` etc
-		return create_type_recursive(clang.Type_getNamedType(ct), type_lookup, types)
+		elaborated_type_idx := create_type_recursive(clang.Type_getNamedType(ct), type_lookup, types)
+		type_lookup[ct] = elaborated_type_idx
+		return elaborated_type_idx
 	case .Typedef:
 		alias_type_idx := add_type(Type_Alias{}, ct, type_lookup, types)
 		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
