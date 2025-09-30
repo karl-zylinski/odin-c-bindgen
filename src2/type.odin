@@ -15,8 +15,8 @@ Type_Pointer :: struct {
 	pointed_to_type: Type_Index,
 }
 
-Type_Typedef :: struct {
-	typedeffed_to_type: Type_Index,
+Type_Alias :: struct {
+	aliased_type: Type_Index,
 }
 
 Type_Struct_Field :: struct {
@@ -60,5 +60,5 @@ Type :: union #no_nil {
 	Type_Struct,
 	Type_Enum,
 	Type_Bit_Set,
-	Type_Typedef,
+	Type_Alias,
 }

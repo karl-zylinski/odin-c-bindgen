@@ -139,20 +139,12 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		p(b, "rawptr")
 
 	case Type_Struct:
-		if tv.defined_inline {
-			output_struct_declaration(types, idx, b, indent)
-		} else {
-			p(b, tv.name)
-		}
-	case Type_Typedef:
-		parse_type_build(types, tv.typedeffed_to_type, b, indent)
+		output_struct_declaration(types, idx, b, indent)
+	case Type_Alias:
+		parse_type_build(types, tv.aliased_type, b, indent)
 
 	case Type_Enum:
-		if tv.defined_inline {
-			output_enum_declaration(types, idx, b, indent)
-		} else {
-			p(b, tv.name)
-		}
+		output_enum_declaration(types, idx, b, indent)
 
 	case Type_Bit_Set:
 		e := types[tv.enum_type]

@@ -33,11 +33,11 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			})
 
-		case Type_Typedef:
+		case Type_Alias:
 			append(&decls, FR_Declaration {
 				name = get_cursor_name(c),
 				variant = FR_Typedef {
-					typedeffed_type = t.typedeffed_to_type,
+					typedeffed_type = t.aliased_type,
 				},
 				comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			})
