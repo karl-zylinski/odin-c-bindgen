@@ -11,7 +11,6 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 	decls: [dynamic]FR_Declaration
 
 	for &d in ir.declarations {
-		c := d.cursor
 		t := ir.types[d.type]
 		_, is_named := t.(Type_Named)
 
@@ -22,7 +21,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 
 		append(&decls, FR_Declaration {
 			named_type = d.type,
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			comment_before = d.comment,
 		})
 	}
 

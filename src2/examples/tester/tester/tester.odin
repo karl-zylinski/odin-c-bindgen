@@ -9,9 +9,9 @@ Test2 :: struct {
 }
 
 Wa :: enum {
-	One,
-	Two,
-	Three,
+	One = 0,
+	Two = 1,
+	Three = 2,
 }
 
 Test1 :: struct {
@@ -21,8 +21,8 @@ Test1 :: struct {
 	w: Wa,
 	bam: Di,
 	ba: enum {
-		Didi,
-		Dodo,
+		Didi = 0,
+		Dodo = 1,
 	},
 }
 

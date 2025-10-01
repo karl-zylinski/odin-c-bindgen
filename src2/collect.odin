@@ -90,30 +90,24 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 
 	kind := clang.getCursorKind(c)
 
-	#partial switch kind {
-	case .StructDecl:
-		append(declarations, Declaration {
-			cursor = c,
-			type = ti,
-		})
+	decl: Maybe(Declaration)
+	process_children := false
 
+	if kind != .StructDecl && kind != .TypedefDecl && kind != .EnumDecl {
+		return
+	}
+
+	append(declarations, Declaration {
+		comment = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+		type = ti,
+	})
+
+	if kind == .StructDecl {
 		children := get_cursor_children(c)
 
 		for cc in children {
 			add_declarations(declarations, type_lookup, cc)
 		}
-
-	case .TypedefDecl:
-		append(declarations, Declaration {
-			cursor = c,
-			type = ti,
-		})
-
-	case .EnumDecl:
-		append(declarations, Declaration {
-			cursor = c,
-			type = ti,
-		})
 	}
 }
 
@@ -307,7 +301,7 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 
 		cursor := clang.getTypeDeclaration(ct)
 		name := get_cursor_name(cursor)
-		
+
 		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
 			types[alias_type_idx] = type_definition
 		} else {
@@ -336,165 +330,3 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 	log.error("Unknown type")
 	return TYPE_INDEX_NONE
 }
-
-/*build_cursor_type :: proc(type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type, ct: clang.Type) -> Type_Index {
-	if t_idx, has_t_idx := type_lookup[ct]; has_t_idx {
-		return t_idx
-	}
-
-	t: Type
-
-	#partial switch ct.kind {
-	case .Bool:
-		t = Type_Name("bool")
-	case .Char_U, .UChar:
-		t = Type_Name("u8")
-	case .UShort:
-		t = Type_Name("u16")
-	case .UInt:
-		t = Type_Name("u32")
-	case .ULongLong:
-		t = Type_Name("u64")
-	case .UInt128:
-		t = Type_Name("u128")
-	case .Char_S, .SChar:
-		t = Type_Name("i8")
-	case .Short:
-		t = Type_Name("i16")
-	case .Int:
-		t = Type_Name("i32")
-	case .LongLong:
-		t = Type_Name("i64")
-	case .Int128:
-		t = Type_Name("i128")
-	case .Float:
-		t = Type_Name("f32")
-	case .Double, .LongDouble:
-		t = Type_Name("f64")
-	case .NullPtr:
-		t = Type_Name("rawptr")
-	case .Pointer:
-		clang_pointee_type := clang.getPointeeType(ct)
-
-		if clang_pointee_type.kind == .Void {
-			t = Type_Raw_Pointer {}
-		} else {
-			pointee_type := build_cursor_type(type_lookup, types, clang_pointee_type)
-
-			if pointee_type != TYPE_INDEX_NONE {
-				t = Type_Pointer { pointee_type }
-			}
-		}
-	case .Record:
-		cursor := clang.getTypeDeclaration(ct)
-
-		if clang.getCanonicalCursor(cursor) == cursor {
-			break
-		}
-
-		struct_children := get_cursor_children(cursor)
-		fields: [dynamic]Type_Struct_Field
-
-		for sc, sc_i in struct_children {
-			sc_kind := clang.getCursorKind(sc)
-
-			if sc_kind == .FieldDecl {
-				field_type := build_cursor_type(type_lookup, types, clang.getCursorType(sc))
-				name := get_cursor_name(sc)
-
-				if field_type == TYPE_INDEX_NONE {
-					log.errorf("Unresolved struct field type: %v", sc)
-				}
-
-				field_loc := get_cursor_location(sc)
-				comment_loc := get_comment_location(sc)
-
-				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
-				comment_before: string
-				comment_on_right: string
-
-				if field_loc.line == comment_loc.line {
-					comment_on_right = comment
-				} else {
-					comment_before = comment
-				}
-
-				append(&fields, Type_Struct_Field {
-					name = name,
-					type = field_type,
-					comment_before = comment_before,
-					comment_on_right = comment_on_right,
-				})
-			}
-		}
-
-		t = Type_Struct {
-			name = get_cursor_name(cursor),
-			defined_inline = clang.Cursor_isAnonymous(cursor) == 1,
-			fields = fields[:],
-		}
-	case .Enum:
-		cursor := clang.getTypeDeclaration(ct)
-		name := get_cursor_name(cursor)
-
-		bit_set_name, bit_setify := bit_setify_lookup[name]
-
-		enum_children := get_cursor_children(cursor)
-		members: [dynamic]Type_Enum_Member
-		backing_type := clang.getEnumDeclIntegerType(cursor)
-		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
-
-		for ec, ec_i in enum_children {
-			member_name := get_cursor_name(ec)
-			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
-			
-			if bit_setify {
-				if value == 0 {
-					continue
-				}
-
-				value = int(bits.log2(uint(value)))
-			}
-
-			append(&members, Type_Enum_Member {
-				name = member_name,
-				value = value,
-			})
-		}
-
-		if bit_setify {
-			append(types, Type_Bit_Set {
-				name = bit_set_name,
-				enum_type = Type_Index(len(types) + 1),
-			})
-		}
-
-		t = Type_Enum {
-			name = name,
-			members = members[:],
-			defined_inline = clang.Cursor_isAnonymous(cursor) == 1,
-		}
-
-	case .Elaborated:
-		// Just return the type index here so we "short circuit" past `struct S` etc
-		return build_cursor_type(type_lookup, types, clang.Type_getNamedType(ct))
-	case .Typedef:
-		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
-		t = Type_Alias { build_cursor_type(type_lookup, types, underlying) }
-	/*case .ConstantArray:
-		ws(b, "[")
-		strings.write_int(b, int(clang.getArraySize(t)))
-		ws(b, "]")
-
-		parse_type_build(clang.getArrayElementType(t), b)*/
-	}
-
-	if _, is_unknown := t.(Type_Unknown); is_unknown {
-		return 0
-	}
-
-	idx := Type_Index(len(types))
-	type_lookup[ct] = idx
-	append(types, t)
-	return idx
-}*/

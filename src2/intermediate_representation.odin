@@ -3,8 +3,8 @@ package bindgen2
 import clang "../libclang"
 
 Declaration :: struct {
-	cursor: clang.Cursor,
 	type: Type_Index,
+	comment: string,
 }
 
 Intermediate_Representation :: struct {
