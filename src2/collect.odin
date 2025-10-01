@@ -83,10 +83,6 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 	ct := clang.getCursorType(c)
 	ti, ti_ok := type_lookup[ct]
 
-	if clang.Cursor_isAnonymous(c) == 1 {
-		return
-	}
-
 	if !ti_ok {
 		log.errorf("Unknown type: %v", ct)
 		return
@@ -126,56 +122,63 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 		return t_idx
 	}
 
-	add_type :: proc(t: Type, ct: clang.Type, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
+	add_anonymous_type :: proc(t: Type, types: ^[dynamic]Type) -> Type_Index {
 		idx := Type_Index(len(types))
 		append(types, t)
+		return idx
+	}
+
+	reserve_type :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
+		idx := Type_Index(len(types))
+		append_nothing(types)
 		type_lookup[ct] = idx
 		return idx
 	}
 
+	to_add: Maybe(Type)
+
 	#partial switch ct.kind {
 	case .Bool:
-		return add_type(Type_Name("bool"), ct, type_lookup, types)
+		to_add = Type_Named { name = "bool" }
 	case .Char_U, .UChar:
-		return add_type(Type_Name("u8"), ct, type_lookup, types)
+		to_add = Type_Named { name = "u8" }
 	case .UShort:
-		return add_type(Type_Name("u16"), ct, type_lookup, types)
+		to_add = Type_Named { name = "u16" }
 	case .UInt:
-		return add_type(Type_Name("u32"), ct, type_lookup, types)
+		to_add = Type_Named { name = "u32" }
 	case .ULongLong:
-		return add_type(Type_Name("u64"), ct, type_lookup, types)
+		to_add = Type_Named { name = "u64" }
 	case .UInt128:
-		return add_type(Type_Name("u128"), ct, type_lookup, types)
+		to_add = Type_Named { name = "u128" }
 	case .Char_S, .SChar:
-		return add_type(Type_Name("i8"), ct, type_lookup, types)
+		to_add = Type_Named { name = "i8" }
 	case .Short:
-		return add_type(Type_Name("i16"), ct, type_lookup, types)
+		to_add = Type_Named { name = "i16" }
 	case .Int:
-		return add_type(Type_Name("i32"), ct, type_lookup, types)
+		to_add = Type_Named { name = "i32" }
 	case .LongLong:
-		return add_type(Type_Name("i64"), ct, type_lookup, types)
+		to_add = Type_Named { name = "i64" }
 	case .Int128:
-		return add_type(Type_Name("i128"), ct, type_lookup, types)
+		to_add = Type_Named { name = "i128" }
 	case .Float:
-		return add_type(Type_Name("f32"), ct, type_lookup, types)
+		to_add = Type_Named { name = "f32" }
 	case .Double, .LongDouble:
-		return add_type(Type_Name("f64"), ct, type_lookup, types)
+		to_add = Type_Named { name = "f64" }
 	case .NullPtr:
-		return add_type(Type_Name("rawptr"), ct, type_lookup, types)
+		to_add = Type_Named { name = "rawptr" }
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
 		if clang_pointee_type.kind == .Void {
-			return add_type(Type_Raw_Pointer{}, ct, type_lookup, types)
+			to_add = Type_Raw_Pointer{}
 		} else {
-			ptr_type_idx := add_type(Type_Pointer{}, ct, type_lookup, types)
+			ptr_type_idx := reserve_type(ct, type_lookup, types)
 			pointee_type := create_type_recursive(clang_pointee_type, type_lookup, types)
-			(&types[ptr_type_idx].(Type_Pointer)).pointed_to_type = pointee_type
+			types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointee_type }
 			return ptr_type_idx
 		}
 	case .Record:
-		struct_type_idx := add_type(Type_Struct{}, ct, type_lookup, types)
-
+		struct_type_idx := reserve_type(ct, type_lookup, types)
 		cursor := clang.getTypeDeclaration(ct)
 		struct_children := get_cursor_children(cursor)
 		fields: [dynamic]Type_Struct_Field
@@ -213,21 +216,34 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 			}
 		}
 
-		(&types[struct_type_idx].(Type_Struct))^ = {
-			name = get_cursor_name(cursor),
-			defined_inline = clang.Cursor_isAnonymous(cursor) == 1,
+		type_definition := Type_Struct {
 			fields = fields[:],
 		}
 
-		return struct_type_idx
-
-	case .Enum:
-		enum_type_idx := add_type(Type_Enum{}, ct, type_lookup, types)
-
-		cursor := clang.getTypeDeclaration(ct)
 		name := get_cursor_name(cursor)
 
-		bit_set_name, bit_setify := bit_setify_lookup[name]
+		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
+			types[struct_type_idx] = type_definition
+		} else {
+			named_type := Type_Named {
+				name = name,
+				definition = add_anonymous_type(type_definition, types)
+			}
+			types[struct_type_idx] = named_type
+		}
+
+		return struct_type_idx
+	case .Enum:
+		enum_type_idx := reserve_type(ct, type_lookup, types)
+		cursor := clang.getTypeDeclaration(ct)
+
+		bit_set_name: string
+		bit_setify: bool
+		name := get_cursor_name(cursor)
+
+		if name in bit_setify_lookup {
+			bit_set_name, bit_setify = bit_setify_lookup[name] 
+		}
 
 		enum_children := get_cursor_children(cursor)
 		members: [dynamic]Type_Enum_Member
@@ -252,17 +268,26 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 			})
 		}
 
+		// TODO actually make this work
 		if bit_setify {
-			append(types, Type_Bit_Set {
+			/*append(types, Type_Bit_Set {
 				name = bit_set_name,
 				enum_type = Type_Index(len(types) + 1),
-			})
+			})*/
 		}
 
-		(&types[enum_type_idx].(Type_Enum))^ = {
-			name = name,
+		type_definition := Type_Enum {
 			members = members[:],
-			defined_inline = clang.Cursor_isAnonymous(cursor) == 1,
+		}
+
+		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
+			types[enum_type_idx] = type_definition
+		} else {
+			named_type := Type_Named {
+				name = name,
+				definition = add_anonymous_type(type_definition, types)
+			}
+			types[enum_type_idx] = named_type 
 		}
 
 		return enum_type_idx
@@ -273,11 +298,26 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 		type_lookup[ct] = elaborated_type_idx
 		return elaborated_type_idx
 	case .Typedef:
-		alias_type_idx := add_type(Type_Alias{}, ct, type_lookup, types)
+		alias_type_idx := reserve_type(ct, type_lookup, types)
 		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
-		(&types[alias_type_idx].(Type_Alias))^ = {
+		
+		type_definition := Type_Alias {
 			aliased_type = create_type_recursive(underlying, type_lookup, types)
 		}
+
+		cursor := clang.getTypeDeclaration(ct)
+		name := get_cursor_name(cursor)
+		
+		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
+			types[alias_type_idx] = type_definition
+		} else {
+			named_type := Type_Named {
+				name = name,
+				definition = add_anonymous_type(type_definition, types)
+			}
+			types[alias_type_idx] = named_type 
+		}
+
 		return alias_type_idx
 	/*case .ConstantArray:
 		ws(b, "[")
@@ -287,7 +327,13 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 		parse_type_build(clang.getArrayElementType(t), b)*/
 	}
 
-	//log.error("Unknown type")
+	if t, t_ok := to_add.?; t_ok {
+		idx := reserve_type(ct, type_lookup, types)
+		types[idx] = t
+		return idx
+	}
+
+	log.error("Unknown type")
 	return TYPE_INDEX_NONE
 }
 

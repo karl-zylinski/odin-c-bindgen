@@ -1,4 +1,5 @@
 #pragma once
+
 typedef struct {
 	int* z;
 } Test4;
@@ -30,7 +31,9 @@ typedef struct Test1 {
 	enum {
 		Didi,
 		Dodo,
-	} Ba;
+	} ba;
 } Test1;
 
 typedef struct Test1 Test3;
+
+typedef Test3 Test15;

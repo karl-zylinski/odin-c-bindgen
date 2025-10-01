@@ -12,10 +12,16 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 
 	for &d in ir.declarations {
 		c := d.cursor
+		t := ir.types[d.type]
+		_, is_named := t.(Type_Named)
+
+		if !is_named {
+			log.errorf("Type used in declaration has no name: %v", d.type)
+			continue
+		}
 
 		append(&decls, FR_Declaration {
-			name = get_cursor_name(c),
-			type = d.type,
+			named_type = d.type,
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 		})
 	}

@@ -1,8 +1,7 @@
 package bindgen2
 
 FR_Declaration :: struct {
-	name: string,
-	type: Type_Index,
+	named_type: Type_Index,
 	comment_before: string,
 }
 

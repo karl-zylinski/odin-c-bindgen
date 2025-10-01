@@ -20,7 +20,7 @@ Test1 :: struct {
 	t: Test2,
 	w: Wa,
 	bam: Di,
-	Ba: enum {
+	ba: enum {
 		Didi,
 		Dodo,
 	},
@@ -32,4 +32,5 @@ Di :: struct {
 
 Test3 :: Test1
 
+Test15 :: Test3
 

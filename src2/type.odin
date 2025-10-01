@@ -7,8 +7,6 @@ package bindgen2
 
 Type_Index :: distinct int
 
-Type_Name :: distinct string
-
 TYPE_INDEX_NONE :: Type_Index(0)
 
 Type_Pointer :: struct {
@@ -28,8 +26,6 @@ Type_Struct_Field :: struct {
 
 Type_Struct :: struct {
 	fields: []Type_Struct_Field,
-	defined_inline: bool,
-	name: string,
 }
 
 Type_Enum_Member :: struct {
@@ -37,10 +33,15 @@ Type_Enum_Member :: struct {
 	value: int,
 }
 
-Type_Enum :: struct {
+Type_Named :: struct {
 	name: string,
+
+	// Always zero for "basic types such as 'int'"
+	definition: Type_Index,
+}
+
+Type_Enum :: struct {
 	members: []Type_Enum_Member,
-	defined_inline: bool,
 }
 
 Type_Unknown :: struct {}
@@ -54,7 +55,7 @@ Type_Bit_Set :: struct {
 
 Type :: union #no_nil {
 	Type_Unknown,
-	Type_Name,
+	Type_Named,
 	Type_Pointer,
 	Type_Raw_Pointer,
 	Type_Struct,

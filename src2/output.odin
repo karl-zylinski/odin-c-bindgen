@@ -17,44 +17,18 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	pln(sb, "")
 
 	fr_decls_loop: for &d in fr.decls {
-		t := fr.types[d.type]
-		#partial switch &v in t {
-		case Type_Struct:
-			if d.comment_before != "" {
-				pln(sb, d.comment_before)
-			}
+		t := fr.types[d.named_type].(Type_Named)
+		rhs := get_type_string(fr.types, t.definition)
 
-			pf(sb, "%v :: ", d.name)
-
-			output_struct_declaration(fr.types, d.type, sb, 0)
-
-		case Type_Enum:
-			if d.comment_before != "" {
-				pln(sb, d.comment_before)
-			}
-
-			pf(sb, "%v :: ", d.name)
-
-			output_enum_declaration(fr.types, d.type, sb, 0)
-
-		case Type_Alias:
-			type_str := get_type_string(fr.types, v.aliased_type)
-			log.info(type_str)
-			log.info(d.name)
-			if type_str == d.name {
-				continue fr_decls_loop
-			}
-
-			pfln(sb, "%v :: %v", d.name, type_str)
-
-		case Type_Bit_Set :
-			if d.comment_before != "" {
-				pln(sb, d.comment_before)
-			}
-
-			pf(sb, "%v :: %v", d.name, get_type_string(fr.types, v.enum_type))
+		if rhs == t.name {
+			continue
 		}
-		
+
+		if d.comment_before != "" {
+			pln(sb, d.comment_before)
+		}
+
+		pf(sb, "%v :: %v", t.name, rhs)
 		p(sb, "\n\n")
 	}
 
@@ -62,7 +36,6 @@ output :: proc(fr: Final_Representation, filename: string, package_name: string)
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
 }
-
 
 output_indent :: proc(b: ^strings.Builder, indent: int) {
 	for _ in 0..<indent {
@@ -108,14 +81,10 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	t_enum := &t.(Type_Enum)
 
 	pln(b, "enum {")
-	for &m, m_idx in t_enum.members {
+	for &m in t_enum.members {
 		output_indent(b, indent + 1)
 		pf(b, "%s", m.name)
-
-		if m_idx != m.value {
-			pf(b, " = %v", m.value)
-		}
-
+		pf(b, " = %v", m.value)
 		p(b, ",\n")
 	}
 	
@@ -123,15 +92,18 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	p(b, "}")
 }
 
-
 parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	switch &tv in t {
 	case Type_Unknown:
 		log.warn("Is this a bug?")
 
-	case Type_Name:
-		p(b, string(tv))
+	case Type_Named:
+		if tv.name == "" {
+			log.errorf("Named type with index %v has no name", idx)
+			break
+		}
+		p(b, string(tv.name))
 
 	case Type_Pointer:
 		p(b, "^")
@@ -141,33 +113,29 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		p(b, "rawptr")
 
 	case Type_Struct:
-		if tv.defined_inline {
-			output_struct_declaration(types, idx, b, indent)
-		} else {
-			p(b, tv.name)
-		}
+		output_struct_declaration(types, idx, b, indent)
 
 	case Type_Alias:
 		parse_type_build(types, tv.aliased_type, b, indent)
 
 	case Type_Enum:
-		if tv.defined_inline {
-			output_enum_declaration(types, idx, b, indent)
-		} else {
-			p(b, tv.name)
-		}
+		output_enum_declaration(types, idx, b, indent)
 
 	case Type_Bit_Set:
 		e := types[tv.enum_type]
+		named, is_named := e.(Type_Named)
 
-		pf(b, "bit_set[%v]", e.(Type_Enum).name)
+		if !is_named {
+			log.error("Didn't use named enum type with bit set")
+			break
+		}
+
+		pf(b, "bit_set[%v]", named.name)
 	}
 }
 
 get_type_string :: proc(types: []Type, idx: Type_Index) -> string {
 	// For getting function parameter names: https://stackoverflow.com/questions/79356416/how-can-i-get-the-argument-names-of-a-function-types-argument-list
-
-
 	b := strings.builder_make()
 	parse_type_build(types, idx, &b, 0)
 	return strings.to_string(b)
