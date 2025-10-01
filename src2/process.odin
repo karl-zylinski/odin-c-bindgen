@@ -5,6 +5,7 @@ import clang "../libclang"
 import "core:strings"
 import "core:slice"
 import "core:log"
+import "core:math/bits"
 
 @(private="package")
 process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
@@ -12,10 +13,15 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 
 	for &d in ir.declarations {
 		t := ir.types[d.type]
-		_, is_named := t.(Type_Named)
+		tn, is_named := t.(Type_Named)
 
 		if !is_named {
 			log.errorf("Type used in declaration has no name: %v", d.type)
+			continue
+		}
+
+		if tn.definition == 0 {
+			log.errorf("Type used in declaration has no declaration: %v", tn.name)
 			continue
 		}
 
@@ -23,76 +29,49 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			named_type = d.type,
 			comment_before = d.comment,
 		})
+
+		def := &ir.types[tn.definition]
+
+		#partial switch &dv in def {
+		case Type_Enum:
+			if bit_set_name, bit_setify := bit_setify_lookup[tn.name]; bit_setify {
+				new_members: [dynamic]Type_Enum_Member
+
+				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
+				for m in dv.members {
+					if m.value == 0 {
+						continue
+					}
+
+					append(&new_members, Type_Enum_Member {
+						name = m.name,
+						value = int(bits.log2(uint(m.value)))
+					})
+				}
+
+				dv.members = new_members[:]
+				bs_idx := Type_Index(len(ir.types))
+
+				append(&ir.types, Type_Bit_Set {
+					enum_type = d.type,
+				})
+
+				bs_named_type_idx := Type_Index(len(ir.types))
+				
+				append(&ir.types, Type_Named {
+					name = bit_set_name,
+					definition = bs_idx,
+				})
+
+				append(&decls, FR_Declaration {
+					named_type = bs_named_type_idx,
+				})
+			}
+		}
 	}
 
 	return {
 		decls = decls[:],
-		types = ir.types,
+		types = ir.types[:],
 	}
 }
-
-/*
-parse_type :: proc(type: clang.Type) -> string {
-	// For getting function parameter names: https://stackoverflow.com/questions/79356416/how-can-i-get-the-argument-names-of-a-function-types-argument-list
-
-	ws :: strings.write_string
-
-	parse_type_build :: proc(t: clang.Type, b: ^strings.Builder) {
-		#partial switch t.kind {
-		case .Bool:
-			ws(b, "bool")
-		case .Char_U, .UChar:
-			ws(b, "u8")
-		case .UShort:
-			ws(b, "u16")
-		case .UInt:
-			ws(b, "u32")
-		case .ULongLong:
-			ws(b, "u64")
-		case .UInt128:
-			ws(b, "u128")
-		case .Char_S, .SChar:
-			ws(b, "i8")
-		case .Short:
-			ws(b, "i16")
-		case .Int:
-			ws(b, "i32")
-		case .LongLong:
-			ws(b, "i64")
-		case .Int128:
-			ws(b, "i128")
-		case .Float:
-			ws(b, "f32")
-		case .Double, .LongDouble:
-			ws(b, "f64")
-		case .NullPtr:
-			ws(b, "rawptr")
-		case .Pointer:
-			pointee_type := clang.getPointeeType(t)
-
-			if pointee_type.kind == .Void {
-				ws(b, "rawptr")
-			} else {
-				ws(b, "^")
-				parse_type_build(pointee_type, b)
-			}
-		case .Record:
-			ws(b, get_cursor_name(clang.getTypeDeclaration(t)))
-		case .Elaborated:
-			// Means stuff like `struct S` instead of just `S`
-			parse_type_build(clang.Type_getNamedType(t), b)
-		case .Typedef:
-			parse_type_build(clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(t)), b)
-		case .ConstantArray:
-			ws(b, "[")
-			strings.write_int(b, int(clang.getArraySize(t)))
-			ws(b, "]")
-
-			parse_type_build(clang.getArrayElementType(t), b)
-		}
-	}
-
-	b := strings.builder_make()
-	parse_type_build(type, &b)
-	return strings.to_string(b)
-}*/

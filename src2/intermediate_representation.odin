@@ -9,5 +9,5 @@ Declaration :: struct {
 
 Intermediate_Representation :: struct {
 	declarations: []Declaration,
-	types: []Type,
+	types: [dynamic]Type,
 }

@@ -80,7 +80,7 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	t := types[idx]
 	t_enum := &t.(Type_Enum)
 
-	pln(b, "enum {")
+	pfln(b, "enum %v {{", t_enum.storage_type)
 	for &m in t_enum.members {
 		output_indent(b, indent + 1)
 		pf(b, "%s", m.name)

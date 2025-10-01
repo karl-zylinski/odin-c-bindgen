@@ -41,6 +41,7 @@ Type_Named :: struct {
 }
 
 Type_Enum :: struct {
+	storage_type: typeid,
 	members: []Type_Enum_Member,
 }
 
@@ -49,7 +50,6 @@ Type_Unknown :: struct {}
 Type_Raw_Pointer :: struct {}
 
 Type_Bit_Set :: struct {
-	name: string,
 	enum_type: Type_Index,
 }
 

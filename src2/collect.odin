@@ -75,7 +75,7 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 
 	return {
 		declarations = declarations[:],
-		types = types[:],
+		types = types,
 	}
 }
 
@@ -230,15 +230,6 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 	case .Enum:
 		enum_type_idx := reserve_type(ct, type_lookup, types)
 		cursor := clang.getTypeDeclaration(ct)
-
-		bit_set_name: string
-		bit_setify: bool
-		name := get_cursor_name(cursor)
-
-		if name in bit_setify_lookup {
-			bit_set_name, bit_setify = bit_setify_lookup[name] 
-		}
-
 		enum_children := get_cursor_children(cursor)
 		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(cursor)
@@ -247,14 +238,6 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 		for ec, ec_i in enum_children {
 			member_name := get_cursor_name(ec)
 			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
-			
-			if bit_setify {
-				if value == 0 {
-					continue
-				}
-
-				value = int(bits.log2(uint(value)))
-			}
 
 			append(&members, Type_Enum_Member {
 				name = member_name,
@@ -262,17 +245,49 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 			})
 		}
 
-		// TODO actually make this work
-		if bit_setify {
-			/*append(types, Type_Bit_Set {
-				name = bit_set_name,
-				enum_type = Type_Index(len(types) + 1),
-			})*/
-		}
+		storage_type: typeid = i32
+
+		#partial switch backing_type.kind {
+			case .Char_U:
+				storage_type = u8
+			case .UChar:
+				storage_type = u8
+			case .Char16:
+				storage_type = i16
+			case .Char32:
+				storage_type = i32
+			case .UShort:
+				storage_type = u16
+			case .UInt:
+				storage_type = u32
+			case .ULong:
+				storage_type = u32
+			case .ULongLong:
+				storage_type = u64
+			case .UInt128:
+				storage_type = u128
+			case .Char_S:
+				storage_type = i8
+			case .SChar:
+				storage_type = i8
+			case .Short:
+				storage_type = i16
+			case .Int:
+				storage_type = i32
+			case .Long:
+				storage_type = i32
+			case .LongLong:
+				storage_type = i64
+			case .Int128:
+				storage_type = i128
+		}	
 
 		type_definition := Type_Enum {
+			storage_type = storage_type,
 			members = members[:],
 		}
+
+		name := get_cursor_name(cursor)
 
 		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
 			types[enum_type_idx] = type_definition
