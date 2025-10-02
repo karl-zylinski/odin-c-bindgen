@@ -18,23 +18,6 @@ string_from_clang_string :: proc(str: clang.String) -> string {
 	return ret
 }
 
-get_cursor_children :: proc(cursor: clang.Cursor) -> []clang.Cursor {
-	children: [dynamic]clang.Cursor
-	clang.visitChildren(cursor, curstor_iterator_iterate, &children)
-
-	curstor_iterator_iterate: clang.Cursor_Visitor : proc "c" (
-		cursor, parent: clang.Cursor,
-		state: clang.Client_Data,
-	) -> clang.Child_Visit_Result {
-		context = gen_ctx
-		arr := (^[dynamic]clang.Cursor)(state)
-		append(arr, cursor)
-		return .Continue
-	}
-
-	return children[:]
-}
-
 Location :: struct {
 	file: clang.File,
 	offset: int,

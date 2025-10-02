@@ -8,7 +8,7 @@ Test2 :: struct {
 	y: i32,
 }
 
-Wa :: enum {
+Wa :: enum i32 {
 	One = 0,
 	Two = 1,
 	Three = 2,
@@ -20,7 +20,7 @@ Test1 :: struct {
 	t: Test2,
 	w: Wa,
 	bam: Di,
-	ba: enum {
+	ba: enum i32 {
 		Didi = 0,
 		Dodo = 1,
 	},

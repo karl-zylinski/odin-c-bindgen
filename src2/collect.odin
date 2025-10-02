@@ -43,7 +43,11 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
 
-	root_children := get_cursor_children(root_cursor)
+	children_lookup: Cursor_Children_Map
+
+	build_cursor_children_lookup(root_cursor, &children_lookup)
+
+	root_children := children_lookup[root_cursor]
 
 	type_lookup: map[clang.Type]Type_Index
 	types: [dynamic]Type
@@ -58,7 +62,7 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 			continue
 		}
 
-		create_type_recursive(clang.getCursorType(c), &type_lookup, &types)
+		create_type_recursive(clang.getCursorType(c), children_lookup, &type_lookup, &types)
 	}
 
 	// Create all declarations, i.e. types and such to put into the bindings.
@@ -70,7 +74,7 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 			continue
 		}
 
-		add_declarations(&declarations, type_lookup, c)
+		add_declarations(&declarations, type_lookup, c, children_lookup)
 	}
 
 	return {
@@ -79,7 +83,33 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	}
 }
 
-add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, c: clang.Cursor) {
+build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
+	Build_Children_State :: struct {
+		res: ^Cursor_Children_Map,
+		children: [dynamic]clang.Cursor,
+	}
+
+	bcs := Build_Children_State {
+		res = res,
+	}
+
+	clang.visitChildren(c, curstor_iterator_iterate, &bcs)
+
+	curstor_iterator_iterate: clang.Cursor_Visitor : proc "c" (
+		cursor, parent: clang.Cursor,
+		state: clang.Client_Data,
+	) -> clang.Child_Visit_Result {
+		context = gen_ctx
+		bcs := (^Build_Children_State)(state)
+		append(&bcs.children, cursor)
+		build_cursor_children_lookup(cursor, bcs.res)
+		return .Continue
+	}
+
+	res[c] = bcs.children[:]
+}
+
+add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
 	ct := clang.getCursorType(c)
 	ti, ti_ok := type_lookup[ct]
 
@@ -103,15 +133,15 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 	})
 
 	if kind == .StructDecl {
-		children := get_cursor_children(c)
+		children := children_lookup[c]
 
 		for cc in children {
-			add_declarations(declarations, type_lookup, cc)
+			add_declarations(declarations, type_lookup, cc, children_lookup)
 		}
 	}
 }
 
-create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
+create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
 	if t_idx, has_t_idx := type_lookup[ct]; has_t_idx {
 		return t_idx
 	}
@@ -167,21 +197,21 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 			to_add = Type_Raw_Pointer{}
 		} else {
 			ptr_type_idx := reserve_type(ct, type_lookup, types)
-			pointee_type := create_type_recursive(clang_pointee_type, type_lookup, types)
+			pointee_type := create_type_recursive(clang_pointee_type, children_lookup, type_lookup, types)
 			types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointee_type }
 			return ptr_type_idx
 		}
 	case .Record:
 		struct_type_idx := reserve_type(ct, type_lookup, types)
 		cursor := clang.getTypeDeclaration(ct)
-		struct_children := get_cursor_children(cursor)
+		struct_children := children_lookup[cursor]
 		fields: [dynamic]Type_Struct_Field
 
 		for sc, sc_i in struct_children {
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				field_type := create_type_recursive(clang.getCursorType(sc), type_lookup, types)
+				field_type := create_type_recursive(clang.getCursorType(sc), children_lookup, type_lookup, types)
 				name := get_cursor_name(sc)
 
 				if field_type == TYPE_INDEX_NONE {
@@ -230,7 +260,7 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 	case .Enum:
 		enum_type_idx := reserve_type(ct, type_lookup, types)
 		cursor := clang.getTypeDeclaration(ct)
-		enum_children := get_cursor_children(cursor)
+		enum_children := children_lookup[cursor]
 		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(cursor)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
@@ -303,7 +333,7 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 
 	case .Elaborated:
 		// Just return the type index here so we "short circuit" past `struct S` etc
-		elaborated_type_idx := create_type_recursive(clang.Type_getNamedType(ct), type_lookup, types)
+		elaborated_type_idx := create_type_recursive(clang.Type_getNamedType(ct), children_lookup, type_lookup, types)
 		type_lookup[ct] = elaborated_type_idx
 		return elaborated_type_idx
 	case .Typedef:
@@ -311,7 +341,7 @@ create_type_recursive :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_
 		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
 		
 		type_definition := Type_Alias {
-			aliased_type = create_type_recursive(underlying, type_lookup, types)
+			aliased_type = create_type_recursive(underlying, children_lookup, type_lookup, types)
 		}
 
 		cursor := clang.getTypeDeclaration(ct)
