@@ -117,8 +117,9 @@ main :: proc() {
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
-			ir := collect(i)
-			fr := process(&ir)
+			ts: Translate_State
+			collect(&ts, i)
+			fr := process(&ts)
 			output_stem := filepath.stem(i)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			output(fr, output_filename, package_name)

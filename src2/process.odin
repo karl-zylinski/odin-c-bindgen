@@ -8,11 +8,11 @@ import "core:log"
 import "core:math/bits"
 
 @(private="package")
-process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
+process :: proc(ts: ^Translate_State) -> Final_Representation {
 	decls: [dynamic]FR_Declaration
 
-	for &d in ir.declarations {
-		t := ir.types[d.type]
+	for &d in ts.declarations {
+		t := ts.types[d.type]
 		tn, is_named := t.(Type_Named)
 
 		if !is_named {
@@ -30,7 +30,7 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 			comment_before = d.comment,
 		})
 
-		def := &ir.types[tn.definition]
+		def := &ts.types[tn.definition]
 
 		#partial switch &dv in def {
 		case Type_Enum:
@@ -50,15 +50,15 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 				}
 
 				dv.members = new_members[:]
-				bs_idx := Type_Index(len(ir.types))
+				bs_idx := Type_Index(len(ts.types))
 
-				append(&ir.types, Type_Bit_Set {
+				append(&ts.types, Type_Bit_Set {
 					enum_type = d.type,
 				})
 
-				bs_named_type_idx := Type_Index(len(ir.types))
+				bs_named_type_idx := Type_Index(len(ts.types))
 				
-				append(&ir.types, Type_Named {
+				append(&ts.types, Type_Named {
 					name = bit_set_name,
 					definition = bs_idx,
 				})
@@ -72,6 +72,6 @@ process :: proc(ir: ^Intermediate_Representation) -> Final_Representation {
 
 	return {
 		decls = decls[:],
-		types = ir.types[:],
+		types = ts.types[:],
 	}
 }

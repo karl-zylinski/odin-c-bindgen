@@ -9,7 +9,8 @@ Declaration :: struct {
 
 Cursor_Children_Map :: map[clang.Cursor][]clang.Cursor
 
-Intermediate_Representation :: struct {
+Translate_State :: struct {
 	declarations: []Declaration,
 	types: [dynamic]Type,
+	children_lookup: Cursor_Children_Map,
 }

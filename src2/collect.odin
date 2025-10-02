@@ -11,7 +11,7 @@ import "core:math/bits"
 named_types: map[string]struct{}
 
 @(private="package")
-collect :: proc(filename: string) -> Intermediate_Representation {
+collect :: proc(ts: ^Translate_State, filename: string) {
 	clang_args := []cstring {
 		"-fparse-all-comments"
 	}
@@ -50,9 +50,8 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 	root_children := children_lookup[root_cursor]
 
 	type_lookup: map[clang.Type]Type_Index
-	types: [dynamic]Type
 	declarations: [dynamic]Declaration
-	append(&types, Type_Unknown {})
+	append(&ts.types, Type_Unknown {})
 
 	// Create all types.
 	for c in root_children {
@@ -62,7 +61,7 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 			continue
 		}
 
-		create_type_recursive(clang.getCursorType(c), children_lookup, &type_lookup, &types)
+		create_type_recursive(clang.getCursorType(c), children_lookup, &type_lookup, &ts.types)
 	}
 
 	// Create all declarations, i.e. types and such to put into the bindings.
@@ -77,10 +76,7 @@ collect :: proc(filename: string) -> Intermediate_Representation {
 		add_declarations(&declarations, type_lookup, c, children_lookup)
 	}
 
-	return {
-		declarations = declarations[:],
-		types = types,
-	}
+	ts.declarations = declarations[:]
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
