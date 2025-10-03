@@ -14,15 +14,9 @@ import "core:unicode/utf8"
 translate_process :: proc(ts: ^Translate_State) -> Output_State {
 	decls: [dynamic]Declaration
 
-	// First: Rename all types that need renaming and also replace them.
+	// Replace types
 	for &t in ts.types {
 		if nt, nt_ok := &t.(Type_Named); nt_ok {
-			if new_name, renamed := ts.config.rename[nt.name]; renamed {
-				nt.name = new_name
-			}
-
-			// Note: This should use the new name!
-
 			if nt.definition != TYPE_INDEX_NONE {
 				override: bool
 				override_definition_text: string
@@ -48,9 +42,27 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		}
 	}
 
+	// Build map of enum name -> bit_set config data
+	bit_sets_by_enum_name: map[string][dynamic]Config_Bit_Set
+
+	for &b in ts.config.bit_sets {
+		sets := &bit_sets_by_enum_name[b.enum_name]
+
+		if sets == nil {
+			bit_sets_by_enum_name[b.enum_name] = {}
+			sets = &bit_sets_by_enum_name[b.enum_name]
+		}
+
+		append(sets, b)
+	}
+
+	// We don't want to add to ts.types because we might have pointers to items within a loop lap,
+	// so add to this one!
+	new_types: [dynamic]Type
+
 	for &d in ts.declarations {
-		t := ts.types[d.named_type]
-		tn, is_named := t.(Type_Named)
+		t := &ts.types[d.named_type]
+		tn, is_named := &t.(Type_Named)
 
 		if !is_named {
 			log.errorf("Type used in declaration has no name: %v", d.named_type)
@@ -68,7 +80,11 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 		#partial switch &dv in def {
 		case Type_Enum:
-			if bit_set_name, bit_setify := ts.config.bit_setify[tn.name]; bit_setify {
+			bit_sets := bit_sets_by_enum_name[tn.name]
+
+			log.info(bit_sets)
+
+			for &b in bit_sets {
 				new_members: [dynamic]Type_Enum_Member
 
 				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
@@ -84,29 +100,37 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				}
 
 				dv.members = new_members[:]
-				bs_idx := Type_Index(len(ts.types))
+				bs_idx := Type_Index(len(ts.types) + len(new_types))
 
-				append(&ts.types, Type_Bit_Set {
+				append(&new_types, Type_Bit_Set {
 					enum_type = d.named_type,
 				})
 
-				bs_named_type_idx := Type_Index(len(ts.types))
+				bs_named_type_idx := Type_Index(len(ts.types) + len(new_types))
 				
-				append(&ts.types, Type_Named {
-					name = bit_set_name,
+				append(&new_types, Type_Named {
+					name = b.name,
 					definition = bs_idx,
 				})
 
 				append(&decls, Declaration {
 					named_type = bs_named_type_idx,
 				})
+
+				if b.enum_rename != "" {
+					tn.name = b.enum_rename
+				} else {
+					if tn.name == b.enum_name {
+						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
+					}
+				}
 			}
 		}
 	}
 
 	return {
 		decls = decls[:],
-		types = ts.types[:],
+		types = slice.concatenate([][]Type{ts.types[:], new_types[:]}),
 		top_comment = extract_top_comment(ts.source),
 	}
 }

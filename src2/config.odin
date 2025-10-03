@@ -12,13 +12,16 @@ Config :: struct {
 	// The package name to use in `package package_name` at top of each generated file.
 	package_name: string,
 
-	// Turn an enum into a bit_set. Key is an enum name that exists in the C source. Value is the
-	// new bit_set name. Values within the enum will be automatically log2-ified (2
-	// becomes 1, 4 becomes 2, 8 becomes 3 etc).
-	bit_setify: map[string]string,
-
-	// Rename key name to value.
-	rename: map[string]string,
+	bit_sets: []Config_Bit_Set,
 
 	type_overrides: map[string]string,
+
+	struct_field_overrides: map[string]string,
+}
+
+Config_Bit_Set :: struct {
+	name: string,
+	enum_name: string,
+	enum_rename: string,
+	storage: string,
 }

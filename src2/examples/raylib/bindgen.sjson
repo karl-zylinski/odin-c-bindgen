@@ -8,17 +8,14 @@ output_folder = "raylib"
 imports_file = "imports.odin"
 package_name = "raylib"
 
-// "Old_Name" = "New_Name"
-// We rename ConfigFlags to ConfigFlag so we can introduce a bit_set with the name ConfigFlags.
-rename = {
-	"ConfigFlags" = "ConfigFlag"
-}
-
-// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
-bit_setify = {
-	"Gesture" = "Gestures"
-	"ConfigFlag" = "ConfigFlags"
-}
+bit_sets = [
+	{
+		"name" = "ConfigFlags",
+		"enum_name" = "ConfigFlags",
+		"enum_rename" = "ConfigFlag",
+		"storage" = "i32",
+	}
+]
 
 type_overrides = {
 	"Vector2" = "[2]f32"
