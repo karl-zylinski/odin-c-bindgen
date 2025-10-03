@@ -1,1 +1,9 @@
+- add procs
+
 - add macros
+
+- enum side comments
+- enum spacing alignment
+- can we make the side comment stuff generic somehow? needed for unions too etc
+
+- add unions
