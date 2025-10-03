@@ -104,76 +104,77 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		}
 	}
 
-	// Extract any big comment at top of file (clang doesn't see these)
-	top_comment: string
-
-	{
-		src := strings.trim_space(ts.source)
-		top_comment_end: int
-		in_block := false
-		on_line_comment := false
-		
-		next_rune :: proc(s: string, cur: rune, cur_idx: int) -> rune {
-			next, _ := utf8.decode_rune(s[cur_idx + utf8.rune_size(cur):]) 
-			return next
-		}
-
-		top_comment_loop: for i := 0; i < len(src); {
-			r, r_sz := utf8.decode_rune(src[i:])
-			adv := r_sz
-			defer i += adv
-
-			if r_sz == 0 {
-				break
-			}
-
-			if on_line_comment {
-				if r == '\n' {
-					on_line_comment = false
-					top_comment_end = i + 1
-				}
-			} else if in_block {
-				if i + 2 >= len(src) {
-					continue
-				}
-
-				if src[i:i+2] == "*/" {
-					in_block = false
-					top_comment_end = i + 2
-					adv = 2
-				}
-			} else {
-				if i + 2 >= len(src) {
-					continue
-				}
-
-				// Only OK to skip whitespace here because `on_line_comment` etc needs to check for newlines.
-				if unicode.is_white_space(r) {
-					continue
-				}
-
-				switch src[i:i+2] {
-				case "//":
-					adv = 2
-					on_line_comment = true
-				case "/*":
-					adv = 2
-					in_block = true
-				case:
-					top_comment_end = i
-					break top_comment_loop
-				}
-			}
-		}
-
-		if top_comment_end > 0 {
-			top_comment = strings.trim_space(src[:top_comment_end])
-		}
-	}
-
 	return {
 		decls = decls[:],
 		types = ts.types[:],
-		top_comment = top_comment,
+		top_comment = extract_top_comment(ts.source),
 	}
+}
+
+// Extracts any comment at the top of the source file. These will be put above the package line in
+// the bindings.
+extract_top_comment :: proc(src: string) -> string {
+	src := strings.trim_space(src)
+	top_comment_end: int
+	in_block := false
+	on_line_comment := false
+	
+	next_rune :: proc(s: string, cur: rune, cur_idx: int) -> rune {
+		next, _ := utf8.decode_rune(s[cur_idx + utf8.rune_size(cur):]) 
+		return next
+	}
+
+	top_comment_loop: for i := 0; i < len(src); {
+		r, r_sz := utf8.decode_rune(src[i:])
+		adv := r_sz
+		defer i += adv
+
+		if r_sz == 0 {
+			break
+		}
+
+		if on_line_comment {
+			if r == '\n' {
+				on_line_comment = false
+				top_comment_end = i + 1
+			}
+		} else if in_block {
+			if i + 2 >= len(src) {
+				continue
+			}
+
+			if src[i:i+2] == "*/" {
+				in_block = false
+				top_comment_end = i + 2
+				adv = 2
+			}
+		} else {
+			if i + 2 >= len(src) {
+				continue
+			}
+
+			// Only OK to skip whitespace here because `on_line_comment` etc needs to check for newlines.
+			if unicode.is_white_space(r) {
+				continue
+			}
+
+			switch src[i:i+2] {
+			case "//":
+				adv = 2
+				on_line_comment = true
+			case "/*":
+				adv = 2
+				in_block = true
+			case:
+				top_comment_end = i
+				break top_comment_loop
+			}
+		}
+	}
+
+	if top_comment_end > 0 {
+		return strings.trim_space(src[:top_comment_end])
+	}
+
+	return ""
 }
