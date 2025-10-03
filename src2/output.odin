@@ -95,6 +95,11 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 		}
 	}
 
+	if len(t_struct.fields) == 0 {
+		p(b, "struct {}")
+		return
+	}
+
 	pln(b, "struct {")
 	for &f, fi in t_struct.fields {
 		if f.comment_before != "" {

@@ -54,8 +54,6 @@ struct_field_overrides = {
 	"ModelAnimation.bones"      = "[^]"
 	"ModelAnimation.framePoses" = "[^][^]Transform"
 
-	"AudioStream.buffer"   = "rawptr"
-	"AudioStream.processor" = "rawptr"
 
 	// This is not a complete override list, it's just an example.
 }

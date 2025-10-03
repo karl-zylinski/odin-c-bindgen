@@ -59,6 +59,8 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 	// so add to this one!
 	new_types: [dynamic]Type
 
+	rename_aliases: map[string]string
+
 	for &d in ts.declarations {
 		t := &ts.types[d.named_type]
 		tn, is_named := &t.(Type_Named)
@@ -115,13 +117,16 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				})
 
 				if b.enum_rename != "" {
+					rename_aliases[tn.name] = b.enum_rename
 					tn.name = b.enum_rename
+
 				} else {
 					if tn.name == b.enum_name {
 						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
 					}
 				}
 			}
+
 		case Type_Struct:
 			for &f in dv.fields {
 				override_key := fmt.tprintf("%s.%s", tn.name, f.name)
@@ -137,7 +142,34 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					}
 				}
 			}
-			
+		}
+	}
+
+	// Find any aliases that need renaming. We do this because the bit_set enum renaming may cause
+	// some confusing aliases otherwise.
+	for &d in ts.declarations {
+		t := &ts.types[d.named_type]
+		tn, is_named := &t.(Type_Named)
+
+		if !is_named {
+			log.errorf("Type used in declaration has no name: %v", d.named_type)
+			continue
+		}
+
+		if tn.definition == 0 {
+			log.errorf("Type used in declaration has no declaration: %v", tn.name)
+			continue
+		}
+
+		append(&decls, d)
+
+		def := &ts.types[tn.definition]
+
+		#partial switch &dv in def {
+		case Type_Alias:
+			if new_name, has_new_name := rename_aliases[tn.name]; has_new_name {
+				tn.name = new_name
+			}
 		}
 	}
 
