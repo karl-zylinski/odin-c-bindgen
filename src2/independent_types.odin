@@ -1,8 +1,8 @@
-// Type represents everything we need to know about a type. It is used during translation
-// and also during output.
+// In here we put types that can be used within any file. They are said to be independent, because
+// they do not depend on libclang.
 //
-// It is FORBIDDEN to import or use anything clang-related in here, as the outputter
-// should not know of clang.
+// It is FORBIDDEN to import libclang or use anything from libclang in here, as the outputter
+// will use these types. The outputter does not, and should not, have any knowledge of clang.
 package bindgen2
 
 Type_Index :: distinct int
@@ -53,6 +53,11 @@ Type_Bit_Set :: struct {
 	enum_type: Type_Index,
 }
 
+// Hard-coded override containing Odin type text
+Type_Override :: struct {
+	definition_text: string,
+}
+
 Type :: union #no_nil {
 	Type_Unknown,
 	Type_Named,
@@ -62,4 +67,10 @@ Type :: union #no_nil {
 	Type_Enum,
 	Type_Bit_Set,
 	Type_Alias,
+	Type_Override,
+}
+
+Declaration :: struct {
+	named_type: Type_Index,
+	comment_before: string,
 }

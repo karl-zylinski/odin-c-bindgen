@@ -11,16 +11,6 @@ import "core:encoding/json"
 import "core:slice"
 import "core:log"
 
-Config :: struct {
-	inputs: []string,
-	output_folder: string,
-	package_name: string,
-
-	bit_setify: map[string]string,
-}
-
-bit_setify_lookup: map[string]string
-
 main :: proc() {
 	permanent_arena: vmem.Arena
 	permanent_allocator := vmem.arena_allocator(&permanent_arena)
@@ -74,9 +64,6 @@ main :: proc() {
 		config.inputs = slice.clone([]string{"."})
 	}
 
-	// todo remove this and move to some context you send along
-	bit_setify_lookup = config.bit_setify
-
 	output_folder := filepath.join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
 	package_name := config.package_name != "" ? config.package_name : default_package_name
 
@@ -117,9 +104,20 @@ main :: proc() {
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
-			ts: Translate_State
-			collect(&ts, i)
-			fr := process(&ts)
+
+			source_data, source_data_ok := os.read_entire_file(i)
+
+			if !source_data_ok {
+				log.errorf("Failed reading source file: %v", i)
+				continue
+			}
+			
+			ts := Translate_State {
+				config = config,
+				source = string(source_data),
+			}
+			translate_collect(&ts, i)
+			fr := translate_process(&ts)
 			output_stem := filepath.stem(i)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			output(fr, output_filename, package_name)

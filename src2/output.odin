@@ -1,3 +1,7 @@
+// This files takes the Output_State and produces the bindings based on it.
+//
+// Never import clang within this file. Resolve any clang-related things in on of the
+// translate_X.odin files.
 #+private file
 package bindgen2
 
@@ -7,11 +11,15 @@ import "core:strings"
 import "core:log"
 
 @(private="package")
-output :: proc(fr: Final_Representation, filename: string, package_name: string) {
+output :: proc(fr: Output_State, filename: string, package_name: string) {
 	ensure(filename != "")
 	ensure(package_name != "")
 	builder := strings.builder_make()
 	sb := &builder
+
+	if fr.top_comment != "" {
+		pln(sb, fr.top_comment)
+	}
 
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
@@ -105,6 +113,9 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		}
 		p(b, string(tv.name))
 
+	case Type_Override:
+		p(b, tv.definition_text)
+
 	case Type_Pointer:
 		p(b, "^")
 		parse_type_build(types, tv.pointed_to_type, b, indent)
@@ -122,15 +133,19 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_enum_declaration(types, idx, b, indent)
 
 	case Type_Bit_Set:
-		e := types[tv.enum_type]
-		named, is_named := e.(Type_Named)
+		t := types[tv.enum_type]
+		named, is_named := t.(Type_Named)
 
 		if !is_named {
 			log.error("Didn't use named enum type with bit set")
 			break
 		}
 
-		pf(b, "bit_set[%v]", named.name)
+		enum_type, enum_type_ok := types[named.definition].(Type_Enum)
+
+		if enum_type_ok {
+			pf(b, "bit_set[%v; %v]", named.name, enum_type.storage_type)	
+		}
 	}
 }
 

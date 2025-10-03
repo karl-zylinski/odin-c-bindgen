@@ -8,10 +8,8 @@ import "core:strings"
 import "core:log"
 import "core:math/bits"
 
-named_types: map[string]struct{}
-
 @(private="package")
-collect :: proc(ts: ^Translate_State, filename: string) {
+translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	clang_args := []cstring {
 		"-fparse-all-comments"
 	}
@@ -124,8 +122,8 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 	}
 
 	append(declarations, Declaration {
-		comment = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-		type = ti,
+		comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+		named_type = ti,
 	})
 
 	if kind == .StructDecl {
