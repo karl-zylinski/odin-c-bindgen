@@ -80,7 +80,11 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 			strings.write_rune(&fb, ' ')
 		}
 
-		parse_type_build(types, f.type, &fb, indent + 1)
+		if f.type_overrride != "" {
+			p(&fb, f.type_overrride)
+		} else {
+			parse_type_build(types, f.type, &fb, indent + 1)
+		}
 
 		pf(&fb, ",")
 
