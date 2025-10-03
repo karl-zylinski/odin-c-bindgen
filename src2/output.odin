@@ -60,20 +60,55 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 	t := types[idx]
 	t_struct := &t.(Type_Struct)
 
-	pln(b, "struct {")
+	longest_name: int
 	for &f in t_struct.fields {
+		if len(f.name) > longest_name {
+			longest_name = len(f.name)
+		}
+	}
+
+	field_texts := make([]string, len(t_struct.fields))
+	longest_field_that_has_comment_on_right: int
+
+	for &f, fi in t_struct.fields {
+		fb := strings.builder_make()
+
+		pf(&fb, "%s: ", f.name)
+
+		after_name_padding := longest_name-len(f.name)
+		for _ in 0..<after_name_padding {
+			strings.write_rune(&fb, ' ')
+		}
+
+		parse_type_build(types, f.type, &fb, indent + 1)
+
+		pf(&fb, ",")
+
+		text := strings.to_string(fb)
+		field_texts[fi] = text
+
+		if f.comment_on_right != "" && len(text) > longest_field_that_has_comment_on_right {
+			longest_field_that_has_comment_on_right = len(text)
+		}
+	}
+
+	pln(b, "struct {")
+	for &f, fi in t_struct.fields {
 		if f.comment_before != "" {
 			output_indent(b, indent + 1)
 			pfln(b, "%s", f.comment_before)
 		}
 
 		output_indent(b, indent + 1)
-		pf(b, "%s: ", f.name)	
-		parse_type_build(types, f.type, b, indent + 1)
-
-		pf(b, ",")
+		text := field_texts[fi]
+		p(b, text)
 
 		if f.comment_on_right != "" {
+			// Padding between name and =
+			for _ in 0..<longest_field_that_has_comment_on_right-len(text) {
+				p(b, ' ')
+			}
+
 			pf(b, " %v", f.comment_on_right)
 		}
 
