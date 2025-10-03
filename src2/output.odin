@@ -24,6 +24,8 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
+	prev_is_proc := false
+
 	fr_decls_loop: for &d in fr.decls {
 		t := fr.types[d.named_type].(Type_Named)
 		rhs := get_type_string(fr.types, t.definition)
@@ -32,12 +34,38 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 			continue
 		}
 
+		_, is_proc := fr.types[t.definition].(Type_Procedure)
+
+
+		if is_proc {
+			if !prev_is_proc {
+				pln(sb, "foreign lib {")
+			}
+		} else {
+			if prev_is_proc {
+				pln(sb, "}")
+			}
+		}
+
 		if d.comment_before != "" {
+			if is_proc {
+				p(sb, "\t")
+			}
+
 			pln(sb, d.comment_before)
 		}
 
+		if is_proc {
+			p(sb, "\t")
+		}
+
 		pf(sb, "%v :: %v", t.name, rhs)
-		p(sb, "\n\n")
+
+		if !is_proc {
+			p(sb, "\n\n")
+		}
+
+		prev_is_proc = is_proc
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
@@ -179,6 +207,9 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Enum:
 		output_enum_declaration(types, idx, b, indent)
+
+	case Type_Procedure:
+		pfln(b, "proc()")
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)

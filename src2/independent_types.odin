@@ -60,6 +60,10 @@ Type_Fixed_Array :: struct {
 	size: int,
 }
 
+Type_Procedure :: struct {
+	name: string,
+}
+
 // Hard-coded override containing Odin type text
 Type_Override :: struct {
 	definition_text: string,
@@ -75,6 +79,7 @@ Type :: union #no_nil {
 	Type_Bit_Set,
 	Type_Alias,
 	Type_Fixed_Array,
+	Type_Procedure,
 	Type_Override,
 }
 
