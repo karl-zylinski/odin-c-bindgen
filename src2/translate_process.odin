@@ -130,7 +130,15 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 			for &f in dv.fields {
 				override_key := fmt.tprintf("%s.%s", tn.name, f.name)
 				if override, has_override := ts.config.struct_field_overrides[override_key]; has_override {
-					f.type_overrride = override
+					if override == "[^]" {
+						ptr_type, is_ptr_type := &ts.types[f.type].(Type_Pointer)
+
+						if is_ptr_type {
+							ptr_type.multipointer = true
+						}
+					} else {
+						f.type_overrride = override
+					}
 				}
 			}
 			

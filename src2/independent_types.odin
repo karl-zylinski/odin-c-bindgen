@@ -11,6 +11,7 @@ TYPE_INDEX_NONE :: Type_Index(0)
 
 Type_Pointer :: struct {
 	pointed_to_type: Type_Index,
+	multipointer: bool,
 }
 
 Type_Alias :: struct {
