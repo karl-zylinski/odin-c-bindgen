@@ -346,12 +346,29 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		}
 
 		return alias_type_idx
-	/*case .ConstantArray:
-		ws(b, "[")
-		strings.write_int(b, int(clang.getArraySize(t)))
-		ws(b, "]")
+	case .ConstantArray:
+		array_type_idx := reserve_type(ct, type_lookup, types)
+		element_type_idx := create_type_recursive(clang.getArrayElementType(ct), children_lookup, type_lookup, types)
 
-		parse_type_build(clang.getArrayElementType(t), b)*/
+		type_definition := Type_Fixed_Array {
+			element_type = element_type_idx,
+			size = int(clang.getArraySize(ct)),
+		}
+
+		cursor := clang.getTypeDeclaration(ct)
+		name := get_cursor_name(cursor)
+
+		if clang.Cursor_isAnonymous(cursor) == 1 || name == "" {
+			types[array_type_idx] = type_definition
+		} else {
+			named_type := Type_Named {
+				name = name,
+				definition = add_anonymous_type(type_definition, types),
+			}
+			types[array_type_idx] = named_type 
+		}
+
+		return array_type_idx
 	}
 
 	if t, t_ok := to_add.?; t_ok {

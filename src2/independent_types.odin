@@ -55,6 +55,11 @@ Type_Bit_Set :: struct {
 	enum_type: Type_Index,
 }
 
+Type_Fixed_Array :: struct {
+	element_type: Type_Index,
+	size: int,
+}
+
 // Hard-coded override containing Odin type text
 Type_Override :: struct {
 	definition_text: string,
@@ -69,6 +74,7 @@ Type :: union #no_nil {
 	Type_Enum,
 	Type_Bit_Set,
 	Type_Alias,
+	Type_Fixed_Array,
 	Type_Override,
 }
 

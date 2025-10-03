@@ -81,8 +81,6 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		case Type_Enum:
 			bit_sets := bit_sets_by_enum_name[tn.name]
 
-			log.info(bit_sets)
-
 			for &b in bit_sets {
 				new_members: [dynamic]Type_Enum_Member
 

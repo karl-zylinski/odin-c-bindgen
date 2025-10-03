@@ -40,7 +40,6 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 		p(sb, "\n\n")
 	}
 
-	log.info(filename)
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
 }
@@ -175,6 +174,10 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Enum:
 		output_enum_declaration(types, idx, b, indent)
+
+	case Type_Fixed_Array:
+		pf(b, "[%i]", tv.size)
+		parse_type_build(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
 		t_bs := types[tv.enum_type]
