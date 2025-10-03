@@ -1,12 +1,10 @@
 #+private file
 package bindgen2
 
-import clang "../libclang"
 import "core:strings"
 import "core:slice"
 import "core:log"
 import "core:math/bits"
-import "core:mem"
 import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
@@ -96,7 +94,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 					append(&new_members, Type_Enum_Member {
 						name = m.name,
-						value = int(bits.log2(uint(m.value)))
+						value = int(bits.log2(uint(m.value))),
 					})
 				}
 
@@ -155,7 +153,8 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 // Extracts any comment at the top of the source file. These will be put above the package line in
 // the bindings.
 extract_top_comment :: proc(src: string) -> string {
-	src := strings.trim_space(src)
+	src := src
+	src = strings.trim_space(src)
 	top_comment_end: int
 	in_block := false
 	on_line_comment := false

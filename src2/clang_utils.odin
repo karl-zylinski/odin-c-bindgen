@@ -2,7 +2,6 @@ package bindgen2
 
 import clang "../libclang"
 import "core:strings"
-import "base:runtime"
 
 get_cursor_name :: proc(cursor: clang.Cursor) -> string {
 	return string_from_clang_string(clang.getCursorSpelling(cursor))

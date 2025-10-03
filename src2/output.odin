@@ -177,8 +177,8 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_enum_declaration(types, idx, b, indent)
 
 	case Type_Bit_Set:
-		t := types[tv.enum_type]
-		named, is_named := t.(Type_Named)
+		t_bs := types[tv.enum_type]
+		named, is_named := t_bs.(Type_Named)
 
 		if !is_named {
 			log.error("Didn't use named enum type with bit set")

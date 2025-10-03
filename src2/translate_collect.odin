@@ -3,15 +3,12 @@ package bindgen2
 
 import clang "../libclang"
 import "core:fmt"
-import "base:runtime"
-import "core:strings"
 import "core:log"
-import "core:math/bits"
 
 @(private="package")
 translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	clang_args := []cstring {
-		"-fparse-all-comments"
+		"-fparse-all-comments",
 	}
 
 	index := clang.createIndex(1, 0)
@@ -114,9 +111,6 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 
 	kind := clang.getCursorKind(c)
 
-	decl: Maybe(Declaration)
-	process_children := false
-
 	if kind != .StructDecl && kind != .TypedefDecl && kind != .EnumDecl {
 		return
 	}
@@ -201,7 +195,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		struct_children := children_lookup[cursor]
 		fields: [dynamic]Type_Struct_Field
 
-		for sc, sc_i in struct_children {
+		for sc in struct_children {
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
@@ -245,7 +239,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		} else {
 			named_type := Type_Named {
 				name = name,
-				definition = add_anonymous_type(type_definition, types)
+				definition = add_anonymous_type(type_definition, types),
 			}
 			types[struct_type_idx] = named_type
 		}
@@ -259,7 +253,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		backing_type := clang.getEnumDeclIntegerType(cursor)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
 
-		for ec, ec_i in enum_children {
+		for ec in enum_children {
 			member_name := get_cursor_name(ec)
 			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
 
@@ -318,7 +312,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		} else {
 			named_type := Type_Named {
 				name = name,
-				definition = add_anonymous_type(type_definition, types)
+				definition = add_anonymous_type(type_definition, types),
 			}
 			types[enum_type_idx] = named_type 
 		}
@@ -335,7 +329,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
 		
 		type_definition := Type_Alias {
-			aliased_type = create_type_recursive(underlying, children_lookup, type_lookup, types)
+			aliased_type = create_type_recursive(underlying, children_lookup, type_lookup, types),
 		}
 
 		cursor := clang.getTypeDeclaration(ct)
@@ -346,7 +340,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		} else {
 			named_type := Type_Named {
 				name = name,
-				definition = add_anonymous_type(type_definition, types)
+				definition = add_anonymous_type(type_definition, types),
 			}
 			types[alias_type_idx] = named_type 
 		}
