@@ -1,4 +1,5 @@
 - add procs
+	- associating the type with a proc decl doesn't really work
 
 - add macros
 
