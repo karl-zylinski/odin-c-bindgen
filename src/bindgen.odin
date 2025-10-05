@@ -341,7 +341,7 @@ parse_nonfunction_type :: proc(s: ^Gen_State, type: clang.Type, opts: Type_Parsi
 		strings.write_byte(&builder, '[')
 
 		str_conv_buf: [20]byte // 20 == base_10_digit_count(c.SIZE_MAX)
-		strings.write_string(&builder, strconv.itoa(str_conv_buf[:], int(clang.getArraySize(type))))
+		strings.write_string(&builder, strconv.write_int(str_conv_buf[:], i64(clang.getArraySize(type)), 10))
 
 		strings.write_byte(&builder, ']')
 		str, _ := parse_type(s, clang.getArrayElementType(type), opts)
@@ -2013,9 +2013,11 @@ gen :: proc(input: string, c: Config) {
 						i += 2
 						for j := i; j < len(str); j += 1 {
 							if str[j] == '}' {
-								strings.write_string(&builder, args[strconv.atoi(str[i:j])])
-								i = j
-								break
+								if num, ok := strconv.parse_int(str[i:j], 10); ok {
+									strings.write_string(&builder, args[num])
+									i = j
+									break
+								}
 							}
 						}
 					} else {
@@ -2174,7 +2176,7 @@ gen :: proc(input: string, c: Config) {
 						// If the token is a parameter, replace it with the corresponding value.
 						buf: [10]byte // We can have upto 10 digits
 						strings.write_string(&builder, "${")
-						strings.write_string(&builder, strconv.itoa(buf[:], replace_val))
+						strings.write_string(&builder, strconv.write_int(buf[:], i64(replace_val), 10))
 						strings.write_rune(&builder, '}')
 						continue
 					}
