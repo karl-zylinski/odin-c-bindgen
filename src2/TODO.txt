@@ -1,5 +1,7 @@
 - add procs
 	- associating the type with a proc decl doesn't really work
+	- I think my types/decls split is messed up
+	- just make a tree of decls with explicit types names and try to figure it out from there
 
 - add macros
 
