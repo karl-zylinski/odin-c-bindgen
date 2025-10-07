@@ -26,8 +26,25 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 
 	prev_is_proc := false
 
-	fr_decls_loop: for &d in fr.decls {
-		t := fr.types[d.named_type].(Type_Named)
+	for &d in fr.decls {
+		// TODO remove when redesign done
+		if d.name == "" {
+			continue
+		}
+
+		pf(sb, "%v :: ", d.name)
+		output_declaration_type(d.type, 0, sb)
+
+		p(sb, "\n\n")
+	}
+
+	/*fr_decls_loop: for &d in fr.decls {
+		t, t_ok := fr.types[d.named_type].(Type_Named)
+
+		if !t_ok {
+			continue
+		}
+
 		rhs := get_type_string(fr.types, t.definition)
 
 		if rhs == t.name {
@@ -66,10 +83,89 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 		}
 
 		prev_is_proc = is_proc
-	}
+	}*/
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
+}
+
+output_declaration_type :: proc(dt: Declaration_Type, indent: int, b: ^strings.Builder) {
+	switch &t in dt {
+	case Declaration_Unknown:
+	case Declaration_Procedure:
+		pfln(b, "proc()")
+	case Declaration_Struct:
+		output_struct_declaration2(t, indent, b)
+	}
+}
+
+output_struct_declaration2 :: proc(d: Declaration_Struct, indent: int, b: ^strings.Builder) {
+	longest_name: int
+	for &f in d.fields {
+		if len(f.name) > longest_name {
+			longest_name = len(f.name)
+		}
+	}
+
+	field_texts := make([]string, len(d.fields))
+	longest_field_that_has_comment_on_right: int
+
+	for &f, fi in d.fields {
+		fb := strings.builder_make()
+
+		pf(&fb, "%s: ", f.name)
+
+		after_name_padding := longest_name-len(f.name)
+		for _ in 0..<after_name_padding {
+			strings.write_rune(&fb, ' ')
+		}
+
+		if f.type_overrride != "" {
+			p(&fb, f.type_overrride)
+		} else {
+			output_declaration_type(f.type, indent + 1, b)
+		}
+
+		pf(&fb, ",")
+
+		text := strings.to_string(fb)
+		field_texts[fi] = text
+
+		if f.comment_on_right != "" && len(text) > longest_field_that_has_comment_on_right {
+			longest_field_that_has_comment_on_right = len(text)
+		}
+	}
+
+	if len(d.fields) == 0 {
+		p(b, "struct {}")
+		return
+	}
+
+	pln(b, "struct {")
+	for &f, fi in d.fields {
+		if f.comment_before != "" {
+			output_indent(b, indent + 1)
+			pfln(b, "%s", f.comment_before)
+		}
+
+		output_indent(b, indent + 1)
+		text := field_texts[fi]
+		p(b, text)
+
+		if f.comment_on_right != "" {
+			// Padding between name and =
+			for _ in 0..<longest_field_that_has_comment_on_right-len(text) {
+				p(b, ' ')
+			}
+
+			pf(b, " %v", f.comment_on_right)
+		}
+
+		pf(b, "\n")
+	}
+	
+	output_indent(b, indent)
+	p(b, "}")
 }
 
 output_indent :: proc(b: ^strings.Builder, indent: int) {

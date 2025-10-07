@@ -61,7 +61,17 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 	rename_aliases: map[string]string
 
+
 	for &d in ts.declarations {
+		// TODO remove this when redesign done.
+		if d.name == "" {
+			continue
+		}
+
+		append(&decls, d)
+	}
+
+	/*for &d in ts.declarations {
 		t := &ts.types[d.named_type]
 		tn, is_named := &t.(Type_Named)
 
@@ -171,7 +181,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				tn.name = new_name
 			}
 		}
-	}
+	}*/
 
 	return {
 		decls = decls[:],
