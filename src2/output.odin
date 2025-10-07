@@ -27,14 +27,13 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 	prev_is_proc := false
 
 	fr_decls_loop: for &d in fr.decls {
-		t := fr.types[d.named_type].(Type_Named)
-		rhs := get_type_string(fr.types, t.definition)
+		rhs := get_type_string(fr.types, d.type)
 
-		if rhs == t.name {
+		if rhs == d.name {
 			continue
 		}
 
-		_, is_proc := fr.types[t.definition].(Type_Procedure)
+		_, is_proc := fr.types[d.type].(Type_Procedure)
 
 
 		if is_proc {
@@ -59,7 +58,7 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 			p(sb, "\t")
 		}
 
-		pf(sb, "%v :: %v", t.name, rhs)
+		pf(sb, "%v :: %v", d.name, rhs)
 
 		if !is_proc {
 			p(sb, "\n\n")

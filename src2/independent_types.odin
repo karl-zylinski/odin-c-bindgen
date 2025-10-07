@@ -84,6 +84,7 @@ Type :: union #no_nil {
 }
 
 Declaration :: struct {
-	named_type: Type_Index,
+	name: string,
+	type: Type_Index,
 	comment_before: string,
 }

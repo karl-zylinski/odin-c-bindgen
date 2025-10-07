@@ -62,26 +62,24 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 	rename_aliases: map[string]string
 
 	for &d in ts.declarations {
-		t := &ts.types[d.named_type]
-		tn, is_named := &t.(Type_Named)
-
-		if !is_named {
-			log.errorf("Type used in declaration has no name: %v", d.named_type)
+		if d.name == "" {
+			log.errorf("Declaration has no name: %v", d.name)
 			continue
 		}
 
-		if tn.definition == 0 {
-			log.errorf("Type used in declaration has no declaration: %v", tn.name)
+		if d.type == 0 {
+			log.errorf("Type used in declaration %v is zero", d.name)
 			continue
 		}
+
+		t := &ts.types[d.type]
 
 		append(&decls, d)
-
-		def := &ts.types[tn.definition]
-
-		#partial switch &dv in def {
+/*
+		// TODO rename dv to tv
+		#partial switch &dv in t {
 		case Type_Enum:
-			bit_sets := bit_sets_by_enum_name[tn.name]
+			bit_sets := bit_sets_by_enum_name[d.name]
 
 			for &b in bit_sets {
 				new_members: [dynamic]Type_Enum_Member
@@ -102,7 +100,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				bs_idx := Type_Index(len(ts.types) + len(new_types))
 
 				append(&new_types, Type_Bit_Set {
-					enum_type = d.named_type,
+					enum_type = d.type,
 				})
 
 				bs_named_type_idx := Type_Index(len(ts.types) + len(new_types))
@@ -112,16 +110,17 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					definition = bs_idx,
 				})
 
+				// TODO add name here
 				append(&decls, Declaration {
-					named_type = bs_named_type_idx,
+					type = bs_named_type_idx,
 				})
 
 				if b.enum_rename != "" {
-					rename_aliases[tn.name] = b.enum_rename
-					tn.name = b.enum_rename
+					rename_aliases[d.name] = b.enum_rename
+					d.name = b.enum_rename
 
 				} else {
-					if tn.name == b.enum_name {
+					if d.name == b.enum_name {
 						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
 					}
 				}
@@ -142,12 +141,12 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					}
 				}
 			}
-		}
+		}*/
 	}
 
 	// Find any aliases that need renaming. We do this because the bit_set enum renaming may cause
 	// some confusing aliases otherwise.
-	for &d in ts.declarations {
+	/*for &d in ts.declarations {
 		t := &ts.types[d.named_type]
 		tn, is_named := &t.(Type_Named)
 
@@ -171,7 +170,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				tn.name = new_name
 			}
 		}
-	}
+	}*/
 
 	return {
 		decls = decls[:],

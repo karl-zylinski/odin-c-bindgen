@@ -15,12 +15,12 @@ Wa :: enum i32 {
 }
 
 Test1 :: struct {
-	x: i32,
-	tt: ^Test1,
-	t: Test2,
-	w: Wa,
+	x:   i32,
+	tt:  ^Test1,
+	t:   Test2,
+	w:   Wa,
 	bam: Di,
-	ba: enum i32 {
+	ba:  enum i32 {
 		Didi = 0,
 		Dodo = 1,
 	},
@@ -28,6 +28,11 @@ Test1 :: struct {
 
 Di :: struct {
 	z: i32,
+}
+
+enum (unnamed at src2/examples/tester/tester.h:31:2) :: enum i32 {
+	Didi = 0,
+	Dodo = 1,
 }
 
 Test3 :: Test1

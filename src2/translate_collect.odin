@@ -68,7 +68,7 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 			continue
 		}
 
-		add_declarations(&declarations, type_lookup, c, children_lookup)
+		add_declarations(&declarations, type_lookup, ts.types[:], c, children_lookup)
 	}
 
 	ts.declarations = declarations[:]
@@ -100,13 +100,17 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
-add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
+add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, types: []Type, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
 	ct := clang.getCursorType(c)
 	ti, ti_ok := type_lookup[ct]
 
 	if !ti_ok {
 		//log.errorf("Unknown type: %v", ct)
 		return
+	}
+
+	if named, is_named := types[ti].(Type_Named); is_named {
+		ti = named.definition
 	}
 
 	kind := clang.getCursorKind(c)
@@ -117,14 +121,15 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 
 	append(declarations, Declaration {
 		comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-		named_type = ti,
+		type = ti,
+		name = get_cursor_name(c),
 	})
 
 	if kind == .StructDecl {
 		children := children_lookup[c]
 
 		for cc in children {
-			add_declarations(declarations, type_lookup, cc, children_lookup)
+			add_declarations(declarations, type_lookup, types, cc, children_lookup)
 		}
 	}
 }
