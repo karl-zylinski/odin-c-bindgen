@@ -8,4 +8,5 @@ libclang.dll
 libclang/libclang.lib
 **/_output
 src2/examples/tester/tester/*
+src2/examples/raylib/test/*
 *.sublime-workspace

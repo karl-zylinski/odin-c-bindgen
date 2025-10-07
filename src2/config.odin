@@ -17,6 +17,8 @@ Config :: struct {
 	type_overrides: map[string]string,
 
 	struct_field_overrides: map[string]string,
+
+	imports_file: string,
 }
 
 Config_Bit_Set :: struct {

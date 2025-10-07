@@ -66,6 +66,10 @@ main :: proc() {
 
 	output_folder := filepath.join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
 	package_name := config.package_name != "" ? config.package_name : default_package_name
+	
+	if config.imports_file != "" {
+		config.imports_file = filepath.join({dir, config.imports_file})
+	}
 
 	input_files: [dynamic]string
 

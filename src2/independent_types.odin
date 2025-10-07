@@ -45,7 +45,7 @@ Type_Unknown :: struct {}
 Type_Raw_Pointer :: struct {}
 
 Type_Bit_Set :: struct {
-	enum_type: Type_Index,
+	enum_type: Type_Reference,
 }
 
 Type_Fixed_Array :: struct {
@@ -53,8 +53,15 @@ Type_Fixed_Array :: struct {
 	size: int,
 }
 
+Type_Procedure_Parameter :: struct {
+	name: string,
+	type: Type_Reference,
+}
+
 Type_Procedure :: struct {
 	name: string,
+	parameters: []Type_Procedure_Parameter,
+	return_type: Type_Reference,
 }
 
 // Hard-coded override containing Odin type text
@@ -84,4 +91,12 @@ Declaration :: struct {
 	name: string,
 	type: Type_Index,
 	comment_before: string,
+}
+
+get_type_reference :: proc(types: []Type, ref: Type_Reference, $T: typeid) -> (T, bool) {
+	if idx, is_idx := ref.(Type_Index); is_idx {
+		return types[idx].(T)
+	}
+
+	return {}, false
 }

@@ -144,6 +144,8 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 		return "i16"
 	case .Int:
 		return "i32"
+	case .Long:
+		return "i32"
 	case .LongLong:
 		return "i64"
 	case .Int128:
@@ -379,9 +381,50 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 
 	case .FunctionProto:
 		proc_type := reserve_type(ct, type_lookup, types)
+		params: [dynamic]Type_Procedure_Parameter
+
+		for i in 0..<clang.Cursor_getNumArguments(c) {
+			param_cursor := clang.Cursor_getArgument(c, u32(i))
+
+			if param_cursor.kind != .ParmDecl {
+				log.errorf("Unexpected cursor kind for parameter: %v", param_cursor.kind)
+				continue
+			}
+
+			param_type := clang.getCursorType(param_cursor)
+			ref: Type_Reference
+			type_ref_name := get_type_reference_name(param_type)
+
+			if type_ref_name == "" {
+				ref = create_type_recursive(param_cursor, param_type, children_lookup, type_lookup, types)
+			} else {
+				ref = type_ref_name
+			}
+
+			append(&params, Type_Procedure_Parameter {
+				name = get_cursor_name(param_cursor),
+				type = ref,
+			})
+		}
+
+
+		result_type := clang.getResultType(ct)
+		result_ref_name := get_type_reference_name(result_type)
+
+		return_type: Type_Reference
+
+		if result_type.kind != .Void {
+			if result_ref_name == "" {
+				return_type = create_type_recursive(clang.getTypeDeclaration(result_type), result_type, children_lookup, type_lookup, types)
+			} else {
+				return_type = result_ref_name
+			}
+		}
 
 		type_definition := Type_Procedure {
 			name = get_cursor_name(c),
+			parameters = params[:],
+			return_type = return_type,
 		}
 
 		types[proc_type] = type_definition

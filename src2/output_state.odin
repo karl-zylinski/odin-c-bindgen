@@ -6,4 +6,5 @@ Output_State :: struct {
 
 	// Comment at top of file
 	top_comment: string,
+	top_code: string,
 }

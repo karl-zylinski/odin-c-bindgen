@@ -8,6 +8,7 @@ import "core:math/bits"
 import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
+import "core:os"
 
 @(private="package")
 translate_process :: proc(ts: ^Translate_State) -> Output_State {
@@ -62,20 +63,20 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 	rename_aliases: map[string]string
 
-	for &d in ts.declarations {
-		if d.name == "" {
-			log.errorf("Declaration has no name: %v", d.name)
+	for &dd in ts.declarations {
+		if dd.name == "" {
+			log.errorf("Declaration has no name: %v", dd.name)
 			continue
 		}
 
-		if d.type == 0 {
-			log.errorf("Type used in declaration %v is zero", d.name)
+		if dd.type == 0 {
+			log.errorf("Type used in declaration %v is zero", dd.name)
 			continue
 		}
 
+		append(&decls, dd)
+		d := &decls[len(decls) - 1]
 		t := &ts.types[d.type]
-
-		append(&decls, d)
 
 		// TODO rename dv to tv
 		#partial switch &dv in t {
@@ -100,15 +101,6 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 				dv.members = new_members[:]
 				bs_idx := Type_Index(len(ts.types) + len(new_types))
 
-				append(&new_types, Type_Bit_Set {
-					enum_type = d.type,
-				})
-
-				append(&decls, Declaration {
-					name = b.name,
-					type = bs_idx,
-				})
-
 				if b.enum_rename != "" {
 					rename_aliases[d.name] = b.enum_rename
 					d.name = b.enum_rename
@@ -117,6 +109,15 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
 					}
 				}
+
+				append(&new_types, Type_Bit_Set {
+					enum_type = d.name,
+				})
+
+				append(&decls, Declaration {
+					name = b.name,
+					type = bs_idx,
+				})
 			}
 
 		case Type_Struct:
@@ -167,10 +168,19 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		}
 	}*/
 
+	top_code: string
+
+	if ts.config.imports_file != "" {
+		if imports, imports_ok := os.read_entire_file(ts.config.imports_file); imports_ok {
+			top_code = string(imports)
+		}
+	}
+
 	return {
 		decls = decls[:],
 		types = slice.concatenate([][]Type{ts.types[:], new_types[:]}),
 		top_comment = extract_top_comment(ts.source),
+		top_code = top_code,
 	}
 }
 

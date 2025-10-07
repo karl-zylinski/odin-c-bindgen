@@ -24,6 +24,8 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
+	p(sb, fr.top_code)
+
 	prev_is_proc := false
 
 	fr_decls_loop: for &d in fr.decls {
@@ -38,7 +40,7 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 
 		if is_proc {
 			if !prev_is_proc {
-				pln(sb, "foreign lib {")
+				pln(sb, "@(default_calling_convention=\"c\")\nforeign lib {")
 			}
 		} else {
 			if prev_is_proc {
@@ -65,6 +67,10 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 		}
 
 		prev_is_proc = is_proc
+	}
+
+	if prev_is_proc {
+		pln(sb, "}")
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
@@ -176,12 +182,45 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	p(b, "}")
 }
 
+ensure_name_valid :: proc(n: string) -> string {
+	switch n {
+	case "dynamic": return "_dynamic"
+	}
+	return n
+}
+
 output_type_reference :: proc(types: []Type, ru: Type_Reference, b: ^strings.Builder, indent: int) {
 	switch r in ru {
 	case string:
-		p(b, r)
+		p(b, ensure_name_valid(r))
 	case Type_Index:
 		parse_type_build(types, r, b, indent)
+	}
+}
+
+output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^strings.Builder, indent: int, explicit_calling_convention := false) {
+	pf(b, "proc")
+
+	if explicit_calling_convention {
+		p(b, " \"c\" ")
+	}
+
+	pf(b, "(")
+
+	for param, idx in tp.parameters {
+		if idx != 0 {
+			p(b, ", ")
+		}
+
+		pf(b, "%s: ", ensure_name_valid(param.name))
+		output_type_reference(types, param.type, b, indent)
+	}
+
+	pf(b, ")")
+
+	if tp.return_type != nil {
+		p(b, " -> ")
+		output_type_reference(types, tp.return_type, b, indent)
 	}
 }
 
@@ -210,32 +249,33 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_struct_declaration(types, idx, b, indent)
 
 	case Type_Alias:
-		output_type_reference(types, tv.aliased_type, b, indent)
+		if proc_type, is_proc_type := get_type_reference(types, tv.aliased_type, Type_Procedure); is_proc_type {
+			output_procedure_signature(types, proc_type, b, indent, explicit_calling_convention = true)
+		} else {
+			output_type_reference(types, tv.aliased_type, b, indent)
+		}
 
 	case Type_Enum:
 		output_enum_declaration(types, idx, b, indent)
 
 	case Type_Procedure:
-		pfln(b, "proc()")
+		output_procedure_signature(types, tv, b, indent)
+
+		pf(b, " --- \n")
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
 		output_type_reference(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
-	/*	t_bs := types[tv.enum_type]
-		named, is_named := t_bs.(Type_Named)
+		enum_type_str, enum_type_is_str := tv.enum_type.(string)
 
-		if !is_named {
-			log.error("Didn't use named enum type with bit set")
-			break
+		if !enum_type_is_str {
+			log.error("Invalid type used with bit set")
+			return
 		}
 
-		enum_type, enum_type_ok := types[named.definition].(Type_Enum)
-
-		if enum_type_ok {
-			pf(b, "bit_set[%v; %v]", named.name, enum_type.storage_type)	
-		}*/
+		pf(b, "bit_set[%v; i32]", enum_type_str)	
 	}
 }
 
