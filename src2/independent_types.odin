@@ -20,7 +20,7 @@ Type_Alias :: struct {
 
 Type_Struct_Field :: struct {
 	name: string,
-	type: Type_Index,
+	type: Type_Reference,
 	type_overrride: string,
 	comment_before: string,
 	comment_on_right: string,
@@ -67,6 +67,11 @@ Type_Procedure :: struct {
 // Hard-coded override containing Odin type text
 Type_Override :: struct {
 	definition_text: string,
+}
+
+Type_Reference :: union  {
+	string,
+	Type_Index,
 }
 
 Type :: union #no_nil {

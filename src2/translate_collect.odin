@@ -124,7 +124,51 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[
 	}
 }
 
+get_type_reference_name :: proc(ct: clang.Type) -> string {
+	#partial switch ct.kind {
+	case .Bool:
+		return "bool"
+	case .Char_U, .UChar:
+		return "u8"
+	case .UShort:
+		return "u16"
+	case .UInt:
+		return "u32"
+	case .ULongLong:
+		return "u64"
+	case .UInt128:
+		return "u128"
+	case .Char_S, .SChar:
+		return "i8"
+	case .Short:
+		return "i16"
+	case .Int:
+		return "i32"
+	case .LongLong:
+		return "i64"
+	case .Int128:
+		return "i128"
+	case .Float:
+		return "f32"
+	case .Double, .LongDouble:
+		return "f64"
+	case .NullPtr:
+		return "rawptr"
+
+	case .Record, .Enum:
+		ctc := clang.getTypeDeclaration(ct)
+		if clang.Cursor_isAnonymous(ctc) == 0 {
+			return get_cursor_name(ctc)
+		}
+	}
+
+	return ""
+}
+
 create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
+	if t_idx, has_t_idx := type_lookup[ct]; has_t_idx {
+		return t_idx
+	}
 
 	add_anonymous_type :: proc(t: Type, types: ^[dynamic]Type) -> Type_Index {
 		idx := Type_Index(len(types))
@@ -190,10 +234,20 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				field_type := create_type_recursive(sc, clang.getCursorType(sc), children_lookup, type_lookup, types)
-				name := get_cursor_name(sc)
+				ref: Type_Reference
+				sct := clang.getCursorType(sc)
 
-				if field_type == TYPE_INDEX_NONE {
+				type_ref_name := get_type_reference_name(sct)
+
+				if type_ref_name == "" {
+					ref = create_type_recursive(sc, sct, children_lookup, type_lookup, types)
+				} else {
+					ref = type_ref_name
+				}
+
+				name := get_cursor_name(sc)
+				
+				if ref == nil {
 					log.errorf("Unresolved struct field type: %v", sc)
 				}
 
@@ -212,7 +266,7 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 
 				append(&fields, Type_Struct_Field {
 					name = name,
-					type = field_type,
+					type = ref,
 					comment_before = comment_before,
 					comment_on_right = comment_on_right,
 				})

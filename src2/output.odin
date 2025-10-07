@@ -109,7 +109,13 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 		if f.type_overrride != "" {
 			p(&fb, f.type_overrride)
 		} else {
-			parse_type_build(types, f.type, &fb, indent + 1)
+			switch r in f.type {
+			case string:
+				p(&fb, r)
+			case Type_Index:
+				parse_type_build(types, r, &fb, indent + 1)
+			}
+			
 		}
 
 		pf(&fb, ",")
