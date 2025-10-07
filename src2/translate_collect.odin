@@ -99,10 +99,6 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[
 		return
 	}
 
-	if named, is_named := types[ti].(Type_Named); is_named {
-		ti = named.definition
-	}
-
 	kind := clang.getCursorKind(c)
 
 	if kind != .StructDecl && kind != .TypedefDecl && kind != .EnumDecl && kind != .FunctionDecl {
@@ -155,11 +151,14 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 	case .NullPtr:
 		return "rawptr"
 
-	case .Record, .Enum:
+	case .Record, .Enum, .Typedef:
 		ctc := clang.getTypeDeclaration(ct)
 		if clang.Cursor_isAnonymous(ctc) == 0 {
 			return get_cursor_name(ctc)
 		}
+
+	case .Elaborated:
+		return get_type_reference_name(clang.Type_getNamedType(ct))
 	}
 
 	return ""
@@ -186,43 +185,27 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 	to_add: Maybe(Type)
 
 	#partial switch ct.kind {
-	case .Bool:
-		to_add = Type_Named { name = "bool" }
-	case .Char_U, .UChar:
-		to_add = Type_Named { name = "u8" }
-	case .UShort:
-		to_add = Type_Named { name = "u16" }
-	case .UInt:
-		to_add = Type_Named { name = "u32" }
-	case .ULongLong:
-		to_add = Type_Named { name = "u64" }
-	case .UInt128:
-		to_add = Type_Named { name = "u128" }
-	case .Char_S, .SChar:
-		to_add = Type_Named { name = "i8" }
-	case .Short:
-		to_add = Type_Named { name = "i16" }
-	case .Int:
-		to_add = Type_Named { name = "i32" }
-	case .LongLong:
-		to_add = Type_Named { name = "i64" }
-	case .Int128:
-		to_add = Type_Named { name = "i128" }
-	case .Float:
-		to_add = Type_Named { name = "f32" }
-	case .Double, .LongDouble:
-		to_add = Type_Named { name = "f64" }
-	case .NullPtr:
-		to_add = Type_Named { name = "rawptr" }
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
 		if clang_pointee_type.kind == .Void {
 			to_add = Type_Raw_Pointer{}
+		} else if clang_pointee_type.kind == .FunctionProto {
+			// In Odin, a proc is a always a pointer. You can think all procs as being pointers to
+			// a proc defined somewhere else. So `^proc` should be just `proc`.
+			return create_type_recursive(clang.getTypeDeclaration(clang_pointee_type), clang_pointee_type, children_lookup, type_lookup, types)
 		} else {
 			ptr_type_idx := reserve_type(ct, type_lookup, types)
-			pointee_type := create_type_recursive(clang.getTypeDeclaration(clang_pointee_type), clang_pointee_type, children_lookup, type_lookup, types)
-			types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointee_type }
+			type_ref_name := get_type_reference_name(clang_pointee_type)
+			ref: Type_Reference
+
+			if type_ref_name == "" {
+				ref = create_type_recursive(clang.getTypeDeclaration(clang_pointee_type), clang_pointee_type, children_lookup, type_lookup, types)
+			} else {
+				ref = type_ref_name
+			}
+
+			types[ptr_type_idx] = Type_Pointer { pointed_to_type = ref }
 			return ptr_type_idx
 		}
 	case .Record:
@@ -277,18 +260,7 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 			fields = fields[:],
 		}
 
-		name := get_cursor_name(c)
-
-		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
-			types[struct_type_idx] = type_definition
-		} else {
-			named_type := Type_Named {
-				name = name,
-				definition = add_anonymous_type(type_definition, types),
-			}
-			types[struct_type_idx] = named_type
-		}
-
+		types[struct_type_idx] = type_definition
 		return struct_type_idx
 	case .Enum:
 		enum_type_idx := reserve_type(ct, type_lookup, types)
@@ -349,18 +321,7 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 			members = members[:],
 		}
 
-		name := get_cursor_name(c)
-
-		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
-			types[enum_type_idx] = type_definition
-		} else {
-			named_type := Type_Named {
-				name = name,
-				definition = add_anonymous_type(type_definition, types),
-			}
-			types[enum_type_idx] = named_type 
-		}
-
+		types[enum_type_idx] = type_definition
 		return enum_type_idx
 
 	case .Elaborated:
@@ -371,46 +332,44 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 		return elaborated_type_idx
 	case .Typedef:
 		alias_type_idx := reserve_type(ct, type_lookup, types)
-		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
+		underlying_type_cursor := clang.getTypeDeclaration(ct)
+		underlying := clang.getTypedefDeclUnderlyingType(underlying_type_cursor)
+
+		ref: Type_Reference
+		type_ref_name := get_type_reference_name(underlying)
+
+		if type_ref_name == "" {
+			ref = create_type_recursive(clang.getTypeDeclaration(underlying), underlying, children_lookup, type_lookup, types)
+		} else {
+			ref = type_ref_name
+		}
 		
 		type_definition := Type_Alias {
-			aliased_type = create_type_recursive(clang.getTypeDeclaration(underlying), underlying, children_lookup, type_lookup, types),
+			aliased_type = ref
 		}
-
-		name := get_cursor_name(c)
-
-		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
-			types[alias_type_idx] = type_definition
-		} else {
-			named_type := Type_Named {
-				name = name,
-				definition = add_anonymous_type(type_definition, types),
-			}
-			types[alias_type_idx] = named_type 
-		}
+		
+		types[alias_type_idx] = type_definition
 
 		return alias_type_idx
 	case .ConstantArray:
 		array_type_idx := reserve_type(ct, type_lookup, types)
 		clang_element_type := clang.getArrayElementType(ct)
-		element_type_idx := create_type_recursive(clang.getTypeDeclaration(clang_element_type), clang_element_type, children_lookup, type_lookup, types)
+
+		ref: Type_Reference
+		type_ref_name := get_type_reference_name(clang_element_type)
+
+		if type_ref_name == "" {
+			ref = create_type_recursive(clang.getTypeDeclaration(clang_element_type), clang_element_type, children_lookup, type_lookup, types)
+		} else {
+			ref = type_ref_name
+		}
 
 		type_definition := Type_Fixed_Array {
-			element_type = element_type_idx,
+			element_type = ref,
 			size = int(clang.getArraySize(ct)),
 		}
 
-		name := get_cursor_name(c)
-
-		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
-			types[array_type_idx] = type_definition
-		} else {
-			named_type := Type_Named {
-				name = name,
-				definition = add_anonymous_type(type_definition, types),
-			}
-			types[array_type_idx] = named_type 
-		}
+		types[array_type_idx] = type_definition
 
 		return array_type_idx
 
@@ -421,17 +380,9 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 			name = get_cursor_name(c),
 		}
 
-		name := get_cursor_name(c)
+		types[proc_type] = type_definition
 
-		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
-			types[proc_type] = type_definition
-		} else {
-			named_type := Type_Named {
-				name = name,
-				definition = add_anonymous_type(type_definition, types),
-			}
-			types[proc_type] = named_type 
-		}
+		return proc_type
 	}
 
 	if t, t_ok := to_add.?; t_ok {

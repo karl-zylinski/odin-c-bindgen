@@ -7,4 +7,5 @@ compile_examples.bat
 libclang.dll
 libclang/libclang.lib
 **/_output
+src2/examples/tester/tester/*
 *.sublime-workspace

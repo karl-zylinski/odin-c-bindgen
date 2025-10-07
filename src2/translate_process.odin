@@ -14,30 +14,31 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 	decls: [dynamic]Declaration
 
 	// Replace types
-	for &t in ts.types {
-		if nt, nt_ok := &t.(Type_Named); nt_ok {
-			if nt.definition != TYPE_INDEX_NONE {
-				override: bool
-				override_definition_text: string
+	for &d in ts.declarations {
+		override: bool
+		override_definition_text: string
 
-				if type_override, has_override := ts.config.type_overrides[nt.name]; has_override {
-					override = true
-					override_definition_text = type_override
-				}	
+		if type_override, has_override := ts.config.type_overrides[d.name]; has_override {
+			override = true
+			override_definition_text = type_override
+		}	
 
-				if alias, is_alias := ts.types[nt.definition].(Type_Alias); is_alias {
-					named_alias, alias_is_named := ts.types[alias.aliased_type].(Type_Named)
-					if alias_is_named && nt.name == named_alias.name {
-						override = false
-					}
-				}
-
-				if override {
-					ts.types[nt.definition] = Type_Override {
-						definition_text = override_definition_text,
-					}
-				}
+		// Don't override if this is type is an alias that has the same name as the aliased name.
+		// Doing that override will just make this alias not get ignored, as it is no longer just
+		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
+		if alias, is_alias := ts.types[d.type].(Type_Alias); is_alias {
+			named_alias, alias_is_named := alias.aliased_type.(string)
+			if alias_is_named && d.name == named_alias {
+				override = false
 			}
+		}
+
+		if override {
+			override_idx := Type_Index(len(ts.types))
+			append(&ts.types, Type_Override {
+				definition_text = override_definition_text
+			})
+			d.type = override_idx
 		}
 	}
 
@@ -75,7 +76,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		t := &ts.types[d.type]
 
 		append(&decls, d)
-/*
+
 		// TODO rename dv to tv
 		#partial switch &dv in t {
 		case Type_Enum:
@@ -103,22 +104,14 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					enum_type = d.type,
 				})
 
-				bs_named_type_idx := Type_Index(len(ts.types) + len(new_types))
-				
-				append(&new_types, Type_Named {
-					name = b.name,
-					definition = bs_idx,
-				})
-
-				// TODO add name here
 				append(&decls, Declaration {
-					type = bs_named_type_idx,
+					name = b.name,
+					type = bs_idx,
 				})
 
 				if b.enum_rename != "" {
 					rename_aliases[d.name] = b.enum_rename
 					d.name = b.enum_rename
-
 				} else {
 					if d.name == b.enum_name {
 						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
@@ -128,10 +121,12 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 		case Type_Struct:
 			for &f in dv.fields {
-				override_key := fmt.tprintf("%s.%s", tn.name, f.name)
+				override_key := fmt.tprintf("%s.%s", d.name, f.name)
 				if override, has_override := ts.config.struct_field_overrides[override_key]; has_override {
-					if override == "[^]" {
-						ptr_type, is_ptr_type := &ts.types[f.type].(Type_Pointer)
+					type_idx, has_type_idx := f.type.(Type_Index)
+
+					if override == "[^]" && has_type_idx {
+						ptr_type, is_ptr_type := &ts.types[type_idx].(Type_Pointer)
 
 						if is_ptr_type {
 							ptr_type.multipointer = true
@@ -141,7 +136,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					}
 				}
 			}
-		}*/
+		}
 	}
 
 	// Find any aliases that need renaming. We do this because the bit_set enum renaming may cause

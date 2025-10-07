@@ -176,18 +176,20 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	p(b, "}")
 }
 
+output_type_reference :: proc(types: []Type, ru: Type_Reference, b: ^strings.Builder, indent: int) {
+	switch r in ru {
+	case string:
+		p(b, r)
+	case Type_Index:
+		parse_type_build(types, r, b, indent)
+	}
+}
+
 parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	switch &tv in t {
 	case Type_Unknown:
 		log.warn("Is this a bug?")
-
-	case Type_Named:
-		if tv.name == "" {
-			log.errorf("Named type with index %v has no name", idx)
-			break
-		}
-		p(b, string(tv.name))
 
 	case Type_Override:
 		p(b, tv.definition_text)
@@ -199,7 +201,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 			p(b, "^")
 		}
 		
-		parse_type_build(types, tv.pointed_to_type, b, indent)
+		output_type_reference(types, tv.pointed_to_type, b, indent)
 
 	case Type_Raw_Pointer:
 		p(b, "rawptr")
@@ -208,7 +210,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_struct_declaration(types, idx, b, indent)
 
 	case Type_Alias:
-		parse_type_build(types, tv.aliased_type, b, indent)
+		output_type_reference(types, tv.aliased_type, b, indent)
 
 	case Type_Enum:
 		output_enum_declaration(types, idx, b, indent)
@@ -218,10 +220,10 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
-		parse_type_build(types, tv.element_type, b, indent)
+		output_type_reference(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
-		t_bs := types[tv.enum_type]
+	/*	t_bs := types[tv.enum_type]
 		named, is_named := t_bs.(Type_Named)
 
 		if !is_named {
@@ -233,7 +235,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 		if enum_type_ok {
 			pf(b, "bit_set[%v; %v]", named.name, enum_type.storage_type)	
-		}
+		}*/
 	}
 }
 

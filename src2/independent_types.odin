@@ -10,12 +10,12 @@ Type_Index :: distinct int
 TYPE_INDEX_NONE :: Type_Index(0)
 
 Type_Pointer :: struct {
-	pointed_to_type: Type_Index,
+	pointed_to_type: Type_Reference,
 	multipointer: bool,
 }
 
 Type_Alias :: struct {
-	aliased_type: Type_Index,
+	aliased_type: Type_Reference,
 }
 
 Type_Struct_Field :: struct {
@@ -35,13 +35,6 @@ Type_Enum_Member :: struct {
 	value: int,
 }
 
-Type_Named :: struct {
-	name: string,
-
-	// Always zero for "basic types such as 'int'"
-	definition: Type_Index,
-}
-
 Type_Enum :: struct {
 	storage_type: typeid,
 	members: []Type_Enum_Member,
@@ -56,7 +49,7 @@ Type_Bit_Set :: struct {
 }
 
 Type_Fixed_Array :: struct {
-	element_type: Type_Index,
+	element_type: Type_Reference,
 	size: int,
 }
 
@@ -76,7 +69,6 @@ Type_Reference :: union  {
 
 Type :: union #no_nil {
 	Type_Unknown,
-	Type_Named,
 	Type_Pointer,
 	Type_Raw_Pointer,
 	Type_Struct,
