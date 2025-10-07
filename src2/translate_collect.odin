@@ -90,6 +90,10 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 }
 
 add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
+	if clang.Cursor_isAnonymous(c) == 1 {
+		return
+	}
+
 	ct := clang.getCursorType(c)
 
 	ti := create_type_recursive(c, ct, children_lookup, type_lookup, types)
