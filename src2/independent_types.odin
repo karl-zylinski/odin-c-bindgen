@@ -101,11 +101,8 @@ Declaration_Struct :: struct {
 
 Declaration_Unknown :: struct {}
 
-Declaration_Name :: distinct string
-
 Declaration_Type :: union #no_nil {
 	Declaration_Unknown,
-	Declaration_Name,
 	Declaration_Procedure,
 	Declaration_Struct,
 }

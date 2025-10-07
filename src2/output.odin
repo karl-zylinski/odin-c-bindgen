@@ -92,9 +92,6 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 output_declaration_type :: proc(dt: Declaration_Type, indent: int, b: ^strings.Builder) {
 	switch &t in dt {
 	case Declaration_Unknown:
-		pf(b, "ERROR")
-	case Declaration_Name:
-		pf(b, string(t))
 	case Declaration_Procedure:
 		pfln(b, "proc()")
 	case Declaration_Struct:
@@ -126,7 +123,7 @@ output_struct_declaration2 :: proc(d: Declaration_Struct, indent: int, b: ^strin
 		if f.type_overrride != "" {
 			p(&fb, f.type_overrride)
 		} else {
-			output_declaration_type(f.type, indent + 1, &fb)
+			output_declaration_type(f.type, indent + 1, b)
 		}
 
 		pf(&fb, ",")
