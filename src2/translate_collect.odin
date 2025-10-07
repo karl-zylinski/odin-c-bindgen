@@ -48,17 +48,6 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	declarations: [dynamic]Declaration
 	append(&ts.types, Type_Unknown {})
 
-	// Create all types.
-	for c in root_children {
-		loc := get_cursor_location(c)
-		
-		if clang.File_isEqual(file, loc.file) == 0 {
-			continue
-		}
-
-		create_type_recursive(c, clang.getCursorType(c), children_lookup, &type_lookup, &ts.types)
-	}
-
 	// Create all declarations, i.e. types and such to put into the bindings.
 
 	for c in root_children {
@@ -68,7 +57,7 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 			continue
 		}
 
-		add_declarations(&declarations, type_lookup, ts.types[:], c, children_lookup)
+		add_declarations(&declarations, &type_lookup, &ts.types, c, children_lookup)
 	}
 
 	ts.declarations = declarations[:]
@@ -100,11 +89,12 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
-add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, types: []Type, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
+add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
 	ct := clang.getCursorType(c)
-	ti, ti_ok := type_lookup[ct]
 
-	if !ti_ok {
+	ti := create_type_recursive(c, ct, children_lookup, type_lookup, types)
+
+	if ti == TYPE_INDEX_NONE {
 		//log.errorf("Unknown type: %v", ct)
 		return
 	}
@@ -135,9 +125,6 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[c
 }
 
 create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
-	if t_idx, has_t_idx := type_lookup[ct]; has_t_idx {
-		return t_idx
-	}
 
 	add_anonymous_type :: proc(t: Type, types: ^[dynamic]Type) -> Type_Index {
 		idx := Type_Index(len(types))
