@@ -99,6 +99,48 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
+translate_cursor_type_name :: proc(c: clang.Cursor) -> string {
+	ct := clang.getCursorType(c)
+
+	#partial switch ct.kind {
+	case .Bool:
+		return "bool"
+	case .Char_U, .UChar:
+		return "u8"
+	case .UShort:
+		return "u16"
+	case .UInt:
+		return "u32"
+	case .ULongLong:
+		return "u64"
+	case .UInt128:
+		return "u128"
+	case .Char_S, .SChar:
+		return "i8"
+	case .Short:
+		return "i16"
+	case .Int:
+		return "i32"
+	case .LongLong:
+		return "i64"
+	case .Int128:
+		return "i128"
+	case .Float:
+		return "f32"
+	case .Double, .LongDouble:
+		return "f64"
+
+	case .Record:
+		return get_cursor_name(c)
+	
+	case .Elaborated:
+		named_type := clang.Type_getNamedType(ct)
+		return get_type_name(named_type)
+	}
+
+	return ""
+}
+
 create_declaration_type :: proc(c: clang.Cursor, ts: ^Translate_State) -> (Declaration_Type, bool) {
 	kind := clang.getCursorKind(c)
 
@@ -113,12 +155,24 @@ create_declaration_type :: proc(c: clang.Cursor, ts: ^Translate_State) -> (Decla
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				field_decl, field_decl_ok := create_declaration_type(sc, ts)
-				//field_type := create_type_recursive(sc, clang.getCursorType(sc), children_lookup, type_lookup, types)
+				field_type: Declaration_Type
 
-				if !field_decl_ok {
-					log.errorf("Unresolved struct field type: %v", sc)
-					continue
+				if clang.Cursor_isAnonymous(sc) == 1 {
+					anon_field_type, anon_field_type_ok := create_declaration_type(sc, ts)
+
+					if anon_field_type_ok {
+						field_type = field_type
+					}
+				} else {
+					type_name := translate_cursor_type_name(sc)
+
+					if type_name != "" {
+						field_type = Declaration_Name(type_name)
+					}
+				}
+
+				if _, field_type_is_unknown := field_type.(Declaration_Unknown); field_type_is_unknown {
+					log.errorf("Unknown struct field type: %v", sc)
 				}
 
 				field_name := get_cursor_name(sc)
@@ -138,12 +192,10 @@ create_declaration_type :: proc(c: clang.Cursor, ts: ^Translate_State) -> (Decla
 
 				append(&fields, Declaration_Struct_Field {
 					name = field_name,
-					type = field_decl,
+					type = field_type,
 					comment_before = comment_before,
 					comment_on_right = comment_on_right,
 				})
-
-				log.info(field_name)
 			}
 		}
 
