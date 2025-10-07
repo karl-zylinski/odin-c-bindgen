@@ -38,15 +38,18 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
 
-	build_cursor_children_lookup(root_cursor, &ts.children_lookup)
+	children_lookup: Cursor_Children_Map
 
-	root_children := ts.children_lookup[root_cursor]
+	build_cursor_children_lookup(root_cursor, &children_lookup)
+
+	root_children := children_lookup[root_cursor]
 
 	type_lookup: map[clang.Type]Type_Index
+	declarations: [dynamic]Declaration
 	append(&ts.types, Type_Unknown {})
 
 	// Create all types.
-	/*for c in root_children {
+	for c in root_children {
 		loc := get_cursor_location(c)
 		
 		if clang.File_isEqual(file, loc.file) == 0 {
@@ -54,7 +57,7 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 		}
 
 		create_type_recursive(c, clang.getCursorType(c), children_lookup, &type_lookup, &ts.types)
-	}*/
+	}
 
 	// Create all declarations, i.e. types and such to put into the bindings.
 
@@ -65,12 +68,10 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 			continue
 		}
 
-		decl, decl_ok := create_declaration(c, ts)
-
-		if decl_ok {
-			append(&ts.declarations, decl)
-		}
+		add_declarations(&declarations, type_lookup, c, children_lookup)
 	}
+
+	ts.declarations = declarations[:]
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
@@ -99,82 +100,33 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
-create_declaration_type :: proc(c: clang.Cursor, ts: ^Translate_State) -> (Declaration_Type, bool) {
-	kind := clang.getCursorKind(c)
+add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: map[clang.Type]Type_Index, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
+	ct := clang.getCursorType(c)
+	ti, ti_ok := type_lookup[ct]
 
-	#partial switch kind {
-	case .FunctionDecl:
-		return Declaration_Procedure {}, true
-	case .StructDecl:
-		struct_children := ts.children_lookup[c]
-		fields: [dynamic]Declaration_Struct_Field
-
-		for sc in struct_children {
-			sc_kind := clang.getCursorKind(sc)
-
-			if sc_kind == .FieldDecl {
-				field_decl, field_decl_ok := create_declaration_type(sc, ts)
-				//field_type := create_type_recursive(sc, clang.getCursorType(sc), children_lookup, type_lookup, types)
-
-				if !field_decl_ok {
-					log.errorf("Unresolved struct field type: %v", sc)
-					continue
-				}
-
-				field_name := get_cursor_name(sc)
-
-				field_loc := get_cursor_location(sc)
-				comment_loc := get_comment_location(sc)
-
-				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
-				comment_before: string
-				comment_on_right: string
-
-				if field_loc.line == comment_loc.line {
-					comment_on_right = comment
-				} else {
-					comment_before = comment
-				}
-
-				append(&fields, Declaration_Struct_Field {
-					name = field_name,
-					type = field_decl,
-					comment_before = comment_before,
-					comment_on_right = comment_on_right,
-				})
-
-				log.info(field_name)
-			}
-		}
-
-		return Declaration_Struct {
-			fields = fields[:],
-		}, true
-	}
-
-	return {}, false
-}
-
-create_declaration :: proc(c: clang.Cursor, ts: ^Translate_State) -> (Declaration, bool) {
-	name := get_cursor_name(c)
-
-	if name == "" {
-		return {}, false
+	if !ti_ok {
+		//log.errorf("Unknown type: %v", ct)
+		return
 	}
 
 	kind := clang.getCursorKind(c)
 
-	type, type_ok := create_declaration_type(c, ts)
-
-	if !type_ok {
-		return {}, false
+	if kind != .StructDecl && kind != .TypedefDecl && kind != .EnumDecl && kind != .FunctionDecl {
+		return
 	}
 
-	return Declaration {
+	append(declarations, Declaration {
 		comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-		type = type,
-		name = name,
-	}, true
+		named_type = ti,
+	})
+
+	if kind == .StructDecl {
+		children := children_lookup[c]
+
+		for cc in children {
+			add_declarations(declarations, type_lookup, cc, children_lookup)
+		}
+	}
 }
 
 create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
@@ -415,6 +367,25 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 		}
 
 		return array_type_idx
+
+	case .FunctionProto:
+		proc_type := reserve_type(ct, type_lookup, types)
+
+		type_definition := Type_Procedure {
+			name = get_cursor_name(c),
+		}
+
+		name := get_cursor_name(c)
+
+		if clang.Cursor_isAnonymous(c) == 1 || name == "" {
+			types[proc_type] = type_definition
+		} else {
+			named_type := Type_Named {
+				name = name,
+				definition = add_anonymous_type(type_definition, types),
+			}
+			types[proc_type] = named_type 
+		}
 	}
 
 	if t, t_ok := to_add.?; t_ok {

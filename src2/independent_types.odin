@@ -83,34 +83,7 @@ Type :: union #no_nil {
 	Type_Override,
 }
 
-Declaration_Struct_Field :: struct {
-	name: string,
-	type: Declaration_Type,
-	type_overrride: string,
-	comment_before: string,
-	comment_on_right: string,
-}
-
-Declaration_Procedure :: struct {
-
-}
-
-Declaration_Struct :: struct {
-	fields: []Declaration_Struct_Field,
-}
-
-Declaration_Unknown :: struct {}
-
-Declaration_Type :: union #no_nil {
-	Declaration_Unknown,
-	Declaration_Procedure,
-	Declaration_Struct,
-}
-
 Declaration :: struct {
 	named_type: Type_Index,
 	comment_before: string,
-
-	name: string,
-	type: Declaration_Type,
 }
