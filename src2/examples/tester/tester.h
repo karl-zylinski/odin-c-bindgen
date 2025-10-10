@@ -45,9 +45,10 @@ typedef struct Test1 Test3;
 
 typedef Test3 Test15;
 
-typedef struct {
 
-} Shader;
+typedef struct {
+	int (*hello)(void* data, int len);
+} My_API;
 
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
 typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data

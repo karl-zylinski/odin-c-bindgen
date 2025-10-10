@@ -64,7 +64,6 @@ Type_Procedure_Parameter :: struct {
 }
 
 Type_Procedure :: struct {
-	name: string,
 	parameters: []Type_Procedure_Parameter,
 	return_type: Type_Reference,
 }

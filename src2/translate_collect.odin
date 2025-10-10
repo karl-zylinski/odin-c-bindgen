@@ -153,7 +153,7 @@ create_declaration :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^ma
 		})
 		
 	case .FunctionDecl:
-		ti := create_proc_type(c, ct, children_lookup, type_lookup, types)
+		ti := create_proc_type(children_lookup[c], ct, children_lookup, type_lookup, types)
 
 		if ti == TYPE_INDEX_NONE {
 			log.errorf("Unknown type: %v", ct)
@@ -238,39 +238,18 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 // create_declaration. It's used in create_declaration so we get a unique proc type per proc.
 // Otherweise the FunctionProto stuff may make it so that ther are shared proc types, which will
 // break stuff.
-create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
+create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, children_lookup: Cursor_Children_Map, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type, caller_loc := #caller_location) -> Type_Index {
 	proc_type := reserve_type(ct, type_lookup, types)
 	params: [dynamic]Type_Procedure_Parameter
 
-	// We expect either a function declaration to cause this to be called, or a typedef that defines
-	// a type...
-	//
-	// TODO: also a field within a struct?
-	assert(c.kind == .FunctionDecl || c.kind == .TypedefDecl)
-
-	if c.kind == .FunctionDecl {
-		for i in 0..<clang.Cursor_getNumArguments(c) {
-			param_cursor := clang.Cursor_getArgument(c, u32(i))
-			param_type := clang.getCursorType(param_cursor)
-			ref: Type_Reference
-			type_ref_name := get_type_reference_name(param_type)
-
-			if type_ref_name == "" {
-				ref = create_type_recursive(param_type, children_lookup, type_lookup, types)
-			} else {
-				ref = type_ref_name
+	if len(param_childs) > 0 {
+		for child in param_childs {
+			if child.kind != .ParmDecl {
+				continue
 			}
 
-			append(&params, Type_Procedure_Parameter {
-				name = get_cursor_name(param_cursor),
-				type = ref,
-			})
-		}
-	} else if c.kind == .TypedefDecl {
-		children := children_lookup[c]
-
-		for child in children {
 			param_type := clang.getCursorType(child)
+
 			name := get_cursor_name(child)
 
 			ref: Type_Reference
@@ -284,6 +263,24 @@ create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Curso
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
+				type = ref,
+			})
+		}
+	} else {
+		num_args := clang.getNumArgTypes(ct)
+		for i in 0..<num_args {
+			param_type := clang.getArgType(ct, u32(i))
+
+			ref: Type_Reference
+			type_ref_name := get_type_reference_name(param_type)
+
+			if type_ref_name == "" {
+				ref = create_type_recursive(param_type, children_lookup, type_lookup, types)
+			} else {
+				ref = type_ref_name
+			}
+
+			append(&params, Type_Procedure_Parameter {
 				type = ref,
 			})
 		}
@@ -303,7 +300,6 @@ create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Curso
 	}
 
 	type_definition := Type_Procedure {
-		name = get_cursor_name(c),
 		parameters = params[:],
 		return_type = return_type,
 	}
@@ -371,13 +367,26 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 			if sc_kind == .FieldDecl {
 				ref: Type_Reference
 				sct := clang.getCursorType(sc)
+				
+				is_func_ptr := false
 
-				type_ref_name := get_type_reference_name(sct)
+				if sct.kind == .Pointer {
+					pointee := clang.getPointeeType(sct)
 
-				if type_ref_name == "" {
-					ref = create_type_recursive(sct, children_lookup, type_lookup, types)
-				} else {
-					ref = type_ref_name
+					if pointee.kind == .FunctionProto {
+						ref = create_proc_type(children_lookup[sc], pointee, children_lookup, type_lookup, types)
+						is_func_ptr = true
+					}
+				}
+
+				if !is_func_ptr  {
+					type_ref_name := get_type_reference_name(sct)
+
+					if type_ref_name == "" {
+						ref = create_type_recursive(sct, children_lookup, type_lookup, types)
+					} else {
+						ref = type_ref_name
+					}
 				}
 
 				name := get_cursor_name(sc)
@@ -495,7 +504,7 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 			pointee := clang.getPointeeType(underlying)
 
 			if pointee.kind == .FunctionProto {
-				ref = create_proc_type(c, pointee, children_lookup, type_lookup, types)
+				ref = create_proc_type(children_lookup[c], pointee, children_lookup, type_lookup, types)
 				is_func_ptr = true
 			}
 		}

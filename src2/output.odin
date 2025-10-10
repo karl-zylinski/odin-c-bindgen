@@ -123,7 +123,11 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 			case string:
 				p(&fb, r)
 			case Type_Index:
-				parse_type_build(types, r, &fb, indent + 1)
+				if proc_type, is_proc_type := get_type_reference(types, r, Type_Procedure); is_proc_type {
+					output_procedure_signature(types, proc_type, &fb, indent, explicit_calling_convention = true)
+				} else {
+					parse_type_build(types, r, &fb, indent + 1)
+				}
 			}
 			
 		}
