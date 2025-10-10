@@ -69,6 +69,8 @@ Type_Procedure :: struct {
 	return_type: Type_Reference,
 }
 
+Type_CString :: struct {}
+
 // Hard-coded override containing Odin type text
 Type_Override :: struct {
 	definition_text: string,
@@ -84,6 +86,7 @@ Type :: union #no_nil {
 	Type_Pointer,
 	Type_Multipointer,
 	Type_Raw_Pointer,
+	Type_CString,
 	Type_Struct,
 	Type_Enum,
 	Type_Bit_Set,

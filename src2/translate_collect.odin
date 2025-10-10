@@ -134,6 +134,13 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[
 	}
 }
 
+type_is_char :: proc(ct: clang.Type) -> bool {
+	return ct.kind == .Char_S ||
+	       ct.kind == .SChar ||
+	       ct.kind == .UChar ||
+	       ct.kind == .Char_U
+}
+
 get_type_reference_name :: proc(ct: clang.Type) -> string {
 	#partial switch ct.kind {
 	case .Bool:
@@ -204,12 +211,20 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
+		is_const := clang.isConstQualifiedType(clang_pointee_type) == 1
+		is_const_string := type_is_char(clang_pointee_type) && is_const
+		is_dynamic_string := type_is_char(clang_pointee_type) && !is_const
+
 		if clang_pointee_type.kind == .Void {
 			to_add = Type_Raw_Pointer{}
 		} else if clang_pointee_type.kind == .FunctionProto {
 			// In Odin, a proc is a always a pointer. You can think all procs as being pointers to
 			// a proc defined somewhere else. So `^proc` should be just `proc`.
 			return create_type_recursive(clang.getTypeDeclaration(clang_pointee_type), clang_pointee_type, children_lookup, type_lookup, types)
+		} else if is_const_string {
+			to_add = Type_CString{}
+		} else if is_dynamic_string {
+			to_add = Type_Multipointer { pointed_to_type = "u8" }
 		} else {
 			ptr_type_idx := reserve_type(ct, type_lookup, types)
 			type_ref_name := get_type_reference_name(clang_pointee_type)
@@ -389,32 +404,46 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 
 		return array_type_idx
 
-	case .FunctionProto:
+	case .FunctionProto, .FunctionNoProto:
 		proc_type := reserve_type(ct, type_lookup, types)
 		params: [dynamic]Type_Procedure_Parameter
 
-		for i in 0..<clang.Cursor_getNumArguments(c) {
-			param_cursor := clang.Cursor_getArgument(c, u32(i))
+		if clang.Cursor_getNumArguments(c) != -1 {
+			for i in 0..<clang.Cursor_getNumArguments(c) {
+				param_cursor := clang.Cursor_getArgument(c, u32(i))
+				param_type := clang.getCursorType(param_cursor)
+				ref: Type_Reference
+				type_ref_name := get_type_reference_name(param_type)
 
-			if param_cursor.kind != .ParmDecl {
-				log.errorf("Unexpected cursor kind for parameter: %v", param_cursor.kind)
-				continue
+				if type_ref_name == "" {
+					ref = create_type_recursive(param_cursor, param_type, children_lookup, type_lookup, types)
+				} else {
+					ref = type_ref_name
+				}
+
+				append(&params, Type_Procedure_Parameter {
+					name = get_cursor_name(param_cursor),
+					type = ref,
+				})
 			}
+		} else {
+			for i in 0..<clang.getNumArgTypes(ct) {
+				param_type := clang.getArgType(ct, u32(i))
+				param_cursor := clang.getTypeDeclaration(param_type)
+				ref: Type_Reference
+				type_ref_name := get_type_reference_name(param_type)
 
-			param_type := clang.getCursorType(param_cursor)
-			ref: Type_Reference
-			type_ref_name := get_type_reference_name(param_type)
+				if type_ref_name == "" {
+					ref = create_type_recursive(param_cursor, param_type, children_lookup, type_lookup, types)
+				} else {
+					ref = type_ref_name
+				}
 
-			if type_ref_name == "" {
-				ref = create_type_recursive(param_cursor, param_type, children_lookup, type_lookup, types)
-			} else {
-				ref = type_ref_name
+				append(&params, Type_Procedure_Parameter {
+					name = get_cursor_name(param_cursor),
+					type = ref,
+				})
 			}
-
-			append(&params, Type_Procedure_Parameter {
-				name = get_cursor_name(param_cursor),
-				type = ref,
-			})
 		}
 
 		result_type := clang.getResultType(ct)

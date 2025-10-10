@@ -212,8 +212,12 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 			p(b, ", ")
 		}
 
-		pf(b, "%s: ", ensure_name_valid(param.name))
-		output_type_reference(types, param.type, b, indent)
+		if param.name == "" {
+			output_type_reference(types, param.type, b, indent)
+		} else {
+			pf(b, "%s: ", ensure_name_valid(param.name))
+			output_type_reference(types, param.type, b, indent)
+		}
 	}
 
 	pf(b, ")")
@@ -240,6 +244,9 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 	case Type_Multipointer:
 		p(b, "[^]")
 		output_type_reference(types, tv.pointed_to_type, b, indent)
+
+	case Type_CString:
+		p(b, "cstring")
 
 	case Type_Raw_Pointer:
 		p(b, "rawptr")
