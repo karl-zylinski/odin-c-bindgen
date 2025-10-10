@@ -1,10 +1,5 @@
 #pragma once
 
-#define wooo const
-
-typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSize);    // FileIO: Load binary data
-
-/*
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)
@@ -60,4 +55,4 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileI
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
-bool IsShaderValid(Shader shader);                                  */
+bool IsShaderValid(Shader shader);
