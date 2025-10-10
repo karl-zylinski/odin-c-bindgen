@@ -9,6 +9,7 @@ import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
 import "core:os"
+import "base:runtime"
 
 @(private="package")
 translate_process :: proc(ts: ^Translate_State) -> Output_State {
@@ -35,11 +36,9 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		}
 
 		if override {
-			override_idx := Type_Index(len(ts.types))
-			append(&ts.types, Type_Override {
+			d.type = add_type(&ts.types, Type_Override {
 				definition_text = override_definition_text
 			})
-			d.type = override_idx
 		}
 	}
 
@@ -57,10 +56,6 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		append(sets, b)
 	}
 
-	// We don't want to add to ts.types because we might have pointers to items within a loop lap,
-	// so add to this one!
-	new_types: [dynamic]Type
-
 	rename_aliases: map[string]string
 
 	for &dd in ts.declarations {
@@ -76,18 +71,18 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 		append(&decls, dd)
 		d := &decls[len(decls) - 1]
-		t := &ts.types[d.type]
 
-		// TODO rename dv to tv
-		#partial switch &dv in t {
+		type := &ts.types[d.type]
+
+		#partial switch &v in type {
 		case Type_Enum:
 			bit_sets := bit_sets_by_enum_name[d.name]
 
-			for &b in bit_sets {
+			for b in bit_sets {
 				new_members: [dynamic]Type_Enum_Member
 
 				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
-				for m in dv.members {
+				for m in v.members {
 					if m.value == 0 {
 						continue
 					}
@@ -98,8 +93,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					})
 				}
 
-				dv.members = new_members[:]
-				bs_idx := Type_Index(len(ts.types) + len(new_types))
+				v.members = new_members[:]
 
 				if b.enum_rename != "" {
 					rename_aliases[d.name] = b.enum_rename
@@ -110,7 +104,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					}
 				}
 
-				append(&new_types, Type_Bit_Set {
+				bs_idx := add_type(&ts.types, Type_Bit_Set {
 					enum_type = d.name,
 				})
 
@@ -121,19 +115,35 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 			}
 
 		case Type_Struct:
-			for &f in dv.fields {
+			for &f in v.fields {
 				override_key := fmt.tprintf("%s.%s", d.name, f.name)
 				if override, has_override := ts.config.struct_field_overrides[override_key]; has_override {
-					type_idx, has_type_idx := f.type.(Type_Index)
+					ptr_type, is_ptr_type := get_type_reference(ts.types[:], f.type, Type_Pointer)
 
-					if override == "[^]" && has_type_idx {
-						ptr_type, is_ptr_type := &ts.types[type_idx].(Type_Pointer)
-
-						if is_ptr_type {
-							ptr_type.multipointer = true
-						}
+					if is_ptr_type && override == "[^]" {
+						f.type = add_type(&ts.types, Type_Multipointer {
+							pointed_to_type = ptr_type.pointed_to_type
+						})
 					} else {
-						f.type_overrride = override
+						f.type = add_type(&ts.types, Type_Override {
+							definition_text = override
+						})
+					}
+				}
+			}
+		case Type_Procedure:
+			for &p in v.parameters {
+				override_key := fmt.tprintf("%s.%s", d.name, p.name)
+				if override, has_override := ts.config.procedure_type_overrides[override_key]; has_override {
+					ptr_type, is_ptr_type := get_type_reference(ts.types[:], p.type, Type_Pointer)
+					if is_ptr_type && override == "[^]" {
+						p.type = add_type(&ts.types, Type_Multipointer {
+							pointed_to_type = ptr_type.pointed_to_type
+						})
+					} else {
+						p.type = add_type(&ts.types, Type_Override {
+							definition_text = override
+						})
 					}
 				}
 			}
@@ -178,7 +188,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 	return {
 		decls = decls[:],
-		types = slice.concatenate([][]Type{ts.types[:], new_types[:]}),
+		types = ts.types[:],
 		top_comment = extract_top_comment(ts.source),
 		top_code = top_code,
 	}

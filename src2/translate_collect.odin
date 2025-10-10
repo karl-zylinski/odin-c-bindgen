@@ -4,6 +4,7 @@ package bindgen2
 import clang "../libclang"
 import "core:fmt"
 import "core:log"
+import "core:slice"
 
 @(private="package")
 translate_collect :: proc(ts: ^Translate_State, filename: string) {
@@ -107,6 +108,15 @@ add_declarations :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[
 
 	if kind != .StructDecl && kind != .TypedefDecl && kind != .EnumDecl && kind != .FunctionDecl {
 		return
+	}
+
+	// Procedures have a "prototype" type that is shared between multiple procedures. Clone it, so
+	// each one gets one of their own. That way we can modify it later based on the bindgen config,
+	// without affecting other procedures.
+	if pt, pt_ok := types[ti].(Type_Procedure); pt_ok && kind == .FunctionDecl {
+		type_proc := pt
+		type_proc.parameters = slice.clone(pt.parameters)
+		ti = add_type(types, type_proc)
 	}
 
 	append(declarations, Declaration {
@@ -406,7 +416,6 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 				type = ref,
 			})
 		}
-
 
 		result_type := clang.getResultType(ct)
 		result_ref_name := get_type_reference_name(result_type)

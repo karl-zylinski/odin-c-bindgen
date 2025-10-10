@@ -234,12 +234,11 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		p(b, tv.definition_text)
 
 	case Type_Pointer:
-		if tv.multipointer {
-			p(b, "[^]")
-		} else {
-			p(b, "^")
-		}
-		
+		p(b, "^")
+		output_type_reference(types, tv.pointed_to_type, b, indent)
+
+	case Type_Multipointer:
+		p(b, "[^]")
 		output_type_reference(types, tv.pointed_to_type, b, indent)
 
 	case Type_Raw_Pointer:

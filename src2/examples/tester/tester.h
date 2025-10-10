@@ -36,3 +36,5 @@ struct Test1 {
 typedef struct Test1 Test3;
 
 typedef Test3 Test15;
+
+void do_stuff(const char* waa);

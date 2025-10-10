@@ -5,13 +5,18 @@
 // will use these types. The outputter does not, and should not, have any knowledge of clang.
 package bindgen2
 
+import "core:slice"
+
 Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
 
 Type_Pointer :: struct {
 	pointed_to_type: Type_Reference,
-	multipointer: bool,
+}
+
+Type_Multipointer :: struct {
+	pointed_to_type: Type_Reference,
 }
 
 Type_Alias :: struct {
@@ -77,6 +82,7 @@ Type_Reference :: union  {
 Type :: union #no_nil {
 	Type_Unknown,
 	Type_Pointer,
+	Type_Multipointer,
 	Type_Raw_Pointer,
 	Type_Struct,
 	Type_Enum,
@@ -99,4 +105,10 @@ get_type_reference :: proc(types: []Type, ref: Type_Reference, $T: typeid) -> (T
 	}
 
 	return {}, false
+}
+
+add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {
+	idx := len(array)
+	append(array, t)
+	return Type_Index(idx)
 }

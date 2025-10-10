@@ -17,6 +17,7 @@ Config :: struct {
 	type_overrides: map[string]string,
 
 	struct_field_overrides: map[string]string,
+	procedure_type_overrides: map[string]string,
 
 	imports_file: string,
 }
