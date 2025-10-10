@@ -6,11 +6,16 @@ import "core:fmt"
 import "core:log"
 import "core:slice"
 
+/*src: string
+unit: clang.Translation_Unit*/
+
 @(private="package")
 translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	clang_args := []cstring {
 		"-fparse-all-comments",
 	}
+
+	//src = ts.source
 
 	index := clang.createIndex(1, 0)
 	unit: clang.Translation_Unit
@@ -365,6 +370,29 @@ create_type_recursive :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: 
 		alias_type_idx := reserve_type(ct, type_lookup, types)
 		underlying_type_cursor := clang.getTypeDeclaration(ct)
 		underlying := clang.getTypedefDeclUnderlyingType(underlying_type_cursor)
+
+		/*{
+			log.info(string_from_clang_string(clang.getTypePrettyPrinted(underlying, clang.getCursorPrintingPolicy(c))))
+			source_range := clang.getCursorExtent(underlying_type_cursor)
+			start := clang.getRangeStart(source_range)
+			start_offset: u32
+			clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
+			end := clang.getRangeEnd(source_range)
+			end_offset: u32
+			clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
+			str := src[start_offset:end_offset]
+			tokens: [^]clang.Token
+			num_tokens: u32
+			clang.tokenize(unit, source_range, &tokens, &num_tokens)
+			log.info(src[start_offset:end_offset])
+			log.info(string_from_clang_string(clang.getTypePrettyPrinted(underlying, clang.getCursorPrintingPolicy(underlying_type_cursor))))
+
+			for i in 0..<num_tokens {
+				log.info(clang.getTokenKind(tokens[i]))
+				log.info(string_from_clang_string(clang.getTokenSpelling(unit, tokens[i])))
+			}
+		}*/
+
 
 		ref: Type_Reference
 		type_ref_name := get_type_reference_name(underlying)
