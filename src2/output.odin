@@ -24,6 +24,10 @@ output :: proc(fr: Output_State, filename: string, package_name: string) {
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
+	if fr.import_core_c {
+		pln(sb, "import core_c \"core:c\"\n")
+	}
+
 	p(sb, fr.top_code)
 
 	prev_is_proc := false

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
+
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)

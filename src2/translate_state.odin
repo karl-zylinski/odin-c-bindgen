@@ -11,4 +11,5 @@ Translate_State :: struct {
 	children_lookup: Cursor_Children_Map,
 	config: Config,
 	source: string,
+	import_core_c: bool,
 }

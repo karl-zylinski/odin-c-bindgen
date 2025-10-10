@@ -118,12 +118,14 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 			for &f in v.fields {
 				override_key := fmt.tprintf("%s.%s", d.name, f.name)
 				if override, has_override := ts.config.struct_field_overrides[override_key]; has_override {
-					ptr_type, is_ptr_type := get_type_reference(ts.types[:], f.type, Type_Pointer)
+					
 
-					if is_ptr_type && override == "[^]" {
-						f.type = add_type(&ts.types, Type_Multipointer {
-							pointed_to_type = ptr_type.pointed_to_type
-						})
+					if override == "[^]" {
+						if ptr_type, is_ptr_type := get_type_reference(ts.types[:], f.type, Type_Pointer); is_ptr_type {
+							f.type = add_type(&ts.types, Type_Multipointer {
+								pointed_to_type = ptr_type.pointed_to_type
+							})
+						}	
 					} else {
 						f.type = add_type(&ts.types, Type_Override {
 							definition_text = override
@@ -135,11 +137,13 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 			for &p in v.parameters {
 				override_key := fmt.tprintf("%s.%s", d.name, p.name)
 				if override, has_override := ts.config.procedure_type_overrides[override_key]; has_override {
-					ptr_type, is_ptr_type := get_type_reference(ts.types[:], p.type, Type_Pointer)
-					if is_ptr_type && override == "[^]" {
-						p.type = add_type(&ts.types, Type_Multipointer {
-							pointed_to_type = ptr_type.pointed_to_type
-						})
+					
+					if override == "[^]" {
+						if ptr_type, is_ptr_type := get_type_reference(ts.types[:], p.type, Type_Pointer); is_ptr_type {
+							p.type = add_type(&ts.types, Type_Multipointer {
+								pointed_to_type = ptr_type.pointed_to_type
+							})	
+						}	
 					} else {
 						p.type = add_type(&ts.types, Type_Override {
 							definition_text = override
@@ -191,6 +195,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		types = ts.types[:],
 		top_comment = extract_top_comment(ts.source),
 		top_code = top_code,
+		import_core_c = ts.import_core_c,
 	}
 }
 

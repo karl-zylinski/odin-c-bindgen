@@ -67,6 +67,7 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 	}
 
 	ts.declarations = declarations[:]
+	ts.import_core_c = import_core_c
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
@@ -167,12 +168,12 @@ create_declaration :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^ma
 	}
 }
 
-type_is_char :: proc(ct: clang.Type) -> bool {
-	return ct.kind == .Char_S ||
-	       ct.kind == .SChar ||
-	       ct.kind == .UChar ||
-	       ct.kind == .Char_U
+type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
+	return clang.isConstQualifiedType(ct) == 1 && (ct.kind == .Char_S || ct.kind == .SChar)
 }
+
+// TODO: Remove by passing in non-global state to get_type_reference_name
+import_core_c := false
 
 get_type_reference_name :: proc(ct: clang.Type) -> string {
 	#partial switch ct.kind {
@@ -207,10 +208,23 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 	case .NullPtr:
 		return "rawptr"
 
-	case .Record, .Enum, .Typedef:
+	case .Record, .Enum:
 		ctc := clang.getTypeDeclaration(ct)
 		if clang.Cursor_isAnonymous(ctc) == 0 {
 			return get_cursor_name(ctc)
+		}
+
+	case .Typedef:
+		ctc := clang.getTypeDeclaration(ct)
+		if clang.Cursor_isAnonymous(ctc) == 0 {
+			name := get_cursor_name(ctc)
+
+			if name == "va_list" {
+				import_core_c = true
+				return "core_c.va_list"
+			}
+
+			return name
 		}
 
 	case .Elaborated:
@@ -228,7 +242,13 @@ create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Curso
 	proc_type := reserve_type(ct, type_lookup, types)
 	params: [dynamic]Type_Procedure_Parameter
 
-	if c.kind == .FunctionDecl && clang.Cursor_getNumArguments(c) != -1 {
+	// We expect either a function declaration to cause this to be called, or a typedef that defines
+	// a type...
+	//
+	// TODO: also a field within a struct?
+	assert(c.kind == .FunctionDecl || c.kind == .TypedefDecl)
+
+	if c.kind == .FunctionDecl {
 		for i in 0..<clang.Cursor_getNumArguments(c) {
 			param_cursor := clang.Cursor_getArgument(c, u32(i))
 			param_type := clang.getCursorType(param_cursor)
@@ -246,9 +266,13 @@ create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Curso
 				type = ref,
 			})
 		}
-	} else {
-		for i in 0..<clang.getNumArgTypes(ct) {
-			param_type := clang.getArgType(ct, u32(i))
+	} else if c.kind == .TypedefDecl {
+		children := children_lookup[c]
+
+		for child in children {
+			param_type := clang.getCursorType(child)
+			name := get_cursor_name(child)
+
 			ref: Type_Reference
 			type_ref_name := get_type_reference_name(param_type)
 
@@ -259,7 +283,7 @@ create_proc_type :: proc(c: clang.Cursor, ct: clang.Type, children_lookup: Curso
 			}
 
 			append(&params, Type_Procedure_Parameter {
-				// we don't have a name here ATM
+				name = name,
 				type = ref,
 			})
 		}
@@ -312,20 +336,14 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
-		is_const := clang.isConstQualifiedType(clang_pointee_type) == 1
-		is_const_string := type_is_char(clang_pointee_type) && is_const
-		is_dynamic_string := type_is_char(clang_pointee_type) && !is_const
-
 		if clang_pointee_type.kind == .Void {
 			to_add = Type_Raw_Pointer{}
 		} else if clang_pointee_type.kind == .FunctionProto {
 			// In Odin, a proc is a always a pointer. You can think all procs as being pointers to
 			// a proc defined somewhere else. So `^proc` should be just `proc`.
 			return create_type_recursive(clang_pointee_type, children_lookup, type_lookup, types)
-		} else if is_const_string {
+		} else if type_probably_is_cstring(clang_pointee_type) {
 			to_add = Type_CString{}
-		} else if is_dynamic_string {
-			to_add = Type_Multipointer { pointed_to_type = "u8" }
 		} else {
 			ptr_type_idx := reserve_type(ct, type_lookup, types)
 			type_ref_name := get_type_reference_name(clang_pointee_type)
@@ -467,41 +485,31 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		return elaborated_type_idx
 	case .Typedef:
 		alias_type_idx := reserve_type(ct, type_lookup, types)
-		underlying_type_cursor := clang.getTypeDeclaration(ct)
-		underlying := clang.getTypedefDeclUnderlyingType(underlying_type_cursor)
+		c := clang.getTypeDeclaration(ct)
+		underlying := clang.getTypedefDeclUnderlyingType(c)
 
-		/*{
-			log.info(string_from_clang_string(clang.getTypePrettyPrinted(underlying, clang.getCursorPrintingPolicy(c))))
-			source_range := clang.getCursorExtent(underlying_type_cursor)
-			start := clang.getRangeStart(source_range)
-			start_offset: u32
-			clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
-			end := clang.getRangeEnd(source_range)
-			end_offset: u32
-			clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
-			str := src[start_offset:end_offset]
-			tokens: [^]clang.Token
-			num_tokens: u32
-			clang.tokenize(unit, source_range, &tokens, &num_tokens)
-			log.info(src[start_offset:end_offset])
-			log.info(string_from_clang_string(clang.getTypePrettyPrinted(underlying, clang.getCursorPrintingPolicy(underlying_type_cursor))))
-
-			for i in 0..<num_tokens {
-				log.info(clang.getTokenKind(tokens[i]))
-				log.info(string_from_clang_string(clang.getTokenSpelling(unit, tokens[i])))
-			}
-		}*/
-
+		is_func_ptr := false
 
 		ref: Type_Reference
-		type_ref_name := get_type_reference_name(underlying)
+		if underlying.kind == .Pointer {
+			pointee := clang.getPointeeType(underlying)
 
-		if type_ref_name == "" {
-			ref = create_type_recursive(underlying, children_lookup, type_lookup, types)
-		} else {
-			ref = type_ref_name
+			if pointee.kind == .FunctionProto {
+				ref = create_proc_type(c, pointee, children_lookup, type_lookup, types)
+				is_func_ptr = true
+			}
 		}
-		
+
+		if !is_func_ptr {
+			type_ref_name := get_type_reference_name(underlying)
+
+			if type_ref_name == "" {
+				ref = create_type_recursive(underlying, children_lookup, type_lookup, types)
+			} else {
+				ref = type_ref_name
+			}
+		}
+
 		type_definition := Type_Alias {
 			aliased_type = ref
 		}
