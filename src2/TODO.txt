@@ -1,13 +1,9 @@
-- add procs
-
 - add macros
-
+- add unions
+- proc spacing, comments etc
 - enum side comments
 - enum spacing alignment
 - can we make the side comment stuff generic somehow? needed for unions too etc
 
-- add unions
-
 - new examples:
-	- jolt
-	- 
+	- jolt + raylib3d
