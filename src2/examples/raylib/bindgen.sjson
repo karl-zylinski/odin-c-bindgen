@@ -14,6 +14,11 @@ bit_sets = [
 		"enum_name" = "ConfigFlags",
 		"enum_rename" = "ConfigFlag",
 		"storage" = "i32",
+	},
+	{
+		"name" = "Gestures",
+		"enum_name" = "Gesture",
+		"storage" = "i32",
 	}
 ]
 

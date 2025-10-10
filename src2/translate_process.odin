@@ -99,7 +99,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					rename_aliases[d.name] = b.enum_rename
 					d.name = b.enum_rename
 				} else {
-					if d.name == b.enum_name {
+					if b.name == b.enum_name {
 						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
 					}
 				}
