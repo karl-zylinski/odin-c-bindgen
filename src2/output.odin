@@ -1,6 +1,4 @@
-// This files takes the Output_State and produces the bindings based on it.
-//
-// Never import clang within this file. Resolve any clang-related things in on of the
+// Never import clang within this file. Resolve any clang-related things in one of the
 // translate_X.odin files.
 #+private file
 package bindgen2
@@ -12,6 +10,7 @@ import "core:log"
 
 Output_Input :: Translate_Process_Result
 
+// Takes the result of `translate_process` and outputs bindings into `filename`.
 @(private="package")
 output :: proc(o: Output_Input, filename: string, package_name: string) {
 	ensure(filename != "")
