@@ -339,7 +339,6 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Procedure:
 		output_procedure_signature(types, tv, b, indent)
-
 		pf(b, " ---")
 
 	case Type_Fixed_Array:
