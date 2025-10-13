@@ -7,6 +7,14 @@ package bindgen2
 
 import "core:slice"
 
+// A type identifier is either a string or an index that points to another type. The string used to
+// refer to a type just by its name (for example, when a struct field refers to some other type).
+// The index is often used when a struct contains a field of anonymous type.
+Type_Identifier :: union  {
+	string,
+	Type_Index,
+}
+
 Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
@@ -76,13 +84,6 @@ Type_Override :: struct {
 	definition_text: string,
 }
 
-// A type identifier is either a string or an index that points to another type. The string used to
-// refer to a type just by its name (for example, when a struct field refers to some other type).
-// The index is often used when a struct contains a field of anonymous type.
-Type_Identifier :: union  {
-	string,
-	Type_Index,
-}
 
 Type :: union #no_nil {
 	Type_Unknown,
