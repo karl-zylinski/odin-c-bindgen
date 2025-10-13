@@ -95,6 +95,13 @@ Type_Procedure_Parameter :: struct {
 Type_Procedure :: struct {
 	parameters: []Type_Procedure_Parameter,
 	result_type: Type_Identifier,
+	calling_convention: Calling_Convention,
+}
+
+Calling_Convention :: enum {
+	C,
+	Std_Call,
+	Fast_Call,
 }
 
 Type_CString :: struct {}

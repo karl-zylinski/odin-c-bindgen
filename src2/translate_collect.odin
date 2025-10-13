@@ -299,9 +299,19 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 		result_type_id = get_type_name_or_create_anon_type(result_ct, tcs)
 	}
 
+	calling_conv := Calling_Convention.C
+
+	#partial switch clang.getFunctionTypeCallingConv(ct) {
+	case .X86StdCall:
+		calling_conv = .Std_Call
+	case .X86FastCall:
+		calling_conv = .Fast_Call
+	}
+
 	type_definition := Type_Procedure {
 		parameters = params[:],
 		result_type = result_type_id,
+		calling_convention = calling_conv,
 	}
 
 	tcs.types[proc_type] = type_definition

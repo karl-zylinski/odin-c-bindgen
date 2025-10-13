@@ -31,7 +31,9 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 	p(sb, o.top_code)
 
-	prev_is_proc := false
+	// None if previous decls wasn't a proc
+	inside_foreign_block: bool
+	foreign_block_calling_conv: Calling_Convention
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -42,16 +44,30 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			continue
 		}
 
-		_, is_proc := o.types[d.type].(Type_Procedure)
-
+		proc_type, is_proc := o.types[d.type].(Type_Procedure)
 
 		if is_proc {
-			if !prev_is_proc {
-				pln(sb, "@(default_calling_convention=\"c\")\nforeign lib {")
+			start_foreign_block := false
+
+			if inside_foreign_block {
+				if proc_type.calling_convention != foreign_block_calling_conv  {
+					pln(sb, "}")
+					start_foreign_block = true
+					foreign_block_calling_conv = proc_type.calling_convention
+				}
+			} else {
+				inside_foreign_block = true
+				start_foreign_block = true
+				foreign_block_calling_conv = proc_type.calling_convention
+			}
+
+			if start_foreign_block {
+				pfln(sb, "@(default_calling_convention=\"%s\")\nforeign lib {{", calling_convention_string(proc_type.calling_convention))
 			}
 		} else {
-			if prev_is_proc {
+			if inside_foreign_block {
 				pln(sb, "}")
+				inside_foreign_block = false
 			}
 		}
 
@@ -69,14 +85,14 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 		pf(sb, "%v :: %v", d.name, rhs)
 
-		if !is_proc {
+		if is_proc {
+			p(sb, "\n")
+		} else {
 			p(sb, "\n\n")
 		}
-
-		prev_is_proc = is_proc
 	}
 
-	if prev_is_proc {
+	if inside_foreign_block {
 		pln(sb, "}")
 	}
 
@@ -225,6 +241,20 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	p(b, "}")
 }
 
+// TODO: Clangs seems to always output C calling convention, investigate why.
+calling_convention_string :: proc(calling_convention: Calling_Convention) -> string {
+	switch calling_convention {
+	case .C:
+		return "c"
+	case .Std_Call:
+		return "stdcall"
+	case .Fast_Call:
+		return "fastcall"
+	}
+
+	return "c"
+}
+
 ensure_name_valid :: proc(n: string) -> string {
 	switch n {
 	case "dynamic": return "_dynamic"
@@ -245,7 +275,7 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 	pf(b, "proc")
 
 	if explicit_calling_convention {
-		p(b, " \"c\" ")
+		pf(b, " \"%s\" ", calling_convention_string(tp.calling_convention))
 	}
 
 	pf(b, "(")
@@ -310,7 +340,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 	case Type_Procedure:
 		output_procedure_signature(types, tv, b, indent)
 
-		pf(b, " --- \n")
+		pf(b, " ---")
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
