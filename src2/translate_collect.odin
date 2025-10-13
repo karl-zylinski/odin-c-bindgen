@@ -7,6 +7,14 @@ import "core:log"
 import "core:slice"
 import "core:strings"
 
+@(private="package")
+Translate_Collect_Result :: struct {
+	declarations: []Declaration,
+	types: []Type,
+	source: string,
+	import_core_c: bool,
+}
+
 // Parses the C headers and "collects" the things we need from them. This will create a bunch types
 // and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
 // that is deferred to `translate_process`.
@@ -81,14 +89,6 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 	}, true
 }
 
-@(private="package")
-Translate_Collect_Result :: struct {
-	declarations: []Declaration,
-	types: []Type,
-	source: string,
-	import_core_c: bool,
-}
-
 Translate_Collect_State :: struct {
 	declarations: [dynamic]Declaration,
 	type_lookup: map[clang.Type]Type_Index,
@@ -131,7 +131,6 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	ct := clang.getCursorType(c)
 
 	#partial switch c.kind {
-
 	// Struct and union is the same, only difference is that the `Type_Struct` will get `raw_union`
 	// set to true.
 	case .StructDecl, .UnionDecl:
@@ -267,7 +266,7 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 // Otherweise the FunctionProto stuff may make it so that ther are shared proc types, which will
 // break stuff.
 create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
-	proc_type := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+	proc_type := reserve_type(ct, tcs)
 	params: [dynamic]Type_Procedure_Parameter
 
 	if len(param_childs) > 0 {
@@ -311,10 +310,10 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 	return proc_type
 }
 
-reserve_type :: proc(ct: clang.Type, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type) -> Type_Index {
-	idx := Type_Index(len(types))
-	append_nothing(types)
-	type_lookup[ct] = idx
+reserve_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
+	idx := Type_Index(len(tcs.types))
+	append_nothing(&tcs.types)
+	tcs.type_lookup[ct] = idx
 	return idx
 }
 
@@ -344,14 +343,14 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		} else if type_probably_is_cstring(clang_pointee_type) {
 			to_add = Type_CString{}
 		} else {
-			ptr_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+			ptr_type_idx := reserve_type(ct, tcs)
 			pointing_to_id := get_type_name_or_create_anon_type(clang_pointee_type, tcs)
 			tcs.types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointing_to_id }
 			return ptr_type_idx
 		}
 	case .Record:
 		c := clang.getTypeDeclaration(ct)
-		struct_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+		struct_type_idx := reserve_type(ct, tcs)
 		struct_children := tcs.children_lookup[c]
 		fields: [dynamic]Type_Struct_Field
 
@@ -414,7 +413,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		return struct_type_idx
 	case .Enum:
-		enum_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+		enum_type_idx := reserve_type(ct, tcs)
 		c := clang.getTypeDeclaration(ct)
 		enum_children := tcs.children_lookup[c]
 		members: [dynamic]Type_Enum_Member
@@ -483,7 +482,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		tcs.type_lookup[ct] = elaborated_type_idx
 		return elaborated_type_idx
 	case .Typedef:
-		alias_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+		alias_type_idx := reserve_type(ct, tcs)
 		c := clang.getTypeDeclaration(ct)
 		underlying := clang.getTypedefDeclUnderlyingType(c)
 
@@ -511,7 +510,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		return alias_type_idx
 	case .ConstantArray:
-		array_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+		array_type_idx := reserve_type(ct, tcs)
 		clang_element_type := clang.getArrayElementType(ct)
 
 		type_definition := Type_Fixed_Array {
@@ -528,7 +527,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 	}
 
 	if t, t_ok := to_add.?; t_ok {
-		idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
+		idx := reserve_type(ct, tcs)
 		tcs.types[idx] = t
 		return idx
 	}

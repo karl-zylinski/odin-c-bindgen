@@ -108,18 +108,6 @@ main :: proc() {
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
-
-			source_data, source_data_ok := os.read_entire_file(input_filename)
-
-			if !source_data_ok {
-				log.errorf("Failed reading source file: %v", input_filename)
-				continue
-			}
-			
-			ts := Translate_State {
-				config = config,
-				source = string(source_data),
-			}
 			
 			collect_res, collect_ok := translate_collect(input_filename)
 

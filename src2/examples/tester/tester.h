@@ -1,3 +1,5 @@
+/* a top comment */
+
 #pragma once
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
