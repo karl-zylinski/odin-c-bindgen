@@ -9,4 +9,5 @@ libclang/libclang.lib
 **/_output
 src2/examples/tester/tester/*
 src2/examples/raylib/test/*
+src2/examples/fs
 *.sublime-workspace
