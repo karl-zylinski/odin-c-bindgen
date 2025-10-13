@@ -19,6 +19,27 @@ Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
 
+Declaration :: struct {
+	name: string,
+	type: Type_Index,
+	comment_before: string,
+}
+
+Type :: union #no_nil {
+	Type_Unknown,
+	Type_Pointer,
+	Type_Multipointer,
+	Type_Raw_Pointer,
+	Type_CString,
+	Type_Struct,
+	Type_Enum,
+	Type_Bit_Set,
+	Type_Alias,
+	Type_Fixed_Array,
+	Type_Procedure,
+	Type_Override,
+}
+
 Type_Pointer :: struct {
 	pointed_to_type: Type_Identifier,
 }
@@ -82,28 +103,6 @@ Type_CString :: struct {}
 // Hard-coded override containing Odin type text
 Type_Override :: struct {
 	definition_text: string,
-}
-
-
-Type :: union #no_nil {
-	Type_Unknown,
-	Type_Pointer,
-	Type_Multipointer,
-	Type_Raw_Pointer,
-	Type_CString,
-	Type_Struct,
-	Type_Enum,
-	Type_Bit_Set,
-	Type_Alias,
-	Type_Fixed_Array,
-	Type_Procedure,
-	Type_Override,
-}
-
-Declaration :: struct {
-	name: string,
-	type: Type_Index,
-	comment_before: string,
 }
 
 // If the identifier refers to another type (it's a Type_Index), then this will return a conrete
