@@ -205,6 +205,16 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 // TODO: Remove by passing in non-global state to get_type_reference_name
 import_core_c := false
 
+create_type_reference :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Reference {
+	name := get_type_reference_name(ct)
+
+	if name != "" {
+		return name
+	}
+
+	return create_type_recursive(ct, tcs)
+}
+
 get_type_reference_name :: proc(ct: clang.Type) -> string {
 	#partial switch ct.kind {
 	case .Bool:
@@ -541,13 +551,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		}
 
 		if !is_func_ptr {
-			type_ref_name := get_type_reference_name(underlying)
-
-			if type_ref_name == "" {
-				ref = create_type_recursive(underlying, tcs)
-			} else {
-				ref = type_ref_name
-			}
+			ref = create_type_reference(underlying, tcs)
 		}
 
 		type_definition := Type_Alias {
