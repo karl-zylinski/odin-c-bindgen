@@ -12,15 +12,15 @@ import "core:os"
 import "base:runtime"
 
 @(private="package")
-translate_process :: proc(ts: ^Translate_State) -> Output_State {
-	decls: [dynamic]Declaration
+translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Output_State {
+	types := slice.to_dynamic(tcr.types)
 
 	// Replace types
-	for &d in ts.declarations {
+	for &d in tcr.declarations {
 		override: bool
 		override_definition_text: string
 
-		if type_override, has_override := ts.config.type_overrides[d.name]; has_override {
+		if type_override, has_override := config.type_overrides[d.name]; has_override {
 			override = true
 			override_definition_text = type_override
 		}	
@@ -28,7 +28,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		// Don't override if this is type is an alias that has the same name as the aliased name.
 		// Doing that override will just make this alias not get ignored, as it is no longer just
 		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
-		if alias, is_alias := ts.types[d.type].(Type_Alias); is_alias {
+		if alias, is_alias := types[d.type].(Type_Alias); is_alias {
 			named_alias, alias_is_named := alias.aliased_type.(string)
 			if alias_is_named && d.name == named_alias {
 				override = false
@@ -36,7 +36,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		}
 
 		if override {
-			d.type = add_type(&ts.types, Type_Override {
+			d.type = add_type(&types, Type_Override {
 				definition_text = override_definition_text
 			})
 		}
@@ -45,7 +45,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 	// Build map of enum name -> bit_set config data
 	bit_sets_by_enum_name: map[string][dynamic]Config_Bit_Set
 
-	for &b in ts.config.bit_sets {
+	for &b in config.bit_sets {
 		sets := &bit_sets_by_enum_name[b.enum_name]
 
 		if sets == nil {
@@ -58,7 +58,10 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 	rename_aliases: map[string]string
 
-	for &dd in ts.declarations {
+	// We make a new array and add the declrations from 'tcr' into it and also maybe some new ones
+	decls: [dynamic]Declaration
+
+	for &dd in tcr.declarations {
 		if dd.name == "" {
 			log.errorf("Declaration has no name: %v", dd.name)
 			continue
@@ -72,7 +75,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		append(&decls, dd)
 		d := &decls[len(decls) - 1]
 
-		type := &ts.types[d.type]
+		type := &types[d.type]
 
 		#partial switch &v in type {
 		case Type_Enum:
@@ -104,7 +107,7 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 					}
 				}
 
-				bs_idx := add_type(&ts.types, Type_Bit_Set {
+				bs_idx := add_type(&types, Type_Bit_Set {
 					enum_type = d.name,
 				})
 
@@ -117,17 +120,15 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		case Type_Struct:
 			for &f in v.fields {
 				override_key := fmt.tprintf("%s.%s", d.name, f.name)
-				if override, has_override := ts.config.struct_field_overrides[override_key]; has_override {
-					
-
+				if override, has_override := config.struct_field_overrides[override_key]; has_override {
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := get_type_reference(ts.types[:], f.type, Type_Pointer); is_ptr_type {
-							f.type = add_type(&ts.types, Type_Multipointer {
+						if ptr_type, is_ptr_type := get_type_reference(types[:], f.type, Type_Pointer); is_ptr_type {
+							f.type = add_type(&types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type
 							})
 						}	
 					} else {
-						f.type = add_type(&ts.types, Type_Override {
+						f.type = add_type(&types, Type_Override {
 							definition_text = override
 						})
 					}
@@ -136,16 +137,16 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 		case Type_Procedure:
 			for &p in v.parameters {
 				override_key := fmt.tprintf("%s.%s", d.name, p.name)
-				if override, has_override := ts.config.procedure_type_overrides[override_key]; has_override {
+				if override, has_override := config.procedure_type_overrides[override_key]; has_override {
 					
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := get_type_reference(ts.types[:], p.type, Type_Pointer); is_ptr_type {
-							p.type = add_type(&ts.types, Type_Multipointer {
+						if ptr_type, is_ptr_type := get_type_reference(types[:], p.type, Type_Pointer); is_ptr_type {
+							p.type = add_type(&types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type
 							})	
 						}	
 					} else {
-						p.type = add_type(&ts.types, Type_Override {
+						p.type = add_type(&types, Type_Override {
 							definition_text = override
 						})
 					}
@@ -184,18 +185,18 @@ translate_process :: proc(ts: ^Translate_State) -> Output_State {
 
 	top_code: string
 
-	if ts.config.imports_file != "" {
-		if imports, imports_ok := os.read_entire_file(ts.config.imports_file); imports_ok {
+	if config.imports_file != "" {
+		if imports, imports_ok := os.read_entire_file(config.imports_file); imports_ok {
 			top_code = string(imports)
 		}
 	}
 
 	return {
 		decls = decls[:],
-		types = ts.types[:],
-		top_comment = extract_top_comment(ts.source),
+		types = types[:],
+		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
-		import_core_c = ts.import_core_c,
+		import_core_c = tcr.import_core_c,
 	}
 }
 

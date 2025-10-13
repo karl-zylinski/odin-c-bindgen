@@ -5,19 +5,23 @@ import clang "../libclang"
 import "core:fmt"
 import "core:log"
 import "core:slice"
+import "core:strings"
 
-/*src: string
-unit: clang.Translation_Unit*/
-
-@(private="package")
-translate_collect :: proc(ts: ^Translate_State, filename: string) {
+// Parses the C headers and "collects" the things we need from them. This will create a bunch types
+// and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
+// that is deferred to `translate_process`.
+@(private="package", require_results)
+translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) {
 	clang_args := []cstring {
 		"-fparse-all-comments",
 	}
 
-	//src = ts.source
-
+	// Clang uses 1 and 0 instead of true and false. The index is a set of translation units.
+	//
+	// TODO: Should all bindings created into a single directory use the same index, so they can
+	// see things between them?
 	index := clang.createIndex(1, 0)
+
 	unit: clang.Translation_Unit
 
 	options: clang.Translation_Unit_Flags = {
@@ -39,22 +43,24 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 		&unit,
 	)
 
-	fmt.ensuref(err == .Success, "Failed to parse translation unit for %s. Error code: %v", filename, err)
+	if err != .Success {
+		log.errorf("Failed to parse translation unit for %s. Error code: %v", filename, err)
+		return {}, false
+	}
 
 	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
 
+	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
+	// children. That way we can use this lookup to find arrays of children and iterate them normally.
 	children_lookup: Cursor_Children_Map
-
 	build_cursor_children_lookup(root_cursor, &children_lookup)
 
 	root_children := children_lookup[root_cursor]
 
 	type_lookup: map[clang.Type]Type_Index
-	declarations: [dynamic]Declaration
-	append(&ts.types, Type_Unknown {})
-
-	// Create all declarations, i.e. types and such to put into the bindings.
+	tcs: Translate_Collect_State
+	append(&tcs.types, Type_Unknown {})
 
 	for c in root_children {
 		loc := get_cursor_location(c)
@@ -63,11 +69,33 @@ translate_collect :: proc(ts: ^Translate_State, filename: string) {
 			continue
 		}
 
-		create_declaration(&declarations, &type_lookup, &ts.types, c, children_lookup)
+		create_declaration(&tcs.declarations, &type_lookup, &tcs.types, c, children_lookup)
 	}
 
-	ts.declarations = declarations[:]
-	ts.import_core_c = import_core_c
+	source_size: uint
+	source := clang.getFileContents(unit, file, &source_size)
+
+	return {
+		declarations = tcs.declarations[:],
+		types = tcs.types[:],
+		source = strings.string_from_ptr((^u8)(source), int(source_size)),
+		import_core_c = import_core_c,
+	}, true
+}
+
+@(private="package")
+Translate_Collect_Result :: struct {
+	declarations: []Declaration,
+	types: []Type,
+	source: string,
+	import_core_c: bool,
+}
+
+Translate_Collect_State :: struct {
+	declarations: [dynamic]Declaration,
+	type_lookup: map[clang.Type]Type_Index,
+	types: [dynamic]Type,
+	import_core_c: bool,
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {

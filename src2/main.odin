@@ -102,17 +102,17 @@ main :: proc() {
 		log.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", output_folder, make_dir_err)
 	}
 
-	for i in input_files {
-		if filepath.ext(i) == ".h" {
+	for input_filename in input_files {
+		if filepath.ext(input_filename) == ".h" {
 			gen_arena: vmem.Arena
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
 
-			source_data, source_data_ok := os.read_entire_file(i)
+			source_data, source_data_ok := os.read_entire_file(input_filename)
 
 			if !source_data_ok {
-				log.errorf("Failed reading source file: %v", i)
+				log.errorf("Failed reading source file: %v", input_filename)
 				continue
 			}
 			
@@ -120,9 +120,15 @@ main :: proc() {
 				config = config,
 				source = string(source_data),
 			}
-			translate_collect(&ts, i)
-			fr := translate_process(&ts)
-			output_stem := filepath.stem(i)
+			
+			collect_res, collect_ok := translate_collect(input_filename)
+
+			if !collect_ok {
+				continue
+			}
+
+			fr := translate_process(collect_res, config)
+			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			output(fr, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
