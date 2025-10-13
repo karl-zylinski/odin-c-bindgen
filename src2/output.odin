@@ -123,7 +123,7 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 			case string:
 				p(&fb, r)
 			case Type_Index:
-				if proc_type, is_proc_type := get_type_reference(types, r, Type_Procedure); is_proc_type {
+				if proc_type, is_proc_type := type_from_identifier(types, r, Type_Procedure); is_proc_type {
 					output_procedure_signature(types, proc_type, &fb, indent, explicit_calling_convention = true)
 				} else {
 					parse_type_build(types, r, &fb, indent + 1)
@@ -204,12 +204,12 @@ ensure_name_valid :: proc(n: string) -> string {
 	return n
 }
 
-output_type_reference :: proc(types: []Type, ru: Type_Reference, b: ^strings.Builder, indent: int) {
-	switch r in ru {
+output_type_identifier :: proc(types: []Type, ri: Type_Identifier, b: ^strings.Builder, indent: int) {
+	switch v in ri {
 	case string:
-		p(b, ensure_name_valid(r))
+		p(b, ensure_name_valid(v))
 	case Type_Index:
-		parse_type_build(types, r, b, indent)
+		parse_type_build(types, v, b, indent)
 	}
 }
 
@@ -228,10 +228,10 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 		}
 
 		if param.name == "" {
-			output_type_reference(types, param.type, b, indent)
+			output_type_identifier(types, param.type, b, indent)
 		} else {
 			pf(b, "%s: ", ensure_name_valid(param.name))
-			output_type_reference(types, param.type, b, indent)
+			output_type_identifier(types, param.type, b, indent)
 		}
 	}
 
@@ -239,7 +239,7 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 
 	if tp.return_type != nil {
 		p(b, " -> ")
-		output_type_reference(types, tp.return_type, b, indent)
+		output_type_identifier(types, tp.return_type, b, indent)
 	}
 }
 
@@ -254,11 +254,11 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Pointer:
 		p(b, "^")
-		output_type_reference(types, tv.pointed_to_type, b, indent)
+		output_type_identifier(types, tv.pointed_to_type, b, indent)
 
 	case Type_Multipointer:
 		p(b, "[^]")
-		output_type_reference(types, tv.pointed_to_type, b, indent)
+		output_type_identifier(types, tv.pointed_to_type, b, indent)
 
 	case Type_CString:
 		p(b, "cstring")
@@ -270,10 +270,10 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_struct_declaration(types, idx, b, indent)
 
 	case Type_Alias:
-		if proc_type, is_proc_type := get_type_reference(types, tv.aliased_type, Type_Procedure); is_proc_type {
+		if proc_type, is_proc_type := type_from_identifier(types, tv.aliased_type, Type_Procedure); is_proc_type {
 			output_procedure_signature(types, proc_type, b, indent, explicit_calling_convention = true)
 		} else {
-			output_type_reference(types, tv.aliased_type, b, indent)
+			output_type_identifier(types, tv.aliased_type, b, indent)
 		}
 
 	case Type_Enum:
@@ -286,7 +286,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
-		output_type_reference(types, tv.element_type, b, indent)
+		output_type_identifier(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
 		enum_type_str, enum_type_is_str := tv.enum_type.(string)

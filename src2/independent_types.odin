@@ -12,20 +12,20 @@ Type_Index :: distinct int
 TYPE_INDEX_NONE :: Type_Index(0)
 
 Type_Pointer :: struct {
-	pointed_to_type: Type_Reference,
+	pointed_to_type: Type_Identifier,
 }
 
 Type_Multipointer :: struct {
-	pointed_to_type: Type_Reference,
+	pointed_to_type: Type_Identifier,
 }
 
 Type_Alias :: struct {
-	aliased_type: Type_Reference,
+	aliased_type: Type_Identifier,
 }
 
 Type_Struct_Field :: struct {
 	name: string,
-	type: Type_Reference,
+	type: Type_Identifier,
 	type_overrride: string,
 	comment_before: string,
 	comment_on_right: string,
@@ -51,22 +51,22 @@ Type_Unknown :: struct {}
 Type_Raw_Pointer :: struct {}
 
 Type_Bit_Set :: struct {
-	enum_type: Type_Reference,
+	enum_type: Type_Identifier,
 }
 
 Type_Fixed_Array :: struct {
-	element_type: Type_Reference,
+	element_type: Type_Identifier,
 	size: int,
 }
 
 Type_Procedure_Parameter :: struct {
 	name: string,
-	type: Type_Reference,
+	type: Type_Identifier,
 }
 
 Type_Procedure :: struct {
 	parameters: []Type_Procedure_Parameter,
-	return_type: Type_Reference,
+	return_type: Type_Identifier,
 }
 
 Type_CString :: struct {}
@@ -76,7 +76,10 @@ Type_Override :: struct {
 	definition_text: string,
 }
 
-Type_Reference :: union  {
+// A type identifier is either a string or an index that points to another type. The string used to
+// refer to a type just by its name (for example, when a struct field refers to some other type).
+// The index is often used when a struct contains a field of anonymous type.
+Type_Identifier :: union  {
 	string,
 	Type_Index,
 }
@@ -102,7 +105,7 @@ Declaration :: struct {
 	comment_before: string,
 }
 
-get_type_reference :: proc(types: []Type, ref: Type_Reference, $T: typeid) -> (T, bool) {
+type_from_identifier :: proc(types: []Type, ref: Type_Identifier, $T: typeid) -> (T, bool) {
 	if idx, is_idx := ref.(Type_Index); is_idx {
 		return types[idx].(T)
 	}

@@ -122,7 +122,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Outp
 				override_key := fmt.tprintf("%s.%s", d.name, f.name)
 				if override, has_override := config.struct_field_overrides[override_key]; has_override {
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := get_type_reference(types[:], f.type, Type_Pointer); is_ptr_type {
+						if ptr_type, is_ptr_type := type_from_identifier(types[:], f.type, Type_Pointer); is_ptr_type {
 							f.type = add_type(&types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type
 							})
@@ -140,7 +140,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Outp
 				if override, has_override := config.procedure_type_overrides[override_key]; has_override {
 					
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := get_type_reference(types[:], p.type, Type_Pointer); is_ptr_type {
+						if ptr_type, is_ptr_type := type_from_identifier(types[:], p.type, Type_Pointer); is_ptr_type {
 							p.type = add_type(&types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type
 							})	

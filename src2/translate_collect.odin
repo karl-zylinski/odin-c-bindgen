@@ -205,7 +205,7 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 // TODO: Remove by passing in non-global state to get_type_reference_name
 import_core_c := false
 
-create_type_reference :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Reference {
+create_type_reference :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
 	name := get_type_reference_name(ct)
 
 	if name != "" {
@@ -292,7 +292,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 
 			name := get_cursor_name(child)
 
-			ref: Type_Reference
+			ref: Type_Identifier
 			type_ref_name := get_type_reference_name(param_type)
 
 			if type_ref_name == "" {
@@ -311,7 +311,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 		for i in 0..<num_args {
 			param_type := clang.getArgType(ct, u32(i))
 
-			ref: Type_Reference
+			ref: Type_Identifier
 			type_ref_name := get_type_reference_name(param_type)
 
 			if type_ref_name == "" {
@@ -329,7 +329,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 	result_type := clang.getResultType(ct)
 	result_ref_name := get_type_reference_name(result_type)
 
-	return_type: Type_Reference
+	return_type: Type_Identifier
 
 	if result_type.kind != .Void {
 		if result_ref_name == "" {
@@ -383,7 +383,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		} else {
 			ptr_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
 			type_ref_name := get_type_reference_name(clang_pointee_type)
-			ref: Type_Reference
+			ref: Type_Identifier
 
 			if type_ref_name == "" {
 				ref = create_type_recursive(clang_pointee_type, tcs)
@@ -404,7 +404,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				ref: Type_Reference
+				ref: Type_Identifier
 				sct := clang.getCursorType(sc)
 				
 				is_func_ptr := false
@@ -540,7 +540,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		is_func_ptr := false
 
-		ref: Type_Reference
+		ref: Type_Identifier
 		if underlying.kind == .Pointer {
 			pointee := clang.getPointeeType(underlying)
 
@@ -565,7 +565,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		array_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
 		clang_element_type := clang.getArrayElementType(ct)
 
-		ref: Type_Reference
+		ref: Type_Identifier
 		type_ref_name := get_type_reference_name(clang_element_type)
 
 		if type_ref_name == "" {
