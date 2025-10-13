@@ -23,10 +23,10 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	}
 
 	pfln(sb, "package %v", package_name)
-	pln(sb, "")
 
 	if o.import_core_c {
-		pln(sb, "import core_c \"core:c\"\n")
+		pln(sb, "")
+		pln(sb, "import core_c \"core:c\"")
 	}
 
 	p(sb, o.top_code)
@@ -34,7 +34,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	// None if previous decls wasn't a proc
 	inside_foreign_block: bool
 	foreign_block_calling_conv: Calling_Convention
-	prev_multiline := false
+	prev_multiline := true
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -63,7 +63,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			}
 
 			if start_foreign_block {
-				pfln(sb, "@(default_calling_convention=\"%s\")\nforeign lib {{", calling_convention_string(proc_type.calling_convention))
+				pfln(sb, "\n@(default_calling_convention=\"%s\")\nforeign lib {{", calling_convention_string(proc_type.calling_convention))
 			}
 		} else {
 			if inside_foreign_block {

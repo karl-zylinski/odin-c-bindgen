@@ -13,3 +13,8 @@
 perhaps rename files like so:
 translate_collect -> clang_extract (if all clang things are in there)
 translate_proces  -> intermediate_process (unsure about this one)
+
+
+check old bindgen for c, libc and posix import rules
+
+add vetting of odin keywords (VET_NAMES in old bindings)
