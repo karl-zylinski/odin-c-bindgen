@@ -50,16 +50,14 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 
 	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
+	tcs: Translate_Collect_State
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
 	// children. That way we can use this lookup to find arrays of children and iterate them normally.
-	children_lookup: Cursor_Children_Map
-	build_cursor_children_lookup(root_cursor, &children_lookup)
+	build_cursor_children_lookup(root_cursor, &tcs.children_lookup)
 
-	root_children := children_lookup[root_cursor]
+	root_children := tcs.children_lookup[root_cursor]
 
-	type_lookup: map[clang.Type]Type_Index
-	tcs: Translate_Collect_State
 	append(&tcs.types, Type_Unknown {})
 
 	for c in root_children {
@@ -69,7 +67,7 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 			continue
 		}
 
-		create_declaration(&tcs.declarations, &type_lookup, &tcs.types, c, children_lookup)
+		create_declaration(&tcs, c)
 	}
 
 	source_size: uint
@@ -95,6 +93,7 @@ Translate_Collect_State :: struct {
 	declarations: [dynamic]Declaration,
 	type_lookup: map[clang.Type]Type_Index,
 	types: [dynamic]Type,
+	children_lookup: Cursor_Children_Map,
 	import_core_c: bool,
 }
 
@@ -124,7 +123,7 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
-create_declaration :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^map[clang.Type]Type_Index, types: ^[dynamic]Type, c: clang.Cursor, children_lookup: Cursor_Children_Map) {
+create_declaration :: proc(tcs: ^Translate_Collect_State, c: clang.Cursor) {
 	if clang.Cursor_isAnonymous(c) == 1 {
 		return
 	}
@@ -136,62 +135,62 @@ create_declaration :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^ma
 	// Struct and union is the same, only difference is that the `Type_Struct` will get `raw_union`
 	// set to true.
 	case .StructDecl, .UnionDecl:
-		ti := create_type_recursive(ct, children_lookup, type_lookup, types)
+		ti := create_type_recursive(ct, tcs.children_lookup, &tcs.type_lookup, &tcs.types)
 
 		if ti == TYPE_INDEX_NONE {
 			log.errorf("Unknown type: %v", ct)
 			return
 		}
 
-		append(declarations, Declaration {
+		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			type = ti,
 			name = get_cursor_name(c),
 		})
 
-		children := children_lookup[c]
+		children := tcs.children_lookup[c]
 
 		for cc in children {
-			create_declaration(declarations, type_lookup, types, cc, children_lookup)
+			create_declaration(tcs, cc)
 		}
 
 	case .TypedefDecl:
-		ti := create_type_recursive(ct, children_lookup, type_lookup, types)
+		ti := create_type_recursive(ct, tcs.children_lookup, &tcs.type_lookup, &tcs.types)
 
 		if ti == TYPE_INDEX_NONE {
 			log.errorf("Unknown type: %v", ct)
 			return
 		}
 
-		append(declarations, Declaration {
+		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			type = ti,
 			name = get_cursor_name(c),
 		})
 		
 	case .EnumDecl:
-		ti := create_type_recursive(ct, children_lookup, type_lookup, types)
+		ti := create_type_recursive(ct, tcs.children_lookup, &tcs.type_lookup, &tcs.types)
 
 		if ti == TYPE_INDEX_NONE {
 			log.errorf("Unknown type: %v", ct)
 			return
 		}
 
-		append(declarations, Declaration {
+		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			type = ti,
 			name = get_cursor_name(c),
 		})
 		
 	case .FunctionDecl:
-		ti := create_proc_type(children_lookup[c], ct, children_lookup, type_lookup, types)
+		ti := create_proc_type(tcs.children_lookup[c], ct, tcs.children_lookup, &tcs.type_lookup, &tcs.types)
 
 		if ti == TYPE_INDEX_NONE {
 			log.errorf("Unknown type: %v", ct)
 			return
 		}
 
-		append(declarations, Declaration {
+		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			type = ti,
 			name = get_cursor_name(c),
