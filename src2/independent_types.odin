@@ -15,6 +15,7 @@ Type_Identifier :: union  {
 	Type_Index,
 }
 
+// Just an index into an array of types. Use to point out the definition of another type.
 Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
