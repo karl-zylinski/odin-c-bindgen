@@ -190,9 +190,34 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 	t_enum := &t.(Type_Enum)
 
 	pfln(b, "enum %v {{", t_enum.storage_type)
+
+	overlap_length := 0
+
+	if len(t_enum.members) > 1 {
+		overlap_length_source := t_enum.members[0].name
+		overlap_length = len(overlap_length_source)
+
+		for idx in 1..<len(t_enum.members) {
+			mn := t_enum.members[idx].name
+			length := strings.prefix_length(mn, overlap_length_source)
+
+			if length < overlap_length {
+				overlap_length = length
+				overlap_length_source = mn
+			}
+		}
+	}
+
 	for &m in t_enum.members {
 		output_indent(b, indent + 1)
-		pf(b, "%s", m.name)
+		name_without_overlap := m.name[overlap_length:]
+
+		if len(name_without_overlap) == 0 {
+			pf(b, "%s", m.name)
+		} else {
+			pf(b, "%s", name_without_overlap)
+		}
+
 		pf(b, " = %v", m.value)
 		p(b, ",\n")
 	}
