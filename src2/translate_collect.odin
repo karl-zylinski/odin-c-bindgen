@@ -77,7 +77,7 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 		declarations = tcs.declarations[:],
 		types = tcs.types[:],
 		source = strings.string_from_ptr((^u8)(source), int(source_size)),
-		import_core_c = import_core_c,
+		import_core_c = tcs.import_core_c,
 	}, true
 }
 
@@ -202,21 +202,7 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 	return clang.isConstQualifiedType(ct) == 1 && (ct.kind == .Char_S || ct.kind == .SChar)
 }
 
-// TODO: Remove by passing in non-global state to get_type_reference_name
-import_core_c := false
-
-// 
-get_named_identifier_or_create_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
-	name := get_type_reference_name(ct)
-
-	if name != "" {
-		return name
-	}
-
-	return create_type_recursive(ct, tcs)
-}
-
-get_type_reference_name :: proc(ct: clang.Type) -> string {
+get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
 	#partial switch ct.kind {
 	case .Bool:
 		return "bool"
@@ -261,7 +247,7 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 			name := get_cursor_name(ctc)
 
 			if name == "va_list" {
-				import_core_c = true
+				tcs.import_core_c = true
 				return "core_c.va_list"
 			}
 
@@ -269,10 +255,11 @@ get_type_reference_name :: proc(ct: clang.Type) -> string {
 		}
 
 	case .Elaborated:
-		return get_type_reference_name(clang.Type_getNamedType(ct))
+		return get_type_name_or_create_anon_type(clang.Type_getNamedType(ct), tcs)
 	}
 
-	return ""
+	// No name found! Create a real type definition (used by anonymous types etc)
+	return create_type_recursive(ct, tcs)
 }
 
 // This is a separate proc because we call it both from create_type_recursive and from
@@ -294,7 +281,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
-				type = get_named_identifier_or_create_type(param_type, tcs),
+				type = get_type_name_or_create_anon_type(param_type, tcs),
 			})
 		}
 	} else {
@@ -303,7 +290,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			param_type := clang.getArgType(ct, u32(i))
 
 			append(&params, Type_Procedure_Parameter {
-				type = get_named_identifier_or_create_type(param_type, tcs),
+				type = get_type_name_or_create_anon_type(param_type, tcs),
 			})
 		}
 	}
@@ -312,7 +299,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 	result_type_id: Type_Identifier
 
 	if result_ct.kind != .Void {
-		result_type_id = get_named_identifier_or_create_type(result_ct, tcs)
+		result_type_id = get_type_name_or_create_anon_type(result_ct, tcs)
 	}
 
 	type_definition := Type_Procedure {
@@ -358,7 +345,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			to_add = Type_CString{}
 		} else {
 			ptr_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
-			pointing_to_id := get_named_identifier_or_create_type(clang_pointee_type, tcs)
+			pointing_to_id := get_type_name_or_create_anon_type(clang_pointee_type, tcs)
 			tcs.types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointing_to_id }
 			return ptr_type_idx
 		}
@@ -387,7 +374,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				}
 
 				if !is_func_ptr  {
-					type_id = get_named_identifier_or_create_type(sct, tcs)
+					type_id = get_type_name_or_create_anon_type(sct, tcs)
 				}
 
 				name := get_cursor_name(sc)
@@ -513,7 +500,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		}
 
 		if !is_func_ptr {
-			type_id = get_named_identifier_or_create_type(underlying, tcs)
+			type_id = get_type_name_or_create_anon_type(underlying, tcs)
 		}
 
 		type_definition := Type_Alias {
@@ -528,7 +515,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		clang_element_type := clang.getArrayElementType(ct)
 
 		type_definition := Type_Fixed_Array {
-			element_type = get_named_identifier_or_create_type(clang_element_type, tcs),
+			element_type = get_type_name_or_create_anon_type(clang_element_type, tcs),
 			size = int(clang.getArraySize(ct)),
 		}
 
