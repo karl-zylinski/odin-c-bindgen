@@ -12,7 +12,19 @@ import "core:os"
 import "base:runtime"
 
 @(private="package")
-translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Output_State {
+Translate_Process_Result :: struct {
+	decls: []Declaration,
+	types: []Type,
+
+	// Comment at top of file
+	top_comment: string,
+	top_code: string,
+
+	import_core_c: bool,
+}
+
+@(private="package")
+translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Translate_Process_Result {
 	types := slice.to_dynamic(tcr.types)
 
 	// Replace types

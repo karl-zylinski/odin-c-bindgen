@@ -10,36 +10,40 @@ import "core:fmt"
 import "core:strings"
 import "core:log"
 
+Output_Input :: Translate_Process_Result
+
 @(private="package")
-output :: proc(fr: Output_State, filename: string, package_name: string) {
+output :: proc(o: Output_Input, filename: string, package_name: string) {
 	ensure(filename != "")
 	ensure(package_name != "")
 	builder := strings.builder_make()
 	sb := &builder
 
-	if fr.top_comment != "" {
-		pln(sb, fr.top_comment)
+	if o.top_comment != "" {
+		pln(sb, o.top_comment)
 	}
 
 	pfln(sb, "package %v", package_name)
 	pln(sb, "")
 
-	if fr.import_core_c {
+	if o.import_core_c {
 		pln(sb, "import core_c \"core:c\"\n")
 	}
 
-	p(sb, fr.top_code)
+	p(sb, o.top_code)
 
 	prev_is_proc := false
 
-	fr_decls_loop: for &d in fr.decls {
-		rhs := get_type_string(fr.types, d.type)
+	fr_decls_loop: for &d in o.decls {
+		rhs_builder := strings.builder_make()
+		parse_type_build(o.types, d.type, &rhs_builder, 0)
+		rhs := strings.to_string(rhs_builder)
 
 		if rhs == d.name {
 			continue
 		}
 
-		_, is_proc := fr.types[d.type].(Type_Procedure)
+		_, is_proc := o.types[d.type].(Type_Procedure)
 
 
 		if is_proc {
@@ -298,11 +302,4 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 		pf(b, "bit_set[%v; i32]", enum_type_str)	
 	}
-}
-
-get_type_string :: proc(types: []Type, idx: Type_Index) -> string {
-	// For getting function parameter names: https://stackoverflow.com/questions/79356416/how-can-i-get-the-argument-names-of-a-function-types-argument-list
-	b := strings.builder_make()
-	parse_type_build(types, idx, &b, 0)
-	return strings.to_string(b)
 }

@@ -9,5 +9,5 @@
 
 
 perhaps rename files like so:
-translate_collect -> clang_extract
+translate_collect -> clang_extract (if all clang things are in there)
 translate_proces  -> intermediate_process (unsure about this one)
