@@ -34,6 +34,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	// None if previous decls wasn't a proc
 	inside_foreign_block: bool
 	foreign_block_calling_conv: Calling_Convention
+	prev_multiline := false
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -83,13 +84,17 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			p(sb, "\t")
 		}
 
+		multiline := strings.contains_rune(rhs, '\n')
+
+		if multiline || prev_multiline {
+			p(sb, "\n")
+		}
+
 		pf(sb, "%v :: %v", d.name, rhs)
 
-		if is_proc {
-			p(sb, "\n")
-		} else {
-			p(sb, "\n\n")
-		}
+		p(sb, "\n")
+
+		prev_multiline = multiline
 	}
 
 	if inside_foreign_block {
