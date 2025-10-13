@@ -6,3 +6,8 @@
 
 - new examples:
 	- jolt + raylib3d
+
+
+perhaps rename files like so:
+translate_collect -> clang_extract
+translate_proces  -> intermediate_process (unsure about this one)
