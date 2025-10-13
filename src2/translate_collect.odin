@@ -67,7 +67,7 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 			continue
 		}
 
-		create_declaration(&tcs, c)
+		create_declaration(c, &tcs)
 	}
 
 	source_size: uint
@@ -123,7 +123,7 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
-create_declaration :: proc(tcs: ^Translate_Collect_State, c: clang.Cursor) {
+create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	if clang.Cursor_isAnonymous(c) == 1 {
 		return
 	}
@@ -151,7 +151,7 @@ create_declaration :: proc(tcs: ^Translate_Collect_State, c: clang.Cursor) {
 		children := tcs.children_lookup[c]
 
 		for cc in children {
-			create_declaration(tcs, cc)
+			create_declaration(cc, tcs)
 		}
 
 	case .TypedefDecl:
