@@ -9,7 +9,6 @@ import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
 import "core:os"
-import "base:runtime"
 
 @(private="package")
 Translate_Process_Result :: struct {
@@ -49,7 +48,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 
 		if override {
 			d.type = add_type(&types, Type_Override {
-				definition_text = override_definition_text
+				definition_text = override_definition_text,
 			})
 		}
 	}
@@ -136,12 +135,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := type_from_identifier(types[:], f.type, Type_Pointer); is_ptr_type {
 							f.type = add_type(&types, Type_Multipointer {
-								pointed_to_type = ptr_type.pointed_to_type
+								pointed_to_type = ptr_type.pointed_to_type,
 							})
 						}	
 					} else {
 						f.type = add_type(&types, Type_Override {
-							definition_text = override
+							definition_text = override,
 						})
 					}
 				}
@@ -154,12 +153,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := type_from_identifier(types[:], p.type, Type_Pointer); is_ptr_type {
 							p.type = add_type(&types, Type_Multipointer {
-								pointed_to_type = ptr_type.pointed_to_type
+								pointed_to_type = ptr_type.pointed_to_type,
 							})	
 						}	
 					} else {
 						p.type = add_type(&types, Type_Override {
-							definition_text = override
+							definition_text = override,
 						})
 					}
 				}

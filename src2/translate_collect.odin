@@ -2,9 +2,7 @@
 package bindgen2
 
 import clang "../libclang"
-import "core:fmt"
 import "core:log"
-import "core:slice"
 import "core:strings"
 
 @(private="package")
@@ -503,7 +501,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		}
 
 		type_definition := Type_Alias {
-			aliased_type = type_id
+			aliased_type = type_id,
 		}
 		
 		tcs.types[alias_type_idx] = type_definition

@@ -5,8 +5,6 @@
 // will use these types. The outputter does not, and should not, have any knowledge of clang.
 package bindgen2
 
-import "core:slice"
-
 // A type identifier is either a string or an index that points to another type. The string used to
 // refer to a type just by its name (for example, when a struct field refers to some other type).
 // The index is often used when a struct contains a field of anonymous type.
