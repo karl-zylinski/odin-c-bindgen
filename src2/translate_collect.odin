@@ -205,7 +205,8 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 // TODO: Remove by passing in non-global state to get_type_reference_name
 import_core_c := false
 
-create_type_reference :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
+// 
+get_named_identifier_or_create_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
 	name := get_type_reference_name(ct)
 
 	if name != "" {
@@ -289,21 +290,11 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			}
 
 			param_type := clang.getCursorType(child)
-
 			name := get_cursor_name(child)
-
-			ref: Type_Identifier
-			type_ref_name := get_type_reference_name(param_type)
-
-			if type_ref_name == "" {
-				ref = create_type_recursive(param_type, tcs)
-			} else {
-				ref = type_ref_name
-			}
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
-				type = ref,
+				type = get_named_identifier_or_create_type(param_type, tcs),
 			})
 		}
 	} else {
@@ -311,37 +302,22 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 		for i in 0..<num_args {
 			param_type := clang.getArgType(ct, u32(i))
 
-			ref: Type_Identifier
-			type_ref_name := get_type_reference_name(param_type)
-
-			if type_ref_name == "" {
-				ref = create_type_recursive(param_type, tcs)
-			} else {
-				ref = type_ref_name
-			}
-
 			append(&params, Type_Procedure_Parameter {
-				type = ref,
+				type = get_named_identifier_or_create_type(param_type, tcs),
 			})
 		}
 	}
 
-	result_type := clang.getResultType(ct)
-	result_ref_name := get_type_reference_name(result_type)
+	result_ct := clang.getResultType(ct)
+	result_type_id: Type_Identifier
 
-	return_type: Type_Identifier
-
-	if result_type.kind != .Void {
-		if result_ref_name == "" {
-			return_type = create_type_recursive(result_type, tcs)
-		} else {
-			return_type = result_ref_name
-		}
+	if result_ct.kind != .Void {
+		result_type_id = get_named_identifier_or_create_type(result_ct, tcs)
 	}
 
 	type_definition := Type_Procedure {
 		parameters = params[:],
-		return_type = return_type,
+		result_type = result_type_id,
 	}
 
 	tcs.types[proc_type] = type_definition
@@ -382,16 +358,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			to_add = Type_CString{}
 		} else {
 			ptr_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
-			type_ref_name := get_type_reference_name(clang_pointee_type)
-			ref: Type_Identifier
-
-			if type_ref_name == "" {
-				ref = create_type_recursive(clang_pointee_type, tcs)
-			} else {
-				ref = type_ref_name
-			}
-
-			tcs.types[ptr_type_idx] = Type_Pointer { pointed_to_type = ref }
+			pointing_to_id := get_named_identifier_or_create_type(clang_pointee_type, tcs)
+			tcs.types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointing_to_id }
 			return ptr_type_idx
 		}
 	case .Record:
@@ -404,7 +372,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				ref: Type_Identifier
+				type_id: Type_Identifier
 				sct := clang.getCursorType(sc)
 				
 				is_func_ptr := false
@@ -413,24 +381,18 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 					pointee := clang.getPointeeType(sct)
 
 					if pointee.kind == .FunctionProto {
-						ref = create_proc_type(tcs.children_lookup[sc], pointee, tcs)
+						type_id = create_proc_type(tcs.children_lookup[sc], pointee, tcs)
 						is_func_ptr = true
 					}
 				}
 
 				if !is_func_ptr  {
-					type_ref_name := get_type_reference_name(sct)
-
-					if type_ref_name == "" {
-						ref = create_type_recursive(sct, tcs)
-					} else {
-						ref = type_ref_name
-					}
+					type_id = get_named_identifier_or_create_type(sct, tcs)
 				}
 
 				name := get_cursor_name(sc)
 				
-				if ref == nil {
+				if type_id == nil {
 					log.errorf("Unresolved struct field type: %v", sc)
 				}
 
@@ -449,7 +411,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 				append(&fields, Type_Struct_Field {
 					name = name,
-					type = ref,
+					type = type_id,
 					comment_before = comment_before,
 					comment_on_right = comment_on_right,
 				})
@@ -540,22 +502,22 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		is_func_ptr := false
 
-		ref: Type_Identifier
+		type_id: Type_Identifier
 		if underlying.kind == .Pointer {
 			pointee := clang.getPointeeType(underlying)
 
 			if pointee.kind == .FunctionProto {
-				ref = create_proc_type(tcs.children_lookup[c], pointee, tcs)
+				type_id = create_proc_type(tcs.children_lookup[c], pointee, tcs)
 				is_func_ptr = true
 			}
 		}
 
 		if !is_func_ptr {
-			ref = create_type_reference(underlying, tcs)
+			type_id = get_named_identifier_or_create_type(underlying, tcs)
 		}
 
 		type_definition := Type_Alias {
-			aliased_type = ref
+			aliased_type = type_id
 		}
 		
 		tcs.types[alias_type_idx] = type_definition
@@ -565,17 +527,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		array_type_idx := reserve_type(ct, &tcs.type_lookup, &tcs.types)
 		clang_element_type := clang.getArrayElementType(ct)
 
-		ref: Type_Identifier
-		type_ref_name := get_type_reference_name(clang_element_type)
-
-		if type_ref_name == "" {
-			ref = create_type_recursive(clang_element_type, tcs)
-		} else {
-			ref = type_ref_name
-		}
-
 		type_definition := Type_Fixed_Array {
-			element_type = ref,
+			element_type = get_named_identifier_or_create_type(clang_element_type, tcs),
 			size = int(clang.getArraySize(ct)),
 		}
 

@@ -66,7 +66,7 @@ Type_Procedure_Parameter :: struct {
 
 Type_Procedure :: struct {
 	parameters: []Type_Procedure_Parameter,
-	return_type: Type_Identifier,
+	result_type: Type_Identifier,
 }
 
 Type_CString :: struct {}

@@ -237,9 +237,9 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 
 	pf(b, ")")
 
-	if tp.return_type != nil {
+	if tp.result_type != nil {
 		p(b, " -> ")
-		output_type_identifier(types, tp.return_type, b, indent)
+		output_type_identifier(types, tp.result_type, b, indent)
 	}
 }
 
