@@ -29,7 +29,11 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 		pln(sb, "import core_c \"core:c\"")
 	}
 
-	p(sb, o.top_code)
+	if o.top_code != "" {
+		p(sb, "\n")
+		p(sb, o.top_code)
+		p(sb, "\n")
+	}
 
 	// None if previous decls wasn't a proc
 	inside_foreign_block: bool

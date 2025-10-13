@@ -24,6 +24,8 @@ enum Wa {
 	Three,
 };
 
+#define Test5 Test4
+
 struct Test1 {
 	int x;
 

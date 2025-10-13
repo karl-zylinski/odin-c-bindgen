@@ -4,6 +4,7 @@ package bindgen2
 import clang "../libclang"
 import "core:log"
 import "core:strings"
+import "core:unicode"
 
 @(private="package")
 Translate_Collect_Result :: struct {
@@ -56,7 +57,12 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 
 	file := clang.getFile(unit, filename_cstr)
 	root_cursor := clang.getTranslationUnitCursor(unit)
-	tcs: Translate_Collect_State
+	source_size: uint
+	source := clang.getFileContents(unit, file, &source_size)
+
+	tcs := Translate_Collect_State {
+		source = strings.string_from_ptr((^u8)(source), int(source_size)),
+	}
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
 	// children. That way we can use this lookup to find arrays of children and iterate them normally.
@@ -76,13 +82,10 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 		create_declaration(c, &tcs)
 	}
 
-	source_size: uint
-	source := clang.getFileContents(unit, file, &source_size)
-
 	return {
 		declarations = tcs.declarations[:],
 		types = tcs.types[:],
-		source = strings.string_from_ptr((^u8)(source), int(source_size)),
+		source = tcs.source,
 		import_core_c = tcs.import_core_c,
 	}, true
 }
@@ -92,6 +95,7 @@ Translate_Collect_State :: struct {
 	type_lookup: map[clang.Type]Type_Index,
 	types: [dynamic]Type,
 	children_lookup: Cursor_Children_Map,
+	source: string,
 	import_core_c: bool,
 }
 
@@ -190,6 +194,51 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
 			type = ti,
+			name = get_cursor_name(c),
+		})
+
+	case .MacroDefinition:
+		if clang.Cursor_isMacroBuiltin(c) == 1 {
+			return
+		}
+
+		source_range := clang.getCursorExtent(c)
+		start := clang.getRangeStart(source_range)
+		start_offset: u32
+		clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
+		end := clang.getRangeEnd(source_range)
+		end_offset: u32
+		clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
+		macro_source := tcs.source[start_offset:end_offset]
+
+		first_space_seen := false
+		name_end: int
+		whitespace_after_name: int
+
+		for c, i in macro_source {
+			if unicode.is_white_space(c) {
+				if !first_space_seen {
+					name_end = i
+					first_space_seen = true
+				}
+
+				whitespace_after_name += 1
+			} else {
+				if first_space_seen {
+					break
+				}
+			}
+		}
+
+		idx := reserve_type(ct, tcs)
+
+		tcs.types[idx] = Type_Override {
+			macro_source[name_end + whitespace_after_name:]
+		}
+
+		append(&tcs.declarations, Declaration {
+			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			type = idx,
 			name = get_cursor_name(c),
 		})
 	}
