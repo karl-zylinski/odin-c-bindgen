@@ -104,7 +104,10 @@ create_declaration :: proc(declarations: ^[dynamic]Declaration, type_lookup: ^ma
 	ct := clang.getCursorType(c)
 
 	#partial switch c.kind {
-	case .StructDecl:
+
+	// Struct and union is the same, only difference is that the `Type_Struct` will get `raw_union`
+	// set to true.
+	case .StructDecl, .UnionDecl:
 		ti := create_type_recursive(ct, children_lookup, type_lookup, types)
 
 		if ti == TYPE_INDEX_NONE {
@@ -356,7 +359,6 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 		}
 	case .Record:
 		c := clang.getTypeDeclaration(ct)
-
 		struct_type_idx := reserve_type(ct, type_lookup, types)
 		struct_children := children_lookup[c]
 		fields: [dynamic]Type_Struct_Field
@@ -419,9 +421,11 @@ create_type_recursive :: proc(ct: clang.Type, children_lookup: Cursor_Children_M
 
 		type_definition := Type_Struct {
 			fields = fields[:],
+			raw_union = c.kind == .UnionDecl,
 		}
 
 		types[struct_type_idx] = type_definition
+
 		return struct_type_idx
 	case .Enum:
 		enum_type_idx := reserve_type(ct, type_lookup, types)

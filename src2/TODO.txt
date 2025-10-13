@@ -1,5 +1,4 @@
 - add macros
-- add unions
 - proc spacing, comments etc
 - enum side comments
 - enum spacing alignment

@@ -147,7 +147,14 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 		return
 	}
 
-	pln(b, "struct {")
+	p(b, "struct")
+
+	if t_struct.raw_union {
+		p(b, " #raw_union")
+	}
+
+	pln(b, " {")
+
 	for &f, fi in t_struct.fields {
 		if f.comment_before != "" {
 			output_indent(b, indent + 1)

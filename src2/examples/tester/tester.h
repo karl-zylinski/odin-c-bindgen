@@ -31,6 +31,11 @@ struct Test1 {
 
 	enum Wa w;
 
+	union {
+		int zz;
+		int oo;
+	} Didido;
+
 	struct Di {
 		int z;
 	} bam;
@@ -40,6 +45,12 @@ struct Test1 {
 		Dodo,
 	} ba;
 };
+
+union Un {
+	int x;
+	struct Test1 t;
+	float y;
+}
 
 typedef struct Test1 Test3;
 
