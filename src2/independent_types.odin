@@ -105,8 +105,10 @@ Declaration :: struct {
 	comment_before: string,
 }
 
-type_from_identifier :: proc(types: []Type, ref: Type_Identifier, $T: typeid) -> (T, bool) {
-	if idx, is_idx := ref.(Type_Index); is_idx {
+// If the identifier refers to another type (it's a Type_Index), then this will return a conrete
+// type definition, given that the type is of type T.
+type_from_identifier :: proc(types: []Type, id: Type_Identifier, $T: typeid) -> (T, bool) {
+	if idx, is_idx := id.(Type_Index); is_idx {
 		return types[idx].(T)
 	}
 
