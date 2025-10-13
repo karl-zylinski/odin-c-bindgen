@@ -114,9 +114,3 @@ type_from_identifier :: proc(types: []Type, id: Type_Identifier, $T: typeid) -> 
 
 	return {}, false
 }
-
-add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {
-	idx := len(array)
-	append(array, t)
-	return Type_Index(idx)
-}

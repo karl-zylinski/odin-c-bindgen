@@ -200,6 +200,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Outp
 	}
 }
 
+add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {
+	idx := len(array)
+	append(array, t)
+	return Type_Index(idx)
+}
+
 // Extracts any comment at the top of the source file. These will be put above the package line in
 // the bindings.
 extract_top_comment :: proc(src: string) -> string {
