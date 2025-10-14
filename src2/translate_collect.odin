@@ -7,6 +7,7 @@ import "core:log"
 import "core:strings"
 import "core:unicode"
 import "core:unicode/utf8"
+import "core:fmt"
 
 @(private="package")
 Translate_Collect_Result :: struct {
@@ -21,9 +22,16 @@ Translate_Collect_Result :: struct {
 // and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
 // that is deferred to `translate_process`.
 @(private="package", require_results)
-translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) {
-	clang_args := []cstring {
-		"-fparse-all-comments",
+translate_collect :: proc(filename: string, config: Config) -> (Translate_Collect_Result, bool) {
+	clang_args: [dynamic]cstring
+	append(&clang_args, "-fparse-all-comments")
+
+	for &include in config.clang_include_paths {
+		append(&clang_args, fmt.ctprintf("-I%v", include))
+	}
+
+	for k, v in config.clang_defines {
+		append(&clang_args, fmt.ctprintf("-D%s=%s", k, v))
 	}
 
 	// Clang uses 1 and 0 instead of true and false. The index is a set of translation units.

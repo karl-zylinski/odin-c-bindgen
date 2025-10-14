@@ -109,7 +109,7 @@ main :: proc() {
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
 			
-			collect_res, collect_ok := translate_collect(input_filename)
+			collect_res, collect_ok := translate_collect(input_filename, config)
 
 			if !collect_ok {
 				continue

@@ -25,6 +25,9 @@ Config :: struct {
 	remove_type_prefix: string,
 	remove_function_prefix: string,
 	remove_macro_prefix: string,
+	
+	clang_include_paths: []string,
+	clang_defines: map[string]string,
 
 	force_ada_case_types: bool,
 }
