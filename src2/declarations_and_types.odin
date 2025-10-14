@@ -8,7 +8,7 @@ package bindgen2
 // A type identifier is either a string or an index that points to another type. The string used to
 // refer to a type just by its name (for example, when a struct field refers to some other type).
 // The index is often used when a struct contains a field of anonymous type.
-Type_Identifier :: union  {
+Definition :: union  {
 	string,
 	Type_Index,
 }
@@ -20,7 +20,7 @@ TYPE_INDEX_NONE :: Type_Index(0)
 
 Declaration :: struct {
 	name: string,
-	def: Type_Identifier,
+	def: Definition,
 	comment_before: string,
 }
 
@@ -41,20 +41,20 @@ Type :: union #no_nil {
 }
 
 Type_Pointer :: struct {
-	pointed_to_type: Type_Identifier,
+	pointed_to_type: Definition,
 }
 
 Type_Multipointer :: struct {
-	pointed_to_type: Type_Identifier,
+	pointed_to_type: Definition,
 }
 
 Type_Alias :: struct {
-	aliased_type: Type_Identifier,
+	aliased_type: Definition,
 }
 
 Type_Struct_Field :: struct {
 	name: string,
-	type: Type_Identifier,
+	type: Definition,
 	type_overrride: string,
 	comment_before: string,
 	comment_on_right: string,
@@ -80,22 +80,22 @@ Type_Unknown :: struct {}
 Type_Raw_Pointer :: struct {}
 
 Type_Bit_Set :: struct {
-	enum_type: Type_Identifier,
+	enum_type: Definition,
 }
 
 Type_Fixed_Array :: struct {
-	element_type: Type_Identifier,
+	element_type: Definition,
 	size: int,
 }
 
 Type_Procedure_Parameter :: struct {
 	name: string,
-	type: Type_Identifier,
+	type: Definition,
 }
 
 Type_Procedure :: struct {
 	parameters: []Type_Procedure_Parameter,
-	result_type: Type_Identifier,
+	result_type: Definition,
 	calling_convention: Calling_Convention,
 }
 
@@ -112,10 +112,8 @@ Type_Override :: struct {
 	definition_text: string,
 }
 
-// If the identifier refers to another type (it's a Type_Index), then this will return a conrete
-// type definition, given that the type is of type T.
-type_from_identifier :: proc(types: []Type, id: Type_Identifier, $T: typeid) -> (T, bool) {
-	if idx, is_idx := id.(Type_Index); is_idx {
+resolve_type_definition :: proc(types: []Type, def: Definition, $T: typeid) -> (T, bool) {
+	if idx, is_idx := def.(Type_Index); is_idx {
 		return types[idx].(T)
 	}
 

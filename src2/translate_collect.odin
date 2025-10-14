@@ -268,7 +268,7 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 	return clang.isConstQualifiedType(ct) == 1 && (ct.kind == .Char_S || ct.kind == .SChar)
 }
 
-get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Identifier {
+get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Definition {
 	#partial switch ct.kind {
 	case .Bool:
 		return "bool"
@@ -362,7 +362,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 	}
 
 	result_ct := clang.getResultType(ct)
-	result_type_id: Type_Identifier
+	result_type_id: Definition
 
 	if result_ct.kind != .Void {
 		result_type_id = get_type_name_or_create_anon_type(result_ct, tcs)
@@ -435,7 +435,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			sc_kind := clang.getCursorKind(sc)
 
 			if sc_kind == .FieldDecl {
-				type_id: Type_Identifier
+				type_id: Definition
 				sct := clang.getCursorType(sc)
 				
 				is_func_ptr := false
@@ -565,7 +565,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		is_func_ptr := false
 
-		type_id: Type_Identifier
+		type_id: Definition
 		if underlying.kind == .Pointer {
 			pointee := clang.getPointeeType(underlying)
 

@@ -42,14 +42,14 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
-		output_type_identifier(o.types, d.def, &rhs_builder, 0)
+		output_definition(o.types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)
 
 		if rhs == d.name {
 			continue
 		}
 
-		proc_type, is_proc := type_from_identifier(o.types, d.def, Type_Procedure)
+		proc_type, is_proc := resolve_type_definition(o.types, d.def, Type_Procedure)
 
 		if is_proc {
 			start_foreign_block := false
@@ -120,7 +120,7 @@ pfln :: fmt.sbprintfln
 pf :: fmt.sbprintf
 pln :: fmt.sbprintln
 
-output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	t_struct := &t.(Type_Struct)
 
@@ -137,7 +137,7 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 	for &f, fi in t_struct.fields {
 		fb := strings.builder_make()
 
-		pf(&fb, "%s: ", f.name)
+		pf(&fb, "%s: ", ensure_name_valid(f.name))
 
 		after_name_padding := longest_name-len(f.name)
 		for _ in 0..<after_name_padding {
@@ -151,7 +151,7 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 			case string:
 				p(&fb, r)
 			case Type_Index:
-				if proc_type, is_proc_type := type_from_identifier(types, r, Type_Procedure); is_proc_type {
+				if proc_type, is_proc_type := resolve_type_definition(types, r, Type_Procedure); is_proc_type {
 					output_procedure_signature(types, proc_type, &fb, indent, explicit_calling_convention = true)
 				} else {
 					parse_type_build(types, r, &fb, indent + 1)
@@ -209,7 +209,7 @@ output_struct_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Bu
 	p(b, "}")
 }
 
-output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+output_enum_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	t_enum := &t.(Type_Enum)
 
@@ -237,9 +237,9 @@ output_enum_declaration :: proc(types: []Type, idx: Type_Index, b: ^strings.Buil
 		name_without_overlap := m.name[overlap_length:]
 
 		if len(name_without_overlap) == 0 {
-			pf(b, "%s", m.name)
+			pf(b, "%s", ensure_name_valid(m.name))
 		} else {
-			pf(b, "%s", name_without_overlap)
+			pf(b, "%s", ensure_name_valid(name_without_overlap))
 		}
 
 		pf(b, " = %v", m.value)
@@ -264,19 +264,61 @@ calling_convention_string :: proc(calling_convention: Calling_Convention) -> str
 	return "c"
 }
 
-ensure_name_valid :: proc(n: string) -> string {
-	switch n {
-	case "dynamic": return "_dynamic"
-	}
-	return n
+// TODO make sure this contains all Odin keywords
+KEYWORDS :: [?]string {
+	"_rune",
+	"_import",
+	"_foreign",
+	"_package",
+	"_typeid",
+	"_when",
+	"_where",
+	"_in",
+	"_not_in",
+	"_fallthrough",
+	"_defer",
+	"_proc",
+	"_bit_set",
+	"_bit_field",
+	"_map",
+	"_dynamic",
+	"_auto_cast",
+	"_cast",
+	"_transmute",
+	"_distinct",
+	"_using",
+	"_context",
+	"_or_else",
+	"_or_return",
+	"_or_break",
+	"_or_continue",
+	"_asm",
+	"_inline",
+	"_no_inline",
+	"_matrix",
+	"_string",
+	"_string16",
+	"_cstring",
+	"_cstring16",
 }
 
-output_type_identifier :: proc(types: []Type, ri: Type_Identifier, b: ^strings.Builder, indent: int) {
-	switch v in ri {
+// TODO should this happen in translate_process? But then prefix stripping must happen there as well
+ensure_name_valid :: proc(s: string) -> string {
+	for k in KEYWORDS {
+		if s == k[1:] {
+			return k
+		}
+	}
+
+	return s
+}
+
+output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, indent: int) {
+	switch d in def {
 	case string:
-		p(b, ensure_name_valid(v))
+		p(b, ensure_name_valid(d))
 	case Type_Index:
-		parse_type_build(types, v, b, indent)
+		parse_type_build(types, d, b, indent)
 	}
 }
 
@@ -295,10 +337,10 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 		}
 
 		if param.name == "" {
-			output_type_identifier(types, param.type, b, indent)
+			output_definition(types, param.type, b, indent)
 		} else {
 			pf(b, "%s: ", ensure_name_valid(param.name))
-			output_type_identifier(types, param.type, b, indent)
+			output_definition(types, param.type, b, indent)
 		}
 	}
 
@@ -306,7 +348,7 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 
 	if tp.result_type != nil {
 		p(b, " -> ")
-		output_type_identifier(types, tp.result_type, b, indent)
+		output_definition(types, tp.result_type, b, indent)
 	}
 }
 
@@ -318,11 +360,11 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Pointer:
 		p(b, "^")
-		output_type_identifier(types, tv.pointed_to_type, b, indent)
+		output_definition(types, tv.pointed_to_type, b, indent)
 
 	case Type_Multipointer:
 		p(b, "[^]")
-		output_type_identifier(types, tv.pointed_to_type, b, indent)
+		output_definition(types, tv.pointed_to_type, b, indent)
 
 	case Type_CString:
 		p(b, "cstring")
@@ -331,17 +373,17 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		p(b, "rawptr")
 
 	case Type_Struct:
-		output_struct_declaration(types, idx, b, indent)
+		output_struct_definition(types, idx, b, indent)
 
 	case Type_Alias:
-		if proc_type, is_proc_type := type_from_identifier(types, tv.aliased_type, Type_Procedure); is_proc_type {
+		if proc_type, is_proc_type := resolve_type_definition(types, tv.aliased_type, Type_Procedure); is_proc_type {
 			output_procedure_signature(types, proc_type, b, indent, explicit_calling_convention = true)
 		} else {
-			output_type_identifier(types, tv.aliased_type, b, indent)
+			output_definition(types, tv.aliased_type, b, indent)
 		}
 
 	case Type_Enum:
-		output_enum_declaration(types, idx, b, indent)
+		output_enum_definition(types, idx, b, indent)
 
 	case Type_Procedure:
 		output_procedure_signature(types, tv, b, indent)
@@ -349,7 +391,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
-		output_type_identifier(types, tv.element_type, b, indent)
+		output_definition(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
 		enum_type_str, enum_type_is_str := tv.enum_type.(string)
@@ -359,6 +401,6 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", enum_type_str)	
+		pf(b, "bit_set[%v; i32]", ensure_name_valid(enum_type_str))
 	}
 }
