@@ -204,6 +204,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		}
 	}
 
+	slice.sort_by(decls[:], proc(i, j: Declaration) -> bool {
+		return i.original_line < j.original_line
+	})
+
 	return {
 		decls = decls[:],
 		types = types[:],

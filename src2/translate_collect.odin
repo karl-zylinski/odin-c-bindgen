@@ -136,6 +136,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		return
 	}
 
+	name := get_cursor_name(c)
+	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
+	line := get_cursor_location(c).line
+
 	ct := clang.getCursorType(c)
 
 	#partial switch c.kind {
@@ -150,9 +154,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		}
 
 		append(&tcs.declarations, Declaration {
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			comment_before = comment_before,
 			def = ti,
-			name = get_cursor_name(c),
+			name = name,
+			original_line = line,
 		})
 
 		children := tcs.children_lookup[c]
@@ -170,9 +175,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		}
 
 		append(&tcs.declarations, Declaration {
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			comment_before = comment_before,
 			def = ti,
-			name = get_cursor_name(c),
+			name = name,
+			original_line = line,
 		})
 		
 	case .EnumDecl:
@@ -184,9 +190,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		}
 
 		append(&tcs.declarations, Declaration {
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			comment_before = comment_before,
 			def = ti,
-			name = get_cursor_name(c),
+			name = name,
+			original_line = line,
 		})
 		
 	case .FunctionDecl:
@@ -198,9 +205,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		}
 
 		append(&tcs.declarations, Declaration {
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
+			comment_before = comment_before,
 			def = ti,
-			name = get_cursor_name(c),
+			name = name,
+			original_line = line,
 		})
 
 	case .MacroDefinition:
@@ -339,13 +347,14 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			}
 
 			append(&tcs.macros, Raw_Macro {
-				name = get_cursor_name(c),
+				name = name,
 				is_function_like = clang.Cursor_isMacroFunctionLike(c) == 1,
 				tokens = tokens,
 				comment = comment,
 				side_comment = side_comment,
 				whitespace_before_side_comment = side_comment_align_whitespace,
 				whitespace_after_name = whitespace_after_name,
+				original_line = line,
 			})
 		}
 	}

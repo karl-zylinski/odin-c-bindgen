@@ -16,6 +16,7 @@ Raw_Macro :: struct {
 	side_comment: string,
 	whitespace_before_side_comment: int,
 	whitespace_after_name: int,
+	original_line: int,
 }
 
 @(private="package")
@@ -66,6 +67,7 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 				side_comment = m.side_comment,
 				explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,
 				explicit_whitespace_after_name = m.whitespace_after_name,
+				original_line = m.original_line,
 			})
 		}
 	}

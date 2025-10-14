@@ -16,6 +16,8 @@
 	- jolt + raylib3d
 
 
+- add config option for putting all procs at bottom (default is where they are supposed to be in code)
+
 perhaps rename files like so:
 translate_collect -> clang_extract (if all clang things are in there)
 translate_proces  -> intermediate_process (unsure about this one)

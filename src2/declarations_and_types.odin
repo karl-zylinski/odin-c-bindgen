@@ -24,6 +24,8 @@ Declaration :: struct {
 	comment_before: string,
 	side_comment: string,
 
+	original_line: int,
+
 	// TODO can we get these two for all fields
 
 	// Only used for macros.
