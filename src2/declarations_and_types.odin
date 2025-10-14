@@ -36,6 +36,8 @@ Type :: union #no_nil {
 	Type_Alias,
 	Type_Fixed_Array,
 	Type_Procedure,
+	
+	// rename to Type_Literal and use for everything that has "plan text value"
 	Type_Override,
 }
 

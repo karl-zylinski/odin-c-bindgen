@@ -23,6 +23,10 @@
 					"name": "raylib",
 					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen src2/examples/raylib",
 				},
+				{
+					"name": "tester",
+					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen src2/examples/tester",
+				},
 			],
 		}
 	],

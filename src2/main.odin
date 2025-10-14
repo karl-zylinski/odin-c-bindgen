@@ -115,10 +115,12 @@ main :: proc() {
 				continue
 			}
 
-			fr := translate_process(collect_res, config)
+			translate_macros(collect_res.macros)
+
+			process_res := translate_process(collect_res, config)
 			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
-			output(fr, output_filename, package_name)
+			output(process_res, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
 		}
 	}

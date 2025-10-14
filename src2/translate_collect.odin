@@ -12,6 +12,7 @@ Translate_Collect_Result :: struct {
 	types: []Type,
 	source: string,
 	import_core_c: bool,
+	macros: []Raw_Macro,
 }
 
 // Parses the C headers and "collects" the things we need from them. This will create a bunch types
@@ -62,6 +63,7 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 
 	tcs := Translate_Collect_State {
 		source = strings.string_from_ptr((^u8)(source), int(source_size)),
+		translation_unit = unit,
 	}
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
@@ -87,6 +89,7 @@ translate_collect :: proc(filename: string) -> (Translate_Collect_Result, bool) 
 		types = tcs.types[:],
 		source = tcs.source,
 		import_core_c = tcs.import_core_c,
+		macros = tcs.macros[:],
 	}, true
 }
 
@@ -97,6 +100,8 @@ Translate_Collect_State :: struct {
 	children_lookup: Cursor_Children_Map,
 	source: string,
 	import_core_c: bool,
+	macros: [dynamic]Raw_Macro,
+	translation_unit: clang.Translation_Unit,
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
@@ -203,6 +208,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		}
 
 		source_range := clang.getCursorExtent(c)
+
 		start := clang.getRangeStart(source_range)
 		start_offset: u32
 		clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
@@ -211,15 +217,15 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
 		macro_source := tcs.source[start_offset:end_offset]
 
+		whitespace_after_name: int
 		first_space_seen := false
 		name_end: int
-		whitespace_after_name: int
 
 		for c, i in macro_source {
 			if unicode.is_white_space(c) {
 				if !first_space_seen {
-					name_end = i
 					first_space_seen = true
+					name_end = i
 				}
 
 				whitespace_after_name += 1
@@ -230,17 +236,31 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			}
 		}
 
-		idx := reserve_type(ct, tcs)
 
-		tcs.types[idx] = Type_Override {
-			macro_source[name_end + whitespace_after_name:]
+		clang_tokens: [^]clang.Token
+		clang_token_count: u32
+		clang.tokenize(tcs.translation_unit, source_range, &clang_tokens, &clang_token_count)
+
+		if clang_token_count > 1 {
+			tokens := make([]Raw_Macro_Token, clang_token_count - 1)
+
+			for i in 1..<clang_token_count {
+				val := string_from_clang_string(clang.getTokenSpelling(tcs.translation_unit, clang_tokens[i]))
+				kind: Raw_Macro_Token_Kind
+
+				#partial switch clang.getTokenKind(clang_tokens[i]) {
+				case .Punctuation: kind = .Punctuation
+				case .Keyword: kind = .Keyword
+				case .Identifier: kind = .Identifier
+				case .Literal: kind = .Literal
+				}
+			}
+
+			append(&tcs.macros, Raw_Macro {
+				name = get_cursor_name(c),
+				tokens = tokens,
+			})
 		}
-
-		append(&tcs.declarations, Declaration {
-			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			type = idx,
-			name = get_cursor_name(c),
-		})
 	}
 }
 
