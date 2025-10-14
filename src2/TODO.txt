@@ -21,4 +21,4 @@ translate_proces  -> intermediate_process (unsure about this one)
 
 check old bindgen for c, libc and posix import rules
 
-add vetting of odin keywords (VET_NAMES in old bindings)
+check that we have all keywords in the keyword vetting
