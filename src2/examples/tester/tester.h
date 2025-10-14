@@ -34,9 +34,9 @@ typedef enum
 #define CLITERAL(type)      (type)
 #define LIGHTGRAY  CLITERAL(Color){ 200, 200, 200, 255 }   // Light Gray
 
-#define Test5 Test4
+//#define Test5 Test4
 
-#define Maa (float)5
+//#define Maa (float)5
 
 struct Test1 {
 	int x;

@@ -39,12 +39,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		// Don't override if this is type is an alias that has the same name as the aliased name.
 		// Doing that override will just make this alias not get ignored, as it is no longer just
 		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
-		/*if alias, is_alias := types[d.type].(Type_Alias); is_alias {
+		if alias, is_alias := resolve_type_definition(types[:], d.def, Type_Alias); is_alias {
 			named_alias, alias_is_named := alias.aliased_type.(string)
 			if alias_is_named && d.name == named_alias {
 				override = false
 			}
-		}*/
+		}
 
 		if override {
 			d.def = override_definition_text
