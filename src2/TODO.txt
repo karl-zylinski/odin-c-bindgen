@@ -3,6 +3,7 @@
 	- runs between collect and process stage
 	- make macros end up at correct position in file (they don't appear in right order in decls array, needs explicit sorting key I think)
 
+- Type_Alias shouldn't maybe exist (see comment in Type)
 - proc spacing, comments etc
 - enum side comments
 - enum spacing alignment
