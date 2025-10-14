@@ -76,6 +76,12 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			}
 		}
 
+		multiline := strings.contains_rune(rhs, '\n')
+
+		if multiline || prev_multiline || d.comment_before != "" {
+			p(sb, "\n")
+		}
+
 		if d.comment_before != "" {
 			if is_proc {
 				p(sb, "\t")
@@ -86,12 +92,6 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 		if is_proc {
 			p(sb, "\t")
-		}
-
-		multiline := strings.contains_rune(rhs, '\n')
-
-		if multiline || prev_multiline {
-			p(sb, "\n")
 		}
 
 		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
