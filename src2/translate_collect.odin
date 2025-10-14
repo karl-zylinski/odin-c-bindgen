@@ -254,10 +254,16 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 				case .Identifier: kind = .Identifier
 				case .Literal: kind = .Literal
 				}
+
+				tokens[i - 1] = {
+					value = val,
+					kind = kind,
+				}
 			}
 
 			append(&tcs.macros, Raw_Macro {
 				name = get_cursor_name(c),
+				is_function_like = clang.Cursor_isMacroFunctionLike(c) == 1,
 				tokens = tokens,
 			})
 		}

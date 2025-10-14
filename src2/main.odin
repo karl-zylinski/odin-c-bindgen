@@ -115,9 +115,9 @@ main :: proc() {
 				continue
 			}
 
-			translate_macros(collect_res.macros)
+			macro_decls := translate_macros(collect_res.macros)
 
-			process_res := translate_process(collect_res, config)
+			process_res := translate_process(collect_res, macro_decls, config)
 			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			output(process_res, output_filename, package_name)

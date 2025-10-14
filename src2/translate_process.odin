@@ -23,7 +23,7 @@ Translate_Process_Result :: struct {
 }
 
 @(private="package")
-translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Translate_Process_Result {
+translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, config: Config) -> Translate_Process_Result {
 	types := slice.to_dynamic(tcr.types)
 
 	// Replace types
@@ -69,6 +69,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 
 	// We make a new array and add the declrations from 'tcr' into it and also maybe some new ones
 	decls: [dynamic]Declaration
+
+	for m in macros {
+		append(&decls, m)
+	}
 
 	for &dd in tcr.declarations {
 		if dd.name == "" {

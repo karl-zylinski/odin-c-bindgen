@@ -133,7 +133,7 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 
 	field_texts := make([]string, len(t_struct.fields))
 	longest_field_that_has_comment_on_right: int
-
+	
 	for &f, fi in t_struct.fields {
 		fb := strings.builder_make()
 
