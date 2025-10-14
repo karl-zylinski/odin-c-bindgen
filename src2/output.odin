@@ -42,14 +42,14 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
-		parse_type_build(o.types, d.type, &rhs_builder, 0)
+		output_type_identifier(o.types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)
 
 		if rhs == d.name {
 			continue
 		}
 
-		proc_type, is_proc := o.types[d.type].(Type_Procedure)
+		proc_type, is_proc := type_from_identifier(o.types, d.def, Type_Procedure)
 
 		if is_proc {
 			start_foreign_block := false
@@ -315,9 +315,6 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 	switch &tv in t {
 	case Type_Unknown:
 		log.warn("Is this a bug?")
-
-	case Type_Override:
-		p(b, tv.definition_text)
 
 	case Type_Pointer:
 		p(b, "^")

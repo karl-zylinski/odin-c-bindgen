@@ -150,7 +150,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 
 		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			type = ti,
+			def = ti,
 			name = get_cursor_name(c),
 		})
 
@@ -170,7 +170,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 
 		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			type = ti,
+			def = ti,
 			name = get_cursor_name(c),
 		})
 		
@@ -184,7 +184,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 
 		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			type = ti,
+			def = ti,
 			name = get_cursor_name(c),
 		})
 		
@@ -198,7 +198,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 
 		append(&tcs.declarations, Declaration {
 			comment_before = string_from_clang_string(clang.Cursor_getRawCommentText(c)),
-			type = ti,
+			def = ti,
 			name = get_cursor_name(c),
 		})
 

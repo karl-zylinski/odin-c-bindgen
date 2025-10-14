@@ -24,6 +24,12 @@ enum Wa {
 	Three,
 };
 
+typedef enum
+{
+	NVTT_Container_DDS,
+	NVTT_Container_DDS10,
+} NvttContainer;
+
 #define Test5 Test4
 
 struct Test1 {

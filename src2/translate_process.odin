@@ -39,17 +39,15 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 		// Don't override if this is type is an alias that has the same name as the aliased name.
 		// Doing that override will just make this alias not get ignored, as it is no longer just
 		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
-		if alias, is_alias := types[d.type].(Type_Alias); is_alias {
+		/*if alias, is_alias := types[d.type].(Type_Alias); is_alias {
 			named_alias, alias_is_named := alias.aliased_type.(string)
 			if alias_is_named && d.name == named_alias {
 				override = false
 			}
-		}
+		}*/
 
 		if override {
-			d.type = add_type(&types, Type_Override {
-				definition_text = override_definition_text,
-			})
+			d.def = override_definition_text
 		}
 	}
 
@@ -78,7 +76,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 			continue
 		}
 
-		if dd.type == 0 {
+		if dd.def == nil {
 			log.errorf("Type used in declaration %v is zero", dd.name)
 			continue
 		}
@@ -86,7 +84,11 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 		append(&decls, dd)
 		d := &decls[len(decls) - 1]
 
-		type := &types[d.type]
+		if literal, is_literal := d.def.(string); is_literal {
+			continue
+		}
+
+		type := &types[d.def.(Type_Index)]
 
 		#partial switch &v in type {
 		case Type_Enum:
@@ -124,7 +126,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 
 				append(&decls, Declaration {
 					name = b.name,
-					type = bs_idx,
+					def = bs_idx,
 				})
 			}
 
@@ -139,9 +141,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 							})
 						}	
 					} else {
-						f.type = add_type(&types, Type_Override {
-							definition_text = override,
-						})
+						f.type = override
 					}
 				}
 			}
@@ -157,9 +157,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config) -> Tran
 							})	
 						}	
 					} else {
-						p.type = add_type(&types, Type_Override {
-							definition_text = override,
-						})
+						p.type = override
 					}
 				}
 			}
