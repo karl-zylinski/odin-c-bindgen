@@ -44,8 +44,6 @@ Type :: union #no_nil {
 	Type_Struct,
 	Type_Enum,
 	Type_Bit_Set,
-
-	// Should alias really exist in the output stage? Isn't it just a name + a literal or a
 	Type_Alias,
 	Type_Fixed_Array,
 	Type_Procedure,
