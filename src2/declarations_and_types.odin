@@ -22,6 +22,15 @@ Declaration :: struct {
 	name: string,
 	def: Definition,
 	comment_before: string,
+	side_comment: string,
+
+	// TODO can we get these two for all fields
+
+	// Only used for macros.
+	explicit_whitespace_before_side_comment: int,
+
+	// Only used for macros.
+	explicit_whitespace_after_name: int,
 }
 
 Type :: union #no_nil {

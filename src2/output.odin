@@ -94,7 +94,11 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			p(sb, "\n")
 		}
 
-		pf(sb, "%v :: %v", d.name, rhs)
+		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
+
+		if d.side_comment != "" {
+			pf(sb, "%*s%v", d.explicit_whitespace_before_side_comment, "", d.side_comment)
+		}
 
 		p(sb, "\n")
 

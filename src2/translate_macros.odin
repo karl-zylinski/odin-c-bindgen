@@ -6,11 +6,16 @@ import "core:strings"
 import "core:unicode"
 import "core:fmt"
 
+// TODO could we use a Declaration with some Raw_Macro type and just fix this in translate_process?
 @(private="package")
 Raw_Macro :: struct {
 	name: string,
 	tokens: []Raw_Macro_Token,
 	is_function_like: bool,
+	comment: string,
+	side_comment: string,
+	whitespace_before_side_comment: int,
+	whitespace_after_name: int,
 }
 
 @(private="package")
@@ -29,7 +34,13 @@ Raw_Macro_Token_Kind :: enum {
 }
 
 @(private="package")
-translate_macros :: proc(macros: []Raw_Macro) -> []Declaration {
+translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []Declaration {
+	existing_declaration_names: map[string]struct{}
+
+	for d in declaration_names {
+		existing_declaration_names[d] = {}
+	}
+
 	macro_lookup: map[string]int
 
 	for m, i in macros {
@@ -45,12 +56,16 @@ translate_macros :: proc(macros: []Raw_Macro) -> []Declaration {
 			continue
 		}
 
-		odin_value := evaluate_macro(macros, macro_lookup, i, {})
+		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {})
 
 		if odin_value != "" {
 			append(&macro_decls, Declaration {
 				name = m.name,
 				def = odin_value,
+				comment_before = m.comment,
+				side_comment = m.side_comment,
+				explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,
+				explicit_whitespace_after_name = m.whitespace_after_name,
 			})
 		}
 	}
@@ -68,6 +83,7 @@ Evalulate_Macro_State :: struct {
 	macros: []Raw_Macro,
 	macro_lookup: map[string]Macro_Index,
 	params: map[string]string,
+	existing_declarations: map[string]struct{}
 }
 
 cur :: proc(ems: Evalulate_Macro_State) -> Raw_Macro_Token {
@@ -78,7 +94,7 @@ adv :: proc(ems: ^Evalulate_Macro_State) {
 	ems.cur_token += 1
 }
 
-evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, mi: Macro_Index, args: []string) -> string {
+evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]struct{}, mi: Macro_Index, args: []string) -> string {
 	ems := Evalulate_Macro_State {
 		cur_token = 0,
 		tokens = macros[mi].tokens,
@@ -86,6 +102,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 		cur_macro_index = mi,
 		macros = macros,
 		macro_lookup = macro_lookup,
+		existing_declarations = existing_declarations,
 	}
 
 	if ems.cur_macro.is_function_like {
@@ -242,7 +259,7 @@ parse_parameter_list :: proc(ems: ^Evalulate_Macro_State) -> []string {
 				arg_builder = strings.builder_make()
 			}
 		case .Identifier:
-			parse_identifier(ems, &arg_builder)
+			p(&arg_builder, t.value)
 		}
 
 		adv(ems)
@@ -267,7 +284,7 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 			args = parse_parameter_list(ems)
 		}
 
-		inner := evaluate_macro(ems.macros, ems.macro_lookup, inner_macro_idx, args)
+		inner := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, inner_macro_idx, args)
 
 		if inner == "" {
 			return false
@@ -282,6 +299,10 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 	if parameter_replacement, has_parameter_replacement := ems.params[tv]; has_parameter_replacement {
 		p(b, parameter_replacement)
 		return true
+	}
+
+	if tv not_in ems.existing_declarations {
+		return false
 	}
 
 	p(b, tv)

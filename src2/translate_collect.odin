@@ -5,6 +5,7 @@ import clang "../libclang"
 import "core:log"
 import "core:strings"
 import "core:unicode"
+import "core:unicode/utf8"
 
 @(private="package")
 Translate_Collect_Result :: struct {
@@ -236,6 +237,82 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			}
 		}
 
+		side_comment, side_comment_align_whitespace := find_comment_at_line_end(tcs.source[start_offset:])
+
+		comment: string
+		{
+			Find_Comment_State :: enum {
+				Looking_For_Start,
+				Looking_For_Comment,
+				Looking_For_Single_Line_Start,
+				Verifying_Single_Line,
+				Inside_Block_Comment,
+			}
+			src := tcs.source
+			find_state: Find_Comment_State
+			comment_start := -1
+			comment_end: int
+
+			comment_loop: for i := int(start_offset); i >= 0; {
+				c := utf8.rune_at(src, i)
+				defer i -= utf8.rune_size(c)
+				switch find_state {
+				case .Looking_For_Start:
+					if c == '#' {
+						comment_end = i
+						find_state = .Looking_For_Comment
+						break
+					}
+
+					if c == '\n' {
+						break comment_loop
+					}
+				case .Looking_For_Comment:
+					if unicode.is_white_space(c) {
+						break
+					}
+
+					if c == '/' && i > 1 && src[i - 1] == '*' {
+						find_state = .Inside_Block_Comment
+						break
+					}
+
+					// TODO: Special case when line only is `//`
+
+					find_state = .Looking_For_Single_Line_Start
+				case .Looking_For_Single_Line_Start:
+					if c == '\n' {
+						break comment_loop
+					}
+
+					if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
+						find_state = .Verifying_Single_Line
+						break
+					}
+
+				case .Verifying_Single_Line:
+					if c == '\n' {
+						comment_start = i
+						find_state = .Looking_For_Comment
+						break
+					}
+
+					if !unicode.is_white_space(c) {
+						break comment_loop
+					}
+				case .Inside_Block_Comment:
+					if c == '/' && i < len(src) - 1 && src[i + 1] == '*' {
+						comment_start = i
+						find_state = .Looking_For_Comment
+						break
+					}
+				}
+			}
+
+			if comment_start != -1 && comment_end > comment_start {
+				comment = strings.trim_space(src[comment_start:comment_end])
+			}
+		}
 
 		clang_tokens: [^]clang.Token
 		clang_token_count: u32
@@ -265,9 +342,60 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 				name = get_cursor_name(c),
 				is_function_like = clang.Cursor_isMacroFunctionLike(c) == 1,
 				tokens = tokens,
+				comment = comment,
+				side_comment = side_comment,
+				whitespace_before_side_comment = side_comment_align_whitespace,
+				whitespace_after_name = whitespace_after_name,
 			})
 		}
 	}
+}
+
+find_comment_at_line_end :: proc(str: string) -> (string, int) {
+	space_before_comment: int
+	comment_start: int
+	block_comment: bool
+
+	for c, i in str {
+		if c == ' ' {
+			space_before_comment += 1
+		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '/' {
+			comment_start = i
+			break
+		} else if c == '/' && i + 1 < len(str) && str[i + 1] == '*' {
+			comment_start = i
+			block_comment = true
+			break
+		} else if c == '\n' {
+			break
+		} else {
+			space_before_comment = 0
+		}
+	}
+
+	if comment_start == 0 {
+		return "", 0
+	}
+
+	if block_comment {
+		from_start := str[comment_start:]
+
+		for c, i in from_start {
+			if c == '*' && i < len(from_start) - 1 && from_start[i + 1] == '/' {
+				return from_start[:i+2], space_before_comment
+			}
+		}
+	} else {
+		from_start := str[comment_start:]
+
+		for c, i in from_start {
+			if c == '\n' {
+				return from_start[:i], space_before_comment
+			}
+		}
+	}
+
+	return "", 0
 }
 
 type_probably_is_cstring :: proc(ct: clang.Type) -> bool {

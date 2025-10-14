@@ -115,7 +115,13 @@ main :: proc() {
 				continue
 			}
 
-			macro_decls := translate_macros(collect_res.macros)
+			declaration_names: [dynamic]string
+
+			for d in collect_res.declarations {
+				append(&declaration_names, d.name)
+			}
+
+			macro_decls := translate_macros(collect_res.macros, declaration_names[:])
 
 			process_res := translate_process(collect_res, macro_decls, config)
 			output_stem := filepath.stem(input_filename)
