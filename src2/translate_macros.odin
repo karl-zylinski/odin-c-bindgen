@@ -1,9 +1,7 @@
 #+private file
 package bindgen2
 
-import "core:log"
 import "core:strings"
-import "core:unicode"
 import "core:fmt"
 
 // TODO could we use a Declaration with some Raw_Macro type and just fix this in translate_process?
@@ -85,7 +83,7 @@ Evalulate_Macro_State :: struct {
 	macros: []Raw_Macro,
 	macro_lookup: map[string]Macro_Index,
 	params: map[string]string,
-	existing_declarations: map[string]struct{}
+	existing_declarations: map[string]struct{},
 }
 
 cur :: proc(ems: Evalulate_Macro_State) -> Raw_Macro_Token {
@@ -155,7 +153,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, tv)
 			}
 		case .Keyword:
-			p(&b, tv)
+			return ""
 		case .Identifier:
 			if parse_identifier(&ems, &b) == false {
 				return ""

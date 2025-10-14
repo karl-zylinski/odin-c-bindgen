@@ -4,6 +4,25 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
+typedef float ufbx_real;
+
+typedef struct ufbx_vec2 {
+	union {
+		struct { ufbx_real x, y; };
+		ufbx_real v[2];
+	};
+} ufbx_vec2;
+
+/*
+typedef struct hello hello;
+
+struct hello {
+	ufbx_string name;
+	ufbx_dom_node_list children;
+	ufbx_dom_value_list values;
+};
+
+
 #if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
     #include <stdbool.h>
 #elif !defined(__cplusplus) && !defined(bool)
@@ -85,4 +104,4 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileI
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
-bool IsShaderValid(Shader shader);
+bool IsShaderValid(Shader shader);*/

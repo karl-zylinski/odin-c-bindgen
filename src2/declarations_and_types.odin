@@ -24,6 +24,8 @@ Declaration :: struct {
 	comment_before: string,
 	side_comment: string,
 
+	is_forward_declare: bool,
+
 	original_line: int,
 
 	// TODO can we get these two for all fields
@@ -63,6 +65,7 @@ Type_Alias :: struct {
 
 Type_Struct_Field :: struct {
 	name: string,
+	anonymous: bool,
 	type: Definition,
 	type_overrride: string,
 	comment_before: string,

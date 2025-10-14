@@ -20,6 +20,13 @@ Config :: struct {
 	procedure_type_overrides: map[string]string,
 
 	imports_file: string,
+	import_lib: string,
+	
+	remove_type_prefix: string,
+	remove_function_prefix: string,
+	remove_macro_prefix: string,
+
+	force_ada_case_types: bool,
 }
 
 Config_Bit_Set :: struct {

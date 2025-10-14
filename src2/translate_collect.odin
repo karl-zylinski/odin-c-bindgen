@@ -1,4 +1,5 @@
 #+private file
+#+feature dynamic-literals
 package bindgen2
 
 import clang "../libclang"
@@ -139,6 +140,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	name := get_cursor_name(c)
 	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
 	line := get_cursor_location(c).line
+	is_forward_declare := clang.isCursorDefinition(c) == 0
 
 	ct := clang.getCursorType(c)
 
@@ -158,6 +160,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			is_forward_declare = is_forward_declare,
 		})
 
 		children := tcs.children_lookup[c]
@@ -179,6 +182,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			is_forward_declare = is_forward_declare,
 		})
 		
 	case .EnumDecl:
@@ -194,6 +198,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			is_forward_declare = is_forward_declare,
 		})
 		
 	case .FunctionDecl:
@@ -209,6 +214,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			is_forward_declare = is_forward_declare,
 		})
 
 	case .MacroDefinition:
@@ -411,6 +417,51 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 	return clang.isConstQualifiedType(ct) == 1 && (ct.kind == .Char_S || ct.kind == .SChar)
 }
 
+c_typedef_types := map[string]string {
+	"uint8_t"  = "u8",
+	"int8_t"   = "i8",
+	"uint16_t" = "u16",
+	"int16_t"  = "i16",
+	"uint32_t" = "u32",
+	"int32_t"  = "i32",
+	"uint64_t" = "u64",
+	"int64_t"  = "i64",
+
+	"int_least8_t"   = "i8",
+	"uint_least8_t"  = "u8",
+	"int_least16_t"  = "i16",
+	"uint_least16_t" = "u16",
+	"int_least32_t"  = "i32",
+	"uint_least32_t" = "u32",
+	"int_least64_t"  = "i64",
+	"uint_least64_t" = "u64",
+
+	"int_fast8_t"   = "i8",
+	"uint_fast8_t"  = "u8",
+	"int_fast32_t"  = "i32",
+	"uint_fast32_t" = "u32",
+	"int_fast64_t"  = "i64",
+	"uint_fast64_t" = "u64",
+	
+	"long"          = "c.long",
+	"unsigned long" = "c.ulong",
+	"int_fast16_t"  = "c.int_fast16_t",
+	"uint_fast16_t" = "c.uint_fast16_t",
+
+	"size_t"  = "c.size_t",
+	"ssize_t" = "c.ssize_t",
+	"wchar_t" = "c.wchar_t",
+
+	"intptr_t"  = "c.intptr_t",
+	"uintptr_t" = "c.uintptr_t",
+	"ptrdiff_t" = "c.ptrdiff_t",
+
+	"intmax_t"  = "c.intmax_t",
+	"uintmax_t" = "c.uintmax_t",
+
+	"va_list" = "c.va_list",
+}
+
 get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Definition {
 	#partial switch ct.kind {
 	case .Bool:
@@ -455,9 +506,11 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 		if clang.Cursor_isAnonymous(ctc) == 0 {
 			name := get_cursor_name(ctc)
 
-			if name == "va_list" {
-				tcs.import_core_c = true
-				return "core_c.va_list"
+			if replacement, has_replacement := c_typedef_types[name]; has_replacement {
+				if strings.has_prefix(replacement, "c.") {
+					tcs.import_core_c = true
+				}
+				return replacement
 			}
 
 			return name
@@ -577,10 +630,11 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		for sc in struct_children {
 			sc_kind := clang.getCursorKind(sc)
 
-			if sc_kind == .FieldDecl {
+			#partial switch sc_kind {
+			case .FieldDecl:
 				type_id: Definition
 				sct := clang.getCursorType(sc)
-				
+
 				is_func_ptr := false
 
 				if sct.kind == .Pointer {
@@ -597,6 +651,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				}
 
 				name := get_cursor_name(sc)
+
+
 				
 				if type_id == nil {
 					log.errorf("Unresolved struct field type: %v", sc)
@@ -621,6 +677,33 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 					comment_before = comment_before,
 					comment_on_right = comment_on_right,
 				})
+			
+			case .StructDecl, .UnionDecl:
+				if clang.Cursor_isAnonymousRecordDecl(sc) == 1 {
+					sct := clang.getCursorType(sc)
+					type_id := get_type_name_or_create_anon_type(sct, tcs)
+
+					field_loc := get_cursor_location(sc)
+					comment_loc := get_comment_location(sc)
+
+					comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
+					comment_before: string
+					comment_on_right: string
+
+					if field_loc.line == comment_loc.line {
+						comment_on_right = comment
+					} else {
+						comment_before = comment
+					}
+
+					append(&fields, Type_Struct_Field {
+						anonymous = true,
+						type = type_id,
+						comment_before = comment_before,
+						comment_on_right = comment_on_right,
+					})
+					log.info(get_cursor_name(sc))
+				}
 			}
 		}
 
@@ -725,7 +808,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		type_definition := Type_Alias {
 			aliased_type = type_id,
 		}
-		
+
 		tcs.types[alias_type_idx] = type_definition
 
 		return alias_type_idx

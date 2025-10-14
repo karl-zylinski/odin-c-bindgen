@@ -7,6 +7,8 @@ import "core:os"
 import "core:fmt"
 import "core:strings"
 import "core:log"
+import "core:unicode/utf8"
+import "core:unicode"
 
 Output_Input :: Translate_Process_Result
 
@@ -26,7 +28,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 
 	if o.import_core_c {
 		pln(sb, "")
-		pln(sb, "import core_c \"core:c\"")
+		pln(sb, "import \"core:c\"")
 	}
 
 	if o.top_code != "" {
@@ -39,6 +41,22 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	inside_foreign_block: bool
 	foreign_block_calling_conv: Calling_Convention
 	prev_multiline := true
+
+	for &t in o.types {
+		#partial switch &tv in t {
+		case Type_Struct:
+			for &f in tv.fields {
+				if literal, is_literal := f.type.(string); is_literal {
+					f.type = final_type_name(literal, o.config)
+				}
+			}
+		case Type_Fixed_Array:
+			if literal, is_literal := tv.element_type.(string); is_literal {
+				tv.element_type = final_type_name(literal, o.config)
+			}
+		}
+			
+	}
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -94,7 +112,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			p(sb, "\t")
 		}
 
-		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
+		pf(sb, "%v%*s:: %v", final_type_name(d.name, o.config), max(d.explicit_whitespace_after_name, 1), "", rhs)
 
 		if d.side_comment != "" {
 			pf(sb, "%*s%v", d.explicit_whitespace_before_side_comment, "", d.side_comment)
@@ -112,6 +130,18 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
 }
+
+final_type_name :: proc(name: string, config: Config) -> string {
+	res := trim_prefix(name, config.remove_type_prefix)
+
+	if config.force_ada_case_types {
+		res = strings.to_ada_case(res)
+	}
+
+	return res
+}
+
+trim_prefix :: strings.trim_prefix
 
 output_indent :: proc(b: ^strings.Builder, indent: int) {
 	for _ in 0..<indent {
@@ -137,11 +167,20 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 
 	field_texts := make([]string, len(t_struct.fields))
 	longest_field_that_has_comment_on_right: int
-	
+
 	for &f, fi in t_struct.fields {
 		fb := strings.builder_make()
 
-		pf(&fb, "%s: ", ensure_name_valid(f.name))
+		if f.name == "" && !f.anonymous {
+			log.error("Struct field has no name and is not anonymous")
+			continue
+		}
+
+		if f.anonymous {
+			p(&fb, "using _: ")
+		} else {
+			pf(&fb, "%s: ", ensure_name_valid(f.name))	
+		}
 
 		after_name_padding := longest_name-len(f.name)
 		for _ in 0..<after_name_padding {
@@ -304,6 +343,7 @@ KEYWORDS :: [?]string {
 	"_string16",
 	"_cstring",
 	"_cstring16",
+	"_c",
 }
 
 // TODO should this happen in translate_process? But then prefix stripping must happen there as well
@@ -314,13 +354,17 @@ ensure_name_valid :: proc(s: string) -> string {
 		}
 	}
 
+	if len(s) > 0 && unicode.is_number(utf8.rune_at(s, 0)) {
+		return fmt.tprintf("_%v", s)
+	}
+
 	return s
 }
 
 output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, indent: int) {
 	switch d in def {
 	case string:
-		p(b, ensure_name_valid(d))
+		p(b, d)
 	case Type_Index:
 		parse_type_build(types, d, b, indent)
 	}

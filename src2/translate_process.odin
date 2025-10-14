@@ -20,11 +20,33 @@ Translate_Process_Result :: struct {
 	top_code: string,
 
 	import_core_c: bool,
+
+	config: Config,
 }
+
 
 @(private="package")
 translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, config: Config) -> Translate_Process_Result {
 	types := slice.to_dynamic(tcr.types)
+
+	forward_declare_resolved: map[string]bool
+
+	for &d in tcr.declarations {
+		if d.is_forward_declare {
+			forward_declare_resolved[d.name] = false
+		}
+	}
+
+	for &d in tcr.declarations {
+		// A bit of a hack due to aliases being disregarded later. Perhaps we can change that?
+		if _, is_alias := resolve_type_definition(tcr.types, d.def, Type_Alias); is_alias {
+			continue
+		}
+
+		if !d.is_forward_declare && d.name in forward_declare_resolved {
+			forward_declare_resolved[d.name] = true
+		}
+	}
 
 	// Replace types
 	for &d in tcr.declarations {
@@ -75,6 +97,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 	}
 
 	for &dd in tcr.declarations {
+		if dd.is_forward_declare && forward_declare_resolved[dd.name] {
+			continue
+		}
+
 		if dd.name == "" {
 			log.errorf("Declaration has no name: %v", dd.name)
 			continue
@@ -88,7 +114,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		append(&decls, dd)
 		d := &decls[len(decls) - 1]
 
-		if literal, is_literal := d.def.(string); is_literal {
+		if _, is_literal := d.def.(string); is_literal {
 			continue
 		}
 
@@ -202,6 +228,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		if imports, imports_ok := os.read_entire_file(config.imports_file); imports_ok {
 			top_code = string(imports)
 		}
+	} else if config.import_lib != "" {
+		top_code = fmt.tprintf(`foreign import lib "%v"`, config.import_lib)
 	}
 
 	slice.sort_by(decls[:], proc(i, j: Declaration) -> bool {
@@ -214,6 +242,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
 		import_core_c = tcr.import_core_c,
+		config = config,
 	}
 }
 
