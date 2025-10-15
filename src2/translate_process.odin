@@ -153,6 +153,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				})
 
 				append(&decls, Declaration {
+					original_line = dd.original_line + 1,
 					name = b.name,
 					def = bs_idx,
 				})

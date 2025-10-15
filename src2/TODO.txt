@@ -21,7 +21,5 @@ translate_proces  -> intermediate_process (unsure about this one)
 
 check old bindgen for c, libc and posix import rules
 
-check that we have all keywords in the keyword vetting
-
 Find this comment:
 // A bit of a hack due to aliases being disregarded later. Perhaps we can change that?
