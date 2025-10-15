@@ -389,6 +389,8 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 
 		if is_proc {
 			d.name = strings.trim_prefix(d.name, config.remove_function_prefix)
+		} else if d.from_macro {
+			d.name = strings.trim_prefix(d.name, config.remove_macro_prefix)
 		} else {
 			d.name = string(final_type_name(Type_Name(d.name), config))
 		}

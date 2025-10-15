@@ -40,6 +40,9 @@ Declaration :: struct {
 
 	// Only used for macros.
 	explicit_whitespace_after_name: int,
+
+	// This declaration originates from a C macro.
+	from_macro: bool,
 }
 
 Type :: union #no_nil {

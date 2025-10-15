@@ -58,14 +58,23 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {})
 
 		if odin_value != "" {
+			def: Definition
+			if odin_value in existing_declaration_names {
+				// We want the value of this macro to change if there is some trimming set in the config etc.
+				def = Type_Name(odin_value)
+			} else {
+				def = Fixed_Value(odin_value)
+			}
+
 			append(&macro_decls, Declaration {
 				name = m.name,
-				def = Fixed_Value(odin_value),
+				def = def,
 				comment_before = m.comment,
 				side_comment = m.side_comment,
 				explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,
 				explicit_whitespace_after_name = m.whitespace_after_name,
 				original_line = m.original_line,
+				from_macro = true,
 			})
 		}
 	}

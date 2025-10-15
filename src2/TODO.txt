@@ -3,6 +3,10 @@
 - enum spacing alignment
 - can we make the side comment stuff generic somehow? needed for unions too etc
 
+- add the make_constant bit_set stuff from 1.0
+
+- #by_ptr
+
 - test macros on other libs
 
 - calling convention coming from clang always says C, even if I put __stdcall etc
