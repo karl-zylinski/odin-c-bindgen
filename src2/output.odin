@@ -70,7 +70,15 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			}
 
 			if start_foreign_block {
-				pfln(sb, "\n@(default_calling_convention=\"%s\")\nforeign lib {{", calling_convention_string(proc_type.calling_convention))
+				pf(sb, "\n@(default_calling_convention=\"%s\"", calling_convention_string(proc_type.calling_convention))
+
+				if o.link_prefix != "" {
+					pf(sb, `, link_prefix="%v"`, o.link_prefix)
+				}
+
+				pln(sb, ")")
+
+				pln(sb, "foreign lib {")
 			}
 		} else {
 			if inside_foreign_block {

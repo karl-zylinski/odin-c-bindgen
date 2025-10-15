@@ -18,6 +18,7 @@ Translate_Process_Result :: struct {
 	// Comment at top of file
 	top_comment: string,
 	top_code: string,
+	link_prefix: string,
 
 	import_core_c: bool,
 }
@@ -246,6 +247,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		types = types[:],
 		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
+		link_prefix = config.remove_function_prefix,
 		import_core_c = tcr.import_core_c,
 	}
 }
@@ -325,18 +327,19 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 
 // Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
 resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config) {
-
-	// IMPORTANT: We may need type names to have their own distinct type in Definition: This way we
-	// can be sure we are override typenames and not hard-coded values. And also we won't override
-	// types like 'f32' etc.
-
 	for &t in types {
 		switch &tv in t {
 		case Type_Unknown:
 
 		case Type_Pointer:
+			if type_name, is_type_name := tv.pointed_to_type.(Type_Name); is_type_name {
+				tv.pointed_to_type = final_type_name(type_name, config)
+			}
 
 		case Type_Multipointer:
+			if type_name, is_type_name := tv.pointed_to_type.(Type_Name); is_type_name {
+				tv.pointed_to_type = final_type_name(type_name, config)
+			}
 
 		case Type_Raw_Pointer:
 
@@ -346,8 +349,8 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 			for &f in tv.fields {
 				f.name = ensure_name_valid(f.name)
 
-				if name, is_name := f.type.(Type_Name); is_name {
-					f.type = final_type_name(name, config)
+				if type_name, is_type_name := f.type.(Type_Name); is_type_name {
+					f.type = final_type_name(type_name, config)
 				}
 			}
 
@@ -357,28 +360,38 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 		case Type_Bit_Set:
 
 		case Type_Alias:
-			if name, is_name := tv.aliased_type.(Type_Name); is_name {
-				tv.aliased_type = final_type_name(name, config)
+			if type_name, is_type_name := tv.aliased_type.(Type_Name); is_type_name {
+				tv.aliased_type = final_type_name(type_name, config)
 			}
 
 		case Type_Fixed_Array:
-			if name, is_name := tv.element_type.(Type_Name); is_name {
-				tv.element_type = final_type_name(name, config)
+			if type_name, is_type_name := tv.element_type.(Type_Name); is_type_name {
+				tv.element_type = final_type_name(type_name, config)
 			}
 
 		case Type_Procedure:
 			for &p in tv.parameters {
 				p.name = ensure_name_valid(p.name)
 
-				if name, is_name := p.type.(Type_Name); is_name {
-					p.type = final_type_name(name, config)
-				} 
+				if type_name, is_type_name := p.type.(Type_Name); is_type_name {
+					p.type = final_type_name(type_name, config)
+				}
+			}
+
+			if type_name, is_type_name := tv.result_type.(Type_Name); is_type_name {
+				tv.result_type = final_type_name(type_name, config)
 			}
 		}
 	}
 
 	for &d in decls {
-		d.name = string(final_type_name(Type_Name(d.name), config))
+		_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
+
+		if is_proc {
+			d.name = strings.trim_prefix(d.name, config.remove_function_prefix)
+		} else {
+			d.name = string(final_type_name(Type_Name(d.name), config))
+		}
 	}
 }
 
