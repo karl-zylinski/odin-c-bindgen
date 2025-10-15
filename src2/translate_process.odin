@@ -93,6 +93,9 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 	for m in macros {
 		append(&decls, m)
 	}
+	
+	// Declared here to reuse.
+	bit_set_make_constant: map[string]int
 
 	for &dd in tcr.declarations {
 		if dd.is_forward_declare && forward_declare_resolved[dd.name] {
@@ -127,21 +130,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 			bit_sets := bit_sets_by_enum_name[d.name]
 
 			for b in bit_sets {
-				new_members: [dynamic]Type_Enum_Member
-
-				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
-				for m in v.members {
-					if m.value == 0 {
-						continue
-					}
-
-					append(&new_members, Type_Enum_Member {
-						name = m.name,
-						value = int(bits.log2(uint(m.value))),
-					})
-				}
-
-				v.members = new_members[:]
+				clear(&bit_set_make_constant)
 
 				if b.enum_rename != "" {
 					//rename_aliases[d.name] = b.enum_rename
@@ -153,8 +142,45 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				}
 
 				bs_idx := add_type(&types, Type_Bit_Set {
-					enum_type = Type_Name(d.name),
+					enum_type = d.def.(Type_Index),
+					enum_decl_name = Type_Name(d.name),
 				})
+
+				new_members: [dynamic]Type_Enum_Member
+
+				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
+				for m in v.members {
+					if m.value == 0 {
+						continue
+					}
+
+					if bits.count_ones(m.value) != 1 {
+						// Not a power of two, so not part of a bit_set. Save it for later for making
+						// it into a constant.
+						bs_constant_idx := add_type(&types, Type_Bit_Set_Constant {
+							bit_set_type = bs_idx,
+							bit_set_type_name = Type_Name(b.name),
+							value = m.value,
+						})
+
+						all_constant := strings.to_screaming_snake_case(strings.trim_prefix(strings.to_lower(m.name), strings.to_lower(config.remove_type_prefix)))
+
+						append(&decls, Declaration {
+							original_line = dd.original_line + 2,
+							name = all_constant,
+							def = bs_constant_idx,
+						})
+
+						continue
+					}
+
+					append(&new_members, Type_Enum_Member {
+						name = m.name,
+						value = int(bits.log2(uint(m.value))),
+					})
+				}
+
+				v.members = new_members[:]
 
 				append(&decls, Declaration {
 					original_line = dd.original_line + 1,
@@ -358,6 +384,12 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 			strip_enum_member_prefixes(&tv)
 
 		case Type_Bit_Set:
+			if type_name, is_type_name := tv.enum_decl_name.(Type_Name); is_type_name {
+				tv.enum_decl_name = final_type_name(type_name, config)
+			}
+
+		case Type_Bit_Set_Constant:
+			tv.bit_set_type_name = final_type_name(tv.bit_set_type_name, config)
 
 		case Type_Alias:
 			if type_name, is_type_name := tv.aliased_type.(Type_Name); is_type_name {
@@ -386,12 +418,13 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 
 	for &d in decls {
 		_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
+		_, is_bs_const := resolve_type_definition(types, d.def, Type_Bit_Set_Constant)
 
 		if is_proc {
 			d.name = strings.trim_prefix(d.name, config.remove_function_prefix)
 		} else if d.from_macro {
 			d.name = strings.trim_prefix(d.name, config.remove_macro_prefix)
-		} else {
+		} else if !is_bs_const {
 			d.name = string(final_type_name(Type_Name(d.name), config))
 		}
 	}

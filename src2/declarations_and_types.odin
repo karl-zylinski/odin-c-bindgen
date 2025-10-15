@@ -57,6 +57,7 @@ Type :: union #no_nil {
 	Type_Struct,
 	Type_Enum,
 	Type_Bit_Set,
+	Type_Bit_Set_Constant,
 	Type_Alias,
 	Type_Fixed_Array,
 	Type_Procedure,
@@ -103,7 +104,14 @@ Type_Unknown :: struct {}
 Type_Raw_Pointer :: struct {}
 
 Type_Bit_Set :: struct {
-	enum_type: Definition,
+	enum_decl_name: Definition,
+	enum_type: Type_Index,
+}
+
+Type_Bit_Set_Constant :: struct {
+	bit_set_type: Type_Index,
+	bit_set_type_name: Type_Name,
+	value: int,
 }
 
 Type_Fixed_Array :: struct {

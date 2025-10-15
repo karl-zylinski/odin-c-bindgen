@@ -343,13 +343,41 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_definition(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
-		enum_type_name, enum_type_is_name := tv.enum_type.(Type_Name)
+		enum_name, enum_name_ok := tv.enum_decl_name.(Type_Name)
 
-		if !enum_type_is_name {
+		if !enum_name_ok {
 			log.error("Invalid type used with bit set")
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", enum_type_name)
+		pf(b, "bit_set[%v; i32]", enum_name)
+
+	case Type_Bit_Set_Constant:
+		bit_set_type, bit_set_type_ok := resolve_type_definition(types, tv.bit_set_type, Type_Bit_Set)
+
+		if !bit_set_type_ok {
+			return
+		}
+
+		pf(b, `%v {{`, tv.bit_set_type_name)
+
+		enum_type, enum_type_ok := resolve_type_definition(types, bit_set_type.enum_type, Type_Enum)
+
+		if enum_type_ok {
+			first_printed := false
+			for &m, i in enum_type.members {
+				if (1 << uint(m.value)) & tv.value != 0 {
+					if first_printed == true {
+						p(b, ", ")
+					} else {
+						first_printed = true
+					}
+
+					pf(b, ".%v", m.name)
+				}
+			}
+		}
+	
+		p(b, "}")
 	}
 }
