@@ -20,8 +20,6 @@ Translate_Process_Result :: struct {
 	top_code: string,
 
 	import_core_c: bool,
-
-	config: Config,
 }
 
 
@@ -236,14 +234,273 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		return i.original_line < j.original_line
 	})
 
+	// Run this last! Otherwise mapping that assumes things has their original names may fail.
+	resolve_final_names(types[:], decls[:], config)
+
 	return {
 		decls = decls[:],
 		types = types[:],
 		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
 		import_core_c = tcr.import_core_c,
-		config = config,
 	}
+}
+
+strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
+	overlap_length := 0
+
+	if len(e.members) > 1 {
+		overlap_length_source := e.members[0].name
+		overlap_length = len(overlap_length_source)
+
+		for idx in 1..<len(e.members) {
+			mn := e.members[idx].name
+			length := strings.prefix_length(mn, overlap_length_source)
+
+			if length < overlap_length {
+				overlap_length = length
+				overlap_length_source = mn
+			}
+		}
+
+		if overlap_length > 0 {
+			any_blank := false
+
+			for &m in e.members {
+				if overlap_length == len(m.name) {
+					any_blank = true
+					break
+				}
+			}
+
+			// We stripped to much! Back off to nearest underscore or camelCase change
+			if any_blank {
+				found_underscore := false
+				#reverse for c, i in overlap_length_source {
+					if c == '_' {
+						overlap_length = i + 1
+						found_underscore = true
+						break
+					}
+				}
+
+				// No underscore found, try camelCase
+				if !found_underscore {
+					last_letter: rune
+
+					#reverse for c in overlap_length_source {
+						if unicode.is_letter(c) {
+							last_letter = c
+							break
+						}
+					}
+
+					#reverse for c, i in overlap_length_source {
+						if unicode.is_letter(c) && unicode.is_upper(c) != unicode.is_upper(last_letter) {
+							overlap_length = i + 1
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for &m in e.members {
+		name_without_overlap := m.name[overlap_length:]
+
+		if len(name_without_overlap) != 0 {
+			m.name = name_without_overlap
+
+			if is_number(m.name[0]) {
+				m.name = fmt.tprintf("_%v", m.name)
+			}
+		}
+	}
+}
+
+// Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
+resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config) {
+
+	// IMPORTANT: We may need type names to have their own distinct type in Definition: This way we
+	// can be sure we are override typenames and not hard-coded values. And also we won't override
+	// types like 'f32' etc.
+
+	for &t in types {
+		switch &tv in t {
+		case Type_Unknown:
+
+		case Type_Pointer:
+
+		case Type_Multipointer:
+
+		case Type_Raw_Pointer:
+
+		case Type_CString:
+
+		case Type_Struct:
+			for &f in tv.fields {
+				if name, is_name := f.type.(string); is_name {
+					f.type = final_type_name(name, config)
+				}
+			}
+
+		case Type_Enum:
+			strip_enum_member_prefixes(&tv)
+
+		case Type_Bit_Set:
+
+		case Type_Alias:
+			if name, is_name := tv.aliased_type.(string); is_name {
+				tv.aliased_type = final_type_name(name, config)
+			}
+
+		case Type_Fixed_Array:
+			if name, is_name := tv.element_type.(string); is_name {
+				tv.element_type = final_type_name(name, config)
+			}
+
+		case Type_Procedure:
+			for &p in tv.parameters {
+				p.name = ensure_name_valid(p.name)
+
+				if name, is_name := p.type.(string); is_name {
+					p.type = final_type_name(name, config)
+				} 
+			}
+		}
+	}
+
+	for &d in decls {
+		d.name = final_type_name(d.name, config)
+	}
+}
+
+is_number :: proc(b: byte) -> bool {
+	return b >= '0' && b <= '9'
+}
+
+ensure_name_valid :: proc(s: string) -> string {
+	// TODO make sure this contains all Odin keywords
+	KEYWORDS :: [?]string {
+		"_bool",
+		"_b8",
+		"_b16",
+		"_b32",
+		"_b64",
+		"_int",
+		"_i8",
+		"_i16",
+		"_i32",
+		"_i64",
+		"_i128",
+		"_uint",
+		"_u8",
+		"_u16",
+		"_u32",
+		"_u64",
+		"_u128",
+		"_uintptr",
+		"_i16le",
+		"_i32le",
+		"_i64le",
+		"_i128le",
+		"_u16le",
+		"_u32le",
+		"_u64le",
+		"_u128le",
+		"_i16be",
+		"_i32be",
+		"_i64be",
+		"_i128be",
+		"_u16be",
+		"_u32be",
+		"_u64be",
+		"_u128be",
+		"_f16",
+		"_f32",
+		"_f64",
+		"_f16le",
+		"_f32le",
+		"_f64le",
+		"_f16be",
+		"_f32be",
+		"_f64be",
+		"_complex32",
+		"_complex64",
+		"_complex128",
+		"_quaternion64",
+		"_quaternion128",
+		"_quaternion256",
+		"_rune",
+		"_string",
+		"_cstring",
+		"_string16",
+		"_cstring16",
+		"_rawptr",
+		"_typeid",
+		"_any",
+		"_asm",
+		"_auto_cast",
+		"_bit_set",
+		"_break",
+		"_case",
+		"_cast",
+		"_context",
+		"_continue",
+		"_defer",
+		"_distinct",
+		"_do",
+		"_dynamic",
+		"_else",
+		"_enum",
+		"_fallthrough",
+		"_for",
+		"_foreign",
+		"_if",
+		"_import",
+		"_in",
+		"_map",
+		"_not_in",
+		"_or_else",
+		"_or_return",
+		"_package",
+		"_proc",
+		"_return",
+		"_struct",
+		"_switch",
+		"_transmute",
+		"_typeid",
+		"_union",
+		"_using",
+		"_when",
+		"_where",
+
+		// Not keywords, but used names:
+		"_c",
+	}
+
+	for k in KEYWORDS {
+		if s == k[1:] {
+			return k
+		}
+	}
+
+	if len(s) > 0 && unicode.is_number(utf8.rune_at(s, 0)) {
+		return fmt.tprintf("_%v", s)
+	}
+
+	return s
+}
+
+final_type_name :: proc(name: string, config: Config) -> string {
+	res := strings.trim_prefix(name, config.remove_type_prefix)
+
+	if config.force_ada_case_types {
+		res = strings.to_ada_case(res)
+	}
+
+	return res
 }
 
 add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {

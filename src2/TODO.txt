@@ -10,6 +10,7 @@
 - new examples:
 	- jolt + raylib3d
 
+- should Definition be called Definition? It's used for types, but also for literals and overrides.
 
 - add config option for putting all procs at bottom (default is where they are supposed to be in code)
 

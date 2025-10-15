@@ -42,21 +42,6 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	foreign_block_calling_conv: Calling_Convention
 	prev_multiline := true
 
-	for &t in o.types {
-		#partial switch &tv in t {
-		case Type_Struct:
-			for &f in tv.fields {
-				if literal, is_literal := f.type.(string); is_literal {
-					f.type = final_type_name(literal, o.config)
-				}
-			}
-		case Type_Fixed_Array:
-			if literal, is_literal := tv.element_type.(string); is_literal {
-				tv.element_type = final_type_name(literal, o.config)
-			}
-		}
-			
-	}
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -112,7 +97,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 			p(sb, "\t")
 		}
 
-		pf(sb, "%v%*s:: %v", final_type_name(d.name, o.config), max(d.explicit_whitespace_after_name, 1), "", rhs)
+		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
 
 		if d.side_comment != "" {
 			pf(sb, "%*s%v", d.explicit_whitespace_before_side_comment, "", d.side_comment)
@@ -130,18 +115,6 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)
 }
-
-final_type_name :: proc(name: string, config: Config) -> string {
-	res := trim_prefix(name, config.remove_type_prefix)
-
-	if config.force_ada_case_types {
-		res = strings.to_ada_case(res)
-	}
-
-	return res
-}
-
-trim_prefix :: strings.trim_prefix
 
 output_indent :: proc(b: ^strings.Builder, indent: int) {
 	for _ in 0..<indent {
@@ -179,7 +152,7 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 		if f.anonymous {
 			p(&fb, "using _: ")
 		} else {
-			pf(&fb, "%s: ", ensure_name_valid(f.name))	
+			pf(&fb, "%s: ", f.name)	
 		}
 
 		after_name_padding := longest_name-len(f.name)
@@ -258,34 +231,9 @@ output_enum_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Build
 
 	pfln(b, "enum %v {{", t_enum.storage_type)
 
-	overlap_length := 0
-
-	if len(t_enum.members) > 1 {
-		overlap_length_source := t_enum.members[0].name
-		overlap_length = len(overlap_length_source)
-
-		for idx in 1..<len(t_enum.members) {
-			mn := t_enum.members[idx].name
-			length := strings.prefix_length(mn, overlap_length_source)
-
-			if length < overlap_length {
-				overlap_length = length
-				overlap_length_source = mn
-			}
-		}
-	}
-
 	for &m in t_enum.members {
 		output_indent(b, indent + 1)
-		name_without_overlap := m.name[overlap_length:]
-
-		if len(name_without_overlap) == 0 {
-			pf(b, "%s", ensure_name_valid(m.name))
-		} else {
-			pf(b, "%s", ensure_name_valid(name_without_overlap))
-		}
-
-		pf(b, " = %v", m.value)
+		pf(b, "%v = %v", m.name, m.value)
 		p(b, ",\n")
 	}
 	
@@ -305,60 +253,6 @@ calling_convention_string :: proc(calling_convention: Calling_Convention) -> str
 	}
 
 	return "c"
-}
-
-// TODO make sure this contains all Odin keywords
-KEYWORDS :: [?]string {
-	"_rune",
-	"_import",
-	"_foreign",
-	"_package",
-	"_typeid",
-	"_when",
-	"_where",
-	"_in",
-	"_not_in",
-	"_fallthrough",
-	"_defer",
-	"_proc",
-	"_bit_set",
-	"_bit_field",
-	"_map",
-	"_dynamic",
-	"_auto_cast",
-	"_cast",
-	"_transmute",
-	"_distinct",
-	"_using",
-	"_context",
-	"_or_else",
-	"_or_return",
-	"_or_break",
-	"_or_continue",
-	"_asm",
-	"_inline",
-	"_no_inline",
-	"_matrix",
-	"_string",
-	"_string16",
-	"_cstring",
-	"_cstring16",
-	"_c",
-}
-
-// TODO should this happen in translate_process? But then prefix stripping must happen there as well
-ensure_name_valid :: proc(s: string) -> string {
-	for k in KEYWORDS {
-		if s == k[1:] {
-			return k
-		}
-	}
-
-	if len(s) > 0 && unicode.is_number(utf8.rune_at(s, 0)) {
-		return fmt.tprintf("_%v", s)
-	}
-
-	return s
 }
 
 output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, indent: int) {
@@ -387,7 +281,7 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 		if param.name == "" {
 			output_definition(types, param.type, b, indent)
 		} else {
-			pf(b, "%s: ", ensure_name_valid(param.name))
+			pf(b, "%s: ", param.name)
 			output_definition(types, param.type, b, indent)
 		}
 	}
@@ -449,6 +343,6 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", ensure_name_valid(enum_type_str))
+		pf(b, "bit_set[%v; i32]", enum_type_str)
 	}
 }

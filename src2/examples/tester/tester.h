@@ -13,7 +13,7 @@ typedef struct ufbx_vec2 {
 	};
 } ufbx_vec2;
 
-/*
+
 typedef struct hello hello;
 
 struct hello {
@@ -104,4 +104,4 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileI
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
-bool IsShaderValid(Shader shader);*/
+bool IsShaderValid(Shader shader);
