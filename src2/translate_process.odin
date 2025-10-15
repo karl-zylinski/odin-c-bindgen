@@ -215,6 +215,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 								pointed_to_type = ptr_type.pointed_to_type,
 							})	
 						}	
+					} else if override == "#by_ptr" {
+						if ptr_type, is_ptr_type := resolve_type_definition(types[:], p.type, Type_Pointer); is_ptr_type {
+							p.type = add_type(&types, Type_Pointer_By_Ptr {
+								pointed_to_type = ptr_type.pointed_to_type,
+							})
+						}
 					} else {
 						p.type = Fixed_Value(override)
 					}
@@ -363,6 +369,11 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 			}
 
 		case Type_Multipointer:
+			if type_name, is_type_name := tv.pointed_to_type.(Type_Name); is_type_name {
+				tv.pointed_to_type = final_type_name(type_name, config)
+			}
+
+		case Type_Pointer_By_Ptr:
 			if type_name, is_type_name := tv.pointed_to_type.(Type_Name); is_type_name {
 				tv.pointed_to_type = final_type_name(type_name, config)
 			}

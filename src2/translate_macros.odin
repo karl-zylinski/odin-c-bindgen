@@ -57,7 +57,7 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 
 		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {})
 
-		if odin_value != "" {
+		if odin_value != "" && odin_value[0] != '{' {
 			def: Definition
 			if odin_value in existing_declaration_names {
 				// We want the value of this macro to change if there is some trimming set in the config etc.
@@ -193,13 +193,14 @@ parse_literal :: proc(b: ^strings.Builder, val: string) -> bool {
 			return true
 		}
 
-		loop_start := 0
+		val_start := 0
 		hex := false
 
 		if val[1] == 'x' || val[1] == 'X' {
+			p(b, '0')
 			p(b, 'x')
 			hex = true
-			loop_start = 2
+			val_start = 2
 		}
 
 		end := len(val) - 1
@@ -222,7 +223,7 @@ parse_literal :: proc(b: ^strings.Builder, val: string) -> bool {
 			}
 		}
 
-		p(b, val[:end + 1])
+		p(b, val[val_start:end + 1])
 		return true
 	} else if val[0] == '"' {
 		p(b, val)

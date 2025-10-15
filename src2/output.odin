@@ -7,8 +7,6 @@ import "core:os"
 import "core:fmt"
 import "core:strings"
 import "core:log"
-import "core:unicode/utf8"
-import "core:unicode"
 
 Output_Input :: Translate_Process_Result
 
@@ -288,6 +286,12 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 		if param.name == "" {
 			output_definition(types, param.type, b, indent)
 		} else {
+			_, by_ptr := resolve_type_definition(types, param.type, Type_Pointer_By_Ptr)
+
+			if by_ptr {
+				pf(b, "#by_ptr ")
+			}
+
 			pf(b, "%s: ", param.name)
 			output_definition(types, param.type, b, indent)
 		}
@@ -313,6 +317,9 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 	case Type_Multipointer:
 		p(b, "[^]")
+		output_definition(types, tv.pointed_to_type, b, indent)
+
+	case Type_Pointer_By_Ptr:
 		output_definition(types, tv.pointed_to_type, b, indent)
 
 	case Type_CString:
@@ -365,7 +372,7 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 
 		if enum_type_ok {
 			first_printed := false
-			for &m, i in enum_type.members {
+			for &m in enum_type.members {
 				if (1 << uint(m.value)) & tv.value != 0 {
 					if first_printed == true {
 						p(b, ", ")

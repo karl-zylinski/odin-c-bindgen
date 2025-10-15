@@ -52,6 +52,7 @@ Type :: union #no_nil {
 	Type_Unknown,
 	Type_Pointer,
 	Type_Multipointer,
+	Type_Pointer_By_Ptr,
 	Type_Raw_Pointer,
 	Type_CString,
 	Type_Struct,
@@ -68,6 +69,10 @@ Type_Pointer :: struct {
 }
 
 Type_Multipointer :: struct {
+	pointed_to_type: Definition,
+}
+
+Type_Pointer_By_Ptr :: struct {
 	pointed_to_type: Definition,
 }
 
