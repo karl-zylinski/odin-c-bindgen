@@ -48,7 +48,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 		output_definition(o.types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)
 
-		if rhs == d.name {
+		if rhs == string(d.name) {
 			continue
 		}
 
@@ -164,7 +164,7 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 			p(&fb, f.type_overrride)
 		} else {
 			switch r in f.type {
-			case string:
+			case Type_Name, Fixed_Value:
 				p(&fb, r)
 			case Type_Index:
 				if proc_type, is_proc_type := resolve_type_definition(types, r, Type_Procedure); is_proc_type {
@@ -257,7 +257,7 @@ calling_convention_string :: proc(calling_convention: Calling_Convention) -> str
 
 output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, indent: int) {
 	switch d in def {
-	case string:
+	case Type_Name, Fixed_Value:
 		p(b, d)
 	case Type_Index:
 		parse_type_build(types, d, b, indent)
@@ -336,13 +336,13 @@ parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, in
 		output_definition(types, tv.element_type, b, indent)
 
 	case Type_Bit_Set:
-		enum_type_str, enum_type_is_str := tv.enum_type.(string)
+		enum_type_name, enum_type_is_name := tv.enum_type.(Type_Name)
 
-		if !enum_type_is_str {
+		if !enum_type_is_name {
 			log.error("Invalid type used with bit set")
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", enum_type_str)
+		pf(b, "bit_set[%v; i32]", enum_type_name)
 	}
 }

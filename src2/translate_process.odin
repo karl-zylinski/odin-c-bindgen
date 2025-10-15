@@ -22,7 +22,6 @@ Translate_Process_Result :: struct {
 	import_core_c: bool,
 }
 
-
 @(private="package")
 translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, config: Config) -> Translate_Process_Result {
 	types := slice.to_dynamic(tcr.types)
@@ -60,14 +59,14 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		// Doing that override will just make this alias not get ignored, as it is no longer just
 		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
 		if alias, is_alias := resolve_type_definition(types[:], d.def, Type_Alias); is_alias {
-			named_alias, alias_is_named := alias.aliased_type.(string)
-			if alias_is_named && d.name == named_alias {
+			named_alias, alias_is_named := alias.aliased_type.(Type_Name)
+			if alias_is_named && d.name == string(named_alias) {
 				override = false
 			}
 		}
 
 		if override {
-			d.def = override_definition_text
+			d.def = Fixed_Value(override_definition_text)
 		}
 	}
 
@@ -85,7 +84,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		append(sets, b)
 	}
 
-	rename_aliases: map[string]string
+	//rename_aliases: map[string]string
 
 	// We make a new array and add the declrations from 'tcr' into it and also maybe some new ones
 	decls: [dynamic]Declaration
@@ -112,7 +111,11 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		append(&decls, dd)
 		d := &decls[len(decls) - 1]
 
-		if _, is_literal := d.def.(string); is_literal {
+		if _, is_fixed_value := d.def.(Fixed_Value); is_fixed_value {
+			continue
+		}
+
+		if _, is_type_name := d.def.(Type_Name); is_type_name {
 			continue
 		}
 
@@ -140,7 +143,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				v.members = new_members[:]
 
 				if b.enum_rename != "" {
-					rename_aliases[d.name] = b.enum_rename
+					//rename_aliases[d.name] = b.enum_rename
 					d.name = b.enum_rename
 				} else {
 					if b.name == b.enum_name {
@@ -149,7 +152,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				}
 
 				bs_idx := add_type(&types, Type_Bit_Set {
-					enum_type = d.name,
+					enum_type = Type_Name(d.name),
 				})
 
 				append(&decls, Declaration {
@@ -170,7 +173,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 							})
 						}	
 					} else {
-						f.type = override
+						f.type = Fixed_Value(override)
 					}
 				}
 			}
@@ -186,7 +189,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 							})	
 						}	
 					} else {
-						p.type = override
+						p.type = Fixed_Value(override)
 					}
 				}
 			}
@@ -341,7 +344,9 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 
 		case Type_Struct:
 			for &f in tv.fields {
-				if name, is_name := f.type.(string); is_name {
+				f.name = ensure_name_valid(f.name)
+
+				if name, is_name := f.type.(Type_Name); is_name {
 					f.type = final_type_name(name, config)
 				}
 			}
@@ -352,12 +357,12 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 		case Type_Bit_Set:
 
 		case Type_Alias:
-			if name, is_name := tv.aliased_type.(string); is_name {
+			if name, is_name := tv.aliased_type.(Type_Name); is_name {
 				tv.aliased_type = final_type_name(name, config)
 			}
 
 		case Type_Fixed_Array:
-			if name, is_name := tv.element_type.(string); is_name {
+			if name, is_name := tv.element_type.(Type_Name); is_name {
 				tv.element_type = final_type_name(name, config)
 			}
 
@@ -365,7 +370,7 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 			for &p in tv.parameters {
 				p.name = ensure_name_valid(p.name)
 
-				if name, is_name := p.type.(string); is_name {
+				if name, is_name := p.type.(Type_Name); is_name {
 					p.type = final_type_name(name, config)
 				} 
 			}
@@ -373,7 +378,7 @@ resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config)
 	}
 
 	for &d in decls {
-		d.name = final_type_name(d.name, config)
+		d.name = string(final_type_name(Type_Name(d.name), config))
 	}
 }
 
@@ -494,14 +499,14 @@ ensure_name_valid :: proc(s: string) -> string {
 	return s
 }
 
-final_type_name :: proc(name: string, config: Config) -> string {
-	res := strings.trim_prefix(name, config.remove_type_prefix)
+final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
+	res := strings.trim_prefix(string(name), config.remove_type_prefix)
 
 	if config.force_ada_case_types {
 		res = strings.to_ada_case(res)
 	}
 
-	return res
+	return Type_Name(res)
 }
 
 add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {

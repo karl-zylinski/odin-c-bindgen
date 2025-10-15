@@ -9,9 +9,14 @@ package bindgen2
 // refer to a type just by its name (for example, when a struct field refers to some other type).
 // The index is often used when a struct contains a field of anonymous type.
 Definition :: union  {
-	string,
+	Type_Name,
+	Fixed_Value,
 	Type_Index,
 }
+
+Type_Name :: distinct string
+
+Fixed_Value :: distinct string
 
 // Just an index into an array of types. Use to point out the definition of another type.
 Type_Index :: distinct int

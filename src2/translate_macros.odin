@@ -60,7 +60,7 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 		if odin_value != "" {
 			append(&macro_decls, Declaration {
 				name = m.name,
-				def = odin_value,
+				def = Fixed_Value(odin_value),
 				comment_before = m.comment,
 				side_comment = m.side_comment,
 				explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,

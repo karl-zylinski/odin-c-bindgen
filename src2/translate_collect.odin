@@ -473,40 +473,40 @@ c_typedef_types := map[string]string {
 get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Definition {
 	#partial switch ct.kind {
 	case .Bool:
-		return "bool"
+		return Fixed_Value("bool")
 	case .Char_U, .UChar:
-		return "u8"
+		return Fixed_Value("u8")
 	case .UShort:
-		return "u16"
+		return Fixed_Value("u16")
 	case .UInt:
-		return "u32"
+		return Fixed_Value("u32")
 	case .ULongLong:
-		return "u64"
+		return Fixed_Value("u64")
 	case .UInt128:
-		return "u128"
+		return Fixed_Value("u128")
 	case .Char_S, .SChar:
-		return "i8"
+		return Fixed_Value("i8")
 	case .Short:
-		return "i16"
+		return Fixed_Value("i16")
 	case .Int:
-		return "i32"
+		return Fixed_Value("i32")
 	case .Long:
-		return "i32"
+		return Fixed_Value("i32")
 	case .LongLong:
-		return "i64"
+		return Fixed_Value("i64")
 	case .Int128:
-		return "i128"
+		return Fixed_Value("i128")
 	case .Float:
-		return "f32"
+		return Fixed_Value("f32")
 	case .Double, .LongDouble:
-		return "f64"
+		return Fixed_Value("f64")
 	case .NullPtr:
-		return "rawptr"
+		return Fixed_Value("rawptr")
 
 	case .Record, .Enum:
 		ctc := clang.getTypeDeclaration(ct)
 		if clang.Cursor_isAnonymous(ctc) == 0 {
-			return get_cursor_name(ctc)
+			return Type_Name(get_cursor_name(ctc))
 		}
 
 	case .Typedef:
@@ -518,10 +518,10 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 				if strings.has_prefix(replacement, "c.") {
 					tcs.import_core_c = true
 				}
-				return replacement
+				return Fixed_Value(replacement)
 			}
 
-			return name
+			return Type_Name(name)
 		}
 
 	case .Elaborated:
