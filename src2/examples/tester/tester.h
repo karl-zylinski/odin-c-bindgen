@@ -94,6 +94,7 @@ typedef Test3 Test15;
 
 typedef struct {
 	int (*hello)(void* data, int len);
+	int (*waaa)();
 } My_API;
 
 typedef void (*TraceLogCallback)(int logLevel, const char *text, va_list args);  // Logging: Redirect trace log messages
@@ -105,3 +106,4 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileI
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
 bool IsShaderValid(Shader shader);
+bool AFunc();

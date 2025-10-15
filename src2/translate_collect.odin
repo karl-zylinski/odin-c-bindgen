@@ -585,6 +585,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 		parameters = params[:],
 		result_type = result_type_id,
 		calling_convention = calling_conv,
+		is_variadic = clang.isFunctionTypeVariadic(ct) == 1,
 	}
 
 	tcs.types[proc_type] = type_definition
@@ -617,10 +618,6 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		if clang_pointee_type.kind == .Void {
 			to_add = Type_Raw_Pointer{}
-		} else if clang_pointee_type.kind == .FunctionProto {
-			// In Odin, a proc is a always a pointer. You can think all procs as being pointers to
-			// a proc defined somewhere else. So `^proc` should be just `proc`.
-			return create_type_recursive(clang_pointee_type, tcs)
 		} else if type_probably_is_cstring(clang_pointee_type) {
 			to_add = Type_CString{}
 		} else {
@@ -648,7 +645,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				if sct.kind == .Pointer {
 					pointee := clang.getPointeeType(sct)
 
-					if pointee.kind == .FunctionProto {
+					if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
 						type_id = create_proc_type(tcs.children_lookup[sc], pointee, tcs)
 						is_func_ptr = true
 					}
@@ -659,8 +656,6 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				}
 
 				name := get_cursor_name(sc)
-
-
 				
 				if type_id == nil {
 					log.errorf("Unresolved struct field type: %v", sc)

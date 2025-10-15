@@ -133,6 +133,7 @@ Type_Procedure :: struct {
 	parameters: []Type_Procedure_Parameter,
 	result_type: Definition,
 	calling_convention: Calling_Convention,
+	is_variadic: bool,
 }
 
 Calling_Convention :: enum {

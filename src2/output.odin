@@ -39,6 +39,7 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	inside_foreign_block: bool
 	foreign_block_calling_conv: Calling_Convention
 	prev_multiline := true
+	indent := 0
 
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
@@ -76,9 +77,11 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 				pln(sb, ")")
 
 				pln(sb, "foreign lib {")
+				indent = 1
 			}
 		} else {
 			if inside_foreign_block {
+				indent = 0
 				pln(sb, "}")
 				inside_foreign_block = false
 			}
@@ -91,16 +94,14 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 		}
 
 		if d.comment_before != "" {
-			if is_proc {
-				p(sb, "\t")
+			cb := d.comment_before
+			for l in strings.split_lines_iterator(&cb) {
+				output_indent(sb, indent)
+				pln(sb, l)
 			}
-
-			pln(sb, d.comment_before)
 		}
 
-		if is_proc {
-			p(sb, "\t")
-		}
+		output_indent(sb, indent)
 
 		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
 
@@ -206,8 +207,12 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 
 	for &f, fi in t_struct.fields {
 		if f.comment_before != "" {
-			output_indent(b, indent + 1)
-			pfln(b, "%s", f.comment_before)
+			cb := f.comment_before
+
+			for l in strings.split_lines_iterator(&cb) {
+				output_indent(b, indent + 1)	
+				pln(b, l)
+			}
 		}
 
 		output_indent(b, indent + 1)
@@ -295,6 +300,14 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 			pf(b, "%s: ", param.name)
 			output_definition(types, param.type, b, indent)
 		}
+	}
+
+	if tp.is_variadic {
+		if len(tp.parameters) > 0 {
+			p(b, ", ")
+		}
+		
+		p(b, "#c_vararg _: ..any")
 	}
 
 	pf(b, ")")
