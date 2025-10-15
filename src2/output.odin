@@ -42,7 +42,6 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	foreign_block_calling_conv: Calling_Convention
 	prev_multiline := true
 
-
 	fr_decls_loop: for &d in o.decls {
 		rhs_builder := strings.builder_make()
 		output_definition(o.types, d.def, &rhs_builder, 0)

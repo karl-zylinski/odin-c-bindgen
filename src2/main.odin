@@ -74,7 +74,6 @@ main :: proc() {
 	input_files: [dynamic]string
 
 	for input_base in config.inputs {
-		fmt.println(input_base)
 		input := filepath.join({dir, input_base})
 		if os.is_dir(input) {
 			input_folder, input_folder_err := os2.open(input)
@@ -109,6 +108,7 @@ main :: proc() {
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
 			
+			log.infof("Collecting data from %v", input_filename)
 			collect_res, collect_ok := translate_collect(input_filename, config)
 
 			if !collect_ok {
@@ -123,9 +123,11 @@ main :: proc() {
 
 			macro_decls := translate_macros(collect_res.macros, declaration_names[:])
 
+			log.infof("Processing data from %v", input_filename)
 			process_res := translate_process(collect_res, macro_decls, config)
 			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
+			log.infof("Writing %v", output_filename)
 			output(process_res, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
 		}

@@ -710,7 +710,6 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 						comment_before = comment_before,
 						comment_on_right = comment_on_right,
 					})
-					log.info(get_cursor_name(sc))
 				}
 			}
 		}

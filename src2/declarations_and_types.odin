@@ -42,6 +42,9 @@ Declaration :: struct {
 	explicit_whitespace_after_name: int,
 
 	// This declaration originates from a C macro.
+	//
+	// TODO: We currently have three "categories": types, procs and macros. Should this be enumified
+	// perhaps? The proc info comes from 'def' currently
 	from_macro: bool,
 }
 
