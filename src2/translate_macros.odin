@@ -76,6 +76,8 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 				original_line = m.original_line,
 				from_macro = true,
 			})
+
+			existing_declaration_names[m.name] = {}
 		}
 	}
 
@@ -284,6 +286,18 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	tv := t.value
 
+	// We are inside a function-like macro and this identifier is one of the parameter names:
+	// Replace the identifier with the argument!
+	if parameter_replacement, has_parameter_replacement := ems.params[tv]; has_parameter_replacement {
+		p(b, parameter_replacement)
+		return true
+	}
+
+	if tv in ems.existing_declarations {
+		p(b, tv)
+		return true
+	}
+
 	if inner_macro_idx, inner_macro_exists := ems.macro_lookup[tv]; inner_macro_exists {
 		inner_macro := ems.macros[inner_macro_idx]
 
@@ -304,17 +318,5 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		return true
 	}
 
-	// We are inside a function-like macro and this identifier is one of the parameter names:
-	// Replace the identifier with the argument!
-	if parameter_replacement, has_parameter_replacement := ems.params[tv]; has_parameter_replacement {
-		p(b, parameter_replacement)
-		return true
-	}
-
-	if tv not_in ems.existing_declarations {
-		return false
-	}
-
-	p(b, tv)
-	return true
+	return false
 }

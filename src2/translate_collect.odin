@@ -150,6 +150,19 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	line := get_cursor_location(c).line
 	is_forward_declare := clang.isCursorDefinition(c) == 0
 
+	side_comment: string
+	{
+		source_range := clang.getCursorExtent(c)
+
+		start := clang.getRangeStart(source_range)
+		start_offset: u32
+		clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
+		end := clang.getRangeEnd(source_range)
+		end_offset: u32
+		clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
+		side_comment, _ = find_comment_at_line_end(tcs.source[start_offset:])
+	}
+
 	ct := clang.getCursorType(c)
 
 	#partial switch c.kind {
@@ -168,6 +181,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			side_comment = side_comment,
 			is_forward_declare = is_forward_declare,
 		})
 
@@ -190,6 +204,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			side_comment = side_comment,
 			is_forward_declare = is_forward_declare,
 		})
 		
@@ -206,6 +221,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			side_comment = side_comment,
 			is_forward_declare = is_forward_declare,
 		})
 		
@@ -222,6 +238,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			def = ti,
 			name = name,
 			original_line = line,
+			side_comment = side_comment,
 			is_forward_declare = is_forward_declare,
 		})
 

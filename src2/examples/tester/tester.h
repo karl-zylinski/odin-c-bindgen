@@ -4,6 +4,13 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
+#ifndef PI
+    #define PI 3.14159265358979323846f
+#endif
+#ifndef DEG2RAD
+    #define DEG2RAD (PI/180.0f)
+#endif
+/*
 typedef float ufbx_real;
 
 typedef struct ufbx_vec2 {
@@ -106,4 +113,4 @@ typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileI
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
 bool IsShaderValid(Shader shader);
-bool AFunc();
+bool AFunc();*/
