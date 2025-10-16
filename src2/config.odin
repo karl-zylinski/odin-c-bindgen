@@ -11,8 +11,9 @@ Config :: struct {
 
 	// The package name to use in `package package_name` at top of each generated file.
 	package_name: string,
-
-	bit_sets: []Config_Bit_Set,
+	
+	rename: map[string]string,
+	bit_setify: map[string]string,
 
 	type_overrides: map[string]string,
 
@@ -30,11 +31,4 @@ Config :: struct {
 	clang_defines: map[string]string,
 
 	force_ada_case_types: bool,
-}
-
-Config_Bit_Set :: struct {
-	name: string,
-	enum_name: string,
-	enum_rename: string,
-	storage: string,
 }

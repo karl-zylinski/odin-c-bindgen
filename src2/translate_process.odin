@@ -66,26 +66,6 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		}
 	}
 
-	// Build map of enum name -> bit_set config data
-	bit_sets_by_enum_name: map[string][dynamic]Config_Bit_Set
-
-	for &b in config.bit_sets {
-		sets := &bit_sets_by_enum_name[b.enum_name]
-
-		if sets == nil {
-			bit_sets_by_enum_name[b.enum_name] = {}
-			sets = &bit_sets_by_enum_name[b.enum_name]
-		}
-
-		append(sets, b)
-	}
-
-	//rename_aliases: map[string]string
-
-	/*for m in macros {
-		append(&decls, m)
-	}*/
-	
 	// Declared here to reuse.
 	bit_set_make_constant: map[string]int
 
@@ -93,7 +73,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		if i == 0 {
 			continue
 		}
-		
+
 		if d.is_forward_declare && forward_declare_resolved[d.name] {
 			continue
 		}
@@ -120,18 +100,13 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 		#partial switch &v in type {
 		case Type_Enum:
-			bit_sets := bit_sets_by_enum_name[d.name]
+			bit_set_name, bit_setify := config.bit_setify[d.name]
 
-			for b in bit_sets {
+			if bit_setify {
 				clear(&bit_set_make_constant)
 
-				if b.enum_rename != "" {
-					//rename_aliases[d.name] = b.enum_rename
-					d.name = b.enum_rename
-				} else {
-					if b.name == b.enum_name {
-						log.warnf("bit_set name %v is same as enum name %v. Suggestion: Add \"enum_rename\" = \"New_Name\" on the bit set configuration in bindgen.sjson", b.name, b.enum_name)
-					}
+				if bit_set_name == d.name && (d.name not_in config.rename) {
+					log.warnf("bit_set '%v' has same as enum '%v'. Suggestion: Add '\"%v\" = \"Some_New_Name\"' to 'rename' in bindgen.sjson", bit_set_name, d.name, d.name)
 				}
 
 				bs_idx := add_type(types, Type_Bit_Set {
@@ -152,7 +127,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 						// it into a constant.
 						bs_constant_idx := add_type(types, Type_Bit_Set_Constant {
 							bit_set_type = bs_idx,
-							bit_set_type_name = Type_Name(b.name),
+							bit_set_type_name = Type_Name(bit_set_name),
 							value = m.value,
 						})
 
@@ -177,7 +152,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 				add_decl(decls, {
 					original_line = d.original_line + 1,
-					name = b.name,
+					name = bit_set_name,
 					def = bs_idx,
 				})
 			}
@@ -302,7 +277,7 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 				}
 			}
 
-			// We stripped to much! Back off to nearest underscore or camelCase change
+			// We stripped too much! Back off to nearest underscore or camelCase change
 			if any_blank {
 				found_underscore := false
 				#reverse for c, i in overlap_length_source {
