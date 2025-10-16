@@ -11,8 +11,6 @@ import "core:fmt"
 
 @(private="package")
 Translate_Collect_Result :: struct {
-	declarations: []Declaration,
-	types: []Type,
 	source: string,
 	import_core_c: bool,
 	macros: []Raw_Macro,
@@ -22,7 +20,7 @@ Translate_Collect_Result :: struct {
 // and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
 // that is deferred to `translate_process`.
 @(private="package", require_results)
-translate_collect :: proc(filename: string, config: Config) -> (Translate_Collect_Result, bool) {
+translate_collect :: proc(filename: string, config: Config, types: Type_List, declarations: Declaration_List) -> (Translate_Collect_Result, bool) {
 	clang_args: [dynamic]cstring
 	append(&clang_args, "-fparse-all-comments")
 
@@ -74,6 +72,8 @@ translate_collect :: proc(filename: string, config: Config) -> (Translate_Collec
 	tcs := Translate_Collect_State {
 		source = strings.string_from_ptr((^u8)(source), int(source_size)),
 		translation_unit = unit,
+		types = types,
+		declarations = declarations,
 	}
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
@@ -81,8 +81,6 @@ translate_collect :: proc(filename: string, config: Config) -> (Translate_Collec
 	build_cursor_children_lookup(root_cursor, &tcs.children_lookup)
 
 	root_children := tcs.children_lookup[root_cursor]
-
-	append(&tcs.types, Type_Unknown {})
 
 	for c in root_children {
 		loc := get_cursor_location(c)
@@ -95,8 +93,6 @@ translate_collect :: proc(filename: string, config: Config) -> (Translate_Collec
 	}
 
 	return {
-		declarations = tcs.declarations[:],
-		types = tcs.types[:],
 		source = tcs.source,
 		import_core_c = tcs.import_core_c,
 		macros = tcs.macros[:],
@@ -104,9 +100,9 @@ translate_collect :: proc(filename: string, config: Config) -> (Translate_Collec
 }
 
 Translate_Collect_State :: struct {
-	declarations: [dynamic]Declaration,
+	declarations: Declaration_List,
 	type_lookup: map[clang.Type]Type_Index,
-	types: [dynamic]Type,
+	types: Type_List,
 	children_lookup: Cursor_Children_Map,
 	source: string,
 	import_core_c: bool,
@@ -176,7 +172,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(&tcs.declarations, Declaration {
+		add_decl(tcs.declarations, {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -199,7 +195,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(&tcs.declarations, Declaration {
+		append(tcs.declarations, Declaration {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -216,7 +212,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(&tcs.declarations, Declaration {
+		append(tcs.declarations, Declaration {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -233,7 +229,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(&tcs.declarations, Declaration {
+		append(tcs.declarations, Declaration {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -602,7 +598,10 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 		parameters = params[:],
 		result_type = result_type_id,
 		calling_convention = calling_conv,
-		is_variadic = clang.isFunctionTypeVariadic(ct) == 1,
+
+		// Zero length params and variadic isn't really a usable combination. Just pretend it isn't
+		// variadic in that case.
+		is_variadic = len(params) > 0 && clang.isFunctionTypeVariadic(ct) == 1,
 	}
 
 	tcs.types[proc_type] = type_definition
@@ -611,7 +610,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 
 reserve_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
 	idx := Type_Index(len(tcs.types))
-	append_nothing(&tcs.types)
+	append_nothing(tcs.types)
 	tcs.type_lookup[ct] = idx
 	return idx
 }

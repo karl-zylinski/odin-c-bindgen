@@ -12,9 +12,6 @@ import "core:os"
 
 @(private="package")
 Translate_Process_Result :: struct {
-	decls: []Declaration,
-	types: []Type,
-
 	// Comment at top of file
 	top_comment: string,
 	top_code: string,
@@ -24,20 +21,18 @@ Translate_Process_Result :: struct {
 }
 
 @(private="package")
-translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, config: Config) -> Translate_Process_Result {
-	types := slice.to_dynamic(tcr.types)
-
+translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: Type_List, declarations: Declaration_List) -> Translate_Process_Result {
 	forward_declare_resolved: map[string]bool
 
-	for &d in tcr.declarations {
+	for &d in declarations {
 		if d.is_forward_declare {
 			forward_declare_resolved[d.name] = false
 		}
 	}
 
-	for &d in tcr.declarations {
+	for &d in declarations {
 		// A bit of a hack due to aliases being disregarded later. Perhaps we can change that?
-		if _, is_alias := resolve_type_definition(tcr.types, d.def, Type_Alias); is_alias {
+		if _, is_alias := resolve_type_definition(types, d.def, Type_Alias); is_alias {
 			continue
 		}
 
@@ -47,7 +42,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 	}
 
 	// Replace types
-	for &d in tcr.declarations {
+	for &d in declarations {
 		override: bool
 		override_definition_text: string
 
@@ -59,7 +54,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		// Don't override if this is type is an alias that has the same name as the aliased name.
 		// Doing that override will just make this alias not get ignored, as it is no longer just
 		// doing Some_Type :: Some_Type, but rather Some_New_Type :: Some_Type.
-		if alias, is_alias := resolve_type_definition(types[:], d.def, Type_Alias); is_alias {
+		if alias, is_alias := resolve_type_definition(types, d.def, Type_Alias); is_alias {
 			named_alias, alias_is_named := alias.aliased_type.(Type_Name)
 			if alias_is_named && d.name == string(named_alias) {
 				override = false
@@ -87,33 +82,31 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 
 	//rename_aliases: map[string]string
 
-	// We make a new array and add the declrations from 'tcr' into it and also maybe some new ones
-	decls: [dynamic]Declaration
-
-	for m in macros {
+	/*for m in macros {
 		append(&decls, m)
-	}
+	}*/
 	
 	// Declared here to reuse.
 	bit_set_make_constant: map[string]int
 
-	for &dd in tcr.declarations {
-		if dd.is_forward_declare && forward_declare_resolved[dd.name] {
+	for &d, i in declarations {
+		if i == 0 {
+			continue
+		}
+		
+		if d.is_forward_declare && forward_declare_resolved[d.name] {
 			continue
 		}
 
-		if dd.name == "" {
-			log.errorf("Declaration has no name: %v", dd.name)
+		if d.name == "" {
+			log.errorf("Declaration has no name: %v", d.name)
 			continue
 		}
 
-		if dd.def == nil {
-			log.errorf("Type used in declaration %v is zero", dd.name)
+		if d.def == nil {
+			log.errorf("Type used in declaration %v is zero", d.name)
 			continue
 		}
-
-		append(&decls, dd)
-		d := &decls[len(decls) - 1]
 
 		if _, is_fixed_value := d.def.(Fixed_Value); is_fixed_value {
 			continue
@@ -141,7 +134,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 					}
 				}
 
-				bs_idx := add_type(&types, Type_Bit_Set {
+				bs_idx := add_type(types, Type_Bit_Set {
 					enum_type = d.def.(Type_Index),
 					enum_decl_name = Type_Name(d.name),
 				})
@@ -157,7 +150,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 					if bits.count_ones(m.value) != 1 {
 						// Not a power of two, so not part of a bit_set. Save it for later for making
 						// it into a constant.
-						bs_constant_idx := add_type(&types, Type_Bit_Set_Constant {
+						bs_constant_idx := add_type(types, Type_Bit_Set_Constant {
 							bit_set_type = bs_idx,
 							bit_set_type_name = Type_Name(b.name),
 							value = m.value,
@@ -165,8 +158,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 
 						all_constant := strings.to_screaming_snake_case(strings.trim_prefix(strings.to_lower(m.name), strings.to_lower(config.remove_type_prefix)))
 
-						append(&decls, Declaration {
-							original_line = dd.original_line + 2,
+						add_decl(declarations, {
+							original_line = d.original_line + 2,
 							name = all_constant,
 							def = bs_constant_idx,
 						})
@@ -182,8 +175,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 
 				v.members = new_members[:]
 
-				append(&decls, Declaration {
-					original_line = dd.original_line + 1,
+				add_decl(declarations, {
+					original_line = d.original_line + 1,
 					name = b.name,
 					def = bs_idx,
 				})
@@ -194,8 +187,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				override_key := fmt.tprintf("%s.%s", d.name, f.name)
 				if override, has_override := config.struct_field_overrides[override_key]; has_override {
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types[:], f.type, Type_Pointer); is_ptr_type {
-							f.type = add_type(&types, Type_Multipointer {
+						if ptr_type, is_ptr_type := resolve_type_definition(types, f.type, Type_Pointer); is_ptr_type {
+							f.type = add_type(types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type,
 							})
 						}	
@@ -210,14 +203,14 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 				if override, has_override := config.procedure_type_overrides[override_key]; has_override {
 					
 					if override == "[^]" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types[:], p.type, Type_Pointer); is_ptr_type {
-							p.type = add_type(&types, Type_Multipointer {
+						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
+							p.type = add_type(types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type,
 							})	
 						}	
 					} else if override == "#by_ptr" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types[:], p.type, Type_Pointer); is_ptr_type {
-							p.type = add_type(&types, Type_Pointer_By_Ptr {
+						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
+							p.type = add_type(types, Type_Pointer_By_Ptr {
 								pointed_to_type = ptr_type.pointed_to_type,
 							})
 						}
@@ -267,16 +260,14 @@ translate_process :: proc(tcr: Translate_Collect_Result, macros: []Declaration, 
 		top_code = fmt.tprintf(`foreign import lib "%v"`, config.import_lib)
 	}
 
-	slice.sort_by(decls[:], proc(i, j: Declaration) -> bool {
+	slice.sort_by(declarations[:], proc(i, j: Declaration) -> bool {
 		return i.original_line < j.original_line
 	})
 
 	// Run this last! Otherwise mapping that assumes things has their original names may fail.
-	resolve_final_names(types[:], decls[:], config)
+	resolve_final_names(types, declarations, config)
 
 	return {
-		decls = decls[:],
-		types = types[:],
 		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
 		link_prefix = config.remove_function_prefix,
@@ -358,7 +349,7 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 }
 
 // Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
-resolve_final_names :: proc(types: []Type, decls: []Declaration, config: Config) {
+resolve_final_names :: proc(types: Type_List, decls: Declaration_List, config: Config) {
 	for &t in types {
 		switch &tv in t {
 		case Type_Unknown:
@@ -566,12 +557,6 @@ final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
 	}
 
 	return Type_Name(res)
-}
-
-add_type :: proc(array: ^[dynamic]Type, t: Type) -> Type_Index {
-	idx := len(array)
-	append(array, t)
-	return Type_Index(idx)
 }
 
 // Extracts any comment at the top of the source file. These will be put above the package line in

@@ -1,6 +1,7 @@
 package bindgen2
 
 import vmem "core:mem/virtual"
+import "core:mem"
 import "core:os"
 import "core:os/os2"
 import "core:fmt"
@@ -103,33 +104,45 @@ main :: proc() {
 
 	for input_filename in input_files {
 		if filepath.ext(input_filename) == ".h" {
+			types_arena: vmem.Arena
+			types_arena_err := vmem.arena_init_static(&types_arena, 100 * mem.Megabyte)
+			log.assertf(types_arena_err == nil, "Failed reserving types arena memory. Error: %v", types_arena_err)
+
+			decls_arena: vmem.Arena
+			decls_arena_err := vmem.arena_init_static(&decls_arena, 100 * mem.Megabyte)
+			log.assertf(decls_arena_err == nil, "Failed reserving types arena memory. Error: %v", decls_arena_err)
+
+			types := make([dynamic]Type, allocator = vmem.arena_allocator(&types_arena))
+			type_list := Type_List(&types)
+			declarations := make([dynamic]Declaration, allocator = vmem.arena_allocator(&decls_arena))
+			declaration_list := Declaration_List(&declarations)
+
+			append(&declarations, Declaration {})
+			append(&types, Type_Unknown {})
+
 			gen_arena: vmem.Arena
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
 			gen_ctx = context
 			
 			log.infof("Collecting data from %v", input_filename)
-			collect_res, collect_ok := translate_collect(input_filename, config)
+			collect_res, collect_ok := translate_collect(input_filename, config, type_list, declaration_list)
 
 			if !collect_ok {
 				continue
 			}
 
-			declaration_names: [dynamic]string
-
-			for d in collect_res.declarations {
-				append(&declaration_names, d.name)
-			}
-
-			macro_decls := translate_macros(collect_res.macros, declaration_names[:])
+			translate_macros(collect_res.macros, declaration_list)
 
 			log.infof("Processing data from %v", input_filename)
-			process_res := translate_process(collect_res, macro_decls, config)
+			process_res := translate_process(collect_res, config, type_list, declaration_list)
 			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			log.infof("Writing %v", output_filename)
-			output(process_res, output_filename, package_name)
+			output(type_list, declaration_list, process_res, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
+			vmem.arena_destroy(&types_arena)
+			vmem.arena_destroy(&decls_arena)
 		}
 	}
 }

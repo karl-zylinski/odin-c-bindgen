@@ -23,6 +23,19 @@ Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
 
+Declaration_List :: ^[dynamic]Declaration
+Type_List :: ^[dynamic]Type
+
+add_type :: proc(array: Type_List, t: Type) -> Type_Index {
+	idx := len(array)
+	append(array, t)
+	return Type_Index(idx)
+}
+
+add_decl :: proc(decls: Declaration_List, d: Declaration) {
+	append(decls, d)
+}
+
 Declaration :: struct {
 	name: string,
 	def: Definition,
@@ -149,10 +162,11 @@ Type_Override :: struct {
 	definition_text: string,
 }
 
-resolve_type_definition :: proc(types: []Type, def: Definition, $T: typeid) -> (T, bool) {
+resolve_type_definition :: proc(types: Type_List, def: Definition, $T: typeid) -> (T, bool) {
 	if idx, is_idx := def.(Type_Index); is_idx {
 		return types[idx].(T)
 	}
 
 	return {}, false
 }
+

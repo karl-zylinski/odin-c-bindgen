@@ -33,11 +33,11 @@ Raw_Macro_Token_Kind :: enum {
 }
 
 @(private="package")
-translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []Declaration {
+translate_macros :: proc(macros: []Raw_Macro, declarations: Declaration_List) {
 	existing_declaration_names: map[string]struct{}
 
-	for d in declaration_names {
-		existing_declaration_names[d] = {}
+	for d in declarations {
+		existing_declaration_names[d.name] = {}
 	}
 
 	macro_lookup: map[string]int
@@ -45,8 +45,6 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 	for m, i in macros {
 		macro_lookup[m.name] = i
 	}
-
-	macro_decls: [dynamic]Declaration
 
 	for m, i in macros {
 		// Function-like macros are only used when figuring out a value of a non-function like macro.
@@ -66,7 +64,7 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 				def = Fixed_Value(odin_value)
 			}
 
-			append(&macro_decls, Declaration {
+			add_decl(declarations, {
 				name = m.name,
 				def = def,
 				comment_before = m.comment,
@@ -80,8 +78,6 @@ translate_macros :: proc(macros: []Raw_Macro, declaration_names: []string) -> []
 			existing_declaration_names[m.name] = {}
 		}
 	}
-
-	return macro_decls[:]
 }
 
 Macro_Index :: int

@@ -12,7 +12,7 @@ Output_Input :: Translate_Process_Result
 
 // Takes the result of `translate_process` and outputs bindings into `filename`.
 @(private="package")
-output :: proc(o: Output_Input, filename: string, package_name: string) {
+output :: proc(types: Type_List, declarations: Declaration_List, o: Output_Input, filename: string, package_name: string) {
 	ensure(filename != "")
 	ensure(package_name != "")
 	builder := strings.builder_make()
@@ -41,16 +41,16 @@ output :: proc(o: Output_Input, filename: string, package_name: string) {
 	prev_multiline := true
 	indent := 0
 
-	fr_decls_loop: for &d in o.decls {
+	fr_decls_loop: for &d in declarations {
 		rhs_builder := strings.builder_make()
-		output_definition(o.types, d.def, &rhs_builder, 0)
+		output_definition(types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)
 
 		if rhs == string(d.name) {
 			continue
 		}
 
-		proc_type, is_proc := resolve_type_definition(o.types, d.def, Type_Procedure)
+		proc_type, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
 
 		if is_proc {
 			start_foreign_block := false
@@ -133,7 +133,7 @@ pfln :: fmt.sbprintfln
 pf :: fmt.sbprintf
 pln :: fmt.sbprintln
 
-output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	t_struct := &t.(Type_Struct)
 
@@ -235,7 +235,7 @@ output_struct_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Bui
 	p(b, "}")
 }
 
-output_enum_definition :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	t_enum := &t.(Type_Enum)
 
@@ -265,7 +265,7 @@ calling_convention_string :: proc(calling_convention: Calling_Convention) -> str
 	return "c"
 }
 
-output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, indent: int) {
+output_definition :: proc(types: ^[dynamic]Type, def: Definition, b: ^strings.Builder, indent: int) {
 	switch d in def {
 	case Type_Name, Fixed_Value:
 		p(b, d)
@@ -274,7 +274,7 @@ output_definition :: proc(types: []Type, def: Definition, b: ^strings.Builder, i
 	}
 }
 
-output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^strings.Builder, indent: int, explicit_calling_convention := false) {
+output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b: ^strings.Builder, indent: int, explicit_calling_convention := false) {
 	pf(b, "proc")
 
 	if explicit_calling_convention {
@@ -318,7 +318,7 @@ output_procedure_signature :: proc(types: []Type, tp: Type_Procedure, b: ^string
 	}
 }
 
-parse_type_build :: proc(types: []Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
+parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Builder, indent: int) {
 	t := types[idx]
 	switch &tv in t {
 	case Type_Unknown:
