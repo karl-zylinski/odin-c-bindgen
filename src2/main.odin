@@ -112,13 +112,13 @@ main :: proc() {
 			decls_arena_err := vmem.arena_init_static(&decls_arena, 100 * mem.Megabyte)
 			log.assertf(decls_arena_err == nil, "Failed reserving types arena memory. Error: %v", decls_arena_err)
 
-			types := make([dynamic]Type, allocator = vmem.arena_allocator(&types_arena))
-			type_list := Type_List(&types)
-			declarations := make([dynamic]Declaration, allocator = vmem.arena_allocator(&decls_arena))
-			declaration_list := Declaration_List(&declarations)
+			type_arr := make([dynamic]Type, allocator = vmem.arena_allocator(&types_arena))
+			types := Type_List(&type_arr)
+			decl_arr := make([dynamic]Decl, allocator = vmem.arena_allocator(&decls_arena))
+			decls := Decl_List(&decl_arr)
 
-			append(&declarations, Declaration {})
-			append(&types, Type_Unknown {})
+			add_decl(decls, {})
+			add_type(types, {})
 
 			gen_arena: vmem.Arena
 			context.allocator = vmem.arena_allocator(&gen_arena)
@@ -126,20 +126,20 @@ main :: proc() {
 			gen_ctx = context
 			
 			log.infof("Collecting data from %v", input_filename)
-			collect_res, collect_ok := translate_collect(input_filename, config, type_list, declaration_list)
+			collect_res, collect_ok := translate_collect(input_filename, config, types, decls)
 
 			if !collect_ok {
 				continue
 			}
 
-			translate_macros(collect_res.macros, declaration_list)
+			translate_macros(collect_res.macros, decls)
 
 			log.infof("Processing data from %v", input_filename)
-			process_res := translate_process(collect_res, config, type_list, declaration_list)
+			process_res := translate_process(collect_res, config, types, decls)
 			output_stem := filepath.stem(input_filename)
 			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
 			log.infof("Writing %v", output_filename)
-			output(type_list, declaration_list, process_res, output_filename, package_name)
+			output(types, decls, process_res, output_filename, package_name)
 			vmem.arena_destroy(&gen_arena)
 			vmem.arena_destroy(&types_arena)
 			vmem.arena_destroy(&decls_arena)

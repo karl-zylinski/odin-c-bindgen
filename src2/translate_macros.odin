@@ -33,10 +33,10 @@ Raw_Macro_Token_Kind :: enum {
 }
 
 @(private="package")
-translate_macros :: proc(macros: []Raw_Macro, declarations: Declaration_List) {
+translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 	existing_declaration_names: map[string]struct{}
 
-	for d in declarations {
+	for d in decls {
 		existing_declaration_names[d.name] = {}
 	}
 
@@ -64,7 +64,7 @@ translate_macros :: proc(macros: []Raw_Macro, declarations: Declaration_List) {
 				def = Fixed_Value(odin_value)
 			}
 
-			add_decl(declarations, {
+			add_decl(decls, {
 				name = m.name,
 				def = def,
 				comment_before = m.comment,

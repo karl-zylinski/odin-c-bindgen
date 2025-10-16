@@ -12,7 +12,7 @@ Output_Input :: Translate_Process_Result
 
 // Takes the result of `translate_process` and outputs bindings into `filename`.
 @(private="package")
-output :: proc(types: Type_List, declarations: Declaration_List, o: Output_Input, filename: string, package_name: string) {
+output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: string, package_name: string) {
 	ensure(filename != "")
 	ensure(package_name != "")
 	builder := strings.builder_make()
@@ -41,7 +41,7 @@ output :: proc(types: Type_List, declarations: Declaration_List, o: Output_Input
 	prev_multiline := true
 	indent := 0
 
-	fr_decls_loop: for &d in declarations {
+	fr_decls_loop: for &d in decls {
 		rhs_builder := strings.builder_make()
 		output_definition(types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)

@@ -5,6 +5,8 @@
 
 - test macros on other libs
 
+- check declaration -> decl rename status across all files
+
 - calling convention coming from clang always says C, even if I put __stdcall etc
 
 - new examples:

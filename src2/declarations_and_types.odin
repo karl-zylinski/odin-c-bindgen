@@ -23,7 +23,7 @@ Type_Index :: distinct int
 
 TYPE_INDEX_NONE :: Type_Index(0)
 
-Declaration_List :: ^[dynamic]Declaration
+Decl_List :: ^[dynamic]Decl
 Type_List :: ^[dynamic]Type
 
 add_type :: proc(array: Type_List, t: Type) -> Type_Index {
@@ -32,11 +32,11 @@ add_type :: proc(array: Type_List, t: Type) -> Type_Index {
 	return Type_Index(idx)
 }
 
-add_decl :: proc(decls: Declaration_List, d: Declaration) {
+add_decl :: proc(decls: Decl_List, d: Decl) {
 	append(decls, d)
 }
 
-Declaration :: struct {
+Decl :: struct {
 	name: string,
 	def: Definition,
 	comment_before: string,

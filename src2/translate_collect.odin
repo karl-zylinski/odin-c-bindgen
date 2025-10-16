@@ -20,7 +20,7 @@ Translate_Collect_Result :: struct {
 // and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
 // that is deferred to `translate_process`.
 @(private="package", require_results)
-translate_collect :: proc(filename: string, config: Config, types: Type_List, declarations: Declaration_List) -> (Translate_Collect_Result, bool) {
+translate_collect :: proc(filename: string, config: Config, types: Type_List, decls: Decl_List) -> (Translate_Collect_Result, bool) {
 	clang_args: [dynamic]cstring
 	append(&clang_args, "-fparse-all-comments")
 
@@ -73,7 +73,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		source = strings.string_from_ptr((^u8)(source), int(source_size)),
 		translation_unit = unit,
 		types = types,
-		declarations = declarations,
+		decls = decls,
 	}
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
@@ -99,8 +99,10 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 	}, true
 }
 
+Cursor_Children_Map :: map[clang.Cursor][]clang.Cursor
+
 Translate_Collect_State :: struct {
-	declarations: Declaration_List,
+	decls: Decl_List,
 	type_lookup: map[clang.Type]Type_Index,
 	types: Type_List,
 	children_lookup: Cursor_Children_Map,
@@ -172,7 +174,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		add_decl(tcs.declarations, {
+		add_decl(tcs.decls, {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -195,7 +197,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(tcs.declarations, Declaration {
+		add_decl(tcs.decls, {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -212,7 +214,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(tcs.declarations, Declaration {
+		add_decl(tcs.decls, {
 			comment_before = comment_before,
 			def = ti,
 			name = name,
@@ -229,7 +231,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		append(tcs.declarations, Declaration {
+		add_decl(tcs.decls, {
 			comment_before = comment_before,
 			def = ti,
 			name = name,

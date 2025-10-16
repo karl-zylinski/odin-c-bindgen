@@ -21,16 +21,16 @@ Translate_Process_Result :: struct {
 }
 
 @(private="package")
-translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: Type_List, declarations: Declaration_List) -> Translate_Process_Result {
+translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: Type_List, decls: Decl_List) -> Translate_Process_Result {
 	forward_declare_resolved: map[string]bool
 
-	for &d in declarations {
+	for &d in decls {
 		if d.is_forward_declare {
 			forward_declare_resolved[d.name] = false
 		}
 	}
 
-	for &d in declarations {
+	for &d in decls {
 		// A bit of a hack due to aliases being disregarded later. Perhaps we can change that?
 		if _, is_alias := resolve_type_definition(types, d.def, Type_Alias); is_alias {
 			continue
@@ -42,7 +42,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 	}
 
 	// Replace types
-	for &d in declarations {
+	for &d in decls {
 		override: bool
 		override_definition_text: string
 
@@ -89,7 +89,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 	// Declared here to reuse.
 	bit_set_make_constant: map[string]int
 
-	for &d, i in declarations {
+	for &d, i in decls {
 		if i == 0 {
 			continue
 		}
@@ -158,7 +158,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 						all_constant := strings.to_screaming_snake_case(strings.trim_prefix(strings.to_lower(m.name), strings.to_lower(config.remove_type_prefix)))
 
-						add_decl(declarations, {
+						add_decl(decls, {
 							original_line = d.original_line + 2,
 							name = all_constant,
 							def = bs_constant_idx,
@@ -175,7 +175,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 				v.members = new_members[:]
 
-				add_decl(declarations, {
+				add_decl(decls, {
 					original_line = d.original_line + 1,
 					name = b.name,
 					def = bs_idx,
@@ -260,12 +260,12 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		top_code = fmt.tprintf(`foreign import lib "%v"`, config.import_lib)
 	}
 
-	slice.sort_by(declarations[:], proc(i, j: Declaration) -> bool {
+	slice.sort_by(decls[:], proc(i, j: Decl) -> bool {
 		return i.original_line < j.original_line
 	})
 
 	// Run this last! Otherwise mapping that assumes things has their original names may fail.
-	resolve_final_names(types, declarations, config)
+	resolve_final_names(types, decls, config)
 
 	return {
 		top_comment = extract_top_comment(tcr.source),
@@ -349,7 +349,7 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 }
 
 // Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
-resolve_final_names :: proc(types: Type_List, decls: Declaration_List, config: Config) {
+resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) {
 	for &t in types {
 		switch &tv in t {
 		case Type_Unknown:
