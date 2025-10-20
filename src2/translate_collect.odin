@@ -149,6 +149,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	is_forward_declare := clang.isCursorDefinition(c) == 0
 
 	side_comment: string
+	side_comment_align_whitespace: int
 	{
 		source_range := clang.getCursorExtent(c)
 
@@ -158,7 +159,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		end := clang.getRangeEnd(source_range)
 		end_offset: u32
 		clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
-		side_comment, _ = find_comment_at_line_end(tcs.source[start_offset:])
+		side_comment, side_comment_align_whitespace = find_comment_at_line_end(tcs.source[start_offset:])
 	}
 
 	ct := clang.getCursorType(c)
@@ -273,8 +274,6 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 				}
 			}
 		}
-
-		side_comment, side_comment_align_whitespace := find_comment_at_line_end(tcs.source[start_offset:])
 
 		comment: string
 		{

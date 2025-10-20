@@ -137,6 +137,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 							original_line = d.original_line + 2,
 							name = all_constant,
 							def = bs_constant_idx,
+							explicitly_created = true,
 						})
 
 						continue
@@ -402,13 +403,12 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 		}
 
 		_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
-		_, is_bs_const := resolve_type_definition(types, d.def, Type_Bit_Set_Constant)
 
 		if is_proc {
 			d.name = strings.trim_prefix(d.name, config.remove_function_prefix)
 		} else if d.from_macro {
 			d.name = strings.trim_prefix(d.name, config.remove_macro_prefix)
-		} else if !is_bs_const {
+		} else {
 			d.name = string(final_type_name(Type_Name(d.name), config))
 		}
 	}
