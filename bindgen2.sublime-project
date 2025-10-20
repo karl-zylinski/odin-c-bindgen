@@ -1,0 +1,81 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+		},
+		{
+			"path": "C:\\SDK\\Odin\\core",
+		},
+		{
+			"path": "C:\\SDK\\Odin\\base",
+		},
+	],
+	"build_systems":
+	[
+		{
+			"name": "Binding generator",
+			"working_dir": "$project_path",
+			"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
+			"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style",
+
+			"variants": [
+				{
+					"name": "raylib",
+					"shell_cmd": "odin build src2 -debug -out:bindgen.exe && bindgen.exe examples/raylib",
+				},
+				{
+					"name": "tester",
+					"shell_cmd": "odin build src2 -debug -out:bindgen.exe && bindgen.exe src2/examples/tester",
+				},
+				{
+					"name": "raylib test",
+					"shell_cmd": "odin build src2 -debug -out:bindgen.exe && bindgen.exe examples/raylib && cd src2/examples/raylib/test && odin run .",
+				},
+				{
+					"name": "box2d",
+					"shell_cmd": "odin build src2 -out:bindgen.exe -vet -strict-style && bindgen.exe examples/box2d",
+				},
+				{
+					"name": "box2d test",
+					"shell_cmd": "odin build src2 -out:bindgen.exe -vet && bindgen.exe examples/box2d && cd examples/box2d/test && odin run .",
+				},
+				{
+					"name": "pdfio",
+					"shell_cmd": "odin build src2 -out:bindgen.exe -vet -strict-style && bindgen.exe examples/pdfio",
+				},
+				{
+					"name": "pdfio test",
+					"shell_cmd": "odin build src2 -out:bindgen.exe -vet -strict-style && bindgen.exe examples/pdfio && cd examples/pdfio/test && odin run .",
+				},
+				{
+					"name": "ufbx",
+					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen.exe examples/ufbx",
+				},
+				{
+					"name": "ufbx test",
+					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen.exe examples/ufbx && cd examples/ufbx/test && odin run . -vet -strict-style",
+				},
+				{
+					"name": "scrap",
+					"shell_cmd": "odin build src2 -debug -out:bindgen.exe -vet -strict-style && bindgen.exe scrap",
+				},
+				{
+					"name": "scrap2",
+					"shell_cmd": "odin build src2 -out:bindgen.exe -vet -strict-style && bindgen.exe scrap/bitsquid",
+				},
+			],
+		}
+	],
+	"settings":
+	{
+		"auto_complete": false,
+		"LSP":
+		{
+			"odin":
+			{
+				"enabled": true,
+			},
+		},
+	},
+}
