@@ -163,11 +163,11 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 			p(&fb, "using _: ")
 		} else {
 			pf(&fb, "%s: ", f.name)	
-		}
 
-		after_name_padding := longest_name-len(f.name)
-		for _ in 0..<after_name_padding {
-			strings.write_rune(&fb, ' ')
+			after_name_padding := longest_name-len(f.name)
+			for _ in 0..<after_name_padding {
+				strings.write_rune(&fb, ' ')
+			}
 		}
 
 		if f.type_overrride != "" {
