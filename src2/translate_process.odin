@@ -71,19 +71,23 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 	for &d, i in decls {
 		if i == 0 {
+			d.invalid = true
 			continue
 		}
 
 		if d.is_forward_declare && forward_declare_resolved[d.name] {
+			d.invalid = true
 			continue
 		}
 
 		if d.name == "" {
+			d.invalid = true
 			log.errorf("Declaration has no name: %v", d.name)
 			continue
 		}
 
 		if d.def == nil {
+			d.invalid = true
 			log.errorf("Type used in declaration %v is zero", d.name)
 			continue
 		}

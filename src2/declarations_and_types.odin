@@ -43,6 +43,8 @@ Decl :: struct {
 	comment_before: string,
 	side_comment: string,
 
+	invalid: bool,
+
 	is_forward_declare: bool,
 
 	original_line: int,

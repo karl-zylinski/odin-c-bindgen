@@ -42,6 +42,10 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 	indent := 0
 
 	fr_decls_loop: for &d in decls {
+		if d.invalid {
+			continue
+		}
+
 		rhs_builder := strings.builder_make()
 		output_definition(types, d.def, &rhs_builder, 0)
 		rhs := strings.to_string(rhs_builder)
