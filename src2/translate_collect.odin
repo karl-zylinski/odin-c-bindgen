@@ -742,15 +742,33 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(c)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
+		prev_child_line: int
 
 		for ec in enum_children {
 			member_name := get_cursor_name(ec)
 			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
+			comment := string_from_clang_string(clang.Cursor_getRawCommentText(ec))
+			comment_loc := get_comment_location(ec)
+			cursor_loc := get_cursor_location(ec)
 
+			comment_before: string
+			comment_on_right: string
+
+			// An enum member with a comment can cause later members to get a comment as well...
+			if comment != "" && comment_loc.line > prev_child_line {
+				comment_is_before := comment_loc.line < cursor_loc.line
+				comment_before = comment_is_before ? comment : ""
+				comment_on_right = comment_is_before ? "" : comment
+			}
+		
 			append(&members, Type_Enum_Member {
 				name = member_name,
 				value = value,
+				comment_before = comment_before,
+				comment_on_right = comment_on_right,
 			})
+
+			prev_child_line = cursor_loc.line
 		}
 
 		storage_type: typeid = i32

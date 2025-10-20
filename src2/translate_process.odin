@@ -145,6 +145,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					append(&new_members, Type_Enum_Member {
 						name = m.name,
 						value = int(bits.log2(uint(m.value))),
+						comment_before = m.comment_before,
+						comment_on_right = m.comment_on_right,
 					})
 				}
 

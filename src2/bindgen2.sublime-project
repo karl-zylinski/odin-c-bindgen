@@ -21,7 +21,7 @@
 			"variants": [
 				{
 					"name": "raylib",
-					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen src2/examples/raylib",
+					"shell_cmd": "odin build src2 -out:bindgen.exe && bindgen examples/raylib",
 				},
 				{
 					"name": "tester",

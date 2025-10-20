@@ -242,9 +242,20 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 	pfln(b, "enum %v {{", t_enum.storage_type)
 
 	for &m in t_enum.members {
+		if m.comment_before != "" {
+			output_indent(b, indent + 1)
+			p(b, m.comment_before)
+			p(b, "\n")
+		}
 		output_indent(b, indent + 1)
 		pf(b, "%v = %v", m.name, m.value)
-		p(b, ",\n")
+		p(b, ",")
+
+		if m.comment_on_right != "" {
+			p(b, " ")
+			p(b, m.comment_on_right)
+		}
+		p(b, "\n")
 	}
 	
 	output_indent(b, indent)

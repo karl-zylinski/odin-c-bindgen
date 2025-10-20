@@ -110,6 +110,8 @@ Type_Struct :: struct {
 Type_Enum_Member :: struct {
 	name: string,
 	value: int,
+	comment_before: string,
+	comment_on_right: string,
 }
 
 Type_Enum :: struct {
