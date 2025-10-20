@@ -38,6 +38,7 @@ add_decl :: proc(decls: Decl_List, d: Decl) {
 
 Decl :: struct {
 	name: string,
+
 	def: Definition,
 	comment_before: string,
 	side_comment: string,
@@ -45,6 +46,8 @@ Decl :: struct {
 	is_forward_declare: bool,
 
 	original_line: int,
+
+	explicitly_created: bool,
 
 	// TODO can we get these two for all fields
 

@@ -156,6 +156,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					original_line = d.original_line + 1,
 					name = bit_set_name,
 					def = bs_idx,
+					explicitly_created = true,
 				})
 			}
 
@@ -396,6 +397,10 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 	}
 
 	for &d in decls {
+		if d.explicitly_created {
+			continue
+		}
+
 		_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
 		_, is_bs_const := resolve_type_definition(types, d.def, Type_Bit_Set_Constant)
 
@@ -527,6 +532,10 @@ ensure_name_valid :: proc(s: string) -> string {
 }
 
 final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
+	if new_name, rename := config.rename[string(name)]; rename {
+		return Type_Name(new_name)
+	}
+
 	res := strings.trim_prefix(string(name), config.remove_type_prefix)
 
 	if config.force_ada_case_types {

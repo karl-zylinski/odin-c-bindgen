@@ -30,7 +30,7 @@
 				},
 				{
 					"name": "raylib test",
-					"shell_cmd": "odin build src2 -debug -out:bindgen.exe && bindgen.exe examples/raylib && cd src2/examples/raylib/test && odin run .",
+					"shell_cmd": "odin build src2 -debug -out:bindgen.exe && bindgen.exe examples/raylib && cd examples/raylib/test && odin run .",
 				},
 				{
 					"name": "box2d",
