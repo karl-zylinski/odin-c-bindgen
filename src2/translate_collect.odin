@@ -637,6 +637,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			to_add = Type_Raw_Pointer{}
 		} else if type_probably_is_cstring(clang_pointee_type) {
 			to_add = Type_CString{}
+		} else if clang_pointee_type.kind == .FunctionProto {
+			return create_proc_type(tcs.children_lookup[clang.getTypeDeclaration(clang_pointee_type)], clang_pointee_type, tcs)
 		} else {
 			ptr_type_idx := reserve_type(ct, tcs)
 			pointing_to_id := get_type_name_or_create_anon_type(clang_pointee_type, tcs)
@@ -856,6 +858,18 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		type_definition := Type_Fixed_Array {
 			element_type = get_type_name_or_create_anon_type(clang_element_type, tcs),
 			size = int(clang.getArraySize(ct)),
+		}
+
+		tcs.types[array_type_idx] = type_definition
+
+		return array_type_idx
+
+	case .IncompleteArray:
+		array_type_idx := reserve_type(ct, tcs)
+		clang_element_type := clang.getArrayElementType(ct)
+
+		type_definition := Type_Multipointer {
+			pointed_to_type = get_type_name_or_create_anon_type(clang_element_type, tcs),
 		}
 
 		tcs.types[array_type_idx] = type_definition

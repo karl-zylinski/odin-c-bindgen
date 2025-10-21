@@ -109,6 +109,10 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 
 		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
 
+		if is_proc {
+			pf(sb, " ---")
+		}
+
 		if d.side_comment != "" {
 			pf(sb, "%*s%v", max(1, d.explicit_whitespace_before_side_comment), "", d.side_comment)
 		}
@@ -177,13 +181,8 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 			case Type_Name, Fixed_Value:
 				p(&fb, r)
 			case Type_Index:
-				if proc_type, is_proc_type := resolve_type_definition(types, r, Type_Procedure); is_proc_type {
-					output_procedure_signature(types, proc_type, &fb, indent, explicit_calling_convention = true)
-				} else {
-					parse_type_build(types, r, &fb, indent + 1)
-				}
+				parse_type_build(types, r, &fb, indent + 1)
 			}
-			
 		}
 
 		pf(&fb, ",")
@@ -371,7 +370,6 @@ parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Bui
 
 	case Type_Procedure:
 		output_procedure_signature(types, tv, b, indent)
-		pf(b, " ---")
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)
