@@ -251,20 +251,59 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 
 	pfln(b, "enum %v {{", t_enum.storage_type)
 
+	longest_name: int
 	for &m in t_enum.members {
+		if len(m.name) > longest_name {
+			longest_name = len(m.name)
+		}
+	}
+
+	member_texts := make([]string, len(t_enum.members))
+	longest_member_that_has_comment_on_right: int
+
+	for &m, mi in t_enum.members {
+		fb := strings.builder_make()
+
+		pf(&fb, "%s", m.name)	
+
+		after_name_padding := longest_name-len(m.name)
+		for _ in 0..<after_name_padding {
+			strings.write_rune(&fb, ' ')
+		}
+
+		pf(&fb, " = %v,", m.value)
+
+		text := strings.to_string(fb)
+		member_texts[mi] = text
+
+		if m.comment_on_right != "" && len(text) > longest_member_that_has_comment_on_right {
+			longest_member_that_has_comment_on_right = len(text)
+		}
+	}
+
+	for &m, mi in t_enum.members {
 		if m.comment_before != "" {
-			output_indent(b, indent + 1)
-			p(b, m.comment_before)
-			p(b, "\n")
+			cb := m.comment_before
+
+			for l in strings.split_lines_iterator(&cb) {
+				output_indent(b, indent + 1)	
+				pln(b, l)
+			}
 		}
 		output_indent(b, indent + 1)
-		pf(b, "%v = %v", m.name, m.value)
-		p(b, ",")
+
+		text := member_texts[mi]
+		p(b, text)
 
 		if m.comment_on_right != "" {
+			for _ in 0..<longest_member_that_has_comment_on_right-len(text) {
+				p(b, ' ')
+			}
+
 			p(b, " ")
 			p(b, m.comment_on_right)
 		}
+
 		p(b, "\n")
 	}
 	

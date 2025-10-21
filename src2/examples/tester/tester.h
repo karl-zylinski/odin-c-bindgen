@@ -52,8 +52,8 @@ enum Wa {
 
 typedef enum
 {
-	NVTT_Container_DDS,
-	NVTT_Container_DDS10,
+	NVTT_Container_DDS, // something
+	NVTT_Container_DDS10, // something else
 } NvttContainer;
 
 
