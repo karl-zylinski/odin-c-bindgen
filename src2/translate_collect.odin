@@ -572,6 +572,8 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 				if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
 					type_id = create_proc_type(tcs.children_lookup[child], pointee, tcs)
 					is_func_ptr = true
+				} else if pointee.kind == .Elaborated {
+					log.info(clang.Type_getNamedType(pointee))
 				}
 			}
 
@@ -848,6 +850,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		is_func_ptr := false
 
 		type_id: Definition
+
 		if underlying.kind == .Pointer {
 			pointee := clang.getPointeeType(underlying)
 
@@ -855,6 +858,9 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				type_id = create_proc_type(tcs.children_lookup[c], pointee, tcs)
 				is_func_ptr = true
 			}
+		} else if underlying.kind == .FunctionProto {
+			type_id = create_proc_type(tcs.children_lookup[c], underlying, tcs)
+			is_func_ptr = true
 		}
 
 		if !is_func_ptr {
