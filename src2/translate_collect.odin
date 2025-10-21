@@ -563,9 +563,26 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			param_type := clang.getCursorType(child)
 			name := get_cursor_name(child)
 
+			type_id: Definition
+			is_func_ptr := false
+
+			if param_type.kind == .Pointer {
+				pointee := clang.getPointeeType(param_type)
+
+				if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
+					type_id = create_proc_type(tcs.children_lookup[child], pointee, tcs)
+					is_func_ptr = true
+				}
+			}
+
+			if !is_func_ptr {
+				type_id = get_type_name_or_create_anon_type(param_type, tcs)
+			}
+
+
 			append(&params, Type_Procedure_Parameter {
 				name = name,
-				type = get_type_name_or_create_anon_type(param_type, tcs),
+				type = type_id,
 			})
 		}
 	} else {
