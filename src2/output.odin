@@ -108,7 +108,7 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			cb := d.comment_before
 			for l in strings.split_lines_iterator(&cb) {
 				output_indent(sb, indent)
-				pln(sb, l)
+				pln(sb, strings.trim_space(l))
 			}
 		}
 
@@ -221,7 +221,7 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 
 			for l in strings.split_lines_iterator(&cb) {
 				output_indent(b, indent + 1)	
-				pln(b, l)
+				pln(b, strings.trim_space(l))
 			}
 		}
 
@@ -287,7 +287,7 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 
 			for l in strings.split_lines_iterator(&cb) {
 				output_indent(b, indent + 1)	
-				pln(b, l)
+				pln(b, strings.trim_space(l))
 			}
 		}
 		output_indent(b, indent + 1)
