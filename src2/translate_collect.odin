@@ -564,23 +564,12 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			name := get_cursor_name(child)
 
 			type_id: Definition
-			is_func_ptr := false
 
-			if param_type.kind == .Pointer {
-				pointee := clang.getPointeeType(param_type)
-
-				if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
-					type_id = create_proc_type(tcs.children_lookup[child], pointee, tcs)
-					is_func_ptr = true
-				} else if pointee.kind == .Elaborated {
-					log.info(clang.Type_getNamedType(pointee))
-				}
+			if unwrapped_type, is_proc := unwrap_proc_pointers(param_type); is_proc {
+				type_id = create_proc_type(tcs.children_lookup[child], unwrapped_type, tcs)
+			} else {
+				type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
 			}
-
-			if !is_func_ptr {
-				type_id = get_type_name_or_create_anon_type(param_type, tcs)
-			}
-
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
@@ -635,6 +624,32 @@ reserve_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Inde
 	return idx
 }
 
+// In Odin, every proc is a pointer, and it is like that in C bindings too. So if something takes a
+// ptr to a func in C, then it should just take a proc in Odin. This bypasses pointers to procs etc
+unwrap_proc_pointers :: proc(t: clang.Type) -> (unwrapped_type: clang.Type, is_proc: bool) {
+	if t.kind == .Pointer {
+		pointee := clang.getPointeeType(t)
+
+		if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
+			return pointee, true
+		} else if pointee.kind == .Elaborated {
+			named := clang.Type_getNamedType(pointee)
+
+			if named.kind == .FunctionProto || named.kind == .FunctionNoProto {
+				return pointee, true
+			} else if named.kind == .Typedef {
+				underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(pointee))
+
+				if underlying.kind == .FunctionProto || underlying.kind == .FunctionNoProto {
+					return pointee, false
+				}
+			}
+		}
+	}
+
+	return t, (t.kind == .FunctionProto || t.kind == .FunctionNoProto)
+}
+
 create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
 	if t_idx, has_t_idx := tcs.type_lookup[ct]; has_t_idx {
 		return t_idx
@@ -675,22 +690,13 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 			#partial switch sc_kind {
 			case .FieldDecl:
-				type_id: Definition
 				sct := clang.getCursorType(sc)
+				type_id: Definition
 
-				is_func_ptr := false
-
-				if sct.kind == .Pointer {
-					pointee := clang.getPointeeType(sct)
-
-					if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
-						type_id = create_proc_type(tcs.children_lookup[sc], pointee, tcs)
-						is_func_ptr = true
-					}
-				}
-
-				if !is_func_ptr  {
-					type_id = get_type_name_or_create_anon_type(sct, tcs)
+				if unwrapped_type, is_proc := unwrap_proc_pointers(sct); is_proc {
+					type_id = create_proc_type(tcs.children_lookup[sc], unwrapped_type, tcs)
+				} else {
+					type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
 				}
 
 				name := get_cursor_name(sc)
@@ -846,25 +852,12 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		alias_type_idx := reserve_type(ct, tcs)
 		c := clang.getTypeDeclaration(ct)
 		underlying := clang.getTypedefDeclUnderlyingType(c)
-
-		is_func_ptr := false
-
 		type_id: Definition
 
-		if underlying.kind == .Pointer {
-			pointee := clang.getPointeeType(underlying)
-
-			if pointee.kind == .FunctionProto {
-				type_id = create_proc_type(tcs.children_lookup[c], pointee, tcs)
-				is_func_ptr = true
-			}
-		} else if underlying.kind == .FunctionProto {
-			type_id = create_proc_type(tcs.children_lookup[c], underlying, tcs)
-			is_func_ptr = true
-		}
-
-		if !is_func_ptr {
-			type_id = get_type_name_or_create_anon_type(underlying, tcs)
+		if unwrapped_type, is_proc := unwrap_proc_pointers(underlying); is_proc {
+			type_id = create_proc_type(tcs.children_lookup[c], unwrapped_type, tcs)
+		} else {
+			type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
 		}
 
 		type_definition := Type_Alias {

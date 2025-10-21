@@ -1,3 +1,14 @@
+x proc type passthrough
+- by-decl-type sorting and spacing
+- multi name fields (see Matrix in ufbx)
+
+
+-----
+old todo:
+
+
+
+
 - proc spacing, comments etc
 - enum side comments
 - enum spacing alignment
