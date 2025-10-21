@@ -47,14 +47,21 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 		}
 
 		rhs_builder := strings.builder_make()
-		output_definition(types, d.def, &rhs_builder, 0)
+
+		proc_type, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
+
+
+		if is_proc {
+			output_procedure_signature(types, proc_type, &rhs_builder, 0, false)
+		} else {
+			output_definition(types, d.def, &rhs_builder, 0)
+		}
+
 		rhs := strings.to_string(rhs_builder)
 
 		if rhs == string(d.name) {
 			continue
 		}
-
-		proc_type, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
 
 		if is_proc {
 			start_foreign_block := false
@@ -288,7 +295,7 @@ output_definition :: proc(types: ^[dynamic]Type, def: Definition, b: ^strings.Bu
 	}
 }
 
-output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b: ^strings.Builder, indent: int, explicit_calling_convention := false) {
+output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b: ^strings.Builder, indent: int, explicit_calling_convention: bool) {
 	pf(b, "proc")
 
 	if explicit_calling_convention {
@@ -297,12 +304,26 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 
 	pf(b, "(")
 
+	all_params_have_name := true
+
+	for param in tp.parameters {
+		if param.name == "" {
+			all_params_have_name = false
+			break
+		}
+	}
+
 	for param, idx in tp.parameters {
 		if idx != 0 {
 			p(b, ", ")
 		}
 
 		if param.name == "" {
+			// We can only write a parameter list without any names if all of them have no name.
+			if !all_params_have_name {
+				p(b, "_: ")
+			}
+
 			output_definition(types, param.type, b, indent)
 		} else {
 			_, by_ptr := resolve_type_definition(types, param.type, Type_Pointer_By_Ptr)
@@ -359,17 +380,13 @@ parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Bui
 		output_struct_definition(types, idx, b, indent)
 
 	case Type_Alias:
-		if proc_type, is_proc_type := resolve_type_definition(types, tv.aliased_type, Type_Procedure); is_proc_type {
-			output_procedure_signature(types, proc_type, b, indent, explicit_calling_convention = true)
-		} else {
-			output_definition(types, tv.aliased_type, b, indent)
-		}
+		output_definition(types, tv.aliased_type, b, indent)
 
 	case Type_Enum:
 		output_enum_definition(types, idx, b, indent)
 
 	case Type_Procedure:
-		output_procedure_signature(types, tv, b, indent)
+		output_procedure_signature(types, tv, b, indent, true)
 
 	case Type_Fixed_Array:
 		pf(b, "[%i]", tv.size)

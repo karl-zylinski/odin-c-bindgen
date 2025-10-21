@@ -26,6 +26,11 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 	for &d in decls {
 		if d.is_forward_declare {
+			if d.name in forward_declare_resolved {
+				d.invalid = true
+				continue
+			}
+
 			forward_declare_resolved[d.name] = false
 		}
 	}
