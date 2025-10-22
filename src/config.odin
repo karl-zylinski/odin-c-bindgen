@@ -1,6 +1,6 @@
 package bindgen2
 
-// This is populated from the config `bindgen.sjson`
+// This is populated from a `bindgen.sjson` file
 Config :: struct {
 	// Files and folders to generate bindings for, relative to the config. If you specify a folder,
 	// then all files within that folder will be used.

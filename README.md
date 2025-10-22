@@ -8,9 +8,6 @@ Features:
 - Simplicity. The generator is simple enough that you can modify it, should the need arise.
 - Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
-> [!WARNING]
-> The 1.1 version has some issues, if you run into problems, please try the 1.0 release. I am working on a new version of the binding generator.
-
 ## Requirements
 - Odin
 - libclang
@@ -35,19 +32,15 @@ Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed i
 > NOTE: Config uses the function/type names as found in header files.
 
 ```sjson
-// Inputs can be folders or files. It will look for header (.h) files inside
-// any folder. The bindings will be based on those headers. Also, any .lib,
-// .odin, .dll etc will be copied to the output folder.
+// Inputs can be folders or files. If you provide a folder name, then the generator will look for
+// header (.h) files inside it. The bindings will be based on those headers. For each header,
+// you can create a `header_footer.odin` file with some additional code to append to the finished
+// bindings. If the header is called `raylib.h` then the footer would be `raylib_footer.odin`.
 inputs = [
 	"input"
 ]
 
-// Files to ignore when processing files in the inputs folders
-ignore_inputs = [
-	// "file.h"
-]
-
-// Output folder: One .odin file per processed header
+// Output folder. In there you'll find one .odin file per processed header.
 output_folder = "my_lib"
 
 // Remove this prefix from types names (structs, enums, etc)
@@ -59,79 +52,77 @@ remove_macro_prefix = ""
 // Remove this prefix from function names (and add it as link_prefix) to the foreign group
 remove_function_prefix = ""
 
-// Only include things that has this prefix
-required_prefix = ""
-
 // Set to true translate type names to Ada_Case
 force_ada_case_types = false
 
-// Single lib file to import
+// Single lib file to import. Will be ignored if `imports_file` is set.
 import_lib = "my_lib.lib"
 
-// Use this file instead of `import_lib`. This is a whole file that is pasted near
-// the top of the file. In it you can do platform-specific library imports etc.
+// The filename of a file that contains the foreign import declarations. In it you can do
+// platform-specific library imports etc. The contents of it will  be placed near the top of the
+// file.
 imports_file = ""
 
-// For package line at top of output files
+// `package something` to put at top of each generated Odin binding file.
 package_name = "my_lib"
 
-// "Old_Name" = "New_Name",
+// "Old_Name" = "New_Name"
 rename = {
 }
 
-// Turns an enum into a bit_set. Converts the values of the enum into
-// appropriate values for a bit_set. Creates a bit_set type that uses the enum.
-// Properly removes enum values with value 0. Translates the enum values using
-// a log2 procedure.
+// Turns an enum into a bit_set. Converts the values of the enum into appropriate values for a
+// bit_set. Creates a bit_set type that uses the enum. Properly removes enum values with value 0.
+// Translates the enum values using a log2 procedure.
 bit_setify = {
 	// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
 }
 
-// Completely override the definition of a type. The type needs to be pre-existing.
+// Completely override the definition of a type.
 type_overrides = {
 	// "Vector2" = "[2]f32"
 }
 
-// Override the type of a struct field. Note that a plain `[^]` can be used to
-// modify the existing type.
+// Override the type of a struct field.
+// 
+// You can also use `[^]` to augment an already existing type.
 struct_field_overrides = {
 	// "Some_Type.some_field" = "My_Type"
+	// "Some_Other_Type.field" = "[^]"
+	// "Some_Other_Type.another_file" = "[^]cstring"
 }
 
-// Overrides the type of a procedure parameter or return value. For a parameter
-// use the key Proc_Name.parameter_name. For a return value use the key Proc_Name.
-// Note that a plain `[^]` and `#by_ptr` can be used to modify the existing type.
+// Put these tags on the specified struct field
+struct_field_tags = {
+	// "BoneInfo.name" = "fmt:\"s,0\""
+}
+
+// Overrides the type of a procedure parameter or return value. For a parameter use the key
+// Proc_Name.parameter_name. For a return value use the key Proc_Name.
+//
+// You can also use `[^]`, `#by_ptr` and `#any_int` to augment an already existing type.
 procedure_type_overrides = {
 	// "SetConfigFlags.flags" = "ConfigFlags"
 	// "GetKeyPressed"        = "KeyboardKey"
 }
 
-// Inject a new type before another type. Use `rename` to just rename
-// a pre-existing type.
-inject_before = {
-	// "Some_Type" = "New_Type :: distinct int"
-}
-
-// For typedefs that don't resolve to anything: Put them in here to create
-// empty structs with that name.
-opaque_types = [
-	// "Some_Type"
+// Put the names of declarations in here to remove them.
+remove = [
+	// "Some_Declaration_Name"
 ]
 
-// additional include paths to send into clang. While generating the bindings
-// clang will look into this path in search for included headers.
+// Group all procedures at the end of the file.
+procedures_at_end = false
+
+// Additional include paths to send into clang. While generating the bindings clang will look into
+// this path in search for included headers.
 clang_include_paths = [
 	// "include"
 ]
 
-// Put the names of macros to remove in here. This is useful for removing
-// macros that were converted into invalid Odin constants.
-remove_macros = [
-	// "SOME_BROKEN_MACRO"
-]
-
-// Output a YAML file containing C AST info for debugging.
-debug_dump_ast = false
+// Pass these compiler defines into clang. Can be used to control clang pre-processor
+clang_defines = {
+	// "UFBX_REAL_IS_FLOAT" = "1"
+}
 ```
 
 ## FAQ and common problems
