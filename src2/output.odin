@@ -100,7 +100,7 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			current_group.kind = kind
 			current_group.start_foreign_block = kind == .Proc && (prev_kind != .Proc ||
 				proc_type.calling_convention != prev_proc_calling_conventation)
-			current_group.end_foreign_block = true
+			current_group.end_foreign_block = kind == .Proc
 
 			current_group.proc_calling_convention = kind == .Proc ? proc_type.calling_convention : {}
 		}
