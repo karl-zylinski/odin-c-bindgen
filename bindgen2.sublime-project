@@ -41,14 +41,6 @@
 					"shell_cmd": "odin build src -out:bindgen.exe -vet && bindgen.exe examples/box2d && cd examples/box2d/test && odin run .",
 				},
 				{
-					"name": "pdfio",
-					"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style && bindgen.exe examples/pdfio",
-				},
-				{
-					"name": "pdfio test",
-					"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style && bindgen.exe examples/pdfio && cd examples/pdfio/test && odin run .",
-				},
-				{
 					"name": "ufbx",
 					"shell_cmd": "odin build src -out:bindgen.exe && bindgen.exe examples/ufbx",
 				},
