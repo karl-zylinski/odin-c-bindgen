@@ -96,8 +96,6 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		}
 	}
 
-	log.info(remove_enum_prefixes)
-
 	// Declared here to reuse.
 	bit_set_make_constant: map[string]int
 
@@ -588,6 +586,7 @@ ensure_name_valid :: proc(s: string) -> string {
 		"_using",
 		"_when",
 		"_where",
+		"_matrix",
 
 		// Not keywords, but used names:
 		"_c",
