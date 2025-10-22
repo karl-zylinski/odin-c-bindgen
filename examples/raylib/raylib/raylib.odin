@@ -452,14 +452,14 @@ ConfigFlags :: bit_set[ConfigFlag; i32]
 // Trace log level
 // NOTE: Organized by priority level
 TraceLogLevel :: enum i32 {
-	ALL,     // Display all logs
-	TRACE,   // Trace logging, intended for internal use only
-	DEBUG,   // Debug logging, used for internal debugging, it should be disabled on release builds
-	INFO,    // Info logging, used for program execution info
-	WARNING, // Warning logging, used on recoverable failures
-	ERROR,   // Error logging, used on unrecoverable failures
-	FATAL,   // Fatal logging, used to abort program: exit(EXIT_FAILURE)
-	NONE,    // Disable logging
+	ALL     = 0, // Display all logs
+	TRACE   = 1, // Trace logging, intended for internal use only
+	DEBUG   = 2, // Debug logging, used for internal debugging, it should be disabled on release builds
+	INFO    = 3, // Info logging, used for program execution info
+	WARNING = 4, // Warning logging, used on recoverable failures
+	ERROR   = 5, // Error logging, used on unrecoverable failures
+	FATAL   = 6, // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+	NONE    = 7, // Disable logging
 }
 
 // Keyboard keys (US keyboard layout)
@@ -467,6 +467,8 @@ TraceLogLevel :: enum i32 {
 // required keys for alternative layouts
 KeyboardKey :: enum i32 {
 	NULL          = 0,   // Key: NULL, used for no key pressed
+
+	// Alphanumeric keys
 	APOSTROPHE    = 39,  // Key: '
 	COMMA         = 44,  // Key: ,
 	MINUS         = 45,  // Key: -
@@ -514,6 +516,8 @@ KeyboardKey :: enum i32 {
 	BACKSLASH     = 92,  // Key: '\'
 	RIGHT_BRACKET = 93,  // Key: ]
 	GRAVE         = 96,  // Key: `
+
+	// Function keys
 	SPACE         = 32,  // Key: Space
 	ESCAPE        = 256, // Key: Esc
 	ENTER         = 257, // Key: Enter
@@ -555,6 +559,8 @@ KeyboardKey :: enum i32 {
 	RIGHT_ALT     = 346, // Key: Alt right
 	RIGHT_SUPER   = 347, // Key: Super right
 	KB_MENU       = 348, // Key: KB menu
+
+	// Keypad keys
 	KP_0          = 320, // Key: Keypad 0
 	KP_1          = 321, // Key: Keypad 1
 	KP_2          = 322, // Key: Keypad 2
@@ -572,6 +578,8 @@ KeyboardKey :: enum i32 {
 	KP_ADD        = 334, // Key: Keypad +
 	KP_ENTER      = 335, // Key: Keypad Enter
 	KP_EQUAL      = 336, // Key: Keypad =
+
+	// Android key buttons
 	BACK          = 4,   // Key: Android back button
 	MENU          = 5,   // Key: Android menu button
 	VOLUME_UP     = 24,  // Key: Android volume up button
@@ -580,134 +588,134 @@ KeyboardKey :: enum i32 {
 
 // Mouse buttons
 MouseButton :: enum i32 {
-	LEFT,    // Mouse button left
-	RIGHT,   // Mouse button right
-	MIDDLE,  // Mouse button middle (pressed wheel)
-	SIDE,    // Mouse button side (advanced mouse device)
-	EXTRA,   // Mouse button extra (advanced mouse device)
-	FORWARD, // Mouse button forward (advanced mouse device)
-	BACK,    // Mouse button back (advanced mouse device)
+	LEFT    = 0, // Mouse button left
+	RIGHT   = 1, // Mouse button right
+	MIDDLE  = 2, // Mouse button middle (pressed wheel)
+	SIDE    = 3, // Mouse button side (advanced mouse device)
+	EXTRA   = 4, // Mouse button extra (advanced mouse device)
+	FORWARD = 5, // Mouse button forward (advanced mouse device)
+	BACK    = 6, // Mouse button back (advanced mouse device)
 }
 
 // Mouse cursor
 MouseCursor :: enum i32 {
-	DEFAULT,       // Default pointer shape
-	ARROW,         // Arrow shape
-	IBEAM,         // Text writing cursor shape
-	CROSSHAIR,     // Cross shape
-	POINTING_HAND, // Pointing hand cursor
-	RESIZE_EW,     // Horizontal resize/move arrow shape
-	RESIZE_NS,     // Vertical resize/move arrow shape
-	RESIZE_NWSE,   // Top-left to bottom-right diagonal resize/move arrow shape
-	RESIZE_NESW,   // The top-right to bottom-left diagonal resize/move arrow shape
-	RESIZE_ALL,    // The omnidirectional resize/move cursor shape
-	NOT_ALLOWED,   // The operation-not-allowed shape
+	DEFAULT       = 0,  // Default pointer shape
+	ARROW         = 1,  // Arrow shape
+	IBEAM         = 2,  // Text writing cursor shape
+	CROSSHAIR     = 3,  // Cross shape
+	POINTING_HAND = 4,  // Pointing hand cursor
+	RESIZE_EW     = 5,  // Horizontal resize/move arrow shape
+	RESIZE_NS     = 6,  // Vertical resize/move arrow shape
+	RESIZE_NWSE   = 7,  // Top-left to bottom-right diagonal resize/move arrow shape
+	RESIZE_NESW   = 8,  // The top-right to bottom-left diagonal resize/move arrow shape
+	RESIZE_ALL    = 9,  // The omnidirectional resize/move cursor shape
+	NOT_ALLOWED   = 10, // The operation-not-allowed shape
 }
 
 // Gamepad buttons
 GamepadButton :: enum i32 {
-	UNKNOWN,          // Unknown button, just for error checking
-	LEFT_FACE_UP,     // Gamepad left DPAD up button
-	LEFT_FACE_RIGHT,  // Gamepad left DPAD right button
-	LEFT_FACE_DOWN,   // Gamepad left DPAD down button
-	LEFT_FACE_LEFT,   // Gamepad left DPAD left button
-	RIGHT_FACE_UP,    // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
-	RIGHT_FACE_RIGHT, // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
-	RIGHT_FACE_DOWN,  // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
-	RIGHT_FACE_LEFT,  // Gamepad right button left (i.e. PS3: Square, Xbox: X)
-	LEFT_TRIGGER_1,   // Gamepad top/back trigger left (first), it could be a trailing button
-	LEFT_TRIGGER_2,   // Gamepad top/back trigger left (second), it could be a trailing button
-	RIGHT_TRIGGER_1,  // Gamepad top/back trigger right (first), it could be a trailing button
-	RIGHT_TRIGGER_2,  // Gamepad top/back trigger right (second), it could be a trailing button
-	MIDDLE_LEFT,      // Gamepad center buttons, left one (i.e. PS3: Select)
-	MIDDLE,           // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
-	MIDDLE_RIGHT,     // Gamepad center buttons, right one (i.e. PS3: Start)
-	LEFT_THUMB,       // Gamepad joystick pressed button left
-	RIGHT_THUMB,      // Gamepad joystick pressed button right
+	UNKNOWN          = 0,  // Unknown button, just for error checking
+	LEFT_FACE_UP     = 1,  // Gamepad left DPAD up button
+	LEFT_FACE_RIGHT  = 2,  // Gamepad left DPAD right button
+	LEFT_FACE_DOWN   = 3,  // Gamepad left DPAD down button
+	LEFT_FACE_LEFT   = 4,  // Gamepad left DPAD left button
+	RIGHT_FACE_UP    = 5,  // Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+	RIGHT_FACE_RIGHT = 6,  // Gamepad right button right (i.e. PS3: Circle, Xbox: B)
+	RIGHT_FACE_DOWN  = 7,  // Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+	RIGHT_FACE_LEFT  = 8,  // Gamepad right button left (i.e. PS3: Square, Xbox: X)
+	LEFT_TRIGGER_1   = 9,  // Gamepad top/back trigger left (first), it could be a trailing button
+	LEFT_TRIGGER_2   = 10, // Gamepad top/back trigger left (second), it could be a trailing button
+	RIGHT_TRIGGER_1  = 11, // Gamepad top/back trigger right (first), it could be a trailing button
+	RIGHT_TRIGGER_2  = 12, // Gamepad top/back trigger right (second), it could be a trailing button
+	MIDDLE_LEFT      = 13, // Gamepad center buttons, left one (i.e. PS3: Select)
+	MIDDLE           = 14, // Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+	MIDDLE_RIGHT     = 15, // Gamepad center buttons, right one (i.e. PS3: Start)
+	LEFT_THUMB       = 16, // Gamepad joystick pressed button left
+	RIGHT_THUMB      = 17, // Gamepad joystick pressed button right
 }
 
 // Gamepad axis
 GamepadAxis :: enum i32 {
-	LEFT_X,        // Gamepad left stick X axis
-	LEFT_Y,        // Gamepad left stick Y axis
-	RIGHT_X,       // Gamepad right stick X axis
-	RIGHT_Y,       // Gamepad right stick Y axis
-	LEFT_TRIGGER,  // Gamepad back trigger left, pressure level: [1..-1]
-	RIGHT_TRIGGER, // Gamepad back trigger right, pressure level: [1..-1]
+	LEFT_X        = 0, // Gamepad left stick X axis
+	LEFT_Y        = 1, // Gamepad left stick Y axis
+	RIGHT_X       = 2, // Gamepad right stick X axis
+	RIGHT_Y       = 3, // Gamepad right stick Y axis
+	LEFT_TRIGGER  = 4, // Gamepad back trigger left, pressure level: [1..-1]
+	RIGHT_TRIGGER = 5, // Gamepad back trigger right, pressure level: [1..-1]
 }
 
 // Material map index
 MaterialMapIndex :: enum i32 {
-	ALBEDO,     // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
-	METALNESS,  // Metalness material (same as: MATERIAL_MAP_SPECULAR)
-	NORMAL,     // Normal material
-	ROUGHNESS,  // Roughness material
-	OCCLUSION,  // Ambient occlusion material
-	EMISSION,   // Emission material
-	HEIGHT,     // Heightmap material
-	CUBEMAP,    // Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	IRRADIANCE, // Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	PREFILTER,  // Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
-	BRDF,       // Brdf material
+	ALBEDO     = 0,  // Albedo material (same as: MATERIAL_MAP_DIFFUSE)
+	METALNESS  = 1,  // Metalness material (same as: MATERIAL_MAP_SPECULAR)
+	NORMAL     = 2,  // Normal material
+	ROUGHNESS  = 3,  // Roughness material
+	OCCLUSION  = 4,  // Ambient occlusion material
+	EMISSION   = 5,  // Emission material
+	HEIGHT     = 6,  // Heightmap material
+	CUBEMAP    = 7,  // Cubemap material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	IRRADIANCE = 8,  // Irradiance material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	PREFILTER  = 9,  // Prefilter material (NOTE: Uses GL_TEXTURE_CUBE_MAP)
+	BRDF       = 10, // Brdf material
 }
 
 // Shader location index
 ShaderLocationIndex :: enum i32 {
-	VERTEX_POSITION,    // Shader location: vertex attribute: position
-	VERTEX_TEXCOORD01,  // Shader location: vertex attribute: texcoord01
-	VERTEX_TEXCOORD02,  // Shader location: vertex attribute: texcoord02
-	VERTEX_NORMAL,      // Shader location: vertex attribute: normal
-	VERTEX_TANGENT,     // Shader location: vertex attribute: tangent
-	VERTEX_COLOR,       // Shader location: vertex attribute: color
-	MATRIX_MVP,         // Shader location: matrix uniform: model-view-projection
-	MATRIX_VIEW,        // Shader location: matrix uniform: view (camera transform)
-	MATRIX_PROJECTION,  // Shader location: matrix uniform: projection
-	MATRIX_MODEL,       // Shader location: matrix uniform: model (transform)
-	MATRIX_NORMAL,      // Shader location: matrix uniform: normal
-	VECTOR_VIEW,        // Shader location: vector uniform: view
-	COLOR_DIFFUSE,      // Shader location: vector uniform: diffuse color
-	COLOR_SPECULAR,     // Shader location: vector uniform: specular color
-	COLOR_AMBIENT,      // Shader location: vector uniform: ambient color
-	MAP_ALBEDO,         // Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
-	MAP_METALNESS,      // Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
-	MAP_NORMAL,         // Shader location: sampler2d texture: normal
-	MAP_ROUGHNESS,      // Shader location: sampler2d texture: roughness
-	MAP_OCCLUSION,      // Shader location: sampler2d texture: occlusion
-	MAP_EMISSION,       // Shader location: sampler2d texture: emission
-	MAP_HEIGHT,         // Shader location: sampler2d texture: height
-	MAP_CUBEMAP,        // Shader location: samplerCube texture: cubemap
-	MAP_IRRADIANCE,     // Shader location: samplerCube texture: irradiance
-	MAP_PREFILTER,      // Shader location: samplerCube texture: prefilter
-	MAP_BRDF,           // Shader location: sampler2d texture: brdf
-	VERTEX_BONEIDS,     // Shader location: vertex attribute: boneIds
-	VERTEX_BONEWEIGHTS, // Shader location: vertex attribute: boneWeights
-	BONE_MATRICES,      // Shader location: array of matrices uniform: boneMatrices
-	VERTEX_INSTANCE_TX, // Shader location: vertex attribute: instanceTransform
+	VERTEX_POSITION    = 0,  // Shader location: vertex attribute: position
+	VERTEX_TEXCOORD01  = 1,  // Shader location: vertex attribute: texcoord01
+	VERTEX_TEXCOORD02  = 2,  // Shader location: vertex attribute: texcoord02
+	VERTEX_NORMAL      = 3,  // Shader location: vertex attribute: normal
+	VERTEX_TANGENT     = 4,  // Shader location: vertex attribute: tangent
+	VERTEX_COLOR       = 5,  // Shader location: vertex attribute: color
+	MATRIX_MVP         = 6,  // Shader location: matrix uniform: model-view-projection
+	MATRIX_VIEW        = 7,  // Shader location: matrix uniform: view (camera transform)
+	MATRIX_PROJECTION  = 8,  // Shader location: matrix uniform: projection
+	MATRIX_MODEL       = 9,  // Shader location: matrix uniform: model (transform)
+	MATRIX_NORMAL      = 10, // Shader location: matrix uniform: normal
+	VECTOR_VIEW        = 11, // Shader location: vector uniform: view
+	COLOR_DIFFUSE      = 12, // Shader location: vector uniform: diffuse color
+	COLOR_SPECULAR     = 13, // Shader location: vector uniform: specular color
+	COLOR_AMBIENT      = 14, // Shader location: vector uniform: ambient color
+	MAP_ALBEDO         = 15, // Shader location: sampler2d texture: albedo (same as: SHADER_LOC_MAP_DIFFUSE)
+	MAP_METALNESS      = 16, // Shader location: sampler2d texture: metalness (same as: SHADER_LOC_MAP_SPECULAR)
+	MAP_NORMAL         = 17, // Shader location: sampler2d texture: normal
+	MAP_ROUGHNESS      = 18, // Shader location: sampler2d texture: roughness
+	MAP_OCCLUSION      = 19, // Shader location: sampler2d texture: occlusion
+	MAP_EMISSION       = 20, // Shader location: sampler2d texture: emission
+	MAP_HEIGHT         = 21, // Shader location: sampler2d texture: height
+	MAP_CUBEMAP        = 22, // Shader location: samplerCube texture: cubemap
+	MAP_IRRADIANCE     = 23, // Shader location: samplerCube texture: irradiance
+	MAP_PREFILTER      = 24, // Shader location: samplerCube texture: prefilter
+	MAP_BRDF           = 25, // Shader location: sampler2d texture: brdf
+	VERTEX_BONEIDS     = 26, // Shader location: vertex attribute: boneIds
+	VERTEX_BONEWEIGHTS = 27, // Shader location: vertex attribute: boneWeights
+	BONE_MATRICES      = 28, // Shader location: array of matrices uniform: boneMatrices
+	VERTEX_INSTANCE_TX = 29, // Shader location: vertex attribute: instanceTransform
 }
 
 // Shader uniform data type
 ShaderUniformDataType :: enum i32 {
-	FLOAT,     // Shader uniform type: float
-	VEC2,      // Shader uniform type: vec2 (2 float)
-	VEC3,      // Shader uniform type: vec3 (3 float)
-	VEC4,      // Shader uniform type: vec4 (4 float)
-	INT,       // Shader uniform type: int
-	IVEC2,     // Shader uniform type: ivec2 (2 int)
-	IVEC3,     // Shader uniform type: ivec3 (3 int)
-	IVEC4,     // Shader uniform type: ivec4 (4 int)
-	UINT,      // Shader uniform type: unsigned int
-	UIVEC2,    // Shader uniform type: uivec2 (2 unsigned int)
-	UIVEC3,    // Shader uniform type: uivec3 (3 unsigned int)
-	UIVEC4,    // Shader uniform type: uivec4 (4 unsigned int)
-	SAMPLER2D, // Shader uniform type: sampler2d
+	FLOAT     = 0,  // Shader uniform type: float
+	VEC2      = 1,  // Shader uniform type: vec2 (2 float)
+	VEC3      = 2,  // Shader uniform type: vec3 (3 float)
+	VEC4      = 3,  // Shader uniform type: vec4 (4 float)
+	INT       = 4,  // Shader uniform type: int
+	IVEC2     = 5,  // Shader uniform type: ivec2 (2 int)
+	IVEC3     = 6,  // Shader uniform type: ivec3 (3 int)
+	IVEC4     = 7,  // Shader uniform type: ivec4 (4 int)
+	UINT      = 8,  // Shader uniform type: unsigned int
+	UIVEC2    = 9,  // Shader uniform type: uivec2 (2 unsigned int)
+	UIVEC3    = 10, // Shader uniform type: uivec3 (3 unsigned int)
+	UIVEC4    = 11, // Shader uniform type: uivec4 (4 unsigned int)
+	SAMPLER2D = 12, // Shader uniform type: sampler2d
 }
 
 // Shader attribute data types
 ShaderAttributeDataType :: enum i32 {
-	FLOAT, // Shader attribute type: float
-	VEC2,  // Shader attribute type: vec2 (2 float)
-	VEC3,  // Shader attribute type: vec3 (3 float)
-	VEC4,  // Shader attribute type: vec4 (4 float)
+	FLOAT = 0, // Shader attribute type: float
+	VEC2  = 1, // Shader attribute type: vec2 (2 float)
+	VEC3  = 2, // Shader attribute type: vec3 (3 float)
+	VEC4  = 3, // Shader attribute type: vec4 (4 float)
 }
 
 // Pixel formats
@@ -743,87 +751,87 @@ PixelFormat :: enum i32 {
 // NOTE 1: Filtering considers mipmaps if available in the texture
 // NOTE 2: Filter is accordingly set for minification and magnification
 TextureFilter :: enum i32 {
-	POINT,           // No filter, just pixel approximation
-	BILINEAR,        // Linear filtering
-	TRILINEAR,       // Trilinear filtering (linear with mipmaps)
-	ANISOTROPIC_4X,  // Anisotropic filtering 4x
-	ANISOTROPIC_8X,  // Anisotropic filtering 8x
-	ANISOTROPIC_16X, // Anisotropic filtering 16x
+	POINT           = 0, // No filter, just pixel approximation
+	BILINEAR        = 1, // Linear filtering
+	TRILINEAR       = 2, // Trilinear filtering (linear with mipmaps)
+	ANISOTROPIC_4X  = 3, // Anisotropic filtering 4x
+	ANISOTROPIC_8X  = 4, // Anisotropic filtering 8x
+	ANISOTROPIC_16X = 5, // Anisotropic filtering 16x
 }
 
 // Texture parameters: wrap mode
 TextureWrap :: enum i32 {
-	REPEAT,        // Repeats texture in tiled mode
-	CLAMP,         // Clamps texture to edge pixel in tiled mode
-	MIRROR_REPEAT, // Mirrors and repeats the texture in tiled mode
-	MIRROR_CLAMP,  // Mirrors and clamps to border the texture in tiled mode
+	REPEAT        = 0, // Repeats texture in tiled mode
+	CLAMP         = 1, // Clamps texture to edge pixel in tiled mode
+	MIRROR_REPEAT = 2, // Mirrors and repeats the texture in tiled mode
+	MIRROR_CLAMP  = 3, // Mirrors and clamps to border the texture in tiled mode
 }
 
 // Cubemap layouts
 CubemapLayout :: enum i32 {
-	AUTO_DETECT,         // Automatically detect layout type
-	LINE_VERTICAL,       // Layout is defined by a vertical line with faces
-	LINE_HORIZONTAL,     // Layout is defined by a horizontal line with faces
-	CROSS_THREE_BY_FOUR, // Layout is defined by a 3x4 cross with cubemap faces
-	CROSS_FOUR_BY_THREE, // Layout is defined by a 4x3 cross with cubemap faces
+	AUTO_DETECT         = 0, // Automatically detect layout type
+	LINE_VERTICAL       = 1, // Layout is defined by a vertical line with faces
+	LINE_HORIZONTAL     = 2, // Layout is defined by a horizontal line with faces
+	CROSS_THREE_BY_FOUR = 3, // Layout is defined by a 3x4 cross with cubemap faces
+	CROSS_FOUR_BY_THREE = 4, // Layout is defined by a 4x3 cross with cubemap faces
 }
 
 // Font type, defines generation method
 FontType :: enum i32 {
-	DEFAULT, // Default font generation, anti-aliased
-	BITMAP,  // Bitmap font generation, no anti-aliasing
-	SDF,     // SDF font generation, requires external shader
+	DEFAULT = 0, // Default font generation, anti-aliased
+	BITMAP  = 1, // Bitmap font generation, no anti-aliasing
+	SDF     = 2, // SDF font generation, requires external shader
 }
 
 // Color blending modes (pre-defined)
 BlendMode :: enum i32 {
-	ALPHA,             // Blend textures considering alpha (default)
-	ADDITIVE,          // Blend textures adding colors
-	MULTIPLIED,        // Blend textures multiplying colors
-	ADD_COLORS,        // Blend textures adding colors (alternative)
-	SUBTRACT_COLORS,   // Blend textures subtracting colors (alternative)
-	ALPHA_PREMULTIPLY, // Blend premultiplied textures considering alpha
-	CUSTOM,            // Blend textures using custom src/dst factors (use rlSetBlendFactors())
-	CUSTOM_SEPARATE,   // Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
+	ALPHA             = 0, // Blend textures considering alpha (default)
+	ADDITIVE          = 1, // Blend textures adding colors
+	MULTIPLIED        = 2, // Blend textures multiplying colors
+	ADD_COLORS        = 3, // Blend textures adding colors (alternative)
+	SUBTRACT_COLORS   = 4, // Blend textures subtracting colors (alternative)
+	ALPHA_PREMULTIPLY = 5, // Blend premultiplied textures considering alpha
+	CUSTOM            = 6, // Blend textures using custom src/dst factors (use rlSetBlendFactors())
+	CUSTOM_SEPARATE   = 7, // Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
 }
 
 // Gesture
 // NOTE: Provided as bit-wise flags to enable only desired gestures
 Gesture :: enum i32 {
-	TAP,         // Tap gesture
-	DOUBLETAP,   // Double tap gesture
-	HOLD,        // Hold gesture
-	DRAG,        // Drag gesture
-	SWIPE_RIGHT, // Swipe right gesture
-	SWIPE_LEFT,  // Swipe left gesture
-	SWIPE_UP,    // Swipe up gesture
-	SWIPE_DOWN,  // Swipe down gesture
-	PINCH_IN,    // Pinch in gesture
-	PINCH_OUT,   // Pinch out gesture
+	TAP         = 0, // Tap gesture
+	DOUBLETAP   = 1, // Double tap gesture
+	HOLD        = 2, // Hold gesture
+	DRAG        = 3, // Drag gesture
+	SWIPE_RIGHT = 4, // Swipe right gesture
+	SWIPE_LEFT  = 5, // Swipe left gesture
+	SWIPE_UP    = 6, // Swipe up gesture
+	SWIPE_DOWN  = 7, // Swipe down gesture
+	PINCH_IN    = 8, // Pinch in gesture
+	PINCH_OUT   = 9, // Pinch out gesture
 }
 
 Gestures :: bit_set[Gesture; i32]
 
 // Camera system modes
 CameraMode :: enum i32 {
-	CUSTOM,       // Camera custom, controlled by user (UpdateCamera() does nothing)
-	FREE,         // Camera free mode
-	ORBITAL,      // Camera orbital, around target, zoom supported
-	FIRST_PERSON, // Camera first person
-	THIRD_PERSON, // Camera third person
+	CUSTOM       = 0, // Camera custom, controlled by user (UpdateCamera() does nothing)
+	FREE         = 1, // Camera free mode
+	ORBITAL      = 2, // Camera orbital, around target, zoom supported
+	FIRST_PERSON = 3, // Camera first person
+	THIRD_PERSON = 4, // Camera third person
 }
 
 // Camera projection
 CameraProjection :: enum i32 {
-	PERSPECTIVE,  // Perspective projection
-	ORTHOGRAPHIC, // Orthographic projection
+	PERSPECTIVE  = 0, // Perspective projection
+	ORTHOGRAPHIC = 1, // Orthographic projection
 }
 
 // N-patch layout
 NPatchLayout :: enum i32 {
-	NINE_PATCH,             // Npatch layout: 3x3 tiles
-	THREE_PATCH_VERTICAL,   // Npatch layout: 1x3 tiles
-	THREE_PATCH_HORIZONTAL, // Npatch layout: 3x1 tiles
+	NINE_PATCH             = 0, // Npatch layout: 3x3 tiles
+	THREE_PATCH_VERTICAL   = 1, // Npatch layout: 1x3 tiles
+	THREE_PATCH_HORIZONTAL = 2, // Npatch layout: 3x1 tiles
 }
 
 // Callbacks to hook some internal functions
