@@ -1,5 +1,6 @@
 x proc type passthrough
-- by-decl-type sorting and spacing
+x by-decl-type sorting and spacing
+- similar grouping for struct fields (sort by comment_before etc)
 - multi name fields (see Matrix in ufbx)
 
 

@@ -35,24 +35,46 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 		p(sb, "\n")
 	}
 
-	// None if previous decls wasn't a proc
-	inside_foreign_block: bool
-	foreign_block_calling_conv: Calling_Convention
-	prev_multiline := true
-	indent := 0
+	Output_Group_Kind :: enum {
+		Default,
+		Macro,
+		Proc,
+	}
 
-	fr_decls_loop: for &d in decls {
+	Output_Group_Decl :: struct {
+		decl: Decl,
+		rhs: string,
+	}
+
+	Output_Group :: struct {
+		decls: [dynamic]Output_Group_Decl,
+		kind: Output_Group_Kind,
+		start_foreign_block: bool,
+		end_foreign_block: bool,
+		proc_calling_convention: Calling_Convention,
+	}
+
+	current_group: Output_Group
+
+	for &d in decls {
 		if d.invalid {
 			continue
 		}
 
-		rhs_builder := strings.builder_make()
+		kind: Output_Group_Kind
 
 		proc_type, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
 
-
 		if is_proc {
-			output_procedure_signature(types, proc_type, &rhs_builder, 0, false)
+			kind = .Proc
+		} else if d.from_macro {
+			kind = .Macro
+		}
+
+		rhs_builder := strings.builder_make()
+
+		if kind == .Proc {
+			output_procedure_signature(types, proc_type, &rhs_builder, 1, false)
 		} else {
 			output_definition(types, d.def, &rhs_builder, 0)
 		}
@@ -63,74 +85,112 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			continue
 		}
 
-		if is_proc {
-			start_foreign_block := false
+		multiline := strings.contains_rune(rhs, '\n')
 
-			if inside_foreign_block {
-				if proc_type.calling_convention != foreign_block_calling_conv  {
-					pln(sb, "}")
-					start_foreign_block = true
-					foreign_block_calling_conv = proc_type.calling_convention
-				}
-			} else {
-				inside_foreign_block = true
-				start_foreign_block = true
-				foreign_block_calling_conv = proc_type.calling_convention
+		if kind != current_group.kind ||
+			(kind == .Proc && current_group.proc_calling_convention != proc_type.calling_convention) ||
+			d.comment_before != "" ||
+			multiline {
+			current_group.end_foreign_block = current_group.kind == .Proc && (kind != .Proc ||
+				proc_type.calling_convention != current_group.proc_calling_convention)
+			output_group(current_group, o, sb)
+			clear(&current_group.decls)
+			prev_kind := current_group.kind
+			prev_proc_calling_conventation := current_group.proc_calling_convention
+			current_group.kind = kind
+			current_group.start_foreign_block = kind == .Proc && (prev_kind != .Proc ||
+				proc_type.calling_convention != prev_proc_calling_conventation)
+			current_group.end_foreign_block = true
+
+			current_group.proc_calling_convention = kind == .Proc ? proc_type.calling_convention : {}
+		}
+
+		append(&current_group.decls, Output_Group_Decl {
+			decl = d,
+			rhs = rhs,
+		})
+	}
+
+
+	output_group(current_group, o, sb)
+
+	output_group :: proc(g: Output_Group, o: Output_Input, sb: ^strings.Builder) {
+		k := g.kind
+
+		if g.start_foreign_block {
+			pf(sb, "@(default_calling_convention=\"%s\"", calling_convention_string(g.proc_calling_convention))
+
+			if o.link_prefix != "" {
+				pf(sb, `, link_prefix="%v"`, o.link_prefix)
 			}
 
-			if start_foreign_block {
-				pf(sb, "\n@(default_calling_convention=\"%s\"", calling_convention_string(proc_type.calling_convention))
+			pln(sb, ")")
 
-				if o.link_prefix != "" {
-					pf(sb, `, link_prefix="%v"`, o.link_prefix)
-				}
+			pln(sb, "foreign lib {")
+		}
 
-				pln(sb, ")")
+		longest_name: int
+		for &od in g.decls {
+			d := od.decl
 
-				pln(sb, "foreign lib {")
-				indent = 1
-			}
-		} else {
-			if inside_foreign_block {
-				indent = 0
-				pln(sb, "}")
-				inside_foreign_block = false
+			if len(d.name) > longest_name {
+				longest_name = len(d.name)
 			}
 		}
 
-		multiline := strings.contains_rune(rhs, '\n')
+		group_member_texts := make([]string, len(g.decls))
+		assert(len(group_member_texts) == len(g.decls))
+		longest_member_that_has_comment_on_right: int
 
-		if multiline || prev_multiline || d.comment_before != "" {
+		for &od, i in g.decls {
+			d := od.decl
+			rhs := od.rhs
+
+			tb := strings.builder_make()
+
+			pf(&tb, "%v%*s:: %v", d.name, max(longest_name-len(d.name) + 1, d.explicit_whitespace_after_name), "", rhs)
+
+			if k == .Proc {
+				pf(&tb, " ---")
+			}
+
+			text := strings.to_string(tb)
+			group_member_texts[i] = text
+
+			if d.side_comment != "" && len(text) < 120 && len(text) > longest_member_that_has_comment_on_right {
+				longest_member_that_has_comment_on_right = len(text)
+			}
+		}
+
+		for &od, i in g.decls {
+			d := od.decl
+
+			indent := k == .Proc ? 1 : 0
+
+			if d.comment_before != "" {
+				cb := d.comment_before
+				for l in strings.split_lines_iterator(&cb) {
+					output_indent(sb, indent)
+					pln(sb, strings.trim_space(l))
+				}
+			}
+
+			output_indent(sb, indent)
+			text := group_member_texts[i]
+			p(sb, text)
+
+			if d.side_comment != "" {
+				pf(sb, "%*s%v", max(longest_member_that_has_comment_on_right-len(text) + 1, d.explicit_whitespace_before_side_comment), "", d.side_comment)
+			}
+
 			p(sb, "\n")
 		}
 
-		if d.comment_before != "" {
-			cb := d.comment_before
-			for l in strings.split_lines_iterator(&cb) {
-				output_indent(sb, indent)
-				pln(sb, strings.trim_space(l))
-			}
+		if g.end_foreign_block {
+			pln(sb, "}")
 		}
 
-		output_indent(sb, indent)
-
-		pf(sb, "%v%*s:: %v", d.name, max(d.explicit_whitespace_after_name, 1), "", rhs)
-
-		if is_proc {
-			pf(sb, " ---")
-		}
-
-		if d.side_comment != "" {
-			pf(sb, "%*s%v", max(1, d.explicit_whitespace_before_side_comment), "", d.side_comment)
-		}
-
-		p(sb, "\n")
-
-		prev_multiline = multiline
-	}
-
-	if inside_foreign_block {
-		pln(sb, "}")
+		pln(sb, "")
 	}
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))

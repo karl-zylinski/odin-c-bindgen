@@ -41,7 +41,7 @@ Decl :: struct {
 
 	def: Definition,
 	comment_before: string,
-	side_comment: string,
+	side_comment: string, // rename to comment_on_right
 
 	invalid: bool,
 
