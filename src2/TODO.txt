@@ -36,7 +36,7 @@ translate_proces  -> intermediate_process (unsure about this one)
 
 try binding something that needs typedefs between files to work properly... might need one big translation unit for the bindgen config
 
-check old bindgen for c, libc and posix import rules
+x check old bindgen for c, libc and posix import rules
 
 Find this comment:
 // A bit of a hack due to aliases being disregarded later. Perhaps we can change that?
