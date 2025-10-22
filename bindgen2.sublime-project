@@ -22,7 +22,7 @@
 			"variants": [
 				{
 					"name": "raylib",
-					"shell_cmd": "odin build src -debug -out:bindgen.exe && bindgen.exe examples/raylib && odin check examples/raylib/raylib -vet -strict-style -no-entry-point",
+					"shell_cmd": "odin build src -debug -out:bindgen.exe && bindgen.exe examples/raylib && odin check examples/raylib/test -vet -strict-style",
 				},
 				{
 					"name": "tester",
@@ -34,7 +34,7 @@
 				},
 				{
 					"name": "box2d",
-					"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style && bindgen.exe examples/box2d && odin check examples/box2d/box2d -vet -strict-style -no-entry-point ",
+					"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style && bindgen.exe examples/box2d && odin check examples/box2d/test -vet -strict-style",
 				},
 				{
 					"name": "box2d test",
@@ -42,7 +42,7 @@
 				},
 				{
 					"name": "ufbx",
-					"shell_cmd": "odin build src -out:bindgen.exe && bindgen.exe examples/ufbx",
+					"shell_cmd": "odin build src -out:bindgen.exe && bindgen.exe examples/ufbx && odin check examples/ufbx/test -vet -strict-style",
 				},
 				{
 					"name": "ufbx test",

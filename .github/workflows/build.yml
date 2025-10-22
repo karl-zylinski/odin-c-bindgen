@@ -31,17 +31,17 @@ jobs:
       - name: Raylib
         run: |
           ./bindgen.exe examples/raylib
-          odin check examples/raylib/raylib -vet -strict-style -no-entry-point
+          odin check examples/raylib/test -vet -strict-style
 
       - name: Box2D 
         run: |
           ./bindgen.exe examples/box2d
-          odin check examples/box2d/box2d -vet -strict-style -no-entry-point 
+          odin check examples/box2d/test -vet -strict-style
 
       - name: ufbx
         run: |
           ./bindgen.exe examples/ufbx
-          odin check examples/ufbx/ufbx -vet -strict-style -no-entry-point 
+          odin check examples/ufbx/test -vet -strict-style
 
       - name: joltc
         run: |
