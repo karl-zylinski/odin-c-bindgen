@@ -17,7 +17,7 @@ Translate_Process_Result :: struct {
 	top_code: string,
 	link_prefix: string,
 
-	import_core_c: bool,
+	extra_imports: []string,
 }
 
 @(private="package")
@@ -262,7 +262,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		top_comment = extract_top_comment(tcr.source),
 		top_code = top_code,
 		link_prefix = config.remove_function_prefix,
-		import_core_c = tcr.import_core_c,
+		extra_imports = tcr.extra_imports,
 	}
 }
 

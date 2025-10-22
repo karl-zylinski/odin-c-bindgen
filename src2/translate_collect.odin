@@ -3,6 +3,7 @@
 package bindgen2
 
 import clang "../libclang"
+import "core:slice"
 import "core:log"
 import "core:strings"
 import "core:unicode"
@@ -12,7 +13,7 @@ import "core:fmt"
 @(private="package")
 Translate_Collect_Result :: struct {
 	source: string,
-	import_core_c: bool,
+	extra_imports: []string,
 	macros: []Raw_Macro,
 }
 
@@ -92,9 +93,12 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		create_declaration(c, &tcs)
 	}
 
+	extra_imports, extra_imports_err := slice.map_keys(tcs.extra_imports)
+	assert(extra_imports_err == nil)
+
 	return {
 		source = tcs.source,
-		import_core_c = tcs.import_core_c,
+		extra_imports = extra_imports,
 		macros = tcs.macros[:],
 	}, true
 }
@@ -107,7 +111,7 @@ Translate_Collect_State :: struct {
 	types: Type_List,
 	children_lookup: Cursor_Children_Map,
 	source: string,
-	import_core_c: bool,
+	extra_imports: map[string]bool,
 	macros: [dynamic]Raw_Macro,
 	translation_unit: clang.Translation_Unit,
 }
@@ -440,6 +444,7 @@ type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
 }
 
 c_typedef_types := map[string]string {
+	// builtin types
 	"uint8_t"  = "u8",
 	"int8_t"   = "i8",
 	"uint16_t" = "u16",
@@ -465,6 +470,8 @@ c_typedef_types := map[string]string {
 	"int_fast64_t"  = "i64",
 	"uint_fast64_t" = "u64",
 	
+	// core:c (many of these vary by platform, so we use the `core:c` ones to make this map simpler)
+
 	"long"          = "c.long",
 	"unsigned long" = "c.ulong",
 	"int_fast16_t"  = "c.int_fast16_t",
@@ -482,6 +489,21 @@ c_typedef_types := map[string]string {
 	"uintmax_t" = "c.uintmax_t",
 
 	"va_list" = "c.va_list",
+
+	// posix
+	"dev_t"      = "posix.dev_t",
+	"blkcnt_t"   = "posix.blkcnt_t",
+	"blksize_t"  = "posix.blksize_t",
+	"clock_t"    = "posix.clock_t",
+	"clockid_t"  = "posix.clockid_t",
+	"fsblkcnt_t" = "posix.fsblkcnt_t",
+	"off_t"      = "posix.off_t",
+	"gid_t"      = "posix.gid_t",
+	"pid_t"      = "posix.pid_t",
+	"timespec"   = "posix.timespec",
+
+	// libc
+	"time_t" = "libc.time_t",
 }
 
 get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Definition {
@@ -530,7 +552,11 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 
 			if replacement, has_replacement := c_typedef_types[name]; has_replacement {
 				if strings.has_prefix(replacement, "c.") {
-					tcs.import_core_c = true
+					tcs.extra_imports["core:c"] = true
+				} else if strings.has_prefix(replacement, "libc.") {
+					tcs.extra_imports["core:c/libc"] = true
+				} if strings.has_prefix(replacement, "posix.") {
+					tcs.extra_imports["core:sys/posix"] = true
 				}
 				return Fixed_Value(replacement)
 			}

@@ -22,16 +22,17 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 		pln(sb, o.top_comment)
 	}
 
-	pfln(sb, "package %v", package_name)
+	pfln(sb, "package %v\n", package_name)
 
-	if o.import_core_c {
-		pln(sb, "")
-		pln(sb, "import \"core:c\"")
+	if len(o.extra_imports) > 0 {
+		for ei in o.extra_imports {
+			pfln(sb, "import \"%s\"", ei)
+		}
+		p(sb, "\n")
 	}
 
 	if o.top_code != "" {
-		p(sb, "\n")
-		p(sb, o.top_code)
+		pln(sb, o.top_code)
 		p(sb, "\n")
 	}
 
