@@ -170,6 +170,30 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 		case .Keyword:
 			return ""
 		case .Identifier:
+			if tv == "UINT64_MAX" {
+				notted = true
+				literal_type = .U64
+				break
+			}
+
+			if tv == "UINT32_MAX" {
+				notted = true
+				literal_type = .U32
+				break
+			}
+
+			if tv == "INT32_MAX" {
+				notted = true
+				literal_type = .I32
+				break
+			}
+
+			if tv == "INT64_MAX" {
+				notted = true
+				literal_type = .I64
+				break
+			}
+
 			if parse_identifier(&ems, &b) == false {
 				return ""
 			}

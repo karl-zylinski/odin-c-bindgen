@@ -293,7 +293,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			top_code = string(imports)
 		}
 	} else if config.import_lib != "" {
-		top_code = fmt.tprintf(`foreign import lib "%v"`, config.import_lib)
+		top_code = fmt.tprintf("foreign import lib \"%v\"\n_ :: lib", config.import_lib)
 	}
 
 	if config.procedures_at_end {

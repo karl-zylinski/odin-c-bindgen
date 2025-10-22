@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-
-
 foreign import lib "box2d.lib"
+_ :: lib
 
 DEFAULT_CATEGORY_BITS :: 0x0001
-// DEFAULT_MASK_BITS :: UINT64_MAX
+DEFAULT_MASK_BITS     :: max(u64)
 
 /// Task interface
 /// This is prototype for a Box2D task. Your task system is expected to invoke the Box2D task with these arguments.
@@ -25,7 +24,7 @@ DEFAULT_CATEGORY_BITS :: 0x0001
 /// }
 /// @endcode
 /// @ingroup world
-TaskCallback :: proc "c" (i32, i32, u32, rawptr)
+TaskCallback :: proc "c" (startIndex: i32, endIndex: i32, workerIndex: u32, taskContext: rawptr)
 
 /// These functions can be provided to Box2D to invoke a task system. These are designed to work well with enkiTS.
 /// Returns a pointer to the user's task object. May be nullptr. A nullptr indicates to Box2D that the work was executed
@@ -38,21 +37,21 @@ TaskCallback :: proc "c" (i32, i32, u32, rawptr)
 /// endIndex - startIndex >= minRange
 /// The exception of course is when itemCount < minRange.
 /// @ingroup world
-EnqueueTaskCallback :: proc "c" (TaskCallback, i32, i32, rawptr, rawptr) -> rawptr
+EnqueueTaskCallback :: proc "c" (task: TaskCallback, itemCount: i32, minRange: i32, taskContext: rawptr, userContext: rawptr) -> rawptr
 
 /// Finishes a user task object that wraps a Box2D task.
 /// @ingroup world
-FinishTaskCallback :: proc "c" (rawptr, rawptr)
+FinishTaskCallback :: proc "c" (userTask: rawptr, userContext: rawptr)
 
 /// Optional friction mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-FrictionCallback :: proc "c" (f32, i32, f32, i32) -> f32
+FrictionCallback :: proc "c" (frictionA: f32, materialA: i32, frictionB: f32, materialB: i32) -> f32
 
 /// Optional restitution mixing callback. This intentionally provides no context objects because this is called
 /// from a worker thread.
 /// @warning This function should not attempt to modify Box2D state or user application state.
-RestitutionCallback :: proc "c" (f32, i32, f32, i32) -> f32
+RestitutionCallback :: proc "c" (restitutionA: f32, materialA: i32, restitutionB: f32, materialB: i32) -> f32
 
 /// Result from b2World_RayCastClosest
 /// @ingroup world
@@ -138,21 +137,28 @@ WorldDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your world definition
+	/// @ingroup world
+	DefaultWorldDef :: proc() -> WorldDef ---
+}
+
 /// The body simulation type.
 /// Each body is one of these three types. The type determines how the body behaves in the simulation.
 /// @ingroup body
 BodyType :: enum i32 {
 	/// zero mass, zero velocity, may be manually moved
-	staticBody,
+	staticBody    = 0,
 
 	/// zero mass, velocity set by user, moved by solver
-	kinematicBody,
+	kinematicBody = 1,
 
 	/// positive mass, velocity determined by forces, moved by solver
-	dynamicBody,
+	dynamicBody   = 2,
 
 	/// number of body types
-	bodyTypeCount,
+	bodyTypeCount = 3,
 }
 
 /// A body definition holds all the data needed to construct a rigid body.
@@ -229,6 +235,13 @@ BodyDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your body definition
+	/// @ingroup body
+	DefaultBodyDef :: proc() -> BodyDef ---
+}
+
 /// This is used to filter collision on shapes. It affects shape-vs-shape collision
 /// and shape-versus-query collision (such as b2World_CastRay).
 /// @ingroup shape
@@ -265,6 +278,13 @@ Filter :: struct {
 	groupIndex: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your filter
+	/// @ingroup shape
+	DefaultFilter :: proc() -> Filter ---
+}
+
 /// The query filter is used to filter collisions between queries and shapes. For example,
 /// you may want a ray-cast representing a projectile to hit players and the static environment
 /// but not debris.
@@ -278,26 +298,33 @@ QueryFilter :: struct {
 	maskBits: u64,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your query filter
+	/// @ingroup shape
+	DefaultQueryFilter :: proc() -> QueryFilter ---
+}
+
 /// Shape type
 /// @ingroup shape
 ShapeType :: enum i32 {
 	/// A circle with an offset
-	circleShape,
+	circleShape       = 0,
 
 	/// A capsule is an extruded circle
-	capsuleShape,
+	capsuleShape      = 1,
 
 	/// A line segment
-	segmentShape,
+	segmentShape      = 2,
 
 	/// A convex polygon
-	polygonShape,
+	polygonShape      = 3,
 
 	/// A line segment owned by a chain shape
-	chainSegmentShape,
+	chainSegmentShape = 4,
 
 	/// The number of shape types
-	shapeTypeCount,
+	shapeTypeCount    = 5,
 }
 
 /// Used to create a shape.
@@ -310,10 +337,7 @@ ShapeDef :: struct {
 	userData: rawptr,
 
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
-	friction: f32,
-
-	/// The coefficient of restitution (bounce) usually in the range [0,1].
-	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
+	friction:    f32,
 	restitution: f32,
 
 	/// The rolling resistance usually in the range [0,1].
@@ -363,14 +387,18 @@ ShapeDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your shape definition
+	/// @ingroup shape
+	DefaultShapeDef :: proc() -> ShapeDef ---
+}
+
 /// Surface materials allow chain shapes to have per segment surface properties.
 /// @ingroup shape
 SurfaceMaterial :: struct {
 	/// The Coulomb (dry) friction coefficient, usually in the range [0,1].
-	friction: f32,
-
-	/// The coefficient of restitution (bounce) usually in the range [0,1].
-	/// https://en.wikipedia.org/wiki/Coefficient_of_restitution
+	friction:    f32,
 	restitution: f32,
 
 	/// The rolling resistance usually in the range [0,1].
@@ -385,6 +413,13 @@ SurfaceMaterial :: struct {
 
 	/// Custom debug draw color.
 	customColor: u32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your surface material
+	/// @ingroup shape
+	DefaultSurfaceMaterial :: proc() -> SurfaceMaterial ---
 }
 
 /// Used to create a chain of line segments. This is designed to eliminate ghost collisions with some limitations.
@@ -427,6 +462,13 @@ ChainDef :: struct {
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: i32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your chain definition
+	/// @ingroup shape
+	DefaultChainDef :: proc() -> ChainDef ---
 }
 
 //! @cond
@@ -477,14 +519,14 @@ Counters :: struct {
 /// want to get the type of a joint.
 /// @ingroup joint
 JointType :: enum i32 {
-	distanceJoint,
-	motorJoint,
-	mouseJoint,
-	nullJoint,
-	prismaticJoint,
-	revoluteJoint,
-	weldJoint,
-	wheelJoint,
+	distanceJoint  = 0,
+	motorJoint     = 1,
+	mouseJoint     = 2,
+	nullJoint      = 3,
+	prismaticJoint = 4,
+	revoluteJoint  = 5,
+	weldJoint      = 6,
+	wheelJoint     = 7,
 }
 
 /// Distance joint definition
@@ -548,6 +590,13 @@ DistanceJointDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup distance_joint
+	DefaultDistanceJointDef :: proc() -> DistanceJointDef ---
+}
+
 /// A motor joint is used to control the relative motion between two bodies
 ///
 /// A typical usage is to control the movement of a dynamic body with respect to the ground.
@@ -584,6 +633,13 @@ MotorJointDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup motor_joint
+	DefaultMotorJointDef :: proc() -> MotorJointDef ---
+}
+
 /// A mouse joint is used to make a point on a body track a specified world point.
 ///
 /// This a soft constraint and allows the constraint to stretch without
@@ -618,6 +674,13 @@ MouseJointDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup mouse_joint
+	DefaultMouseJointDef :: proc() -> MouseJointDef ---
+}
+
 /// A null joint is used to disable collision between two specific bodies.
 ///
 /// @ingroup null_joint
@@ -633,6 +696,13 @@ NullJointDef :: struct {
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: i32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup null_joint
+	DefaultNullJointDef :: proc() -> NullJointDef ---
 }
 
 /// Prismatic joint definition
@@ -696,6 +766,13 @@ PrismaticJointDef :: struct {
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: i32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroupd prismatic_joint
+	DefaultPrismaticJointDef :: proc() -> PrismaticJointDef ---
 }
 
 /// Revolute joint definition
@@ -767,6 +844,13 @@ RevoluteJointDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition.
+	/// @ingroup revolute_joint
+	DefaultRevoluteJointDef :: proc() -> RevoluteJointDef ---
+}
+
 /// Weld joint definition
 ///
 /// A weld joint connect to bodies together rigidly. This constraint provides springs to mimic
@@ -809,6 +893,13 @@ WeldJointDef :: struct {
 
 	/// Used internally to detect a valid definition. DO NOT SET.
 	internalValue: i32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup weld_joint
+	DefaultWeldJointDef :: proc() -> WeldJointDef ---
 }
 
 /// Wheel joint definition
@@ -871,6 +962,13 @@ WheelJointDef :: struct {
 	internalValue: i32,
 }
 
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your joint definition
+	/// @ingroup wheel_joint
+	DefaultWheelJointDef :: proc() -> WheelJointDef ---
+}
+
 /// The explosion definition is used to configure options for explosions. Explosions
 /// consider shape geometry when computing the impulse.
 /// @ingroup world
@@ -891,6 +989,13 @@ ExplosionDef :: struct {
 	/// is facing the explosion. Explosions only apply to circles, capsules, and polygons. This
 	/// may be negative for implosions.
 	impulsePerLength: f32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	/// Use this to initialize your explosion definition
+	/// @ingroup world
+	DefaultExplosionDef :: proc() -> ExplosionDef ---
 }
 
 /// A begin touch event is generated when a shape starts to overlap a sensor shape.
@@ -1054,7 +1159,7 @@ ContactData :: struct {
 /// @see b2ShapeDef
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-CustomFilterFcn :: proc "c" (ShapeId, ShapeId, rawptr) -> bool
+CustomFilterFcn :: proc "c" (shapeIdA: ShapeId, shapeIdB: ShapeId, _context: rawptr) -> bool
 
 /// Prototype for a pre-solve callback.
 /// This is called after a contact is updated. This allows you to inspect a
@@ -1069,14 +1174,14 @@ CustomFilterFcn :: proc "c" (ShapeId, ShapeId, rawptr) -> bool
 /// Return false if you want to disable the contact this step
 /// @warning Do not attempt to modify the world inside this callback
 /// @ingroup world
-PreSolveFcn :: proc "c" (ShapeId, ShapeId, ^Manifold, rawptr) -> bool
+PreSolveFcn :: proc "c" (shapeIdA: ShapeId, shapeIdB: ShapeId, manifold: ^Manifold, _context: rawptr) -> bool
 
 /// Prototype callback for overlap queries.
 /// Called for each shape found in the query.
 /// @see b2World_OverlapABB
 /// @return false to terminate the query.
 /// @ingroup world
-OverlapResultFcn :: proc "c" (ShapeId, rawptr) -> bool
+OverlapResultFcn :: proc "c" (shapeId: ShapeId, _context: rawptr) -> bool
 
 /// Prototype callback for ray casts.
 /// Called for each shape found in the query. You control how the ray cast
@@ -1093,7 +1198,7 @@ OverlapResultFcn :: proc "c" (ShapeId, rawptr) -> bool
 /// @return -1 to filter, 0 to terminate, fraction to clip the ray for closest hit, 1 to continue
 /// @see b2World_CastRay
 /// @ingroup world
-CastResultFcn :: proc "c" (ShapeId, Vec2, Vec2, f32, rawptr) -> f32
+CastResultFcn :: proc "c" (shapeId: ShapeId, point: Vec2, normal: Vec2, fraction: f32, _context: rawptr) -> f32
 
 /// These colors are used for debug draw and mostly match the named SVG colors.
 /// See https://www.rapidtables.com/web/color/index.html
@@ -1252,31 +1357,31 @@ HexColor :: enum i32 {
 /// @ingroup world
 DebugDraw :: struct {
 	/// Draw a closed polygon provided in CCW order.
-	DrawPolygon: proc "c" (^Vec2, i32, HexColor, rawptr),
+	DrawPolygon: proc "c" (vertices: ^Vec2, vertexCount: i32, color: HexColor, _context: rawptr),
 
 	/// Draw a solid closed polygon provided in CCW order.
-	DrawSolidPolygon: proc "c" (Transform, ^Vec2, i32, f32, HexColor, rawptr),
+	DrawSolidPolygon: proc "c" (transform: Transform, vertices: ^Vec2, vertexCount: i32, radius: f32, color: HexColor, _context: rawptr),
 
 	/// Draw a circle.
-	DrawCircle: proc "c" (Vec2, f32, HexColor, rawptr),
+	DrawCircle: proc "c" (center: Vec2, radius: f32, color: HexColor, _context: rawptr),
 
 	/// Draw a solid circle.
-	DrawSolidCircle: proc "c" (Transform, f32, HexColor, rawptr),
+	DrawSolidCircle: proc "c" (transform: Transform, radius: f32, color: HexColor, _context: rawptr),
 
 	/// Draw a solid capsule.
-	DrawSolidCapsule: proc "c" (Vec2, Vec2, f32, HexColor, rawptr),
+	DrawSolidCapsule: proc "c" (p1: Vec2, p2: Vec2, radius: f32, color: HexColor, _context: rawptr),
 
 	/// Draw a line segment.
-	DrawSegment: proc "c" (Vec2, Vec2, HexColor, rawptr),
+	DrawSegment: proc "c" (p1: Vec2, p2: Vec2, color: HexColor, _context: rawptr),
 
 	/// Draw a transform. Choose your own length scale.
-	DrawTransform: proc "c" (Transform, rawptr),
+	DrawTransform: proc "c" (transform: Transform, _context: rawptr),
 
 	/// Draw a point.
-	DrawPoint: proc "c" (Vec2, f32, HexColor, rawptr),
+	DrawPoint: proc "c" (p: Vec2, size: f32, color: HexColor, _context: rawptr),
 
 	/// Draw a string in world space
-	DrawString: proc "c" (Vec2, cstring, HexColor, rawptr),
+	DrawString: proc "c" (p: Vec2, s: cstring, color: HexColor, _context: rawptr),
 
 	/// Bounds to use if restricting drawing to a rectangular region
 	drawingBounds: AABB,
@@ -1323,71 +1428,8 @@ DebugDraw :: struct {
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
-	/// Use this to initialize your world definition
-	/// @ingroup world
-	DefaultWorldDef :: proc() -> WorldDef ---
-
-	/// Use this to initialize your body definition
-	/// @ingroup body
-	DefaultBodyDef :: proc() -> BodyDef ---
-
-	/// Use this to initialize your filter
-	/// @ingroup shape
-	DefaultFilter :: proc() -> Filter ---
-
-	/// Use this to initialize your query filter
-	/// @ingroup shape
-	DefaultQueryFilter :: proc() -> QueryFilter ---
-
-	/// Use this to initialize your shape definition
-	/// @ingroup shape
-	DefaultShapeDef :: proc() -> ShapeDef ---
-
-	/// Use this to initialize your surface material
-	/// @ingroup shape
-	DefaultSurfaceMaterial :: proc() -> SurfaceMaterial ---
-
-	/// Use this to initialize your chain definition
-	/// @ingroup shape
-	DefaultChainDef :: proc() -> ChainDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup distance_joint
-	DefaultDistanceJointDef :: proc() -> DistanceJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup motor_joint
-	DefaultMotorJointDef :: proc() -> MotorJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup mouse_joint
-	DefaultMouseJointDef :: proc() -> MouseJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup null_joint
-	DefaultNullJointDef :: proc() -> NullJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroupd prismatic_joint
-	DefaultPrismaticJointDef :: proc() -> PrismaticJointDef ---
-
-	/// Use this to initialize your joint definition.
-	/// @ingroup revolute_joint
-	DefaultRevoluteJointDef :: proc() -> RevoluteJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup weld_joint
-	DefaultWeldJointDef :: proc() -> WeldJointDef ---
-
-	/// Use this to initialize your joint definition
-	/// @ingroup wheel_joint
-	DefaultWheelJointDef :: proc() -> WheelJointDef ---
-
-	/// Use this to initialize your explosion definition
-	/// @ingroup world
-	DefaultExplosionDef :: proc() -> ExplosionDef ---
-
 	/// Use this to initialize your drawing interface. This allows you to implement a sub-set
 	/// of the drawing functions.
 	DefaultDebugDraw :: proc() -> DebugDraw ---
 }
+

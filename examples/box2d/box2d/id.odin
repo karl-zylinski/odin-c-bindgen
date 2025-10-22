@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-
-
 foreign import lib "box2d.lib"
+_ :: lib
 
 /// World id references a world instance. This should be treated as an opaque handle.
 WorldId :: struct {

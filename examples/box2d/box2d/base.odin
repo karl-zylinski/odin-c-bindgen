@@ -2,44 +2,20 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-
-
 foreign import lib "box2d.lib"
-
-// static library
-// BOX2D_EXPORT :: 
-
-// API :: BOX2D_EXPORT
-// INLINE :: 
+_ :: lib
 
 /// Prototype for user allocation function
 /// @param size the allocation size in bytes
 /// @param alignment the required alignment, guaranteed to be a power of 2
-AllocFcn :: proc "c" (u32, i32) -> rawptr
+AllocFcn :: proc "c" (size: u32, alignment: i32) -> rawptr
 
 /// Prototype for user free function
 /// @param mem the memory previously allocated through `b2AllocFcn`
-FreeFcn :: proc "c" (rawptr)
+FreeFcn :: proc "c" (mem: rawptr)
 
 /// Prototype for the user assert callback. Return 0 to skip the debugger break.
-AssertFcn :: proc "c" (cstring, cstring, i32) -> i32
-
-// BREAKPOINT :: __debugbreak()
-
-/// Version numbering scheme.
-/// See https://semver.org/
-Version :: struct {
-	/// Significant changes
-	major: i32,
-
-	/// Incremental changes
-	minor: i32,
-
-	/// Bug fixes
-	revision: i32,
-}
-
-HASH_INIT :: 5381
+AssertFcn :: proc "c" (condition: cstring, fileName: cstring, lineNumber: i32) -> i32
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
@@ -54,7 +30,23 @@ foreign lib {
 	/// @param assertFcn a non-null assert callback
 	SetAssertFcn      :: proc(assertFcn: AssertFcn) ---
 	InternalAssertFcn :: proc(condition: cstring, fileName: cstring, lineNumber: i32) -> i32 ---
+}
 
+/// Version numbering scheme.
+/// See https://semver.org/
+Version :: struct {
+	/// Significant changes
+	major: i32,
+
+	/// Incremental changes
+	minor: i32,
+
+	/// Bug fixes
+	revision: i32,
+}
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
 	/// Get the current version of Box2D
 	GetVersion :: proc() -> Version ---
 
@@ -69,5 +61,13 @@ foreign lib {
 
 	/// Yield to be used in a busy loop.
 	Yield :: proc() ---
-	Hash  :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
 }
+
+/// Simple djb2 hash function for determinism testing
+HASH_INIT :: 5381
+
+@(default_calling_convention="c", link_prefix="b2")
+foreign lib {
+	Hash :: proc(hash: u32, data: ^u8, count: i32) -> u32 ---
+}
+

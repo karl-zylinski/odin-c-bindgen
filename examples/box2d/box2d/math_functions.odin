@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-
-
 foreign import lib "box2d.lib"
+_ :: lib
 
 /// 2D vector
 /// This can be used to represent a point or free vector
@@ -18,7 +17,7 @@ Vec2 :: struct {
 CosSin :: struct {
 	/// cosine and sine
 	cosine: f32,
-	sine: f32,
+	sine:   f32,
 }
 
 /// 2D rotation
@@ -94,3 +93,4 @@ foreign lib {
 	/// Get the current length units per meter.
 	GetLengthUnitsPerMeter :: proc() -> f32 ---
 }
+

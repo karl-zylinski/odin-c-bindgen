@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: MIT
 package box2d
 
-
-
 foreign import lib "box2d.lib"
+_ :: lib
 
 @(default_calling_convention="c", link_prefix="b2")
 foreign lib {
@@ -1078,3 +1077,4 @@ foreign lib {
 	/// Get the wheel joint current motor torque, usually in newton-meters
 	WheelJoint_GetMotorTorque :: proc(jointId: JointId) -> f32 ---
 }
+

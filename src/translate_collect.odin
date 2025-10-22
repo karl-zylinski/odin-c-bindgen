@@ -229,6 +229,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		})
 		
 	case .FunctionDecl:
+		if clang.Cursor_isFunctionInlined(c) == 1 {
+			return
+		}
+
 		ti := create_proc_type(tcs.children_lookup[c], ct, tcs)
 
 		if ti == TYPE_INDEX_NONE {
@@ -324,7 +328,6 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 		Looking_For_Start,
 		Looking_For_Comment,
 		Looking_For_Single_Line_Start,
-		Skip_All_Slashes,
 		Verifying_Single_Line,
 		Inside_Block_Comment,
 	}
@@ -366,19 +369,6 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 			}
 
 			if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
-				find_state = .Skip_All_Slashes
-				break
-			}
-
-		// For skipping stuff like //////lots of slashes
-		case .Skip_All_Slashes:
-			if c == '\n' {
-				comment_start = i
-				find_state = .Looking_For_Comment
-				break
-			}
-
-			if c != '/' {
 				find_state = .Verifying_Single_Line
 				break
 			}
@@ -387,6 +377,10 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 			if c == '\n' {
 				comment_start = i
 				find_state = .Looking_For_Comment
+				break
+			}
+
+			if c == '/' && ((i > 0 && src[i - 1] == '/') || (i < len(src)-1 && src[i + 1] == '/')) {
 				break
 			}
 
