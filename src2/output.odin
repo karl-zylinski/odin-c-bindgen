@@ -109,12 +109,20 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			decl = d,
 			rhs = rhs,
 		})
-	}
 
+		if multiline {
+			output_group(current_group, o, sb)
+			clear(&current_group.decls)
+		}
+	}
 
 	output_group(current_group, o, sb)
 
 	output_group :: proc(g: Output_Group, o: Output_Input, sb: ^strings.Builder) {
+		if len(g.decls) == 0 {
+			return
+		}
+
 		k := g.kind
 
 		if g.start_foreign_block {
@@ -157,7 +165,7 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			text := strings.to_string(tb)
 			group_member_texts[i] = text
 
-			if d.side_comment != "" && len(text) < 120 && len(text) > longest_member_that_has_comment_on_right {
+			if d.side_comment != "" && len(text) < 90 && len(text) > longest_member_that_has_comment_on_right {
 				longest_member_that_has_comment_on_right = len(text)
 			}
 		}
@@ -180,7 +188,7 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 			p(sb, text)
 
 			if d.side_comment != "" {
-				pf(sb, "%*s%v", max(longest_member_that_has_comment_on_right-len(text) + 1, d.explicit_whitespace_before_side_comment), "", d.side_comment)
+				pf(sb, "%*s%v", max(max(longest_member_that_has_comment_on_right-len(text) + 1, 1), d.explicit_whitespace_before_side_comment), "", d.side_comment)
 			}
 
 			p(sb, "\n")
@@ -212,78 +220,23 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 	t := types[idx]
 	t_struct := &t.(Type_Struct)
 
-	longest_name: int
-	for &f in t_struct.fields {
-		names_len: int
-
-		for n, i in f.names {
-			if i != 0 {
-				names_len += 2 // for comma and space
-			}
-
-			names_len =+ len(n)
-		}
-		
-		if names_len > longest_name {
-			longest_name = names_len
-		}
-	}
-
-	field_texts := make([]string, len(t_struct.fields))
-	longest_field_that_has_comment_on_right: int
-
-	for &f, fi in t_struct.fields {
-		fb := strings.builder_make()
-
-		if len(f.names) == 0 && !f.anonymous {
-			log.error("Struct field has no name and is not anonymous")
-			continue
-		}
-
-		if f.anonymous {
-			p(&fb, "using _: ")
-		} else {
-			for fn, nidx in f.names {
-				if nidx != 0 {
-					p(&fb, ", ")
-				}
-				p(&fb, fn)
-			}
-
-			p(&fb, ": ")	
-
-			names_len := strings.builder_len(fb)
-			after_name_padding := longest_name-names_len
-			for _ in 0..<after_name_padding {
-				strings.write_rune(&fb, ' ')
-			}
-		}
-
-		if f.type_overrride != "" {
-			p(&fb, f.type_overrride)
-		} else {
-			switch r in f.type {
-			case Type_Name, Fixed_Value:
-				p(&fb, r)
-			case Type_Index:
-				parse_type_build(types, r, &fb, indent + 1)
-			}
-		}
-
-		pf(&fb, ",")
-
-		text := strings.to_string(fb)
-		field_texts[fi] = text
-
-		if f.comment_on_right != "" && len(text) > longest_field_that_has_comment_on_right {
-			longest_field_that_has_comment_on_right = len(text)
-		}
-	}
-
 	if len(t_struct.fields) == 0 {
 		p(b, "struct {}")
 		return
 	}
+
+	Struct_Field :: struct {
+		type: Type_Struct_Field,
+		name: string,
+		rhs: string,
+	}
+
+	Struct_Fields_Group :: struct {
+		header: string,
+		line_break_before: bool,
+		fields: [dynamic]Struct_Field,
+	}
+
 
 	p(b, "struct")
 
@@ -293,30 +246,125 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 
 	pln(b, " {")
 
-	for &f, fi in t_struct.fields {
-		if f.comment_before != "" {
-			cb := f.comment_before
+	current_group: Struct_Fields_Group
+	first_field := true
 
-			for l in strings.split_lines_iterator(&cb) {
-				output_indent(b, indent + 1)	
+	for &f in t_struct.fields {
+		if len(f.names) == 0 && !f.anonymous {
+			log.error("Struct field has no name and is not anonymous")
+			continue
+		}
+
+		if f.comment_before != "" {
+			output_field_group(current_group, b, indent + 1)
+			clear(&current_group.fields)
+			current_group.header = f.comment_before
+			current_group.line_break_before = !first_field
+		}
+
+		first_field = false
+
+		// name builder
+		nb := strings.builder_make()
+
+		if f.anonymous {
+			p(&nb, "using _: ")
+		} else {
+			for fn, nidx in f.names {
+				if nidx != 0 {
+					p(&nb, ", ")
+				}
+				p(&nb, fn)
+			}
+
+			p(&nb, ": ")
+		}
+
+		name := strings.to_string(nb)
+
+		rhs_builder := strings.builder_make()
+
+		if f.type_overrride != "" {
+			p(&rhs_builder, f.type_overrride)
+		} else {
+			switch r in f.type {
+			case Type_Name, Fixed_Value:
+				p(&rhs_builder, r)
+			case Type_Index:
+				parse_type_build(types, r, &rhs_builder, indent + 1)
+			}
+		}
+
+		pf(&rhs_builder, ",")
+
+		rhs := strings.to_string(rhs_builder)
+		append(&current_group.fields, Struct_Field {
+			type = f,
+			name = name,
+			rhs = rhs,
+		})
+	}
+
+	output_field_group(current_group, b, indent + 1)
+
+	output_field_group :: proc(g: Struct_Fields_Group, b: ^strings.Builder, indent: int) {
+		if len(g.fields) == 0 {
+			return
+		}
+
+		if g.line_break_before {
+			p(b, "\n")
+		}
+
+		if g.header != "" {
+			h := g.header
+
+			for l in strings.split_lines_iterator(&h) {
+				output_indent(b, indent)
 				pln(b, strings.trim_space(l))
 			}
 		}
 
-		output_indent(b, indent + 1)
-		text := field_texts[fi]
-		p(b, text)
-
-		if f.comment_on_right != "" {
-			// Padding between name and =
-			for _ in 0..<longest_field_that_has_comment_on_right-len(text) {
-				p(b, ' ')
+		longest_name: int
+		for &f in g.fields {
+			if len(f.name) > longest_name {
+				longest_name = len(f.name)
 			}
-
-			pf(b, " %v", f.comment_on_right)
 		}
 
-		pf(b, "\n")
+		longest_field_that_has_comment_on_right: int
+		field_texts := make([]string, len(g.fields))
+
+		for f, fi in g.fields {
+			tb := strings.builder_make()
+			p(&tb, f.name)
+
+			after_name_padding := longest_name-len(f.name)
+			for _ in 0..<after_name_padding {
+				strings.write_rune(&tb, ' ')
+			}
+
+			p(&tb, f.rhs)
+
+			text := strings.to_string(tb)
+			field_texts[fi] = text
+
+			if f.type.comment_on_right != "" && len(text) < 120 && len(text) > longest_field_that_has_comment_on_right {
+				longest_field_that_has_comment_on_right = len(text)
+			}
+		}
+
+		for f, fi in g.fields {
+			output_indent(b, indent)
+			text := field_texts[fi]
+			p(b, text)
+
+			if f.type.comment_on_right != "" {
+				pf(b, "%*s%v", max(longest_field_that_has_comment_on_right-len(text) + 1, 1), "", f.type.comment_on_right)
+			}
+
+			p(b, "\n")
+		}
 	}
 	
 	output_indent(b, indent)
@@ -376,6 +424,10 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 	for &m, mi in t_enum.members {
 		if m.comment_before != "" {
 			cb := m.comment_before
+
+			if mi > 0 {
+				pln(b, "")
+			}
 
 			for l in strings.split_lines_iterator(&cb) {
 				output_indent(b, indent + 1)	

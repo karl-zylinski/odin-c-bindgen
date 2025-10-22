@@ -193,7 +193,6 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			for &p in v.parameters {
 				override_key := fmt.tprintf("%s.%s", d.name, p.name)
 				if override, has_override := config.procedure_type_overrides[override_key]; has_override {
-					
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
 							p.type = add_type(types, Type_Multipointer {
@@ -211,36 +210,22 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					}
 				}
 			}
-		}
-	}
 
-	// Find any aliases that need renaming. We do this because the bit_set enum renaming may cause
-	// some confusing aliases otherwise.
-	/*for &d in ts.declarations {
-		t := &ts.types[d.named_type]
-		tn, is_named := &t.(Type_Named)
+			return_override_key := d.name
 
-		if !is_named {
-			log.errorf("Type used in declaration has no name: %v", d.named_type)
-			continue
-		}
-
-		if tn.definition == 0 {
-			log.errorf("Type used in declaration has no declaration: %v", tn.name)
-			continue
-		}
-
-		append(&decls, d)
-
-		def := &ts.types[tn.definition]
-
-		#partial switch &dv in def {
-		case Type_Alias:
-			if new_name, has_new_name := rename_aliases[tn.name]; has_new_name {
-				tn.name = new_name
+			if override, has_override := config.procedure_type_overrides[return_override_key]; has_override {
+				if override == "[^]" {
+					if ptr_type, is_ptr_type := resolve_type_definition(types, v.result_type, Type_Pointer); is_ptr_type {
+						v.result_type = add_type(types, Type_Multipointer {
+							pointed_to_type = ptr_type.pointed_to_type,
+						})	
+					}	
+				} else {
+					v.result_type = Fixed_Value(override)
+				}
 			}
 		}
-	}*/
+	}
 
 	top_code: string
 
