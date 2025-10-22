@@ -135,9 +135,10 @@ If you have some library that is hard to generate bindings for, then submit an i
 
 The generator won't bring along any inline functions.
 
-### How do I include a pre-made Odin file?
+### How can I add some extra code to a generated file?
 
-Add it to the input folder.
+If the source header is called `raylib.h` then add a a file called `raylib_footer.odin` next to it
+and put your code in there.
 
 ### How do I manually specify which libraries to load on different platforms etc?
 
@@ -162,20 +163,13 @@ It will also translate the values of the enum by calculating their log2 value (t
 If the generator is processing `include/some_folder/header.h` and it can't find some other header `include/some_folder/something.h`, then add `include` to the include search path by adding he following to `bindgen.sjson`:
 
 ```
-clang_include_path = "include"
-```
-
-### My forward-declared type is missing in the bindings
-
-Add the typename to `opaque_types` in `bindgen.sjson`:
-```
-opaque_types = [
-	"The_Type"
+clang_include_paths = [
+	"include"
 ]
 ```
 
-You should put in the untranslated type name, as it appears in the input file (including all prefixes, etc).
-
 ## Acknowledgements
+
+Big thanks to [Xandaron](https://github.com/xandaron/) for figuring out a lot of the libclang stuff.
 
 This generator was inspired by floooh's Sokol bindgen: https://github.com/floooh/sokol/tree/master/bindgen
