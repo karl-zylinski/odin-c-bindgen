@@ -1,5 +1,5 @@
 // This footer comes from vendor:raylib. It shows how to manually add extra things to your bindings.
-// It comes from input/raylib_footer.odin in the example
+// The footer is added to this file from `input/raylib_footer.odin` automatically.
 
 MAX_TEXTFORMAT_BUFFERS :: #config(RAYLIB_MAX_TEXTFORMAT_BUFFERS, 4)
 MAX_TEXT_BUFFER_LENGTH :: #config(RAYLIB_MAX_TEXT_BUFFER_LENGTH, 1024)
