@@ -324,6 +324,7 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 		Looking_For_Start,
 		Looking_For_Comment,
 		Looking_For_Single_Line_Start,
+		Skip_All_Slashes,
 		Verifying_Single_Line,
 		Inside_Block_Comment,
 	}
@@ -365,6 +366,19 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 			}
 
 			if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
+				find_state = .Skip_All_Slashes
+				break
+			}
+
+		// For skipping stuff like //////lots of slashes
+		case .Skip_All_Slashes:
+			if c == '\n' {
+				comment_start = i
+				find_state = .Looking_For_Comment
+				break
+			}
+
+			if c != '/' {
 				find_state = .Verifying_Single_Line
 				break
 			}
@@ -381,8 +395,7 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 			}
 		case .Inside_Block_Comment:
 			if c == '/' && i < len(src) - 1 && src[i + 1] == '*' {
-				comment_start = i
-				find_state = .Looking_For_Comment
+				find_state = .Verifying_Single_Line
 				break
 			}
 		}
@@ -517,6 +530,8 @@ c_typedef_types := map[string]string {
 
 get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Definition {
 	#partial switch ct.kind {
+	case .Void:
+		return Fixed_Value("struct {}")
 	case .Bool:
 		return Fixed_Value("bool")
 	case .Char_U, .UChar:
@@ -749,22 +764,9 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				}
 
 				field_loc := get_cursor_location(sc)
-				comment_loc := get_comment_location(sc)
 
-				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
-
-				comment_before: string
-				comment_on_right: string
-
-				if field_loc.line == comment_loc.line {
-					comment_on_right = comment
-
-					// clang only rememberes one kind of comment. It prioritzes the ones on the right.
-					// So if there is a comment on the right, then manually scan for a comment before.
-					comment_before = find_comment_before(tcs.source, '\n', field_loc.offset)
-				} else {
-					comment_before = comment
-				}
+				comment_before := find_comment_before(tcs.source, '\n', field_loc.offset)
+				comment_on_right, _ := find_comment_at_line_end(tcs.source[field_loc.offset:])
 
 				if prev_named_field >= 0 && prev_named_field == len(fields) - 1 &&
 				fields[prev_named_field].type == type_id && field_loc.line == fields[prev_named_field].line {
@@ -823,33 +825,21 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(c)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
-		prev_child_line: int
 
 		for ec in enum_children {
 			member_name := get_cursor_name(ec)
 			value := is_unsigned_type ? int(clang.getEnumConstantDeclUnsignedValue(ec)) : int(clang.getEnumConstantDeclValue(ec))
-			comment := string_from_clang_string(clang.Cursor_getRawCommentText(ec))
-			comment_loc := get_comment_location(ec)
 			cursor_loc := get_cursor_location(ec)
 
-			comment_before: string
-			comment_on_right: string
+			comment_before := find_comment_before(tcs.source, '\n', cursor_loc.offset)
+			comment_on_right, _ := find_comment_at_line_end(tcs.source[cursor_loc.offset:])
 
-			// An enum member with a comment can cause later members to get a comment as well...
-			if comment != "" && comment_loc.line > prev_child_line {
-				comment_is_before := comment_loc.line < cursor_loc.line
-				comment_before = comment_is_before ? comment : ""
-				comment_on_right = comment_is_before ? "" : comment
-			}
-		
 			append(&members, Type_Enum_Member {
 				name = member_name,
 				value = value,
 				comment_before = comment_before,
 				comment_on_right = comment_on_right,
 			})
-
-			prev_child_line = cursor_loc.line
 		}
 
 		storage_type: typeid = i32

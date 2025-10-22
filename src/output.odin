@@ -407,31 +407,17 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 	member_texts := make([]string, len(t_enum.members))
 	longest_member_that_has_comment_on_right: int
 
-	all_has_default_value := true
-	counter := 0
-	for &m in t_enum.members {
-		if m.value != counter {
-			all_has_default_value = false
-			break
-		}
-		counter += 1
-	}
-
 	for &m, mi in t_enum.members {
 		fb := strings.builder_make()
 
 		pf(&fb, "%s", m.name)	
 
-		if all_has_default_value {
-			p(&fb, ",")
-		} else {
-			after_name_padding := longest_name-len(m.name)
-			for _ in 0..<after_name_padding {
-				strings.write_rune(&fb, ' ')
-			}
-
-			pf(&fb, " = %v,", m.value)
+		after_name_padding := longest_name-len(m.name)
+		for _ in 0..<after_name_padding {
+			strings.write_rune(&fb, ' ')
 		}
+
+		pf(&fb, " = %v,", m.value)
 
 		text := strings.to_string(fb)
 		member_texts[mi] = text

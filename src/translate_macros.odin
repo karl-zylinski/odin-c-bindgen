@@ -3,6 +3,9 @@ package bindgen2
 
 import "core:strings"
 import "core:fmt"
+import "core:log"
+
+_ :: log
 
 // TODO could we use a Declaration with some Raw_Macro type and just fix this in translate_process?
 @(private="package")
@@ -128,6 +131,8 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 	curly_braces: int
 
 	b := strings.builder_make()
+	literal_type: Literal_Type_Info
+	notted: bool
 
 	for ems.cur_token < len(ems.tokens) {
 		t := cur(ems)
@@ -158,6 +163,9 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 
 			case "(", ")", "-", "*", "/", "+":
 				p(&b, tv)
+
+			case "~":
+				notted = true
 			}
 		case .Keyword:
 			return ""
@@ -166,12 +174,26 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				return ""
 			}
 		case .Literal:
-			if parse_literal(&b, tv) == false {
+			if type, ok := parse_literal(&b, tv); ok == false {
 				return ""
+			} else {
+				literal_type = type
 			}
 		}
 
 		adv(&ems)
+	}
+
+	if notted {
+		switch literal_type {
+		case .None:
+		case .U32: return "max(u32)"
+		case .I32: return "max(i32)"
+		case .U64: return "max(u64)"
+		case .I64: return "max(i64)"
+		}
+
+		log.errorf("Unknown type: %v", ems.tokens)
 	}
 
 	return strings.to_string(b)
@@ -180,15 +202,23 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 p :: fmt.sbprint
 pf :: fmt.sbprintf
 
-parse_literal :: proc(b: ^strings.Builder, val: string) -> bool {
+Literal_Type_Info :: enum {
+	None,
+	U32,
+	I32,
+	U64,
+	I64,
+}
+
+parse_literal :: proc(b: ^strings.Builder, val: string) -> (Literal_Type_Info, bool) {
 	if len(val) == 0 {
-		return false
+		return {}, false
 	}
 
 	if val[0] >= '0' && val[0] <= '9' {
 		if len(val) == 1 {
 			p(b, val)
-			return true
+			return {}, true
 		}
 
 		val_start := 0
@@ -203,12 +233,20 @@ parse_literal :: proc(b: ^strings.Builder, val: string) -> bool {
 
 		end := len(val) - 1
 
+		l: int
+		u: int
+
 		// remove suffix chars such as ULL and f
 		LOOP: for ; end > 0; end -= 1 {
 			switch val[end] {
-			case 'L', 'l', 'U', 'u':
-				// These are suffixes for long and unsigned literals.
+			case 'L', 'l':
+				l += 1
 				continue LOOP
+
+			case 'U', 'u':
+				u += 1
+				continue LOOP
+
 			case 'F', 'f':
 				if hex {
 					break LOOP
@@ -221,13 +259,31 @@ parse_literal :: proc(b: ^strings.Builder, val: string) -> bool {
 			}
 		}
 
+		ti: Literal_Type_Info
+
+		if l == 1 && u == 0 {
+			ti = .I32
+		}
+
+		if l == 0 && u == 1 || l == 1 && u == 1 {
+			ti = .U32
+		}
+
+		if l == 2 && u == 0 {
+			ti = .I64
+		}
+
+		if l == 2 && u == 1 {
+			ti = .U64
+		}
+
 		p(b, val[val_start:end + 1])
-		return true
+		return ti, true
 	} else if val[0] == '"' {
 		p(b, val)
-		return true
+		return {}, true
 	}
-	return false
+	return {}, false
 }
 
 parse_parameter_list :: proc(ems: ^Evalulate_Macro_State) -> []string {

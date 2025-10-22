@@ -57,6 +57,10 @@
 					"shell_cmd": "odin build src -out:bindgen.exe && bindgen.exe examples/ufbx && cd examples/ufbx/test && odin run . -vet -strict-style",
 				},
 				{
+					"name": "joltc",
+					"shell_cmd": "odin build src -out:bindgen.exe && bindgen.exe examples/joltc && odin check examples/joltc/jolt -no-entry-point",
+				},
+				{
 					"name": "scrap",
 					"shell_cmd": "odin build src -debug -out:bindgen.exe -vet -strict-style && bindgen.exe scrap",
 				},

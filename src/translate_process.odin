@@ -343,17 +343,29 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 		}
 
 		if overlap_length > 0 {
-			any_blank := false
+			back_off := false
+			underscore_in_member := false
+
+			for &m in e.members {
+				if strings.contains(m.name[overlap_length:], "_") {
+					underscore_in_member = true
+					break
+				}
+			}
+
+			if !underscore_in_member && strings.contains(overlap_length_source, "_") {
+				back_off = true
+			}
 
 			for &m in e.members {
 				if overlap_length == len(m.name) {
-					any_blank = true
+					back_off = true
 					break
 				}
 			}
 
 			// We stripped too much! Back off to nearest underscore or camelCase change
-			if any_blank {
+			if back_off {
 				found_underscore := false
 				#reverse for c, i in overlap_length_source {
 					if c == '_' {
