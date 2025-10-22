@@ -1,5 +1,7 @@
 package bindgen2
 
+import "core:bytes"
+import "core:bufio"
 import vmem "core:mem/virtual"
 import "core:mem"
 import "core:os"
@@ -136,10 +138,21 @@ main :: proc() {
 
 			log.infof("Processing data from %v", input_filename)
 			process_res := translate_process(collect_res, config, types, decls)
-			output_stem := filepath.stem(input_filename)
-			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", output_stem)})
+	
+			input_folder := filepath.dir(input_filename)
+			filename_stem := filepath.stem(input_filename)
+			footer_filename := filepath.join({input_folder, fmt.tprintf("%v_footer.odin", filename_stem)})
+
+			footer: string
+			if os.exists(footer_filename) {
+				if footer_bytes, footer_bytes_ok := os.read_entire_file(footer_filename); footer_bytes_ok {
+					footer = string(footer_bytes)
+				}
+			}
+
+			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", filename_stem)})
 			log.infof("Writing %v", output_filename)
-			output(types, decls, process_res, output_filename, package_name)
+			output(types, decls, process_res, output_filename, footer, package_name)
 			vmem.arena_destroy(&gen_arena)
 			vmem.arena_destroy(&types_arena)
 			vmem.arena_destroy(&decls_arena)

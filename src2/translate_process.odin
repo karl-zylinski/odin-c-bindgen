@@ -24,7 +24,18 @@ Translate_Process_Result :: struct {
 translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: Type_List, decls: Decl_List) -> Translate_Process_Result {
 	forward_declare_resolved: map[string]bool
 
+	to_remove: map[string]struct{}
+
+	for r in config.remove {
+		to_remove[r] = {}
+	}
+
 	for &d in decls {
+		if d.name in to_remove {
+			d.invalid = true
+			continue
+		}
+
 		if d.is_forward_declare {
 			if d.name in forward_declare_resolved {
 				d.invalid = true

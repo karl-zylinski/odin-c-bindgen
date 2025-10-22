@@ -12,7 +12,7 @@ Output_Input :: Translate_Process_Result
 
 // Takes the result of `translate_process` and outputs bindings into `filename`.
 @(private="package")
-output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: string, package_name: string) {
+output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: string, footer: string, package_name: string) {
 	ensure(filename != "")
 	ensure(package_name != "")
 	builder := strings.builder_make()
@@ -201,6 +201,8 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 
 		pln(sb, "")
 	}
+
+	p(sb, footer)
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
 	fmt.ensuref(write_err == true, "Failed writing %v", filename)

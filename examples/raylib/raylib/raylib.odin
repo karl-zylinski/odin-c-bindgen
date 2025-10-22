@@ -85,8 +85,6 @@ package raylib
 
 import "core:c"
 
-_ :: c
-
 @(extra_linker_flags="/NODEFAULTLIB:libcmt")
 foreign import lib {
 	"raylib.lib",
@@ -96,32 +94,13 @@ foreign import lib {
 	"system:Shell32.lib",
 }
 
-// RAYLIB_H :: 
-
 RAYLIB_VERSION_MAJOR :: 5
 RAYLIB_VERSION_MINOR :: 6
 RAYLIB_VERSION_PATCH :: 0
-RAYLIB_VERSION  :: "5.6-dev"
-
-// RLAPI ::        // Functions defined as 'extern' by default (implicit specifiers)
-
-PI :: 3.14159265358979323846
-
-DEG2RAD :: (PI/180.0)
-
-RAD2DEG :: (180.0/PI)
-
-// NOTE: We set some defines with some data types declared by raylib
-// Other modules (raymath, rlgl) also require some of those types, so,
-// to be able to use those other modules as standalone (not depending on raylib)
-// this defines are very useful for internal check and avoid type (re)definitions
-// RL_COLOR_TYPE :: 
-// RL_RECTANGLE_TYPE :: 
-// RL_VECTOR2_TYPE :: 
-// RL_VECTOR3_TYPE :: 
-// RL_VECTOR4_TYPE :: 
-// RL_QUATERNION_TYPE :: 
-// RL_MATRIX_TYPE :: 
+RAYLIB_VERSION       :: "5.6-dev"
+PI                   :: 3.14159265358979323846
+DEG2RAD              :: (PI/180.0)
+RAD2DEG              :: (180.0/PI)
 
 // Some Basic Colors
 // NOTE: Custom raylib color palette for amazing visuals on WHITE background
@@ -146,7 +125,6 @@ DARKPURPLE :: (Color){112, 31, 126, 255}    // Dark Purple
 BEIGE      :: (Color){211, 176, 131, 255}   // Beige
 BROWN      :: (Color){127, 106, 79, 255}    // Brown
 DARKBROWN  :: (Color){76, 63, 47, 255}      // Dark Brown
-
 WHITE      :: (Color){255, 255, 255, 255}   // White
 BLACK      :: (Color){0, 0, 0, 255}         // Black
 BLANK      :: (Color){0, 0, 0, 0}           // Blank (Transparent)
@@ -366,6 +344,9 @@ Wave :: struct {
 	data:       rawptr, // Buffer data pointer
 }
 
+rAudioBuffer    :: struct {}
+rAudioProcessor :: struct {}
+
 // AudioStream, custom audio stream
 AudioStream :: struct {
 	buffer:     rawptr, // Pointer to internal data used by the audio system
@@ -417,9 +398,9 @@ VrStereoConfig :: struct {
 
 // File path list
 FilePathList :: struct {
-	capacity: u32,        // Filepaths max entries
-	count:    u32,        // Filepaths entries count
-	paths:    [^]cstring, // Filepaths entries
+	capacity: u32,      // Filepaths max entries
+	count:    u32,      // Filepaths entries count
+	paths:    ^cstring, // Filepaths entries
 }
 
 // Automation event
@@ -461,7 +442,7 @@ ConfigFlag :: enum i32 {
 	INTERLACED_HINT          = 16, // Set to try enabling interlaced video format (for V3D)
 }
 
-ConfigFlags :: distinct bit_set[ConfigFlag; i32]
+ConfigFlags :: bit_set[ConfigFlag; i32]
 
 // Trace log level
 // NOTE: Organized by priority level
@@ -592,11 +573,6 @@ KeyboardKey :: enum i32 {
 	VOLUME_DOWN   = 25,  // Key: Android volume down button
 }
 
-// Add backwards compatibility support for deprecated names
-// MOUSE_LEFT_BUTTON   :: MOUSE_BUTTON_LEFT
-// MOUSE_RIGHT_BUTTON  :: MOUSE_BUTTON_RIGHT
-// MOUSE_MIDDLE_BUTTON :: MOUSE_BUTTON_MIDDLE
-
 // Mouse buttons
 MouseButton :: enum i32 {
 	LEFT,    // Mouse button left
@@ -670,9 +646,6 @@ MaterialMapIndex :: enum i32 {
 	BRDF,       // Brdf material
 }
 
-// MATERIAL_MAP_DIFFUSE      :: MATERIAL_MAP_ALBEDO
-// MATERIAL_MAP_SPECULAR     :: MATERIAL_MAP_METALNESS
-
 // Shader location index
 ShaderLocationIndex :: enum i32 {
 	VERTEX_POSITION,    // Shader location: vertex attribute: position
@@ -706,9 +679,6 @@ ShaderLocationIndex :: enum i32 {
 	BONE_MATRICES,      // Shader location: array of matrices uniform: boneMatrices
 	VERTEX_INSTANCE_TX, // Shader location: vertex attribute: instanceTransform
 }
-
-// SHADER_LOC_MAP_DIFFUSE      :: SHADER_LOC_MAP_ALBEDO
-// SHADER_LOC_MAP_SPECULAR     :: SHADER_LOC_MAP_METALNESS
 
 // Shader uniform data type
 ShaderUniformDataType :: enum i32 {
@@ -827,7 +797,7 @@ Gesture :: enum i32 {
 	PINCH_OUT,   // Pinch out gesture
 }
 
-Gestures :: distinct bit_set[Gesture; i32]
+Gestures :: bit_set[Gesture; i32]
 
 // Camera system modes
 CameraMode :: enum i32 {
@@ -853,15 +823,11 @@ NPatchLayout :: enum i32 {
 
 // Callbacks to hook some internal functions
 // WARNING: These callbacks are intended for advanced users
-TraceLogCallback :: proc "c" (i32, cstring, c.va_list) // Logging: Redirect trace log messages
-
-LoadFileDataCallback :: proc "c" (cstring, ^i32) -> ^u8 // FileIO: Load binary data
-
-SaveFileDataCallback :: proc "c" (cstring, rawptr, i32) -> bool // FileIO: Save binary data
-
-LoadFileTextCallback :: proc "c" (cstring) -> cstring // FileIO: Load text data
-
-SaveFileTextCallback :: proc "c" (cstring, cstring) -> bool // FileIO: Save text data
+TraceLogCallback     :: proc "c" (logLevel: i32, text: cstring, args: c.va_list)          // Logging: Redirect trace log messages
+LoadFileDataCallback :: proc "c" (fileName: cstring, dataSize: ^i32) -> ^u8               // FileIO: Load binary data
+SaveFileDataCallback :: proc "c" (fileName: cstring, data: rawptr, dataSize: i32) -> bool // FileIO: Save binary data
+LoadFileTextCallback :: proc "c" (fileName: cstring) -> cstring                           // FileIO: Load text data
+SaveFileTextCallback :: proc "c" (fileName: cstring, text: cstring) -> bool               // FileIO: Save text data
 
 // Screen-space-related functions
 GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib versions
@@ -869,9 +835,9 @@ GetMouseRay :: GetScreenToWorldRay     // Compatibility hack for previous raylib
 //------------------------------------------------------------------------------------
 // Audio Loading and Playing Functions (Module: audio)
 //------------------------------------------------------------------------------------
-AudioCallback :: proc "c" (rawptr, u32)
+AudioCallback :: proc "c" (bufferData: rawptr, frames: u32)
 
-@(default_calling_convention="c", link_prefix="")
+@(default_calling_convention="c")
 foreign lib {
 	// Window-related functions
 	InitWindow               :: proc(width: i32, height: i32, title: cstring) --- // Initialize window and OpenGL context
@@ -1007,7 +973,6 @@ foreign lib {
 	SetTraceLogLevel :: proc(logLevel: i32) ---                                    // Set the current threshold (minimum) log level
 	MemAlloc         :: proc(size: u32) -> rawptr ---                              // Internal memory allocator
 	MemRealloc       :: proc(ptr: rawptr, size: u32) -> rawptr ---                 // Internal memory reallocator
-	MemFree          :: proc(ptr: rawptr) ---                                      // Internal memory free
 
 	// Set custom callbacks
 	// WARNING: Callbacks setup is intended for advanced users
@@ -1048,7 +1013,7 @@ foreign lib {
 	IsFileDropped           :: proc() -> bool ---                                // Check if a file has been dropped into window
 	LoadDroppedFiles        :: proc() -> FilePathList ---                        // Load dropped filepaths
 	UnloadDroppedFiles      :: proc(files: FilePathList) ---                     // Unload dropped filepaths
-	GetFileModTime          :: proc(fileName: cstring) -> c.long ---             // Get file modification time (last write time)
+	GetFileModTime          :: proc(fileName: cstring) -> i32 ---                // Get file modification time (last write time)
 
 	// Compression/Encoding functionality
 	CompressData     :: proc(data: ^u8, dataSize: i32, compDataSize: ^i32) -> ^u8 ---     // Compress data (DEFLATE algorithm), memory must be MemFree()
@@ -1119,14 +1084,13 @@ foreign lib {
 	//------------------------------------------------------------------------------------
 	// Gestures and Touch Handling Functions (Module: rgestures)
 	//------------------------------------------------------------------------------------
-	SetGesturesEnabled     :: proc(flags: Gestures) ---           // Enable a set of gestures using flags
-	IsGestureDetected      :: proc(gesture: Gestures) -> bool --- // Check if a gesture have been detected
-	GetGestureDetected     :: proc() -> i32 ---                   // Get latest detected gesture
-	GetGestureHoldDuration :: proc() -> f32 ---                   // Get gesture hold time in seconds
-	GetGestureDragVector   :: proc() -> Vector2 ---               // Get gesture drag vector
-	GetGestureDragAngle    :: proc() -> f32 ---                   // Get gesture drag angle
-	GetGesturePinchVector  :: proc() -> Vector2 ---               // Get gesture pinch delta
-	GetGesturePinchAngle   :: proc() -> f32 ---                   // Get gesture pinch angle
+	SetGesturesEnabled     :: proc(flags: Gestures) --- // Enable a set of gestures using flags
+	GetGestureDetected     :: proc() -> i32 ---         // Get latest detected gesture
+	GetGestureHoldDuration :: proc() -> f32 ---         // Get gesture hold time in seconds
+	GetGestureDragVector   :: proc() -> Vector2 ---     // Get gesture drag vector
+	GetGestureDragAngle    :: proc() -> f32 ---         // Get gesture drag angle
+	GetGesturePinchVector  :: proc() -> Vector2 ---     // Get gesture pinch delta
+	GetGesturePinchAngle   :: proc() -> f32 ---         // Get gesture pinch angle
 
 	//------------------------------------------------------------------------------------
 	// Camera System Functions (Module: rcamera)
@@ -1392,24 +1356,23 @@ foreign lib {
 	// Text strings management functions (no UTF-8 strings, only byte chars)
 	// WARNING 1: Most of these functions use internal static buffers, it's recommended to store returned data on user-side for re-use
 	// WARNING 2: Some strings allocate memory internally for the returned strings, those strings must be free by user using MemFree()
-	TextCopy      :: proc(dst: cstring, src: cstring) -> i32 ---                        // Copy one string to another, returns bytes copied
-	TextIsEqual   :: proc(text1: cstring, text2: cstring) -> bool ---                   // Check if two text string are equal
-	TextLength    :: proc(text: cstring) -> u32 ---                                     // Get text length, checks for '\0' ending
-	TextFormat    :: proc(text: cstring, #c_vararg _: ..any) -> cstring ---             // Text formatting with variables (sprintf() style)
-	TextSubtext   :: proc(text: cstring, position: i32, length: i32) -> cstring ---     // Get a piece of a text string
-	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---  // Replace text string (WARNING: memory must be freed!)
-	TextInsert    :: proc(text: cstring, insert: cstring, position: i32) -> cstring --- // Insert text in a position (WARNING: memory must be freed!)
-	TextJoin      :: proc(textList: [^]cstring, count: i32, delimiter: cstring) -> cstring --- // Join text strings with delimiter
-	TextSplit     :: proc(text: cstring, delimiter: i8, count: ^i32) -> [^]cstring ---  // Split text into multiple strings
-	TextAppend    :: proc(text: cstring, append: cstring, position: ^i32) ---           // Append text at specific position and move cursor!
-	TextFindIndex :: proc(text: cstring, find: cstring) -> i32 ---                      // Find first text occurrence within a string
-	TextToUpper   :: proc(text: cstring) -> cstring ---                                 // Get upper case version of provided string
-	TextToLower   :: proc(text: cstring) -> cstring ---                                 // Get lower case version of provided string
-	TextToPascal  :: proc(text: cstring) -> cstring ---                                 // Get Pascal case notation version of provided string
-	TextToSnake   :: proc(text: cstring) -> cstring ---                                 // Get Snake case notation version of provided string
-	TextToCamel   :: proc(text: cstring) -> cstring ---                                 // Get Camel case notation version of provided string
-	TextToInteger :: proc(text: cstring) -> i32 ---                                     // Get integer value from text
-	TextToFloat   :: proc(text: cstring) -> f32 ---                                     // Get float value from text
+	TextCopy      :: proc(dst: cstring, src: cstring) -> i32 ---                             // Copy one string to another, returns bytes copied
+	TextIsEqual   :: proc(text1: cstring, text2: cstring) -> bool ---                        // Check if two text string are equal
+	TextLength    :: proc(text: cstring) -> u32 ---                                          // Get text length, checks for '\0' ending
+	TextSubtext   :: proc(text: cstring, position: i32, length: i32) -> cstring ---          // Get a piece of a text string
+	TextReplace   :: proc(text: cstring, replace: cstring, by: cstring) -> cstring ---       // Replace text string (WARNING: memory must be freed!)
+	TextInsert    :: proc(text: cstring, insert: cstring, position: i32) -> cstring ---      // Insert text in a position (WARNING: memory must be freed!)
+	TextJoin      :: proc(textList: ^cstring, count: i32, delimiter: cstring) -> cstring --- // Join text strings with delimiter
+	TextSplit     :: proc(text: cstring, delimiter: i8, count: ^i32) -> ^cstring ---         // Split text into multiple strings
+	TextAppend    :: proc(text: cstring, append: cstring, position: ^i32) ---                // Append text at specific position and move cursor!
+	TextFindIndex :: proc(text: cstring, find: cstring) -> i32 ---                           // Find first text occurrence within a string
+	TextToUpper   :: proc(text: cstring) -> cstring ---                                      // Get upper case version of provided string
+	TextToLower   :: proc(text: cstring) -> cstring ---                                      // Get lower case version of provided string
+	TextToPascal  :: proc(text: cstring) -> cstring ---                                      // Get Pascal case notation version of provided string
+	TextToSnake   :: proc(text: cstring) -> cstring ---                                      // Get Snake case notation version of provided string
+	TextToCamel   :: proc(text: cstring) -> cstring ---                                      // Get Camel case notation version of provided string
+	TextToInteger :: proc(text: cstring) -> i32 ---                                          // Get integer value from text
+	TextToFloat   :: proc(text: cstring) -> f32 ---                                          // Get float value from text
 
 	// Basic geometric 3D shapes drawing functions
 	DrawLine3D          :: proc(startPos: Vector3, endPos: Vector3, color: Color) ---    // Draw a line in 3D world space
@@ -1579,3 +1542,111 @@ foreign lib {
 	AttachAudioMixedProcessor       :: proc(processor: AudioCallback) ---                     // Attach audio stream processor to the entire audio pipeline, receives the samples as 'float'
 	DetachAudioMixedProcessor       :: proc(processor: AudioCallback) ---                     // Detach audio stream processor from the entire audio pipeline
 }
+
+// This footer comes from vendor:raylib. It shows how to manually add extra things to your bindings.
+// It comes from input/raylib_footer.odin in the example
+
+MAX_TEXTFORMAT_BUFFERS :: #config(RAYLIB_MAX_TEXTFORMAT_BUFFERS, 4)
+MAX_TEXT_BUFFER_LENGTH :: #config(RAYLIB_MAX_TEXT_BUFFER_LENGTH, 1024)
+
+import "core:mem"
+import "core:fmt"
+
+//  Check if a gesture have been detected
+IsGestureDetected :: proc "c" (gesture: Gesture) -> bool {
+	@(default_calling_convention="c")
+	foreign lib {
+		IsGestureDetected :: proc "c" (gesture: Gestures) -> bool ---
+	}
+	return IsGestureDetected({gesture})
+}
+
+
+// Text formatting with variables (sprintf style)
+TextFormat :: proc(text: cstring, args: ..any) -> cstring {
+	@static buffers: [MAX_TEXTFORMAT_BUFFERS][MAX_TEXT_BUFFER_LENGTH]byte
+	@static index: u32
+	
+	buffer := buffers[index][:]
+	mem.zero_slice(buffer)
+	
+	index = (index+1)%MAX_TEXTFORMAT_BUFFERS
+	
+	str := fmt.bprintf(buffer[:len(buffer)-1], string(text), ..args)
+	buffer[len(str)] = 0
+	
+	return cstring(raw_data(buffer))
+}
+
+// Text formatting with variables (sprintf style) and allocates (must be freed with 'MemFree')
+TextFormatAlloc :: proc(text: cstring, args: ..any) -> cstring {
+	return fmt.caprintf(string(text), ..args, allocator=MemAllocator())
+}
+
+
+// Internal memory free
+MemFree :: proc{
+	MemFreePtr,
+	MemFreeCstring,
+}
+
+
+@(default_calling_convention="c")
+foreign lib {
+	@(link_name="MemFree")
+	MemFreePtr :: proc(ptr: rawptr) ---
+}
+
+MemFreeCstring :: proc "c" (s: cstring) {
+	MemFreePtr(rawptr(s))
+}
+
+
+MemAllocator :: proc "contextless" () -> mem.Allocator {
+	return mem.Allocator{MemAllocatorProc, nil}
+}
+
+MemAllocatorProc :: proc(allocator_data: rawptr, mode: mem.Allocator_Mode,
+                         size, alignment: int,
+                         old_memory: rawptr, old_size: int, location := #caller_location) -> (data: []byte, err: mem.Allocator_Error)  {
+	switch mode {
+	case .Alloc, .Alloc_Non_Zeroed:
+		ptr := MemAlloc(c.uint(size))
+		if ptr == nil {
+			err = .Out_Of_Memory
+			return
+		}
+		data = mem.byte_slice(ptr, size)
+		return
+	case .Free:
+		MemFree(old_memory)
+		return nil, nil
+	
+	case .Resize, .Resize_Non_Zeroed:
+		ptr := MemRealloc(old_memory, c.uint(size))
+		if ptr == nil {
+			err = .Out_Of_Memory
+			return
+		}
+		data = mem.byte_slice(ptr, size)
+		return
+	
+	case .Free_All, .Query_Features, .Query_Info:
+		return nil, .Mode_Not_Implemented
+	}	
+	return nil, .Mode_Not_Implemented
+}
+
+// RayLib 5.5 renamed Is*Ready to Is*Valid.
+// See: https://github.com/raysan5/raylib/commit/8cbf34ddc495e2bca42245f786915c27210b0507
+IsImageReady         :: IsImageValid
+IsTextureReady       :: IsTextureValid
+IsRenderTextureReady :: IsRenderTextureValid
+IsFontReady          :: IsFontValid
+IsModelReady         :: IsModelValid
+IsMaterialReady      :: IsMaterialValid
+IsWaveReady          :: IsWaveValid
+IsSoundReady         :: IsSoundValid
+IsMusicReady         :: IsMusicValid
+IsAudioStreamReady   :: IsAudioStreamValid
+IsShaderReady        :: IsShaderValid

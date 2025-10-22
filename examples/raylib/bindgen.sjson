@@ -85,12 +85,10 @@ procedure_type_overrides = {
 	// This is not a complete override list, it's just an example.
 }
 
-remove_macros = [
-	"MOUSE_LEFT_BUTTON",
-	"MOUSE_RIGHT_BUTTON",
-	"MOUSE_MIDDLE_BUTTON",
-	"SHADER_LOC_MAP_DIFFUSE",
-	"SHADER_LOC_MAP_SPECULAR",
-	"MATERIAL_MAP_DIFFUSE",
-	"MATERIAL_MAP_SPECULAR"
+procedures_at_end = true
+
+remove = [
+	"MemFree",
+	"IsGestureDetected",
+	"TextFormat",
 ]

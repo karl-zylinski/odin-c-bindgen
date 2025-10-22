@@ -23,6 +23,7 @@ Config :: struct {
 	imports_file: string,
 	import_lib: string,
 	
+	remove: []string,
 	remove_type_prefix: string,
 	remove_function_prefix: string,
 	remove_macro_prefix: string,
