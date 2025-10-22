@@ -37,10 +37,10 @@ Raw_Macro_Token_Kind :: enum {
 
 @(private="package")
 translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
-	existing_declaration_names: map[string]struct{}
+	existing_declaration_names: map[string]int
 
-	for d in decls {
-		existing_declaration_names[d.name] = {}
+	for d, i in decls {
+		existing_declaration_names[d.name] = i
 	}
 
 	macro_lookup: map[string]int
@@ -60,9 +60,14 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 
 		if odin_value != "" && odin_value[0] != '{' {
 			def: Definition
-			if odin_value in existing_declaration_names {
+			if decl_idx, decl_exists := existing_declaration_names[odin_value]; decl_exists {
 				// We want the value of this macro to change if there is some trimming set in the config etc.
-				def = Type_Name(odin_value)
+
+				if decls[decl_idx].from_macro {
+					def = Macro_Name(odin_value)
+				} else {
+					def = Type_Name(odin_value)
+				}
 			} else {
 				def = Fixed_Value(odin_value)
 			}
@@ -78,7 +83,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 				from_macro = true,
 			})
 
-			existing_declaration_names[m.name] = {}
+			existing_declaration_names[m.name] = len(decls) - 1
 		}
 	}
 }
@@ -93,7 +98,7 @@ Evalulate_Macro_State :: struct {
 	macros: []Raw_Macro,
 	macro_lookup: map[string]Macro_Index,
 	params: map[string]string,
-	existing_declarations: map[string]struct{},
+	existing_declarations: map[string]int,
 }
 
 cur :: proc(ems: Evalulate_Macro_State) -> Raw_Macro_Token {
@@ -104,7 +109,7 @@ adv :: proc(ems: ^Evalulate_Macro_State) {
 	ems.cur_token += 1
 }
 
-evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]struct{}, mi: Macro_Index, args: []string) -> string {
+evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, mi: Macro_Index, args: []string) -> string {
 	ems := Evalulate_Macro_State {
 		cur_token = 0,
 		tokens = macros[mi].tokens,
@@ -195,7 +200,13 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 			}
 
 			if parse_identifier(&ems, &b) == false {
-				return ""
+				mapped, has_mapping := c_type_mapping[tv]
+
+				if has_mapping {
+					p(&b, mapped)
+				} else {
+					return ""
+				}
 			}
 		case .Literal:
 			if type, ok := parse_literal(&b, tv); ok == false {
@@ -347,6 +358,9 @@ parse_parameter_list :: proc(ems: ^Evalulate_Macro_State) -> []string {
 				arg_builder = strings.builder_make()
 			}
 		case .Identifier:
+			p(&arg_builder, t.value)
+
+		case .Literal:
 			p(&arg_builder, t.value)
 		}
 

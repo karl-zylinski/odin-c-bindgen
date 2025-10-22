@@ -130,6 +130,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			continue
 		}
 
+		if _, is_macro_name := d.def.(Macro_Name); is_macro_name {
+			continue
+		}
+
 		type := &types[d.def.(Type_Index)]
 
 		#partial switch &v in type {
@@ -496,6 +500,14 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 		} else {
 			d.name = string(final_type_name(Type_Name(d.name), config))
 		}
+
+		switch &def in d.def {
+		case Type_Name: d.def = final_type_name(def, config)
+		case Macro_Name: d.def = final_macro_name(def, config)
+
+		case Fixed_Value:
+		case Type_Index:
+		}
 	}
 }
 
@@ -629,6 +641,10 @@ final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
 	}
 
 	return Type_Name(res)
+}
+
+final_macro_name :: proc(name: Macro_Name, config: Config) -> Macro_Name {
+	return Macro_Name(strings.trim_prefix(string(name), config.remove_macro_prefix))
 }
 
 // Extracts any comment at the top of the source file. These will be put above the package line in

@@ -286,7 +286,7 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 			p(&rhs_builder, f.type_overrride)
 		} else {
 			switch r in f.type {
-			case Type_Name, Fixed_Value:
+			case Type_Name, Fixed_Value, Macro_Name:
 				p(&rhs_builder, r)
 			case Type_Index:
 				parse_type_build(types, r, &rhs_builder, indent + 1)
@@ -477,7 +477,7 @@ calling_convention_string :: proc(calling_convention: Calling_Convention) -> str
 
 output_definition :: proc(types: ^[dynamic]Type, def: Definition, b: ^strings.Builder, indent: int) {
 	switch d in def {
-	case Type_Name, Fixed_Value:
+	case Type_Name, Fixed_Value, Macro_Name:
 		p(b, d)
 	case Type_Index:
 		parse_type_build(types, d, b, indent)

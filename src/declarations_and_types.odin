@@ -12,14 +12,18 @@ Definition :: union  {
 	Type_Name,
 	Fixed_Value,
 	Type_Index,
+	Macro_Name,
 }
 
 Type_Name :: distinct string
 
 Fixed_Value :: distinct string
 
+Macro_Name :: distinct string
 // Just an index into an array of types. Use to point out the definition of another type.
 Type_Index :: distinct int
+
+
 
 TYPE_INDEX_NONE :: Type_Index(0)
 

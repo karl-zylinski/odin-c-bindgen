@@ -55,8 +55,14 @@ bit_setify = {
     "ufbx_baked_key_flags" = "Baked_Key_Flags"
 }
 
+remove_enum_members = [
+    "*FORCE_32BIT"
+]
+
 remove_macros = [
     "UFBX_STDC",
     "UFBX_PLATFORM_MSC",
     "UFBX_NO_INDEX"
 ]
+
+procedures_at_end = true
