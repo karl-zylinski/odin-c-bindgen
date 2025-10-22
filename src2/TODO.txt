@@ -1,7 +1,7 @@
 x proc type passthrough
 x by-decl-type sorting and spacing
 - similar grouping for struct fields (sort by comment_before etc)
-- multi name fields (see Matrix in ufbx)
+x multi name fields (see Matrix in ufbx)
 - top and bottom code (head and footer code?) make raylib 1:1 with vendor bindings
 
 
