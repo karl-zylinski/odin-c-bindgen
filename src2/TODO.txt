@@ -26,7 +26,7 @@ x check declaration -> decl rename status across all files
 
 - should Definition be called Definition? It's used for types, but also for literals and overrides.
 
-- add config option for putting all procs at bottom (default is where they are supposed to be in code)
+x add config option for putting all procs at bottom (default is where they are supposed to be in code)
 
 perhaps rename files like so:
 translate_collect -> clang_extract (if all clang things are in there)
