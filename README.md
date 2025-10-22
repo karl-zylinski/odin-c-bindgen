@@ -11,7 +11,9 @@ Features:
 ## Requirements
 - Odin
 - libclang
-	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz and from within that archive copy 'lib/libclang.lib' into the 'libclang' folder of this repository. Also copy 'bin/libclang.dll' into the root folder of the repository.
+	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz copy he following from that archive:
+		- 'lib/libclang.lib' into the generator's 'libclang' folder
+		- 'bin/libclang.dll' into the root of the generator's folder (next to where the bindgen executable will end up).
 	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint.
 
 > [!NOTE]
