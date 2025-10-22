@@ -131,11 +131,10 @@ clang_defines = {
 
 ### Why didn't my bindings generate correctly?
 
-If your bindings don't work because of a missing C type, then chances are I've forgotten to add support for it. Try adding it to `c_type_mapping` inside `bindgen.odin` and recompile the generator.
+Please look through the list of configuration options listed above and see if they help you. Also,
+see the the examples folder for additional inspiration.
 
-If you have some library that is hard to generate bindings for, then submit an issue on this GitHub page and provide the headers in a zip. I'll try to help if I can find some time.
-
-The generator won't bring along any inline functions.
+If you fail to make any progress on generating bindings for a certain library, then submit an issue on this GitHub page and provide the headers in a zip. I'll try to help if I can find some time.
 
 ### How can I add some extra code to a generated file?
 
