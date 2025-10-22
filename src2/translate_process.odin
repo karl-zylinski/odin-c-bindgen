@@ -237,9 +237,23 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		top_code = fmt.tprintf(`foreign import lib "%v"`, config.import_lib)
 	}
 
-	slice.sort_by(decls[:], proc(i, j: Decl) -> bool {
-		return i.original_line < j.original_line
-	})
+	if config.procedures_at_end {
+		slice.sort_by_with_data(decls[:], proc(i, j: Decl, data: rawptr) -> bool {
+			types := (Type_List)(data)
+			_, i_is_proc := resolve_type_definition(types, i.def, Type_Procedure)
+			_, j_is_proc := resolve_type_definition(types, j.def, Type_Procedure)
+
+			if i_is_proc != j_is_proc {
+				return j_is_proc
+			}
+
+			return i.original_line < j.original_line
+		}, types)
+	} else {
+		slice.sort_by(decls[:], proc(i, j: Decl) -> bool {
+			return i.original_line < j.original_line
+		})
+	}
 
 	// Run this last! Otherwise mapping that assumes things has their original names may fail.
 	resolve_final_names(types, decls, config)

@@ -31,4 +31,5 @@ Config :: struct {
 	clang_defines: map[string]string,
 
 	force_ada_case_types: bool,
+	procedures_at_end: bool,
 }
