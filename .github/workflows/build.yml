@@ -31,24 +31,20 @@ jobs:
       - name: Raylib
         run: |
           ./bindgen.exe examples/raylib
-          
-#          odin build examples/raylib/test
+          odin check examples/raylib/raylib -vet -strict-style -no-entry-point
 
       - name: Box2D 
         run: |
           ./bindgen.exe examples/box2d
-#          odin build examples/box2d/test
-
-      - name: pdfio
-        run: |
-          ./bindgen.exe examples/pdfio
-#          cd examples/pdfio/test
-#          copy ../pdfio\pdfio1.dll .
-#          copy ../pdfio\zlib.dll .
-#          odin run .
+          odin check examples/box2d/box2d -vet -strict-style -no-entry-point 
 
       - name: ufbx
         run: |
           ./bindgen.exe examples/ufbx
-#          odin build examples/ufbx/test
+          odin check examples/ufbx/ufbx -vet -strict-style -no-entry-point 
+
+      - name: joltc
+        run: |
+          ./bindgen.exe examples/joltc
+          odin check examples/joltc/jolt -vet -strict-style -no-entry-point 
 
