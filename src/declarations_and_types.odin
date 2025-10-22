@@ -106,6 +106,9 @@ Type_Struct_Field :: struct {
 	comment_before: string,
 	comment_on_right: string,
 
+	tag: string,
+	is_using: bool,
+
 	// internal
 	line: int,
 }
@@ -150,6 +153,7 @@ Type_Fixed_Array :: struct {
 Type_Procedure_Parameter :: struct {
 	name: string,
 	type: Definition,
+	any_int: bool,
 }
 
 Type_Procedure :: struct {

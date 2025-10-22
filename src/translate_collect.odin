@@ -279,80 +279,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			}
 		}
 
-		comment: string
-		{
-			Find_Comment_State :: enum {
-				Looking_For_Start,
-				Looking_For_Comment,
-				Looking_For_Single_Line_Start,
-				Verifying_Single_Line,
-				Inside_Block_Comment,
-			}
-			src := tcs.source
-			find_state: Find_Comment_State
-			comment_start := -1
-			comment_end: int
-
-			comment_loop: for i := int(start_offset); i >= 0; {
-				c := utf8.rune_at(src, i)
-				defer i -= utf8.rune_size(c)
-				switch find_state {
-				case .Looking_For_Start:
-					if c == '#' {
-						comment_end = i
-						find_state = .Looking_For_Comment
-						break
-					}
-
-					if c == '\n' {
-						break comment_loop
-					}
-				case .Looking_For_Comment:
-					if unicode.is_white_space(c) {
-						break
-					}
-
-					if c == '/' && i > 1 && src[i - 1] == '*' {
-						find_state = .Inside_Block_Comment
-						break
-					}
-
-					// TODO: Special case when line only is `//`
-
-					find_state = .Looking_For_Single_Line_Start
-				case .Looking_For_Single_Line_Start:
-					if c == '\n' {
-						break comment_loop
-					}
-
-					if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
-						find_state = .Verifying_Single_Line
-						break
-					}
-
-				case .Verifying_Single_Line:
-					if c == '\n' {
-						comment_start = i
-						find_state = .Looking_For_Comment
-						break
-					}
-
-					if !unicode.is_white_space(c) {
-						break comment_loop
-					}
-				case .Inside_Block_Comment:
-					if c == '/' && i < len(src) - 1 && src[i + 1] == '*' {
-						comment_start = i
-						find_state = .Looking_For_Comment
-						break
-					}
-				}
-			}
-
-			if comment_start != -1 && comment_end > comment_start {
-				comment = strings.trim_space(src[comment_start:comment_end])
-			}
-		}
+		comment := find_comment_before(tcs.source, '#', int(start_offset))
 
 		clang_tokens: [^]clang.Token
 		clang_token_count: u32
@@ -390,6 +317,82 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			})
 		}
 	}
+}
+
+find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) -> string {
+	Find_Comment_State :: enum {
+		Looking_For_Start,
+		Looking_For_Comment,
+		Looking_For_Single_Line_Start,
+		Verifying_Single_Line,
+		Inside_Block_Comment,
+	}
+
+	find_state: Find_Comment_State
+	comment_start := -1
+	comment_end: int
+
+	comment_loop: for i := start_offset; i >= 0; {
+		c := utf8.rune_at(src, i)
+		defer i -= utf8.rune_size(c)
+		switch find_state {
+		case .Looking_For_Start:
+			if c == start_rune {
+				comment_end = i
+				find_state = .Looking_For_Comment
+				break
+			}
+
+			if c == '\n' {
+				break comment_loop
+			}
+		case .Looking_For_Comment:
+			if unicode.is_white_space(c) {
+				break
+			}
+
+			if c == '/' && i > 1 && src[i - 1] == '*' {
+				find_state = .Inside_Block_Comment
+				break
+			}
+
+			// TODO: Special case when line only is `//`
+
+			find_state = .Looking_For_Single_Line_Start
+		case .Looking_For_Single_Line_Start:
+			if c == '\n' {
+				break comment_loop
+			}
+
+			if c == '/' && i < len(src) - 1 && src[i + 1] == '/' {
+				find_state = .Verifying_Single_Line
+				break
+			}
+
+		case .Verifying_Single_Line:
+			if c == '\n' {
+				comment_start = i
+				find_state = .Looking_For_Comment
+				break
+			}
+
+			if !unicode.is_white_space(c) {
+				break comment_loop
+			}
+		case .Inside_Block_Comment:
+			if c == '/' && i < len(src) - 1 && src[i + 1] == '*' {
+				comment_start = i
+				find_state = .Looking_For_Comment
+				break
+			}
+		}
+	}
+
+	if comment_start != -1 && comment_end > comment_start {
+		return strings.trim_space(src[comment_start:comment_end])
+	}
+
+	return ""
 }
 
 find_comment_at_line_end :: proc(str: string) -> (string, int) {
@@ -522,6 +525,9 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 		return Fixed_Value("u16")
 	case .UInt:
 		return Fixed_Value("u32")
+	case .ULong:
+		tcs.extra_imports["core:c"] = true
+		return Fixed_Value("c.ulong")
 	case .ULongLong:
 		return Fixed_Value("u64")
 	case .UInt128:
@@ -533,7 +539,8 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 	case .Int:
 		return Fixed_Value("i32")
 	case .Long:
-		return Fixed_Value("i32")
+		tcs.extra_imports["core:c"] = true
+		return Fixed_Value("c.long")
 	case .LongLong:
 		return Fixed_Value("i64")
 	case .Int128:
@@ -544,6 +551,9 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 		return Fixed_Value("f64")
 	case .NullPtr:
 		return Fixed_Value("rawptr")
+	case .WChar:
+		tcs.extra_imports["core:c"] = true
+		return Fixed_Value("c.wchar_t")
 
 	case .Record, .Enum:
 		ctc := clang.getTypeDeclaration(ct)
@@ -742,11 +752,16 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				comment_loc := get_comment_location(sc)
 
 				comment := string_from_clang_string(clang.Cursor_getRawCommentText(sc))
+
 				comment_before: string
 				comment_on_right: string
 
 				if field_loc.line == comment_loc.line {
 					comment_on_right = comment
+
+					// clang only rememberes one kind of comment. It prioritzes the ones on the right.
+					// So if there is a comment on the right, then manually scan for a comment before.
+					comment_before = find_comment_before(tcs.source, '\n', field_loc.offset)
 				} else {
 					comment_before = comment
 				}

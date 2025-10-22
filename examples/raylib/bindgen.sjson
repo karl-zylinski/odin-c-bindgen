@@ -34,6 +34,14 @@ struct_field_overrides = {
 	"NPatchInfo.layout" = "NPatchLayout"
 	"GlyphInfo.value"   = "rune"
 
+	"Font.recs"   = "[^]"
+	"Font.glyphs" = "[^]"
+
+	"Sound.stream" = "using",
+	"Music.stream" = "using",
+
+	"Camera3D.projection" = "CameraProjection"
+
 	"Mesh.vertices"     = "[^]"
 	"Mesh.texcoords"    = "[^]"
 	"Mesh.texcoords2"   = "[^]"
@@ -51,7 +59,7 @@ struct_field_overrides = {
 	"Material.maps"     = "[^]"
 	"Model.meshes"        = "[^]"
 	"Model.materials"     = "[^]"
-	"Model.meshMaterials" = "[^]"
+	"Model.meshMaterial"  = "[^]"
 	"Model.bones"         = "[^]"
 	"Model.bindPose"      = "[^]"
 	"ModelAnimation.bones"      = "[^]"
@@ -60,21 +68,40 @@ struct_field_overrides = {
 	"AudioStream.buffer"   = "rawptr"
 	"AudioStream.processor" = "rawptr"
 
-	// This is not a complete override list, it's just an example.
+	"FilePathList.paths" = "[^]"
+	"AutomationEventList.events" = "[^]"
+}
+
+struct_field_tags = {
+	"BoneInfo.name" = "fmt:\"s,0\""
+	"ModelAnimation.name" = "fmt:\"s,0\""
 }
 
 procedure_type_overrides = {
-	"SetConfigFlags.flags"         = "ConfigFlags"
-	"IsKeyPressed.key"             = "KeyboardKey"
-	"IsKeyPressedRepeat.key"       = "KeyboardKey"
-	"IsKeyDown.key"                = "KeyboardKey"
-	"IsKeyReleased.key"            = "KeyboardKey"
-	"IsKeyUp.key"                  = "KeyboardKey"
-	"GetKeyPressed"                = "KeyboardKey"
+	"SetConfigFlags.flags"   = "ConfigFlags"
+	"IsWindowState.flag"     = "ConfigFlag"
+	"SetWindowState.flags"   = "ConfigFlags"
+	"ClearWindowState.flags" = "ConfigFlags"
+
+	"SetWindowIcons.images" = "[^]"
+
+	"IsKeyPressed.key"       = "KeyboardKey"
+	"IsKeyPressedRepeat.key" = "KeyboardKey"
+	"IsKeyDown.key"          = "KeyboardKey"
+	"IsKeyReleased.key"      = "KeyboardKey"
+	"IsKeyUp.key"            = "KeyboardKey"
+	"GetKeyPressed"          = "KeyboardKey"
+	
 	"IsMouseButtonPressed.button"  = "MouseButton"
 	"IsMouseButtonDown.button"     = "MouseButton"
 	"IsMouseButtonReleased.button" = "MouseButton"
 	"IsMouseButtonUp.button"       = "MouseButton"
+
+	"SetShaderValue.locIndex"        = "#any_int",
+	"SetShaderValueV.locIndex"       = "#any_int",
+	"SetShaderValueMatrix.locIndex"  = "#any_int",
+	"SetShaderValueTexture.locIndex" = "#any_int",
+
 	"SetShaderValue.uniformType"   = "ShaderUniformDataType"
 	"SetShaderValueV.uniformType"  = "ShaderUniformDataType"
 	"SetExitKey.key"               = "KeyboardKey"
@@ -82,7 +109,109 @@ procedure_type_overrides = {
 	"IsGestureDetected.gesture"    = "Gestures"
 	"SetGesturesEnabled.flags"     = "Gestures"
 
-	// This is not a complete override list, it's just an example.
+	"LoadRandomSequence" = "[^]"
+	"UnloadRandomSequence.sequence" = "[^]"	
+
+	"LoadFileData" = "[^]"
+	"UnloadFileData.data" = "[^]"
+	"LoadFileText" = "[^]u8"
+	"UnloadFileText.text" = "[^]u8"
+	"SaveFileText.text" = "[^]u8"
+
+	"CompressData" = "[^]"
+	"CompressData.data" = "rawptr"
+	"DecompressData" = "[^]"
+	"DecompressData.compData" = "rawptr"
+	"EncodeDataBase64" = "[^]u8"
+	"EncodeDataBase64.data" = "rawptr"
+	"DecodeDataBase64" = "[^]"
+	"DecodeDataBase64.data" = "rawptr"
+	"ComputeCRC32.data" = "rawptr"
+	"ComputeMD5" = "[^]"
+	"ComputeMD5.data" = "rawptr"
+	"ComputeSHA1" = "[^]"
+	"ComputeSHA1.data" = "rawptr"
+
+	"IsGamepadButtonPressed.button" = "GamepadButton"
+	"IsGamepadButtonDown.button" = "GamepadButton"
+	"IsGamepadButtonReleased.button" = "GamepadButton"
+	"IsGamepadButtonUp.button" = "GamepadButton"
+	"GetGamepadButtonPressed" = "GamepadButton"
+	"GetGamepadAxisMovement.axis" = "GamepadAxis"
+
+	"SetMouseCursor.cursor" = "MouseCursor"
+
+	"GetGestureDetected" = "Gesture"
+
+	"UpdateCamera.mode" = "CameraMode"
+
+	"DrawLineStrip.points" = "[^]"
+	"DrawTriangleFan.points" = "[^]"
+	"DrawTriangleStrip.points" = "[^]"
+
+	"DrawSplineLinear.points" = "[^]"
+	"DrawSplineBasis.points" = "[^]"
+	"DrawSplineCatmullRom.points" = "[^]"
+	"DrawSplineBezierQuadratic.points" = "[^]"
+	"DrawSplineBezierCubic.points" = "[^]"
+
+	"CheckCollisionLines.collisionPoint" = "[^]"
+
+	"ExportImageToMemory" = "rawptr"
+
+	"UnloadImageColors.colors" = "[^]"
+	"UnloadImagePalette.colors" = "[^]"
+
+	"ImageDrawTriangleFan.points" = "[^]"
+	"ImageDrawTriangleStrip.points" = "[^]"
+
+	"GetPixelColor.format" = "PixelFormat"
+	"SetPixelColor.format" = "PixelFormat"
+	"GetPixelDataSize.format" = "PixelFormat"
+
+	"LoadFontEx.codepoints" = "[^]rune"
+	"LoadFontFromMemory.codepoints" = "[^]rune"
+	"LoadFontData.codepoints" = "[^]rune"
+	"LoadFontData" = "[^]"
+
+	"GenImageFontAtlas.glyphs" = "[^]"
+	"GenImageFontAtlas.glyphRecs" = "^[^]Rectangle"
+	"UnloadFontData.glyphs" = "[^]"
+
+	"DrawTextCodepoints.codepoints" = "[^]"
+
+	"LoadUTF8.codepoints" = "[^]rune"
+	"LoadUTF8" = "[^]u8"
+	"UnloadUTF8.text" = "[^]u8"
+	"LoadCodepoints" = "[^]rune"
+	"UnloadCodepoints.codepoints" = "[^]rune"
+	"GetCodepoint" = "rune"
+	"GetCodepointNext" = "rune"
+	"GetCodepointPrevious" = "rune"
+	"CodepointToUTF8.codepoint" = "rune"
+
+	"TextCopy.dst" = "[^]u8"
+	"TextInsert" = "[^]u8"
+	"TextReplace" = "[^]u8"
+	"TextReplace.text" = "[^]u8"
+	"TextJoin.textList" = "[^]"
+	"TextSplit" = "[^]"
+	"TextAppend.text" = "[^]u8"
+
+	"DrawTriangleStrip3D.points" = "[^]"
+
+	"DrawMeshInstanced.transforms" = "[^]"
+
+	"LoadMaterials" = "[^]"
+
+	"LoadModelAnimations" = "[^]"
+	"UnloadModelAnimations.animations" = "[^]"
+
+	"LoadWaveFromMemory.fileData" = "rawptr"
+	"LoadWaveSamples" = "[^]"
+	"UnloadWaveSamples.samples" = "[^]"
+
+	"LoadMusicStreamFromMemory.data" = "rawptr"
 }
 
 procedures_at_end = true
@@ -91,4 +220,6 @@ remove = [
 	"MemFree",
 	"IsGestureDetected",
 	"TextFormat",
+	"rAudioBuffer",
+	"rAudioProcessor",
 ]

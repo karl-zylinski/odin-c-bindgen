@@ -187,17 +187,23 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					continue
 				}
 
-				override_key := fmt.tprintf("%s.%s", d.name, f.names[0])
-				if override, has_override := config.struct_field_overrides[override_key]; has_override {
+				field_key := fmt.tprintf("%s.%s", d.name, f.names[0])
+				if override, has_override := config.struct_field_overrides[field_key]; has_override {
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := resolve_type_definition(types, f.type, Type_Pointer); is_ptr_type {
 							f.type = add_type(types, Type_Multipointer {
 								pointed_to_type = ptr_type.pointed_to_type,
 							})
 						}	
+					} else if override == "using" {
+						f.is_using = true
 					} else {
 						f.type = Fixed_Value(override)
 					}
+				}
+
+				if tag, has_tag := config.struct_field_tags[field_key]; has_tag {
+					f.tag = tag
 				}
 			}
 		case Type_Procedure:
@@ -216,6 +222,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 								pointed_to_type = ptr_type.pointed_to_type,
 							})
 						}
+					} else if override == "#any_int" {
+						p.any_int = true
 					} else {
 						p.type = Fixed_Value(override)
 					}

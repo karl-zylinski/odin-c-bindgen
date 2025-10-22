@@ -264,6 +264,10 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 		if f.anonymous {
 			p(&nb, "using _: ")
 		} else {
+			if f.is_using {
+				p(&nb, "using ")
+			}
+
 			for fn, nidx in f.names {
 				if nidx != 0 {
 					p(&nb, ", ")
@@ -287,6 +291,10 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 			case Type_Index:
 				parse_type_build(types, r, &rhs_builder, indent + 1)
 			}
+		}
+
+		if f.tag != "" {
+			pf(&rhs_builder, " `%s`", f.tag)
 		}
 
 		pf(&rhs_builder, ",")
@@ -525,6 +533,10 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 
 			if by_ptr {
 				pf(b, "#by_ptr ")
+			}
+
+			if param.any_int {
+				pf(b, "#any_int ")
 			}
 
 			pf(b, "%s: ", param.name)
