@@ -53,6 +53,8 @@ Config :: struct {
 	// Put these tags on the specified struct field
 	struct_field_tags: map[string]string,
 
+	remove_enum_members: []string,
+
 	// Overrides the type of a procedure parameter or return value. For a parameter use the key
 	// Proc_Name.parameter_name. For a return value use the key Proc_Name.
 	//

@@ -98,6 +98,13 @@ struct_field_tags = {
 	// "BoneInfo.name" = "fmt:\"s,0\""
 }
 
+// Remove a specific enum member. Write the C name of the member. You can also use wildcards
+// such as *_Count
+remove_enum_members = [
+	// "MAGICAL_ENUM_ALL"
+	// "_*Count"
+]
+
 // Overrides the type of a procedure parameter or return value. For a parameter use the key
 // Proc_Name.parameter_name. For a return value use the key Proc_Name.
 //

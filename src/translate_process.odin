@@ -82,6 +82,22 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		}
 	}
 
+	remove_enum_members: map[string]struct{}
+	remove_enum_suffixes: [dynamic]string
+	remove_enum_prefixes: [dynamic]string
+
+	for e in config.remove_enum_members {
+		if strings.has_prefix(e, "*") {
+			append(&remove_enum_suffixes, e[1:])
+		} else if strings.has_suffix(e, "*") {
+			append(&remove_enum_prefixes, e[:len(e) - 1])
+		} else {
+			remove_enum_members[e] = {}
+		}
+	}
+
+	log.info(remove_enum_prefixes)
+
 	// Declared here to reuse.
 	bit_set_make_constant: map[string]int
 
@@ -120,6 +136,32 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 		#partial switch &v in type {
 		case Type_Enum:
+			{
+				new_members: [dynamic]Type_Enum_Member
+				
+				member_loop: for m in v.members {
+					if m.name in remove_enum_members {
+						continue
+					}
+
+					for p in remove_enum_suffixes {
+						if strings.has_suffix(m.name, p) {
+							continue member_loop
+						}
+					}
+
+					for p in remove_enum_prefixes {
+						if strings.has_prefix(m.name, p) {
+							continue member_loop
+						}
+					}
+
+					append(&new_members, m)
+				}
+
+				v.members = new_members[:]
+			}
+
 			bit_set_name, bit_setify := config.bit_setify[d.name]
 
 			if bit_setify {
