@@ -1,0 +1,22 @@
+inputs = [ "joltc.h" ]
+output_folder = "jolt"
+remove_type_prefix = "JPH_"
+remove_macro_prefix = "JPH_"
+remove_function_prefix = "JPH_"
+imports_file = "imports.inc"
+package_name = "jolt"
+type_overrides = {
+    "JPH_Vec3" = "[3]f32"
+    "JPH_Vec4" = "[4]f32"
+    "JPH_Quat" = "quaternion128"
+    "JPH_Mat4" = "matrix[4,4]f32"
+}
+
+remove_enum_members = [
+    "_JPH_*"
+]
+
+remove = [
+    "JOLT_C_H_"
+    "JPH_CAPI"
+]
