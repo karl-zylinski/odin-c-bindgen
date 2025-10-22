@@ -256,15 +256,6 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 			continue
 		}
 
-		if f.comment_before != "" {
-			output_field_group(current_group, b, indent + 1)
-			clear(&current_group.fields)
-			current_group.header = f.comment_before
-			current_group.line_break_before = !first_field
-		}
-
-		first_field = false
-
 		// name builder
 		nb := strings.builder_make()
 
@@ -299,11 +290,29 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 		pf(&rhs_builder, ",")
 
 		rhs := strings.to_string(rhs_builder)
+		multiline := strings.contains_rune(rhs, '\n')
+
+		if f.comment_before != "" || multiline {
+			output_field_group(current_group, b, indent + 1)
+			clear(&current_group.fields)
+			current_group.header = f.comment_before
+			current_group.line_break_before = !first_field
+		}
+
+		first_field = false
+
 		append(&current_group.fields, Struct_Field {
 			type = f,
 			name = name,
 			rhs = rhs,
 		})
+
+		if multiline {
+			output_field_group(current_group, b, indent + 1)
+			clear(&current_group.fields)
+			current_group.header = f.comment_before
+			current_group.line_break_before = true
+		}
 	}
 
 	output_field_group(current_group, b, indent + 1)
