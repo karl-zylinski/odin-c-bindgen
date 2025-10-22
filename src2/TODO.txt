@@ -1,6 +1,6 @@
 x proc type passthrough
 x by-decl-type sorting and spacing
-- similar grouping for struct fields (sort by comment_before etc)
+x similar grouping for struct fields (sort by comment_before etc)
 x multi name fields (see Matrix in ufbx)
 - top and bottom code (head and footer code?) make raylib 1:1 with vendor bindings
 
@@ -11,10 +11,9 @@ old todo:
 
 
 
-- proc spacing, comments etc
-- enum side comments
-- enum spacing alignment
-- can we make the side comment stuff generic somehow? needed for unions too etc
+x proc spacing, comments etc
+x enum side comments
+x enum spacing alignment
 
 - test macros on other libs
 
