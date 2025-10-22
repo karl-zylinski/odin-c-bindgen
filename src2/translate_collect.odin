@@ -684,6 +684,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		struct_type_idx := reserve_type(ct, tcs)
 		struct_children := tcs.children_lookup[c]
 		fields: [dynamic]Type_Struct_Field
+		prev_named_field := -1
 
 		for sc in struct_children {
 			sc_kind := clang.getCursorKind(sc)
@@ -718,13 +719,20 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 					comment_before = comment
 				}
 
-				append(&fields, Type_Struct_Field {
-					name = name,
-					type = type_id,
-					comment_before = comment_before,
-					comment_on_right = comment_on_right,
-				})
-			
+				if prev_named_field >= 0 && prev_named_field == len(fields) - 1 &&
+				fields[prev_named_field].type == type_id && field_loc.line == fields[prev_named_field].line {
+					append(&fields[prev_named_field].names, name)
+				} else {
+					prev_named_field = len(fields)
+					append(&fields, Type_Struct_Field {
+						names = [dynamic]string { name },
+						type = type_id,
+						comment_before = comment_before,
+						comment_on_right = comment_on_right,
+						line = field_loc.line,
+					})
+				}
+
 			case .StructDecl, .UnionDecl:
 				if clang.Cursor_isAnonymousRecordDecl(sc) == 1 {
 					sct := clang.getCursorType(sc)

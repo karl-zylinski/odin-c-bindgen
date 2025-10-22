@@ -99,12 +99,15 @@ Type_Alias :: struct {
 }
 
 Type_Struct_Field :: struct {
-	name: string,
+	names: [dynamic]string,
 	anonymous: bool,
 	type: Definition,
 	type_overrride: string,
 	comment_before: string,
 	comment_on_right: string,
+
+	// internal
+	line: int,
 }
 
 Type_Struct :: struct {

@@ -172,7 +172,11 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 		case Type_Struct:
 			for &f in v.fields {
-				override_key := fmt.tprintf("%s.%s", d.name, f.name)
+				if len(f.names) != 1 {
+					continue
+				}
+
+				override_key := fmt.tprintf("%s.%s", d.name, f.names[0])
 				if override, has_override := config.struct_field_overrides[override_key]; has_override {
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := resolve_type_definition(types, f.type, Type_Pointer); is_ptr_type {
@@ -363,7 +367,9 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 
 		case Type_Struct:
 			for &f in tv.fields {
-				f.name = ensure_name_valid(f.name)
+				for &n in f.names {
+					n = ensure_name_valid(n)
+				}
 
 				if type_name, is_type_name := f.type.(Type_Name); is_type_name {
 					f.type = final_type_name(type_name, config)

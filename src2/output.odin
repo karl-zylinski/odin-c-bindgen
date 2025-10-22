@@ -214,8 +214,18 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 
 	longest_name: int
 	for &f in t_struct.fields {
-		if len(f.name) > longest_name {
-			longest_name = len(f.name)
+		names_len: int
+
+		for n, i in f.names {
+			if i != 0 {
+				names_len += 2 // for comma and space
+			}
+
+			names_len =+ len(n)
+		}
+		
+		if names_len > longest_name {
+			longest_name = names_len
 		}
 	}
 
@@ -225,7 +235,7 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 	for &f, fi in t_struct.fields {
 		fb := strings.builder_make()
 
-		if f.name == "" && !f.anonymous {
+		if len(f.names) == 0 && !f.anonymous {
 			log.error("Struct field has no name and is not anonymous")
 			continue
 		}
@@ -233,9 +243,17 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 		if f.anonymous {
 			p(&fb, "using _: ")
 		} else {
-			pf(&fb, "%s: ", f.name)	
+			for fn, nidx in f.names {
+				if nidx != 0 {
+					p(&fb, ", ")
+				}
+				p(&fb, fn)
+			}
 
-			after_name_padding := longest_name-len(f.name)
+			p(&fb, ": ")	
+
+			names_len := strings.builder_len(fb)
+			after_name_padding := longest_name-names_len
 			for _ in 0..<after_name_padding {
 				strings.write_rune(&fb, ' ')
 			}
