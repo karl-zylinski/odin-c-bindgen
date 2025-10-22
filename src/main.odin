@@ -1,7 +1,5 @@
 package bindgen2
 
-import "core:bytes"
-import "core:bufio"
 import vmem "core:mem/virtual"
 import "core:mem"
 import "core:os"
