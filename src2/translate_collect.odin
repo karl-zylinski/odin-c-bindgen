@@ -440,7 +440,13 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 }
 
 type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
-	return clang.isConstQualifiedType(ct) == 1 && (ct.kind == .Char_S || ct.kind == .SChar)
+	if ct.kind != .Pointer {
+		return false
+	}
+
+	pt := clang.getPointeeType(ct)
+
+	return (pt.kind == .Char_S || pt.kind == .SChar)
 }
 
 c_typedef_types := map[string]string {
@@ -695,7 +701,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		if clang_pointee_type.kind == .Void {
 			to_add = Type_Raw_Pointer{}
-		} else if type_probably_is_cstring(clang_pointee_type) {
+		} else if type_probably_is_cstring(ct) {
 			to_add = Type_CString{}
 		} else if clang_pointee_type.kind == .FunctionProto {
 			return create_proc_type(tcs.children_lookup[clang.getTypeDeclaration(clang_pointee_type)], clang_pointee_type, tcs)
