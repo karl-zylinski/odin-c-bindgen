@@ -353,7 +353,7 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 				}
 			}
 
-			if !underscore_in_member && strings.contains(overlap_length_source, "_") {
+			if !underscore_in_member && strings.count(overlap_length_source, "_") > 1 {
 				back_off = true
 			}
 
