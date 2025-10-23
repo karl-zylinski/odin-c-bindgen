@@ -8,10 +8,12 @@ Features:
 - Simplicity. The generator is simple enough that you can modify it, should the need arise.
 - Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
+> If you find this generator helpful and want to say thanks, then please consider [dontating](https://github.com/sponsors/karl-zylinski).
+
 ## Requirements
 - Odin
 - libclang
-	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz -- Copy The following from that archive:
+	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz -- Copy the following from that archive:
 		- `lib/libclang.lib` into the generator's 'libclang' folder
 		- `bin/libclang.dll` into the root of the generator (next to where the bindgen executable will end up).
 	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint. It doesn't have to be version 20, I've tried it with as low as version 18.
