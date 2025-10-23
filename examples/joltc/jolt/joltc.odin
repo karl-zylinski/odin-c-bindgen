@@ -1368,7 +1368,7 @@ foreign lib {
 	HingeConstraint_GetLimitsSpringSettings      :: proc(constraint: ^HingeConstraint, result: ^SpringSettings) ---
 	HingeConstraint_SetLimitsSpringSettings      :: proc(constraint: ^HingeConstraint, settings: ^SpringSettings) ---
 	HingeConstraint_GetTotalLambdaPosition       :: proc(constraint: ^HingeConstraint, result: ^Vec3) ---
-	HingeConstraint_GetTotalLambdaRotation       :: proc(constraint: ^HingeConstraint, rotation: [2]f32) ---
+	HingeConstraint_GetTotalLambdaRotation       :: proc(constraint: ^HingeConstraint, #by_ptr rotation: [2]f32) ---
 	HingeConstraint_GetTotalLambdaRotationLimits :: proc(constraint: ^HingeConstraint) -> f32 ---
 	HingeConstraint_GetTotalLambdaMotor          :: proc(constraint: ^HingeConstraint) -> f32 ---
 
@@ -1394,7 +1394,7 @@ foreign lib {
 	SliderConstraint_HasLimits                    :: proc(constraint: ^SliderConstraint) -> bool ---
 	SliderConstraint_GetLimitsSpringSettings      :: proc(constraint: ^SliderConstraint, result: ^SpringSettings) ---
 	SliderConstraint_SetLimitsSpringSettings      :: proc(constraint: ^SliderConstraint, settings: ^SpringSettings) ---
-	SliderConstraint_GetTotalLambdaPosition       :: proc(constraint: ^SliderConstraint, position: [2]f32) ---
+	SliderConstraint_GetTotalLambdaPosition       :: proc(constraint: ^SliderConstraint, #by_ptr position: [2]f32) ---
 	SliderConstraint_GetTotalLambdaPositionLimits :: proc(constraint: ^SliderConstraint) -> f32 ---
 	SliderConstraint_GetTotalLambdaRotation       :: proc(constraint: ^SliderConstraint, result: ^Vec3) ---
 	SliderConstraint_GetTotalLambdaMotor          :: proc(constraint: ^SliderConstraint) -> f32 ---

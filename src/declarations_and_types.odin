@@ -180,6 +180,16 @@ Type_Override :: struct {
 	definition_text: string,
 }
 
+check_type_definition :: proc(types: Type_List, def: Definition, $T: typeid) -> (bool) {
+	if idx, is_idx := def.(Type_Index); is_idx {
+		_, is_type := types[idx].(T)
+
+		return is_type
+	}
+
+	return false
+}
+
 resolve_type_definition :: proc(types: Type_List, def: Definition, $T: typeid) -> (T, bool) {
 	if idx, is_idx := def.(Type_Index); is_idx {
 		return types[idx].(T)

@@ -552,6 +552,28 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 	return create_type_recursive(ct, tcs)
 }
 
+is_fixed_array :: proc(ct: clang.Type) -> bool {
+	ct := ct
+
+	if ct.kind == .Elaborated {
+		ct = clang.Type_getNamedType(ct)
+	}
+
+	if ct.kind == .ConstantArray {
+		return true
+	}
+
+	if ct.kind == .Typedef {
+		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
+
+		if underlying.kind == .ConstantArray {
+			return true
+		}
+	}
+
+	return false
+}
+
 // This is a separate proc because we call it both from create_type_recursive and from
 // create_declaration. It's used in create_declaration so we get a unique proc type per proc.
 // Otherweise the FunctionProto stuff may make it so that ther are shared proc types, which will
@@ -575,6 +597,16 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 				type_id = create_proc_type(tcs.children_lookup[child], unwrapped_type, tcs)
 			} else {
 				type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
+
+				// Fixed arrays are #by_ptr because that's how they are passed in C: It's just a pointer.
+				if is_fixed_array(param_type) {
+					wrapper_idx := Type_Index(len(tcs.types))
+					append_nothing(tcs.types)
+					tcs.types[wrapper_idx] = Type_Pointer_By_Ptr {
+						pointed_to_type = type_id,
+					}
+					type_id = wrapper_idx
+				}
 			}
 
 			append(&params, Type_Procedure_Parameter {

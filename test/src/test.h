@@ -1,6 +1,3 @@
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-
 #include <stdarg.h>
 
 #define TEST unsigned char
@@ -8,7 +5,7 @@
 typedef signed long   Int64;
 typedef unsigned long UInt64;
 
-typedef int testType[4];
+typedef char testType[2];
 
 typedef void (*myLogImpl)(const char* fmt, ...);
 
@@ -29,12 +26,11 @@ void test3(myLogImpl* log);
 
 void test4(myLogImpl2** log);
 
-int constArray(const int arr[4]);
+char constArray(const char arr[2]);
 
-int typedef_test(testType arr);
+char typedef_test(testType arr);
 
 void functionNoProto();
 
 void functionProto(void);
 
-#pragma GCC pop_options

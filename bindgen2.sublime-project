@@ -57,6 +57,10 @@
 					"shell_cmd": "odin build src -debug -out:bindgen.exe -vet -strict-style && bindgen.exe scrap",
 				},
 				{
+					"name": "test",
+					"shell_cmd": "odin build src -debug -out:bindgen.exe -vet -strict-style && cd test && ..\\bindgen.exe . && odin run test_binding",
+				},
+				{
 					"name": "scrap2",
 					"shell_cmd": "odin build src -out:bindgen.exe -vet -strict-style && bindgen.exe scrap/bitsquid",
 				},

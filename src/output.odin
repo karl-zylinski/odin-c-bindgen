@@ -493,11 +493,11 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 
 	pf(b, "(")
 
-	all_params_have_name := true
+	all_params_are_unnamed := true
 
 	for param in tp.parameters {
-		if param.name == "" {
-			all_params_have_name = false
+		if param.name != "" {
+			all_params_are_unnamed = false
 			break
 		}
 	}
@@ -507,24 +507,25 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 			p(b, ", ")
 		}
 
+		_, by_ptr := resolve_type_definition(types, param.type, Type_Pointer_By_Ptr)
+
+
+		if by_ptr {
+			p(b, "#by_ptr ")
+		}
+
+		if param.any_int {
+			p(b, "#any_int ")
+		}
+
 		if param.name == "" {
 			// We can only write a parameter list without any names if all of them have no name.
-			if !all_params_have_name {
+			if !all_params_are_unnamed {
 				p(b, "_: ")
 			}
 
 			output_definition(types, param.type, b, indent)
 		} else {
-			_, by_ptr := resolve_type_definition(types, param.type, Type_Pointer_By_Ptr)
-
-			if by_ptr {
-				pf(b, "#by_ptr ")
-			}
-
-			if param.any_int {
-				pf(b, "#any_int ")
-			}
-
 			pf(b, "%s: ", param.name)
 			output_definition(types, param.type, b, indent)
 		}

@@ -1,5 +1,9 @@
 #include "test.h"
 
-int constArray(const int arr[4]) {
-    return arr[0] + arr[1] + arr[2] + arr[3];
+char constArray(const char arr[2]) {
+    return arr[0] + arr[1];
+}
+
+char typedef_test(testType arr) {
+    return arr[0] + arr[1];
 }
