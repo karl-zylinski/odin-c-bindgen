@@ -79,7 +79,6 @@ struct_field_tags = {
 
 procedure_type_overrides = {
 	"SetConfigFlags.flags"   = "ConfigFlags"
-	"IsWindowState.flag"     = "ConfigFlag"
 	"SetWindowState.flags"   = "ConfigFlags"
 	"ClearWindowState.flags" = "ConfigFlags"
 
@@ -140,8 +139,6 @@ procedure_type_overrides = {
 	"GetGamepadAxisMovement.axis" = "GamepadAxis"
 
 	"SetMouseCursor.cursor" = "MouseCursor"
-
-	"GetGestureDetected" = "Gesture"
 
 	"UpdateCamera.mode" = "CameraMode"
 
@@ -219,6 +216,8 @@ procedures_at_end = true
 remove = [
 	"MemFree",
 	"IsGestureDetected",
+	"GetGestureDetected",
+	"IsWindowState",
 	"TextFormat",
 	"rAudioBuffer",
 	"rAudioProcessor",

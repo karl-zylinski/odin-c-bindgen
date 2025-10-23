@@ -6,16 +6,33 @@ MAX_TEXT_BUFFER_LENGTH :: #config(RAYLIB_MAX_TEXT_BUFFER_LENGTH, 1024)
 
 import "core:mem"
 import "core:fmt"
+import "core:math/bits"
 
 //  Check if a gesture have been detected
 IsGestureDetected :: proc "c" (gesture: Gesture) -> bool {
-	@(default_calling_convention="c")
 	foreign lib {
 		IsGestureDetected :: proc "c" (gesture: Gestures) -> bool ---
 	}
 	return IsGestureDetected({gesture})
 }
 
+// Get latest detected gesture
+GetGestureDetected :: proc "c" () -> Gesture {
+	foreign lib {
+		GetGestureDetected :: proc "c" () -> Gestures ---
+	}
+
+	return Gesture(bits.log2(transmute(u32)(GetGestureDetected())))
+}
+
+// Check if one specific window flag is enabled
+IsWindowState :: proc "c" (flag: ConfigFlag) -> bool {
+	foreign lib {
+		IsWindowState :: proc "c" (flag: ConfigFlags) -> bool ---
+	}
+
+	return IsWindowState({flag})
+}
 
 // Text formatting with variables (sprintf style)
 TextFormat :: proc(text: cstring, args: ..any) -> cstring {
