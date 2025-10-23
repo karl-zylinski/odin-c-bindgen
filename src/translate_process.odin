@@ -246,6 +246,16 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					}
 				}
 
+				if proc_type := resolve_type_definition_ptr(types, f.type, Type_Procedure); proc_type != nil {
+					for &param in proc_type.parameters {
+						key := fmt.tprintf("%s.%s.%s", d.name, f.names[0], param.name)
+						
+						if default, has_default := config.procedure_parameter_defaults[key]; has_default {
+							param.default = default
+						}
+					}
+				}
+
 				if tag, has_tag := config.struct_field_tags[field_key]; has_tag {
 					f.tag = tag
 				}

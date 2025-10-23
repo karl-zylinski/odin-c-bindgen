@@ -199,3 +199,13 @@ resolve_type_definition :: proc(types: Type_List, def: Definition, $T: typeid) -
 	return {}, false
 }
 
+resolve_type_definition_ptr :: proc(types: Type_List, def: Definition, $T: typeid) -> ^T {
+	if idx, is_idx := def.(Type_Index); is_idx {
+		if t, is_t := &types[idx].(T); is_t {
+			return t
+		}
+	}
+
+	return nil
+}
+

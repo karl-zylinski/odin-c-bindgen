@@ -65,6 +65,9 @@ Config :: struct {
 
 	// Add in a default value to a procedure parameter. Use `Proc_Name.parameter_name` as key and
 	// write the plain-text Odin value as value.
+	//
+	// You can also add defaults for proc parameters within structs. In that case you do:
+	// `Struct_Name.proc_field.parameter_name` -- This does not currently support nested structs.
 	procedure_parameter_defaults: map[string]string,
 
 	// Put the names of declarations in here to remove them.	
