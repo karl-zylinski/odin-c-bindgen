@@ -20,7 +20,7 @@ _ :: libc
 
 when ODIN_OS == .Windows {
 	when !#exists("libclang.lib") {
-		#panic("Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz and from within that archive copy 'lib/libclang.lib' into the 'libclang' folder of this repository. Also copy 'bin/libclang.dll' into the root folder of the repository.")
+		#panic("Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz -- Copy the following from that archive:\n- `lib/libclang.lib` into the generator's 'libclang' folder\n- `bin/libclang.dll` into the root of the generator (next to where the bindgen executable will end up).")
 	}
 
     @(extra_linker_flags="/NODEFAULTLIB:libcmt")
