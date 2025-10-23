@@ -663,25 +663,34 @@ reserve_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Inde
 }
 
 // In Odin, every proc is a pointer, and it is like that in C bindings too. So if something takes a
-// ptr to a func in C, then it should just take a proc in Odin. This bypasses pointers to procs etc
+// ptr to a func in C, then it should just take a proc in Odin. In other words, we need to bypass
+// one level of pointers whenever the thing we are looking at ends in a function.
 unwrap_proc_pointers :: proc(t: clang.Type) -> (unwrapped_type: clang.Type, is_proc: bool) {
 	if t.kind == .Pointer {
-		pointee := clang.getPointeeType(t)
+		first_pointee := clang.getPointeeType(t)
+		pointee := first_pointee
 
-		if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
-			return pointee, true
-		} else if pointee.kind == .Elaborated {
-			named := clang.Type_getNamedType(pointee)
+		// We loop here so 'some_func_type**' just becomes 'some_func_type*'. We need to find if the
+		// chain of pointers end i function type. But we need to discard the first level of pointer
+		// indirection.
+		for pointee.kind != .Invalid {
+			if pointee.kind == .FunctionProto || pointee.kind == .FunctionNoProto {
+				return first_pointee, true
+			} else if pointee.kind == .Elaborated {
+				named := clang.Type_getNamedType(pointee)
 
-			if named.kind == .FunctionProto || named.kind == .FunctionNoProto {
-				return pointee, true
-			} else if named.kind == .Typedef {
-				underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(pointee))
+				if named.kind == .FunctionProto || named.kind == .FunctionNoProto {
+					return first_pointee, true
+				} else if named.kind == .Typedef {
+					underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(pointee))
 
-				if underlying.kind == .FunctionProto || underlying.kind == .FunctionNoProto {
-					return pointee, false
+					if underlying.kind == .FunctionProto || underlying.kind == .FunctionNoProto {
+						return first_pointee, false
+					}
 				}
-			}
+			} 
+
+			pointee = clang.getPointeeType(pointee)
 		}
 	}
 
