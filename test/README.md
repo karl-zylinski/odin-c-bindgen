@@ -1,0 +1,1 @@
+Ignore this test folder. It's for testing a few corner-cases. It's not a full test suite. See the 'examples' folder for examples of how to use the generator.
