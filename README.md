@@ -8,7 +8,7 @@ Features:
 - Simplicity. The generator is simple enough that you can modify it, should the need arise.
 - Configurable. Easy to override types and turn enums into bit_sets, etc. More info [below](#configuration) and [in the examples](https://github.com/karl-zylinski/odin-c-bindgen/blob/main/examples/raylib/bindgen.sjson).
 
-> If you find this generator helpful and want to say thanks, then please consider [dontating](https://github.com/sponsors/karl-zylinski).
+> If you find this generator helpful and want to say thanks, then please consider [donating](https://github.com/sponsors/karl-zylinski).
 
 ## Requirements
 - Odin
