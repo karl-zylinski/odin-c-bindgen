@@ -63,6 +63,10 @@ Config :: struct {
 	// You can also use `[^]`, `#by_ptr` and `#any_int` to augment an already existing type.
 	procedure_type_overrides: map[string]string,
 
+	// Add in a default value to a procedure parameter. Use `Proc_Name.parameter_name` as key and
+	// write the plain-text Odin value as value.
+	procedure_parameter_defaults: map[string]string,
+
 	// Put the names of declarations in here to remove them.	
 	remove: []string,
 

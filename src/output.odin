@@ -529,6 +529,10 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 			pf(b, "%s: ", param.name)
 			output_definition(types, param.type, b, indent)
 		}
+
+		if param.default != "" {
+			pf(b, " = %v", param.default)
+		}
 	}
 
 	if tp.is_variadic {

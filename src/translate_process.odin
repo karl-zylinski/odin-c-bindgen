@@ -252,8 +252,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			}
 		case Type_Procedure:
 			for &p in v.parameters {
-				override_key := fmt.tprintf("%s.%s", d.name, p.name)
-				if override, has_override := config.procedure_type_overrides[override_key]; has_override {
+				param_key := fmt.tprintf("%s.%s", d.name, p.name)
+				if override, has_override := config.procedure_type_overrides[param_key]; has_override {
 					if override == "[^]" {
 						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
 							p.type = add_type(types, Type_Multipointer {
@@ -271,6 +271,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					} else {
 						p.type = Fixed_Value(override)
 					}
+				}
+
+				if default, has_default := config.procedure_parameter_defaults[param_key]; has_default {
+					p.default = default
 				}
 			}
 

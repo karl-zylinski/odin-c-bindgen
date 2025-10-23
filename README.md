@@ -114,6 +114,12 @@ procedure_type_overrides = {
 	// "GetKeyPressed"        = "KeyboardKey"
 }
 
+// Add in a default value to a procedure parameter. Use `Proc_Name.parameter_name` as key and
+// write the plain-text Odin value as value.
+procedure_parameter_defaults = {
+	// "DrawTexturePro.tint" = "RED"
+}
+
 // Put the names of declarations in here to remove them.
 remove = [
 	// "Some_Declaration_Name"

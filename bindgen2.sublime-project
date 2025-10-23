@@ -54,7 +54,7 @@
 				},
 				{
 					"name": "scrap",
-					"shell_cmd": "odin build src -debug -out:bindgen.exe -vet -strict-style && bindgen.exe scrap",
+					"shell_cmd": "odin build src -debug -out:bindgen.exe -vet -strict-style && bindgen.exe src/examples/scrap",
 				},
 				{
 					"name": "test",
