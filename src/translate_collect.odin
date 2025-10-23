@@ -598,11 +598,14 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			} else {
 				type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
 
-				// Fixed arrays are #by_ptr because that's how they are passed in C: It's just a pointer.
+				// Fixed arrays are passed by pointer into procs. That's how it works in C. I.e.
+				// `float numbers[2]` as a function parameter is equivalent to `float *numbers`, but
+				// you have that `2` there for documentation purposes. So by default we turn such
+				// a parameter into `numbers: ^[2]f32`.
 				if is_fixed_array(param_type) {
 					wrapper_idx := Type_Index(len(tcs.types))
 					append_nothing(tcs.types)
-					tcs.types[wrapper_idx] = Type_Pointer_By_Ptr {
+					tcs.types[wrapper_idx] = Type_Pointer {
 						pointed_to_type = type_id,
 					}
 					type_id = wrapper_idx
