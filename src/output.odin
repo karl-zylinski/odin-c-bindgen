@@ -539,8 +539,12 @@ output_procedure_signature :: proc(types: ^[dynamic]Type, tp: Type_Procedure, b:
 		if len(tp.parameters) > 0 {
 			p(b, ", ")
 		}
-		
-		p(b, "#c_vararg _: ..any")
+
+		if !all_params_are_unnamed {
+			p(b, "#c_vararg _: ..any")
+		} else {
+			p(b, "#c_vararg ..any")
+		}
 	}
 
 	pf(b, ")")

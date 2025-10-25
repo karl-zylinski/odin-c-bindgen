@@ -114,3 +114,5 @@ Shader LoadShader(const char *vsFileName, const char *fsFileName);
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);
 bool IsShaderValid(Shader shader);
 bool AFunc();
+
+void func_with_varargs(int, const char *, ...);
