@@ -44,6 +44,12 @@ struct Test2 {
 	int y;
 };
 
+typedef enum {
+	Thing,
+	Something,
+	Else,
+} A_Typedeffed_Enum;
+
 enum Wa {
 	One,
 	Two,

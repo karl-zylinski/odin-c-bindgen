@@ -6,6 +6,7 @@ import clang "../libclang"
 import "core:slice"
 import "core:log"
 import "core:strings"
+import "core:strconv"
 import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
@@ -22,6 +23,21 @@ Translate_Collect_Result :: struct {
 // that is deferred to `translate_process`.
 @(private="package", require_results)
 translate_collect :: proc(filename: string, config: Config, types: Type_List, decls: Decl_List) -> (Translate_Collect_Result, bool) {
+	clang_version := string_from_clang_string(clang.getClangVersion())
+	clang_version = strings.trim_prefix(clang_version, "clang version ")
+	clang_version_major_end := strings.index_rune(clang_version, '.')
+
+	if clang_version_major_end == -1 {
+		log.panic("Failed checking libclang version")
+	}
+
+	clang_major_version_str := clang_version[:clang_version_major_end]
+
+	if clang_major_version, clang_major_version_ok := strconv.parse_int(clang_major_version_str);
+		clang_major_version_ok && clang_major_version < 16 {
+		log.panic("libclang version 16 or newer is required")
+	}
+
 	clang_args: [dynamic]cstring
 	append(&clang_args, "-fparse-all-comments")
 
