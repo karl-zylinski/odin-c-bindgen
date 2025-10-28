@@ -41,8 +41,10 @@ Config :: struct {
 	rename: map[string]string,
 
 	// Turns an enum into a bit_set. Converts the values of the enum into appropriate values for a
-	// bit_set. Creates a bit_set type that uses the enum. Properly removes enum values with value 0.
-	// Translates the enum values using a log2 procedure.
+	// bit_set (translates the enum values using a log2 procedure).
+	//
+	// Note that the enum will be turned into a bit_set type. There will be a new type created that
+	// contains the actual enum, which the bit_set then references.
 	bit_setify: map[string]string,
 
 	// Completely override the definition of a type.
@@ -83,6 +85,4 @@ Config :: struct {
 	// this path in search for included headers.
 	clang_include_paths: []string,
 	clang_defines: map[string]string,
-
-	
 }

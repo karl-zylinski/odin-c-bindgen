@@ -80,10 +80,12 @@ rename = {
 }
 
 // Turns an enum into a bit_set. Converts the values of the enum into appropriate values for a
-// bit_set. Creates a bit_set type that uses the enum. Properly removes enum values with value 0.
-// Translates the enum values using a log2 procedure.
+// bit_set (translates the enum values using a log2 procedure).
+//
+// Note that the enum will be turned into a bit_set type. There will be a new type created that
+// contains the actual enum, which the bit_set then references.
 bit_setify = {
-	// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
+	// "Enum_To_Turn_Into_Bitset" = "New_Enum_Type_Name"
 }
 
 // Completely override the definition of a type.

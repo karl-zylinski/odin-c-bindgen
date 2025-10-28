@@ -9,15 +9,15 @@ imports_file = "imports.odin"
 package_name = "raylib"
 
 // "Old_Name" = "New_Name"
-// We rename ConfigFlags to ConfigFlag so we can introduce a bit_set with the name ConfigFlags.
 rename = {
-	"ConfigFlags" = "ConfigFlag"
+	"Gesture" = "Gestures"
+	"Gesture_Enum" = "Gesture"
 }
 
-// "Pre_Existing_Enum_Type" = "New_Bit_Set_Type"
+// "Enum_To_Turn_Into_Bitset" = "New_Enum_Type_Name"
 bit_setify = {
-	"Gesture" = "Gestures"
-	"ConfigFlags" = "ConfigFlags"
+	"Gesture" = "Gesture_Enum"
+	"ConfigFlags" = "ConfigFlag"
 }
 
 type_overrides = {

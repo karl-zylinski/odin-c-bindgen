@@ -422,12 +422,6 @@ AutomationEventList :: struct {
 	events:   [^]AutomationEvent, // Events entries
 }
 
-//----------------------------------------------------------------------------------
-// Enumerators Definition
-//----------------------------------------------------------------------------------
-// System/Window config flags
-// NOTE: Every bit registers one state (use it with bit masks)
-// By default all flags are set to 0
 ConfigFlag :: enum i32 {
 	VSYNC_HINT               = 6,  // Set to try enabling V-Sync on GPU
 	FULLSCREEN_MODE          = 1,  // Set to run program in fullscreen
@@ -447,6 +441,12 @@ ConfigFlag :: enum i32 {
 	INTERLACED_HINT          = 16, // Set to try enabling interlaced video format (for V3D)
 }
 
+//----------------------------------------------------------------------------------
+// Enumerators Definition
+//----------------------------------------------------------------------------------
+// System/Window config flags
+// NOTE: Every bit registers one state (use it with bit masks)
+// By default all flags are set to 0
 ConfigFlags :: bit_set[ConfigFlag; i32]
 
 // Trace log level
@@ -795,8 +795,6 @@ BlendMode :: enum i32 {
 	CUSTOM_SEPARATE   = 7, // Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
 }
 
-// Gesture
-// NOTE: Provided as bit-wise flags to enable only desired gestures
 Gesture :: enum i32 {
 	TAP         = 0, // Tap gesture
 	DOUBLETAP   = 1, // Double tap gesture
@@ -810,6 +808,8 @@ Gesture :: enum i32 {
 	PINCH_OUT   = 9, // Pinch out gesture
 }
 
+// Gesture
+// NOTE: Provided as bit-wise flags to enable only desired gestures
 Gestures :: bit_set[Gesture; i32]
 
 // Camera system modes

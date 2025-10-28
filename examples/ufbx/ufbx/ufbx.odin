@@ -205,7 +205,6 @@ Prop_Type :: enum i32 {
 
 PROP_TYPE_COUNT :: 16
 
-// Property flags: Advanced information about properties, not usually needed.
 Prop_Flag :: enum i32 {
 	// Supports animation.
 	// NOTE: ufbx ignores this and allows animations on non-animatable properties.
@@ -265,6 +264,7 @@ Prop_Flag :: enum i32 {
 	VALUE_BLOB   = 26,
 }
 
+// Property flags: Advanced information about properties, not usually needed.
 Prop_Flags :: bit_set[Prop_Flag; i32]
 
 // Single property with name/type/value.
@@ -272,7 +272,7 @@ Prop :: struct {
 	name:          String,
 	_internal_key: u32,
 	type:          Prop_Type,
-	flags:         Prop_Flag,
+	flags:         Prop_Flags,
 	value_str:     String,
 	value_blob:    Blob,
 	value_int:     i64,
@@ -4390,9 +4390,9 @@ Baked_Key_Flag :: enum i32 {
 Baked_Key_Flags :: bit_set[Baked_Key_Flag; i32]
 
 Baked_Vec3 :: struct {
-	time:  f64,            // < Time of the keyframe, in seconds
-	value: Vec3,           // < Value at `time`, can be linearly interpolated
-	flags: Baked_Key_Flag, // < Additional information about the keyframe
+	time:  f64,             // < Time of the keyframe, in seconds
+	value: Vec3,            // < Value at `time`, can be linearly interpolated
+	flags: Baked_Key_Flags, // < Additional information about the keyframe
 }
 
 Baked_Vec3_List :: struct {
@@ -4401,9 +4401,9 @@ Baked_Vec3_List :: struct {
 }
 
 Baked_Quat :: struct {
-	time:  f64,            // < Time of the keyframe, in seconds
-	value: Quat,           // < Value at `time`, can be (spherically) linearly interpolated
-	flags: Baked_Key_Flag, // < Additional information about the keyframe
+	time:  f64,             // < Time of the keyframe, in seconds
+	value: Quat,            // < Value at `time`, can be (spherically) linearly interpolated
+	flags: Baked_Key_Flags, // < Additional information about the keyframe
 }
 
 Baked_Quat_List :: struct {
@@ -5121,7 +5121,6 @@ Panic :: struct {
 	message:        [128]i8,
 }
 
-// Flags to control `ufbx_evaluate_transform_flags()`.
 Transform_Flag :: enum i32 {
 	// Ignore parent scale helper.
 	IGNORE_SCALE_HELPER        = 0,
@@ -5148,6 +5147,7 @@ Transform_Flag :: enum i32 {
 	NO_EXTRAPOLATION           = 7,
 }
 
+// Flags to control `ufbx_evaluate_transform_flags()`.
 Transform_Flags :: bit_set[Transform_Flag; i32]
 
 // bindgen-enable

@@ -164,18 +164,14 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				v.members = new_members[:]
 			}
 
-			bit_set_name, bit_setify := config.bit_setify[d.name]
+			bit_set_enum_name, bit_setify := config.bit_setify[d.name]
 
 			if bit_setify {
 				clear(&bit_set_make_constant)
 
-				if bit_set_name == d.name && (d.name not_in config.rename) {
-					log.warnf("bit_set '%v' has same as enum '%v'. Suggestion: Add '\"%v\" = \"Some_New_Name\"' to 'rename' in bindgen.sjson", bit_set_name, d.name, d.name)
-				}
-
 				bs_idx := add_type(types, Type_Bit_Set {
 					enum_type = d.def.(Type_Index),
-					enum_decl_name = Type_Name(d.name),
+					enum_decl_name = Type_Name(bit_set_enum_name),
 				})
 
 				new_members: [dynamic]Type_Enum_Member
@@ -191,7 +187,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 						// it into a constant.
 						bs_constant_idx := add_type(types, Type_Bit_Set_Constant {
 							bit_set_type = bs_idx,
-							bit_set_type_name = Type_Name(bit_set_name),
+							bit_set_type_name = Type_Name(d.name),
 							value = m.value,
 						})
 
@@ -217,12 +213,15 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 				v.members = new_members[:]
 
-				add_decl(decls, {
-					original_line = d.original_line + 1,
-					name = bit_set_name,
-					def = bs_idx,
-					explicitly_created = true,
-				})
+				enum_decl := d
+				enum_decl.comment_before = ""
+				enum_decl.side_comment = ""
+				d.def = bs_idx
+				d.original_line += 1
+
+				enum_decl.name = bit_set_enum_name
+
+				add_decl(decls, enum_decl)
 			}
 
 		case Type_Struct:
@@ -253,6 +252,10 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 						if default, has_default := config.procedure_parameter_defaults[key]; has_default {
 							param.default = default
 						}
+
+						if override, has_override := config.procedure_type_overrides[key]; has_override {
+							override_procedure_parameter(&param, types, override)
+						}
 					}
 				}
 
@@ -264,23 +267,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			for &p in v.parameters {
 				param_key := fmt.tprintf("%s.%s", d.name, p.name)
 				if override, has_override := config.procedure_type_overrides[param_key]; has_override {
-					if override == "[^]" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
-							p.type = add_type(types, Type_Multipointer {
-								pointed_to_type = ptr_type.pointed_to_type,
-							})	
-						}	
-					} else if override == "#by_ptr" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
-							p.type = add_type(types, Type_Pointer_By_Ptr {
-								pointed_to_type = ptr_type.pointed_to_type,
-							})
-						}
-					} else if override == "#any_int" {
-						p.any_int = true
-					} else {
-						p.type = Fixed_Value(override)
-					}
+					override_procedure_parameter(&p, types, override)
 				}
 
 				if default, has_default := config.procedure_parameter_defaults[param_key]; has_default {
@@ -502,20 +489,8 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 	}
 
 	for &d in decls {
-		if d.explicitly_created {
-			continue
-		}
-
-		_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
-
-		if is_proc {
-			d.name = strings.trim_prefix(d.name, config.remove_function_prefix)
-		} else if d.from_macro {
-			d.name = strings.trim_prefix(d.name, config.remove_macro_prefix)
-		} else {
-			d.name = string(final_type_name(Type_Name(d.name), config))
-		}
-
+		d.name = final_decl_name(d, types, config)
+		
 		switch &def in d.def {
 		case Type_Name: d.def = final_type_name(def, config)
 		case Macro_Name: d.def = final_macro_name(def, config)
@@ -523,6 +498,26 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 		case Fixed_Value:
 		case Type_Index:
 		}
+	}
+}
+
+override_procedure_parameter :: proc(p: ^Type_Procedure_Parameter, types: Type_List, override: string) {
+	if override == "[^]" {
+		if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
+			p.type = add_type(types, Type_Multipointer {
+				pointed_to_type = ptr_type.pointed_to_type,
+			})	
+		}	
+	} else if override == "#by_ptr" {
+		if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
+			p.type = add_type(types, Type_Pointer_By_Ptr {
+				pointed_to_type = ptr_type.pointed_to_type,
+			})
+		}
+	} else if override == "#any_int" {
+		p.any_int = true
+	} else {
+		p.type = Fixed_Value(override)
 	}
 }
 
@@ -642,6 +637,35 @@ ensure_name_valid :: proc(s: string) -> string {
 	}
 
 	return s
+}
+
+final_decl_name :: proc(d: Decl, types: Type_List, config: Config) -> string {
+	if d.explicitly_created {
+		return d.name
+	}
+
+	if new_name, rename := config.rename[string(d.name)]; rename {
+		return new_name
+	}
+
+	_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
+
+	if is_proc {
+		return strings.trim_prefix(d.name, config.remove_function_prefix)
+	} else if d.from_macro {
+		return strings.trim_prefix(d.name, config.remove_macro_prefix)
+	} else {
+		res := strings.trim_prefix(d.name, config.remove_type_prefix)
+		res = strings.trim_suffix(res, config.remove_type_suffix)
+
+		if config.force_ada_case_types {
+			res = strings.to_ada_case(res)
+		}
+
+		return res
+	}
+
+	return d.name
 }
 
 final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
