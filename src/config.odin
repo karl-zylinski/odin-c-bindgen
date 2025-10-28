@@ -19,6 +19,9 @@ Config :: struct {
 
 	// Remove this prefix from function names (and add it as link_prefix) to the foreign group
 	remove_function_prefix: string,
+
+	// Remove this suffix from type names (structs, enum, etc)
+	remove_type_suffix: string,
 	
 	// Set to true translate type names to Ada_Case
 	force_ada_case_types: bool,

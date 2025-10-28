@@ -650,6 +650,7 @@ final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {
 	}
 
 	res := strings.trim_prefix(string(name), config.remove_type_prefix)
+	res = strings.trim_suffix(res, config.remove_type_suffix)
 
 	if config.force_ada_case_types {
 		res = strings.to_ada_case(res)
