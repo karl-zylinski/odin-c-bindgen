@@ -58,6 +58,9 @@ remove_macro_prefix = ""
 // Remove this prefix from function names (and add it as link_prefix) to the foreign group
 remove_function_prefix = ""
 
+// Remove this suffix from type names (such as '_t' etc)
+remove_type_suffix = ""
+
 // Set to true translate type names to Ada_Case
 force_ada_case_types = false
 
