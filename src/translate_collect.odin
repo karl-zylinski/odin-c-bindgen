@@ -40,6 +40,8 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 
 	clang_args: [dynamic]cstring
 	append(&clang_args, "-fparse-all-comments")
+	// Strict mode: warn about undefined/implicit types
+	append(&clang_args, "-Wimplicit")
 
 	for &include in config.clang_include_paths {
 		append(&clang_args, fmt.ctprintf("-I%v", include))
@@ -79,6 +81,30 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 	if err != .Success {
 		log.errorf("Failed to parse translation unit for %s. Error code: %v", filename, err)
 		return {}, false
+	}
+
+	// Check for diagnostics
+	for i in 0 ..< clang.getNumDiagnostics(unit) {
+		diag := clang.getDiagnostic(unit, i)
+		severity := clang.getDiagnosticSeverity(diag)
+		diag_message := string_from_clang_string(clang.formatDiagnostic(diag, clang.defaultDiagnosticDisplayOptions()))
+
+		log_level: log.Level
+		switch severity {
+		case .Ignored:
+			log_level = .Debug
+		case .Note:
+			log_level = .Info
+		case .Warning:
+			log_level = .Warning
+		case .Error:
+			log_level = .Error
+		case .Fatal:
+			log_level = .Fatal
+		}
+		log.log(log_level, diag_message)
+
+		clang.disposeDiagnostic(diag)
 	}
 
 	file := clang.getFile(unit, filename_cstr)
