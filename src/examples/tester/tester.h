@@ -4,6 +4,8 @@
 
 #include <stdarg.h>     // Required for: va_list - Only used by TraceLogCallback
 
+#define SOME_THING (1 << 16)
+
 #ifndef PI
     #define PI 3.14159265358979323846f
 #endif
@@ -24,9 +26,7 @@ typedef struct ufbx_vec2 {
 typedef struct hello hello;
 
 struct hello {
-	ufbx_string name;
-	ufbx_dom_node_list children;
-	ufbx_dom_value_list values;
+	const char* name;
 };
 
 
@@ -98,7 +98,7 @@ union Un {
 	int x;
 	struct Test1 t;
 	float y;
-}
+};
 
 typedef struct Test1 Test3;
 
@@ -115,6 +115,10 @@ typedef unsigned char *(*LoadFileDataCallback)(const char *fileName, int *dataSi
 typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataSize);   // FileIO: Save binary data
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileIO: Save text data
+
+typedef struct Shader {
+	int internal;
+};
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);

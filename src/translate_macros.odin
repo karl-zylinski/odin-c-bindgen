@@ -166,11 +166,11 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, tv)
 				p(&b, ' ')
 
-			case "(", ")", "-", "*", "/", "+":
-				p(&b, tv)
-
 			case "~":
 				notted = true
+
+			case:
+				p(&b, tv)
 			}
 		case .Keyword:
 			return ""
