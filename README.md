@@ -177,7 +177,7 @@ In `bindgen.sjson`:
 
 ```
 bit_setify = {
-	"your_enum" = "the_bit_set_type"
+	"Enum_To_Turn_Into_Bitset" = "New_Enum_Type_Name"
 }
 ```
 
