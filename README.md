@@ -181,9 +181,10 @@ bit_setify = {
 }
 ```
 
-This will create a type `the_bit_set_type :: bit_set[your_enum; c.int`.
+This will replace the type `Enum_To_Turn_Into_Bitset` (an enum) with a bit_set. The type will look like this:
+This will create a type `Enum_To_Turn_Into_Bitset :: bit_set[New_Enum_Type_Name; i32]`.
 
-It will also translate the values of the enum by calculating their log2 value (that gives you the bit index instead of the integer value corresponding to that bit).
+The members that `Enum_To_Turn_Into_Bitset` had when it was an enum will be moved into a new enum called `New_Enum_Type_Name`. Within that enum the members will have their values converted using a log2 procedure. The log2 procedure turns for example 2 into 1 and 4 into 2. The bit_set itself will use these numbers to target a specific bit within its backing type.
 
 ### My headers can't find other headers in the same folder
 
