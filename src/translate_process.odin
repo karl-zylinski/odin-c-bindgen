@@ -138,7 +138,15 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 		#partial switch &v in type {
 		case Type_Enum:
+			automatically_strip_member_prefixes := true
+
 			{
+				strip_member_prefix := config.remove_enum_member_prefix[d.name]
+
+				if strip_member_prefix != "" {
+					automatically_strip_member_prefixes = false
+				}
+
 				new_members: [dynamic]Type_Enum_Member
 				
 				member_loop: for m in v.members {
@@ -158,10 +166,24 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 						}
 					}
 
-					append(&new_members, m)
+					new_m := m
+					new_m.name = strings.trim_prefix(new_m.name, strip_member_prefix)
+
+					append(&new_members, new_m)
 				}
 
 				v.members = new_members[:]
+			}
+
+			if automatically_strip_member_prefixes {
+				strip_enum_member_prefixes(&v)
+			}
+
+			// Stripping might have caused members to start with a number. Fix that!
+			for &m in v.members {
+				if is_number(m.name[0]) {
+					m.name = fmt.tprintf("_%v", m.name)
+				}
 			}
 
 			bit_set_enum_name, bit_setify := config.bit_setify[d.name]
@@ -403,18 +425,6 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 			}
 		}
 	}
-
-	for &m in e.members {
-		name_without_overlap := m.name[overlap_length:]
-
-		if len(name_without_overlap) != 0 {
-			m.name = name_without_overlap
-
-			if is_number(m.name[0]) {
-				m.name = fmt.tprintf("_%v", m.name)
-			}
-		}
-	}
 }
 
 // Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
@@ -454,7 +464,6 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 			}
 
 		case Type_Enum:
-			strip_enum_member_prefixes(&tv)
 
 		case Type_Bit_Set:
 			if type_name, is_type_name := tv.enum_decl_name.(Type_Name); is_type_name {

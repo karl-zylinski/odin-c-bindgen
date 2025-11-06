@@ -104,6 +104,13 @@ typedef struct Test1 Test3;
 
 typedef Test3 Test15;
 
+typedef enum{
+	RENDER_TARGET_FORMAT_RGBA8_UNORM,
+	RENDER_TARGET_FORMAT_RGBA16F,
+	RENDER_TARGET_FORMAT_RG16F,
+	RENDER_TARGET_FORMAT_RGBA32F,
+	RENDER_TARGET_FORMAT_32F
+}RenderTargetFormat_t;
 
 typedef struct {
 	int (*hello)(void* data, int len);
@@ -116,9 +123,9 @@ typedef bool (*SaveFileDataCallback)(const char *fileName, void *data, int dataS
 typedef char *(*LoadFileTextCallback)(const char *fileName);            // FileIO: Load text data
 typedef bool (*SaveFileTextCallback)(const char *fileName, char *text); // FileIO: Save text data
 
-typedef struct Shader {
+typedef struct {
 	int internal;
-};
+} Shader;
 
 Shader LoadShader(const char *vsFileName, const char *fsFileName);  
 Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);

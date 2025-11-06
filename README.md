@@ -114,6 +114,14 @@ remove_enum_members = [
 	// "_*Count"
 ]
 
+// Enums automatically have any prefix that is sharred by all members removed. This sometimes
+// misbehaves for certain names. Use this setting to manually set the perfix to remove for a
+// certain enum type.
+remove_enum_member_prefix = {
+	// "enum type name" = "enum member prefix to strip"
+	// "PixelFormat" = "PIXEL_FORMAT_"
+}
+
 // Overrides the type of a procedure parameter or return value. For a parameter use the key
 // Proc_Name.parameter_name. For a return value use the key Proc_Name.
 //
