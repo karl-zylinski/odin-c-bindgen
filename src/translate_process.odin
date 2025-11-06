@@ -425,6 +425,16 @@ strip_enum_member_prefixes :: proc(e: ^Type_Enum) {
 			}
 		}
 	}
+
+	if overlap_length > 0 {
+		for &m in e.members {
+			name_without_overlap := m.name[overlap_length:]
+
+			if len(name_without_overlap) != 0 {
+				m.name = name_without_overlap
+			}
+		}
+	}
 }
 
 // Give all types and declarations their final names. Based on config, but also strips enum prefixes etc.
