@@ -43,7 +43,7 @@ procedure_type_overrides = {
     "ufbx_generate_indices.streams" = "[^]"
 }
 
-bit_setify = {
+bit_setify_enum = {
     "ufbx_prop_flags" = "Prop_Flag"
     "ufbx_transform_flags" = "Transform_Flag"
     "ufbx_baked_key_flags" = "Baked_Key_Flag"

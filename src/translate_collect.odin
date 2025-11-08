@@ -2,6 +2,7 @@
 #+feature dynamic-literals
 package bindgen2
 
+import "core:math/bits"
 import clang "../libclang"
 import "core:slice"
 import "core:log"
@@ -117,6 +118,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		translation_unit = unit,
 		types = types,
 		decls = decls,
+		config = config,
 	}
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
@@ -155,7 +157,9 @@ Translate_Collect_State :: struct {
 	source: string,
 	extra_imports: map[string]bool,
 	macros: [dynamic]Raw_Macro,
+	bit_set_macros: map[string][dynamic]Raw_Macro,
 	translation_unit: clang.Translation_Unit,
+	config: Config,
 }
 
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
@@ -369,7 +373,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 				}
 			}
 
-			append(&tcs.macros, Raw_Macro {
+			raw_macro := Raw_Macro {
 				name = name,
 				is_function_like = clang.Cursor_isMacroFunctionLike(c) == 1,
 				tokens = tokens,
@@ -378,7 +382,20 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 				whitespace_before_side_comment = side_comment_align_whitespace,
 				whitespace_after_name = whitespace_after_name,
 				original_line = line,
-			})
+			}
+
+			// We process macros that will be converted into enum bitsets separately
+			for old_type_name, bsm in tcs.config.bit_setify_macro {
+				if strings.starts_with(name, bsm.member_prefix) {
+					// map_entry will create a dynamic array for us if it doesn't exist
+					_, bit_set_macros, _, err := map_entry(&tcs.bit_set_macros, old_type_name)
+					assert(err == nil)
+					append(bit_set_macros, raw_macro)
+					return
+				}
+			}
+
+			append(&tcs.macros, raw_macro)
 		}
 	}
 }
@@ -938,6 +955,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			type_id = create_proc_type(tcs.children_lookup[c], unwrapped_type, tcs)
 		} else {
 			type_id = get_type_name_or_create_anon_type(unwrapped_type, tcs)
+			try_bit_setify_macro(tcs, &type_id, ct)
 		}
 
 		type_definition := Type_Alias {
@@ -984,6 +1002,78 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 	//log.error("Unknown type")
 	return TYPE_INDEX_NONE
+}
+
+try_bit_setify_macro :: proc(tcs: ^Translate_Collect_State, type_id: ^Definition, ct: clang.Type) {
+	MathOp :: enum {
+		ADD,
+		SUB,
+		LSHIFT,
+		RSHIFT,
+	}
+	if bsm := tcs.config.bit_setify_macro; len(bsm) != 0 { 
+		typedef_name := string_from_clang_string(clang.getTypedefName(ct))
+		if macro, exists := tcs.config.bit_setify_macro[typedef_name]; exists { 
+			
+			type_id^ = Type_Name(fmt.tprintf("bit_set[%s; %s]", macro.new_enum_name, type_id^))
+			members: [dynamic]Type_Enum_Member
+			for member_macro in tcs.bit_set_macros[typedef_name] {
+				value: uint
+				op: MathOp
+				for token in member_macro.tokens {
+					switch token.kind {
+					case .Literal:
+						if v, ok := strconv.parse_uint(token.value); ok {
+							// We currently only support common math and bit stuff that's used for bitsets
+							switch op {
+							case .ADD:
+								value += v
+							case .SUB:
+								value -= v
+							case .LSHIFT:
+								value = value << v 
+							case .RSHIFT:
+								value = value >> v
+							}
+						}
+					case .Punctuation:
+						switch token.value {
+						case "+":
+							op = .ADD
+						case "-":
+							op = .SUB
+						case "<<":
+							op = .LSHIFT
+						case ">>":
+							op = .RSHIFT
+						}
+					case .Keyword, .Identifier:
+					}
+				}
+
+				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
+				value = bits.log2(value)
+
+				member := Type_Enum_Member {
+					name = member_macro.name[len(macro.member_prefix):],
+					value = int(value),
+				}
+				append(&members, member)
+			}
+			enum_idx := add_type(tcs.types, Type_Enum {
+				members = members[:],
+			})
+			
+			enum_decl := Decl {
+				name = macro.new_enum_name,
+				from_macro = true,
+				def = enum_idx,
+				original_line = tcs.decls[len(tcs.decls)-1].original_line + 1,
+			}
+			
+			add_decl(tcs.decls, enum_decl)
+		}
+	}
 }
 
 get_cursor_name :: proc(cursor: clang.Cursor) -> string {
