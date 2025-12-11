@@ -41,7 +41,7 @@ main :: proc() {
 	default_package_name := "pkg"
 
 	if config_dir_handle, config_dir_handle_err := os2.open(dir); config_dir_handle_err == nil {
-		if stat, stat_err := config_dir_handle.fstat(config_dir_handle, context.allocator); stat_err == nil {
+		if stat, stat_err := os2.fstat(config_dir_handle, context.allocator); stat_err == nil {
 			default_output_folder = stat.name
 			default_package_name = stat.name
 		}
