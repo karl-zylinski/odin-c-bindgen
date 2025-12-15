@@ -139,10 +139,11 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		#partial switch &v in type {
 		case Type_Enum:
 			automatically_strip_member_prefixes := true
+			strip_member_prefix := config.remove_enum_member_prefix[d.name]
+
+			original_member_names: [dynamic]string
 
 			{
-				strip_member_prefix := config.remove_enum_member_prefix[d.name]
-
 				if strip_member_prefix != "" {
 					automatically_strip_member_prefixes = false
 				}
@@ -165,6 +166,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 							continue member_loop
 						}
 					}
+
+					append(&original_member_names, m.name)
 
 					new_m := m
 					new_m.name = strings.trim_prefix(new_m.name, strip_member_prefix)
@@ -199,7 +202,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				new_members: [dynamic]Type_Enum_Member
 
 				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
-				for m in v.members {
+				for m, m_idx in v.members {
 					if m.value == 0 {
 						continue
 					}
@@ -213,11 +216,17 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 							value = m.value,
 						})
 
-						all_constant := strings.to_screaming_snake_case(strings.trim_prefix(strings.to_lower(m.name), strings.to_lower(config.remove_type_prefix)))
+						name := m.name
+
+						if len(original_member_names) == len(v.members) {
+							name = original_member_names[m_idx]
+						}
+
+						constant_name := strings.to_screaming_snake_case(strings.trim_prefix(strings.to_lower(name), strings.to_lower(config.remove_type_prefix)))
 
 						add_decl(decls, {
 							original_line = d.original_line + 2,
-							name = all_constant,
+							name = constant_name,
 							def = bs_constant_idx,
 							explicitly_created = true,
 						})
