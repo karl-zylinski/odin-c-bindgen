@@ -143,8 +143,6 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 	curly_braces: int
 
 	b := strings.builder_make()
-	literal_type: Literal_Type_Info
-	notted: bool
 
 	for ems.cur_token < len(ems.tokens) {
 		t := cur(ems)
@@ -174,37 +172,19 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, ' ')
 
 			case "~":
-				notted = true
+				p(&b, tv)
 
 			case:
 				p(&b, tv)
 			}
 		case .Keyword:
 			return ""
+
 		case .Identifier:
-			if tv == "UINT64_MAX" {
-				notted = true
-				literal_type = .U64
-				break
-			}
-
-			if tv == "UINT32_MAX" {
-				notted = true
-				literal_type = .U32
-				break
-			}
-
-			if tv == "INT32_MAX" {
-				notted = true
-				literal_type = .I32
-				break
-			}
-
-			if tv == "INT64_MAX" {
-				notted = true
-				literal_type = .I64
-				break
-			}
+			if tv == "UINT64_MAX" { p(&b, "max(u64)"); break }
+			if tv == "UINT32_MAX" { p(&b, "max(u32)"); break }
+			if tv == "INT32_MAX"	{ p(&b, "max(i32)"); break }
+			if tv == "INT64_MAX"	{ p(&b, "max(i64)"); break }
 
 			if parse_identifier(&ems, &b) == false {
 				mapped, has_mapping := c_type_mapping[tv]
@@ -216,26 +196,12 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				}
 			}
 		case .Literal:
-			if type, ok := parse_literal(&b, tv); ok == false {
+			if _, ok := parse_literal(&b, tv); ok == false {
 				return ""
-			} else {
-				literal_type = type
 			}
 		}
 
 		adv(&ems)
-	}
-
-	if notted {
-		switch literal_type {
-		case .None:
-		case .U32: return "max(u32)"
-		case .I32: return "max(i32)"
-		case .U64: return "max(u64)"
-		case .I64: return "max(i64)"
-		}
-
-		log.errorf("Unknown type: %v", ems.tokens)
 	}
 
 	return strings.to_string(b)
