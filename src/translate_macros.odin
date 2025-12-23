@@ -367,7 +367,6 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		args: []string
 
 		if inner_macro.is_function_like {
-			adv(ems)
 			args = parse_parameter_list(ems)
 		}
 
