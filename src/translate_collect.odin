@@ -781,16 +781,18 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		return idx
 	}
 
-	to_add: Maybe(Type)
-
 	#partial switch ct.kind {
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
 		if clang_pointee_type.kind == .Void {
-			to_add = Type_Raw_Pointer{}
+			idx := reserve_type(ct, tcs)
+			tcs.types[idx] = Type_Raw_Pointer{}
+			return idx
 		} else if type_probably_is_cstring(ct) {
-			to_add = Type_CString{}
+			idx := reserve_type(ct, tcs)
+			tcs.types[idx] = Type_CString{}
+			return idx
 		} else if clang_pointee_type.kind == .FunctionProto {
 			return create_proc_type(tcs.children_lookup[clang.getTypeDeclaration(clang_pointee_type)], clang_pointee_type, tcs)
 		} else {
@@ -1002,12 +1004,6 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 	case .FunctionProto, .FunctionNoProto:
 		return create_proc_type({}, ct, tcs)
-	}
-
-	if t, t_ok := to_add.?; t_ok {
-		idx := reserve_type(ct, tcs)
-		tcs.types[idx] = t
-		return idx
 	}
 
 	//log.error("Unknown type")
