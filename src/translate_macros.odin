@@ -1,3 +1,8 @@
+// This file takes the macro information collected by `translate_collect.odin` and evaluates the
+// macros. This way we can turn `#define` constants into Odin constants.
+//
+// Thought: Could we use a Declaration with some Raw_Macro type and just fix this in
+// translate_process?
 #+private file
 package bindgen2
 
@@ -7,7 +12,6 @@ import "core:log"
 
 _ :: log
 
-// TODO could we use a Declaration with some Raw_Macro type and just fix this in translate_process?
 @(private="package")
 Raw_Macro :: struct {
 	name: string,
