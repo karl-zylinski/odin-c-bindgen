@@ -1,4 +1,9 @@
 // This file "collects" information from the headers we are creating bindings for, using libclang.
+//
+// It tries to do as little processing of the information as possible. It is usually good to first
+// collect all information and then process it, as you otherwise get issues with knowing if
+// something has already been declared etc. The processing happens in `translate_process.odin` and
+// and `translate_macros.odin`.
 #+private file
 #+feature dynamic-literals
 package bindgen2
@@ -760,11 +765,16 @@ unwrap_proc_pointers :: proc(t: clang.Type) -> (unwrapped_type: clang.Type, is_p
 	return t, (t.kind == .FunctionProto || t.kind == .FunctionNoProto)
 }
 
+// Used to create entries in `tcs.types` given a `clang.Type`. Has a lookup so that types can refer
+// to other types. This makes it possible to create types such as `^^Some_Struct` where everyone
+// sees the same type `Some_Struct`.
 create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
 	if t_idx, has_t_idx := tcs.type_lookup[ct]; has_t_idx {
 		return t_idx
 	}
 
+	// Anonymous types are those that do not end up in `type_lookup`. They can never be referred to
+	// other than by the thing that calls this proc. Used for inline type definitions.
 	add_anonymous_type :: proc(t: Type, types: ^[dynamic]Type) -> Type_Index {
 		idx := Type_Index(len(types))
 		append(types, t)
