@@ -1,3 +1,4 @@
+// This file "collects" information from the headers we are creating bindings for, using libclang.
 #+private file
 #+feature dynamic-literals
 package bindgen2
@@ -11,6 +12,8 @@ import "core:unicode"
 import "core:unicode/utf8"
 import "core:fmt"
 
+// Return value of `translate_collect`. It's not all that proc returns however, it also writes into
+// its `types` and `decls` parameters.
 @(private="package")
 Translate_Collect_Result :: struct {
 	source: string,
@@ -18,9 +21,8 @@ Translate_Collect_Result :: struct {
 	macros: []Raw_Macro,
 }
 
-// Parses the C headers and "collects" the things we need from them. This will create a bunch types
-// and declarations in the `Translate_State` struct. This file avoids doing any furher processing,
-// that is deferred to `translate_process`.
+// Parses the C headers and "collects" the things we need from them. This file avoids doing any
+// further processing, that is deferred to `translate_macros` and `translate_process`.
 @(private="package", require_results)
 translate_collect :: proc(filename: string, config: Config, types: Type_List, decls: Decl_List) -> (Translate_Collect_Result, bool) {
 	clang_version := string_from_clang_string(clang.getClangVersion())
@@ -39,6 +41,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 	}
 
 	clang_args: [dynamic]cstring
+	// This makes sure we get comments in the clang AST.
 	append(&clang_args, "-fparse-all-comments")
 	// Strict mode: warn about undefined/implicit types
 	append(&clang_args, "-Wimplicit")
@@ -67,6 +70,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 
 	filename_cstr := to_cstring(filename)
 
+	// This makes an Abstract Syntax Tree (AST) that can be browsed using the libclang API.
 	err := clang.parseTranslationUnit2(
 		index,
 		filename_cstr,
@@ -83,7 +87,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		return {}, false
 	}
 
-	// Check for diagnostics
+	// Check for diagnostics (errors and such).
 	for i in 0 ..< clang.getNumDiagnostics(unit) {
 		diag := clang.getDiagnostic(unit, i)
 		severity := clang.getDiagnosticSeverity(diag)
@@ -113,6 +117,8 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 	source := clang.getFileContents(unit, file, &source_size)
 
 	tcs := Translate_Collect_State {
+		// The source is used to extract some comments in `translate_process`. Clang fails to
+		// include some comments.
 		source = strings.string_from_ptr((^u8)(source), int(source_size)),
 		translation_unit = unit,
 		types = types,
@@ -121,6 +127,9 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
 	// children. That way we can use this lookup to find arrays of children and iterate them normally.
+	//
+	// Also, the combination of Odin + C visitors is annoying because the context isn't passed
+	// along, making it even worse.
 	build_cursor_children_lookup(root_cursor, &tcs.children_lookup)
 
 	root_children := tcs.children_lookup[root_cursor]
@@ -147,6 +156,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 
 Cursor_Children_Map :: map[clang.Cursor][]clang.Cursor
 
+// Convenient blob to pass around within this file, instead of lots of procs params.
 Translate_Collect_State :: struct {
 	decls: Decl_List,
 	type_lookup: map[clang.Type]Type_Index,
@@ -158,6 +168,8 @@ Translate_Collect_State :: struct {
 	translation_unit: clang.Translation_Unit,
 }
 
+// Recursive proc to visit everthing in AST and make a handy lookup so we don't have to use
+// visitor callbacks later.
 build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map) {
 	Build_Children_State :: struct {
 		res: ^Cursor_Children_Map,
@@ -184,6 +196,8 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 	res[c] = bcs.children[:]
 }
 
+// Finds things such as procs and struct declarations and stores them in `tcs.decls`. Recursive.
+// Also runs `create_type_recursive` which will fill out `tcs.types`.
 create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	if clang.Cursor_isAnonymous(c) == 1 && c.kind != .EnumDecl {
 		return
@@ -192,8 +206,12 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 	name := get_cursor_name(c)
 	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
 	line := get_cursor_location(c).line
+
+	// When the cursor is actually defined somewhere else in the file. Used later to resolve
+	// forward declarations.
 	is_forward_declare := clang.isCursorDefinition(c) == 0
 
+	// Comments on the right side of the line aren't picked up by clang. So we extract them manually.
 	side_comment: string
 	side_comment_align_whitespace: int
 	{
