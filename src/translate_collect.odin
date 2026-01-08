@@ -641,7 +641,7 @@ is_fixed_array :: proc(ct: clang.Type) -> bool {
 
 // This is a separate proc because we call it both from create_type_recursive and from
 // create_declaration. It's used in create_declaration so we get a unique proc type per proc.
-// Otherweise the FunctionProto stuff may make it so that ther are shared proc types, which will
+// Otherwise the FunctionProto stuff may make it so that there are shared proc types, which will
 // break stuff.
 create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
 	proc_type := reserve_type(ct, tcs)
@@ -785,6 +785,9 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 	case .Pointer:
 		clang_pointee_type := clang.getPointeeType(ct)
 
+		// The current type is a pointer. Here we do some special cases for void pointers and
+		// string-like things. This makes `void*` become `rawptr` etc.
+
 		if clang_pointee_type.kind == .Void {
 			idx := reserve_type(ct, tcs)
 			tcs.types[idx] = Type_Raw_Pointer{}
@@ -794,6 +797,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			tcs.types[idx] = Type_CString{}
 			return idx
 		} else if clang_pointee_type.kind == .FunctionProto {
+			// In Odin a function pointer type should be just `proc`, not `^proc`. This is because
+			// all procs in Odin are pointers.
 			return create_proc_type(tcs.children_lookup[clang.getTypeDeclaration(clang_pointee_type)], clang_pointee_type, tcs)
 		} else {
 			ptr_type_idx := reserve_type(ct, tcs)
@@ -801,6 +806,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			tcs.types[ptr_type_idx] = Type_Pointer { pointed_to_type = pointing_to_id }
 			return ptr_type_idx
 		}
+
+	// Structs and raw unions
 	case .Record:
 		c := clang.getTypeDeclaration(ct)
 		struct_type_idx := reserve_type(ct, tcs)
@@ -816,6 +823,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				sct := clang.getCursorType(sc)
 				type_id: Definition
 
+				// Check if field is function pointer. In that case create the proc type directly,
+				// bypassing one level of pointerness.
 				if unwrapped_type, is_proc := unwrap_proc_pointers(sct); is_proc {
 					type_id = create_proc_type(tcs.children_lookup[sc], unwrapped_type, tcs)
 				} else {
@@ -846,7 +855,12 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 						line = field_loc.line,
 					})
 				}
-
+			
+			// This is for fields that are anonymous struct types. Note that there are Record,
+			// StructDecl and UnionDecl. Record is the cursor kind used for struct or union types.
+			// StructDecl and UnionDecl are the cursor kinds for the declarations themselves. I.e.
+			// named things in the file. However, there can be unnamed decls as we see here, which
+			// happens when we have this kind of anonymous struct types. 
 			case .StructDecl, .UnionDecl:
 				if clang.Cursor_isAnonymousRecordDecl(sc) == 1 {
 					sct := clang.getCursorType(sc)
@@ -978,6 +992,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		return alias_type_idx
 	case .ConstantArray:
+		// For fixed size arrays. 
 		array_type_idx := reserve_type(ct, tcs)
 		clang_element_type := clang.getArrayElementType(ct)
 
@@ -991,6 +1006,8 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		return array_type_idx
 
 	case .IncompleteArray:
+		// For arrays that don't have a specified size. This is actually just an array in C. But the
+		// array-ness of hints that this should be a multi pointer.
 		array_type_idx := reserve_type(ct, tcs)
 		clang_element_type := clang.getArrayElementType(ct)
 
