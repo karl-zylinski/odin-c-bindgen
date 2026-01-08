@@ -1,3 +1,5 @@
+// This file takes care of loading the bindgen config and then runs procs in the `translate_X.odin`
+// files and the `output.odin` file in order to generate the bindings.
 package bindgen2
 
 import vmem "core:mem/virtual"
@@ -27,6 +29,9 @@ main :: proc() {
 	config_filename: string
 	dir: string
 
+	// Check if the path the user points to is a directory or a .sjson file. The user can supply one
+	// or the other. If the path the user points to is a file, then the directory where the file
+	// lives will be used a "working directory."
 	if strings.has_suffix(config_dir_or_file, ".sjson") && os.is_file(config_dir_or_file) {
 		config_filename = config_dir_or_file
 		dir = filepath.dir(config_dir_or_file)
@@ -37,6 +42,7 @@ main :: proc() {
 		fmt.panicf("%v is not a directory nor a valid config file", config_dir_or_file)
 	}
 
+	// These are almost never used. The are a fallback if it fails to stat the directory below.
 	default_output_folder := "output"
 	default_package_name := "pkg"
 
@@ -62,9 +68,17 @@ main :: proc() {
 			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
 		}
 	} else {
+		// If the user points to a directory and there is no `bindgen.sjson` inside it, then we will
+		// set the folder itself as input. This is a "quick and dirty" path to generating bindings:
+		// You do not really need a config for very simple things.
 		config.inputs = slice.clone([]string{"."})
 	}
 
+	// The working dir of the program may not be the same as `dir`. Therefore, we add `dir` to any
+	// path that comes out of the config.
+	//
+	// Initially, I changed the working directory (using some OS proc) instead of adding `dir` to
+	// the path, but it lead to other problems.
 	output_folder := filepath.join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
 	package_name := config.package_name != "" ? config.package_name : default_package_name
 	
@@ -104,6 +118,13 @@ main :: proc() {
 
 	for input_filename in input_files {
 		if filepath.ext(input_filename) == ".h" {
+			// We use a separate virtual arena for the types and the decls. When a dynamic array
+			// reallocs using a virtual arena, then it can grow in-place if nothing else has been
+			// allocated after it. Therefore these two have their own arena.
+			//
+			// Since they don't move in virtual memory when they grow, it means that pointers etc to
+			// elements never get stale (given we don't remove things, which we don't, we just
+			// append).
 			types_arena: vmem.Arena
 			types_arena_err := vmem.arena_init_static(&types_arena, 100 * mem.Megabyte)
 			log.assertf(types_arena_err == nil, "Failed reserving types arena memory. Error: %v", types_arena_err)
@@ -117,9 +138,14 @@ main :: proc() {
 			decl_arr := make([dynamic]Decl, allocator = vmem.arena_allocator(&decls_arena))
 			decls := Decl_List(&decl_arr)
 
+			// Add dummy to both arrays so index `0` isn't a valid item. This means we can use index
+			// `0` as a "no item found" marker.
 			add_decl(decls, {})
 			add_type(types, {})
 
+			// Set allocator and temp allocator to an arena so we can just clear it after each lap
+			// of this loop. This makes the memory management within each generation pass "script
+			// like".
 			gen_arena: vmem.Arena
 			context.allocator = vmem.arena_allocator(&gen_arena)
 			context.temp_allocator = vmem.arena_allocator(&gen_arena)
