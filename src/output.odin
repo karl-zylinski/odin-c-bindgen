@@ -1,5 +1,6 @@
-// Never import clang within this file. Resolve any clang-related things in one of the
-// translate_X.odin files.
+//
+//
+// Never import clang within this file. Resolve any clang-related things in translate_collect.odin.
 #+private file
 package bindgen2
 

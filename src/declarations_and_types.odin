@@ -150,6 +150,9 @@ Type_Bit_Set :: struct {
 	enum_type: Type_Index,
 }
 
+// When bit-setifying, there may exist values that are not power-of-two. Those can't be in the
+// bitset because they won't have a unique bit associated with them. They will instead be outputted
+// as separate constants.
 Type_Bit_Set_Constant :: struct {
 	bit_set_type: Type_Index,
 	bit_set_type_name: Type_Name,
