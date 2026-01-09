@@ -204,6 +204,14 @@ clang_include_paths = [
 ]
 ```
 
+## Contributing
+
+If you want to fix issues or add features, then you can create a Pull Request to this repository.
+
+Check out the [Issues](https://github.com/karl-zylinski/odin-c-bindgen/issues) tab and see if there is something you could help with.
+
+To learn more about how the program works, start by looking in the `main.odin` file. That file loads the bindgen configuration file and then runs procedures in `translate_collect.odin`, `translate_macros.odin`, `translate_process.odin` and `output.odin`. All those files have some comments that try to explain what they do.
+
 ## Acknowledgements
 
 Big thanks to [Xandaron](https://github.com/xandaron/) for figuring out a lot of the libclang stuff.
