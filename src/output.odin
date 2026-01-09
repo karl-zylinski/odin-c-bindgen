@@ -1,4 +1,5 @@
-//
+// This file takes the processed output from `translate_process.odin` and turns it into an Odin
+// source file. This is done using simple printing.
 //
 // Never import clang within this file. Resolve any clang-related things in translate_collect.odin.
 #+private file
@@ -56,6 +57,8 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 		proc_calling_convention: Calling_Convention,
 	}
 
+	// We group things by type, this makes it possible to create nice alignment between the name
+	// and type.
 	current_group: Output_Group
 
 	for &d in decls {
@@ -89,6 +92,8 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 
 		multiline := strings.contains_rune(rhs, '\n')
 
+		// This check is a bit complicated. It breaks things into separate groups depending on if
+		// the group kind changes, if the proc calling convention changes etc.
 		if kind != current_group.kind ||
 			(kind == .Proc && current_group.proc_calling_convention != proc_type.calling_convention) ||
 			d.comment_before != "" ||
@@ -250,6 +255,8 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 
 	pln(b, " {")
 
+	// Struct fields are grouped by comment. If there is a comment before a line then all the lines
+	// after it without a comment before that line will be grouped together.
 	current_group: Struct_Fields_Group
 	first_field := true
 

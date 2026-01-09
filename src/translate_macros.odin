@@ -12,6 +12,7 @@ import "core:log"
 
 _ :: log
 
+// "Raw" as in not evaluated yet.
 @(private="package")
 Raw_Macro :: struct {
 	name: string,
@@ -39,8 +40,10 @@ Raw_Macro_Token_Kind :: enum {
 	Literal,
 }
 
+// Takes the Raw_Macros and turns them into declarations, often constants.
 @(private="package")
 translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
+	// Create lookup / acceleration structures.
 	existing_declaration_names: map[string]int
 
 	for d, i in decls {
