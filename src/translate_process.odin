@@ -189,9 +189,9 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				}
 			}
 
-			bit_set_enum_name, bit_setify := config.bit_setify[d.name]
+			bit_set_enum_name, bit_setify_enum := config.bit_setify_enum[d.name]
 
-			if bit_setify {
+			if bit_setify_enum {
 				clear(&bit_set_make_constant)
 
 				bs_idx := add_type(types, Type_Bit_Set {

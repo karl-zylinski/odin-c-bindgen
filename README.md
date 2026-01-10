@@ -84,7 +84,7 @@ rename = {
 //
 // Note that the enum will be turned into a bit_set type. There will be a new type created that
 // contains the actual enum, which the bit_set then references.
-bit_setify = {
+bit_setify_enum = {
 	// "Enum_To_Turn_Into_Bitset" = "New_Enum_Type_Name"
 }
 
@@ -184,7 +184,7 @@ Use `imports_file` in `bindgen.sjson`. See `examples/raylib`
 In `bindgen.sjson`:
 
 ```
-bit_setify = {
+bit_setify_enum = {
 	"Enum_To_Turn_Into_Bitset" = "New_Enum_Type_Name"
 }
 ```
