@@ -4,35 +4,41 @@
 // Thought: Could we use a Declaration with some Raw_Macro type and just fix this in
 // translate_process?
 #+private file
+// This file takes the macro information collected by `translate_collect.odin` and evaluates the
+// macros. This way we can turn `#define` constants into Odin constants.
+//
+// Thought: Could we use a Declaration with some Raw_Macro type and just fix this in
+// translate_process?
+
 package bindgen2
 
-import "core:strings"
 import "core:fmt"
 import "core:log"
+import "core:strings"
 
 _ :: log
 
 // "Raw" as in not evaluated yet.
-@(private="package")
+@(private = "package")
 Raw_Macro :: struct {
-	name: string,
-	tokens: []Raw_Macro_Token,
-	is_function_like: bool,
-	comment: string,
-	side_comment: string,
+	name:                           string,
+	tokens:                         []Raw_Macro_Token,
+	is_function_like:               bool,
+	comment:                        string,
+	side_comment:                   string,
 	whitespace_before_side_comment: int,
-	whitespace_after_name: int,
-	original_line: int,
+	whitespace_after_name:          int,
+	original_line:                  int,
 }
 
-@(private="package")
+@(private = "package")
 Raw_Macro_Token :: struct {
 	value: string,
-	kind: Raw_Macro_Token_Kind,
+	kind:  Raw_Macro_Token_Kind,
 }
 
 // Same as Token_Kind in clang, but without 'Comment'
-@(private="package")
+@(private = "package")
 Raw_Macro_Token_Kind :: enum {
 	Punctuation,
 	Keyword,
@@ -41,7 +47,7 @@ Raw_Macro_Token_Kind :: enum {
 }
 
 // Takes the Raw_Macros and turns them into declarations, often constants.
-@(private="package")
+@(private = "package")
 translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 	// Create lookup / acceleration structures.
 	existing_declaration_names: map[string]int
@@ -79,16 +85,19 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 				def = Fixed_Value(odin_value)
 			}
 
-			add_decl(decls, {
-				name = m.name,
-				def = def,
-				comment_before = m.comment,
-				side_comment = m.side_comment,
-				explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,
-				explicit_whitespace_after_name = m.whitespace_after_name,
-				original_line = m.original_line,
-				from_macro = true,
-			})
+			add_decl(
+				decls,
+				{
+					name = m.name,
+					def = def,
+					comment_before = m.comment,
+					side_comment = m.side_comment,
+					explicit_whitespace_before_side_comment = m.whitespace_before_side_comment,
+					explicit_whitespace_after_name = m.whitespace_after_name,
+					original_line = m.original_line,
+					from_macro = true,
+				},
+			)
 
 			existing_declaration_names[m.name] = len(decls) - 1
 		}
@@ -98,13 +107,13 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 Macro_Index :: int
 
 Evalulate_Macro_State :: struct {
-	cur_token: int,
-	tokens: []Raw_Macro_Token,
-	cur_macro: Raw_Macro,
-	cur_macro_index: Macro_Index,
-	macros: []Raw_Macro,
-	macro_lookup: map[string]Macro_Index,
-	params: map[string]string,
+	cur_token:             int,
+	tokens:                []Raw_Macro_Token,
+	cur_macro:             Raw_Macro,
+	cur_macro_index:       Macro_Index,
+	macros:                []Raw_Macro,
+	macro_lookup:          map[string]Macro_Index,
+	params:                map[string]string,
 	existing_declarations: map[string]int,
 }
 
@@ -116,14 +125,20 @@ adv :: proc(ems: ^Evalulate_Macro_State) {
 	ems.cur_token += 1
 }
 
-evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, mi: Macro_Index, args: []string) -> string {
+evaluate_macro :: proc(
+	macros: []Raw_Macro,
+	macro_lookup: map[string]Macro_Index,
+	existing_declarations: map[string]int,
+	mi: Macro_Index,
+	args: []string,
+) -> string {
 	ems := Evalulate_Macro_State {
-		cur_token = 0,
-		tokens = macros[mi].tokens,
-		cur_macro = macros[mi],
-		cur_macro_index = mi,
-		macros = macros,
-		macro_lookup = macro_lookup,
+		cur_token             = 0,
+		tokens                = macros[mi].tokens,
+		cur_macro             = macros[mi],
+		cur_macro_index       = mi,
+		macros                = macros,
+		macro_lookup          = macro_lookup,
 		existing_declarations = existing_declarations,
 	}
 
@@ -143,6 +158,8 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 	curly_braces: int
 
 	b := strings.builder_make()
+	literal_type: Literal_Type_Info
+	notted: bool
 
 	for ems.cur_token < len(ems.tokens) {
 		t := cur(ems)
@@ -157,7 +174,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 			case "{":
 				curly_braces += 1
 				p(&b, tv)
-				
+
 
 			case "}":
 				curly_braces -= 1
@@ -172,19 +189,37 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, ' ')
 
 			case "~":
-				p(&b, tv)
+				notted = true
 
 			case:
 				p(&b, tv)
 			}
 		case .Keyword:
 			return ""
-
 		case .Identifier:
-			if tv == "UINT64_MAX" { p(&b, "max(u64)"); break }
-			if tv == "UINT32_MAX" { p(&b, "max(u32)"); break }
-			if tv == "INT32_MAX"	{ p(&b, "max(i32)"); break }
-			if tv == "INT64_MAX"	{ p(&b, "max(i64)"); break }
+			if tv == "UINT64_MAX" {
+				notted = true
+				literal_type = .U64
+				break
+			}
+
+			if tv == "UINT32_MAX" {
+				notted = true
+				literal_type = .U32
+				break
+			}
+
+			if tv == "INT32_MAX" {
+				notted = true
+				literal_type = .I32
+				break
+			}
+
+			if tv == "INT64_MAX" {
+				notted = true
+				literal_type = .I64
+				break
+			}
 
 			if parse_identifier(&ems, &b) == false {
 				mapped, has_mapping := c_type_mapping[tv]
@@ -196,12 +231,30 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				}
 			}
 		case .Literal:
-			if _, ok := parse_literal(&b, tv); ok == false {
+			if type, ok := parse_literal(&b, tv); ok == false {
 				return ""
+			} else {
+				literal_type = type
 			}
 		}
 
 		adv(&ems)
+	}
+
+	if notted {
+		switch literal_type {
+		case .None:
+		case .U32:
+			return "max(u32)"
+		case .I32:
+			return "max(i32)"
+		case .U64:
+			return "max(u64)"
+		case .I64:
+			return "max(i64)"
+		}
+
+		log.errorf("Unknown type: %v", ems.tokens)
 	}
 
 	return strings.to_string(b)
@@ -351,7 +404,8 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	// We are inside a function-like macro and this identifier is one of the parameter names:
 	// Replace the identifier with the argument!
-	if parameter_replacement, has_parameter_replacement := ems.params[tv]; has_parameter_replacement {
+	if parameter_replacement, has_parameter_replacement := ems.params[tv];
+	   has_parameter_replacement {
 		p(b, parameter_replacement)
 		return true
 	}
@@ -367,10 +421,21 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		args: []string
 
 		if inner_macro.is_function_like {
+			if ems.cur_token + 1 >= len(ems.tokens) {return false}
+			if ems.tokens[ems.cur_token + 1].kind != .Punctuation {return false}
+			if ems.tokens[ems.cur_token + 1].value != "(" {return false}
+
+			adv(ems)
 			args = parse_parameter_list(ems)
 		}
 
-		inner := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, inner_macro_idx, args)
+		inner := evaluate_macro(
+			ems.macros,
+			ems.macro_lookup,
+			ems.existing_declarations,
+			inner_macro_idx,
+			args,
+		)
 
 		if inner == "" {
 			return false
@@ -382,3 +447,4 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	return false
 }
+
