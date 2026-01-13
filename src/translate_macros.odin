@@ -420,10 +420,14 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		args: []string
 
 		if inner_macro.is_function_like {
-			if ems.cur_token + 1 >= len(ems.tokens) {return false}
-			if ems.tokens[ems.cur_token + 1].kind != .Punctuation {return false}
-			if ems.tokens[ems.cur_token + 1].value != "(" {return false}
-
+			// Only treat as a call if the next token is '('
+			if ems.cur_token + 1 >= len(ems.tokens) ||
+			ems.tokens[ems.cur_token + 1].kind != .Punctuation ||
+			ems.tokens[ems.cur_token + 1].value != "(" {
+				p(b, tv)
+				return true
+			}
+			
 			adv(ems)
 			args = parse_parameter_list(ems)
 		}
