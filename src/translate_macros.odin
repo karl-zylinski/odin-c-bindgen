@@ -227,8 +227,23 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 	}
 
 	if notted {
+		if literal_type == .None {
+			s := strings.to_string(b)
+
+			for {
+				if len(s) < 2 { break }
+				if s[0] != '(' || s[len(s)-1] != ')' { break }
+				s = s[1:len(s)-1]
+			}
+
+			tmp := strings.builder_make()
+			if ti, ok := parse_literal(&tmp, s); ok {
+				literal_type = ti
+			}
+		}
+
 		switch literal_type {
-		case .None:
+		case .None: return ""
 		case .U32: return "max(u32)"
 		case .I32: return "max(i32)"
 		case .U64: return "max(u64)"
