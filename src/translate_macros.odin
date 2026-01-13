@@ -174,7 +174,26 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, ' ')
 
 			case "~":
-				notted = true
+				if ems.cur_token + 1 < len(ems.tokens) {
+					n1 := ems.tokens[ems.cur_token + 1]
+
+					if n1.kind == .Literal {
+						notted = true
+						break
+					}
+
+					if n1.kind == .Punctuation && n1.value == "(" &&
+					ems.cur_token + 3 < len(ems.tokens) {
+						n2 := ems.tokens[ems.cur_token + 2]
+						n3 := ems.tokens[ems.cur_token + 3]
+						if n2.kind == .Literal && n3.kind == .Punctuation && n3.value == ")" {
+							notted = true
+							break
+						}
+					}
+				}
+
+				p(&b, tv)
 
 			case:
 				p(&b, tv)
@@ -227,21 +246,6 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 	}
 
 	if notted {
-		if literal_type == .None {
-			s := strings.to_string(b)
-
-			for {
-				if len(s) < 2 { break }
-				if s[0] != '(' || s[len(s)-1] != ')' { break }
-				s = s[1:len(s)-1]
-			}
-
-			tmp := strings.builder_make()
-			if ti, ok := parse_literal(&tmp, s); ok {
-				literal_type = ti
-			}
-		}
-
 		switch literal_type {
 		case .None: return ""
 		case .U32: return "max(u32)"
@@ -436,4 +440,3 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	return false
 }
-
