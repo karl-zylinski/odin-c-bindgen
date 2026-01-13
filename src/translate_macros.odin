@@ -399,6 +399,7 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		inner_macro := ems.macros[inner_macro_idx]
 
 		args: []string
+
 		if inner_macro.is_function_like {
 			if ems.cur_token + 1 >= len(ems.tokens) {return false}
 			if ems.tokens[ems.cur_token + 1].kind != .Punctuation {return false}
@@ -420,3 +421,4 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	return false
 }
+
