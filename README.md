@@ -18,7 +18,7 @@ Features:
 	- On Windows: Download libclang 20.1.8 from here: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.8/clang+llvm-20.1.8-x86_64-pc-windows-msvc.tar.xz -- Copy the following from that archive:
 		- `lib/libclang.lib` into the generator's 'libclang' folder
 		- `bin/libclang.dll` into the root of the generator (next to where the bindgen executable will end up).
-	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint. Anything from clang version 16 and new should work.
+	- On Linux/mac, please install libclang. For example using `apt install libclang-dev` on Ubuntu/Debian/Mint. Anything from clang version 16 and newer should work.
 
 > [!NOTE]
 > libclang is used for analysing the C headers and deciding what Odin code to output.
@@ -210,7 +210,7 @@ If you want to fix issues or add features, then you can create a Pull Request to
 
 Check out the [Issues](https://github.com/karl-zylinski/odin-c-bindgen/issues) tab and see if there is something you could help with.
 
-To learn more about how the program works, start by looking in the `main.odin` file. That file loads the bindgen configuration file and then runs procedures in `translate_collect.odin`, `translate_macros.odin`, `translate_process.odin` and `output.odin`. All those files have some comments that try to explain what they do.
+To learn more about how the program works, start by looking in the `src/main.odin` file. That file loads the bindgen configuration file and then runs procedures in `src/translate_collect.odin`, `src/translate_macros.odin`, `src/translate_process.odin` and `src/output.odin`. All those files have some comments that try to explain what they do.
 
 ## Acknowledgements
 
