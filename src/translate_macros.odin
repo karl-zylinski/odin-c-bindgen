@@ -174,7 +174,26 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				p(&b, ' ')
 
 			case "~":
-				notted = true
+				if ems.cur_token + 1 < len(ems.tokens) {
+					n1 := ems.tokens[ems.cur_token + 1]
+
+					if n1.kind == .Literal {
+						notted = true
+						break
+					}
+
+					if n1.kind == .Punctuation && n1.value == "(" &&
+					ems.cur_token + 3 < len(ems.tokens) {
+						n2 := ems.tokens[ems.cur_token + 2]
+						n3 := ems.tokens[ems.cur_token + 3]
+						if n2.kind == .Literal && n3.kind == .Punctuation && n3.value == ")" {
+							notted = true
+							break
+						}
+					}
+				}
+
+				p(&b, tv)
 
 			case:
 				p(&b, tv)
@@ -228,7 +247,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 
 	if notted {
 		switch literal_type {
-		case .None:
+		case .None: return ""
 		case .U32: return "max(u32)"
 		case .I32: return "max(i32)"
 		case .U64: return "max(u64)"
@@ -401,6 +420,14 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 		args: []string
 
 		if inner_macro.is_function_like {
+			// Only treat as a call if the next token is '('
+			if ems.cur_token + 1 >= len(ems.tokens) ||
+			ems.tokens[ems.cur_token + 1].kind != .Punctuation ||
+			ems.tokens[ems.cur_token + 1].value != "(" {
+				p(b, tv)
+				return true
+			}
+			
 			adv(ems)
 			args = parse_parameter_list(ems)
 		}

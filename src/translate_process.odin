@@ -525,6 +525,15 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 		case Macro_Name: d.def = final_macro_name(def, config)
 
 		case Fixed_Value:
+			if d.from_macro {
+				s := string(def)
+
+				s = strip_prefix_in_idents(s, config.remove_macro_prefix)
+				s = strip_prefix_in_idents(s, config.remove_type_prefix)
+
+				d.def = Fixed_Value(s)
+			}
+
 		case Type_Index:
 		}
 	}
@@ -783,4 +792,140 @@ extract_top_comment :: proc(src: string) -> string {
 	}
 
 	return ""
+}
+
+is_ident_char :: proc(c: byte) -> bool {
+	return (c >= 'a' && c <= 'z') ||
+	       (c >= 'A' && c <= 'Z') ||
+	       (c >= '0' && c <= '9') ||
+	       (c == '_')
+}
+
+is_ident_start :: proc(c: byte) -> bool {
+	return (c >= 'a' && c <= 'z') ||
+	       (c >= 'A' && c <= 'Z') ||
+	       (c == '_')
+}
+
+strip_prefix_in_idents :: proc(s: string, prefix: string) -> string {
+	if len(prefix) == 0 || len(s) == 0 {
+		return s
+	}
+
+	out: [dynamic]byte
+	out = make([dynamic]byte, 0, len(s))
+
+	in_string := false
+	in_char := false
+	in_line_comment := false
+	in_block_comment := false
+	escaped := false
+
+	i := 0
+	for i < len(s) {
+		if in_line_comment {
+			b := s[i]
+			append(&out, b)
+			i += 1
+			if b == '\n' {
+				in_line_comment = false
+			}
+			continue
+		}
+
+		if in_block_comment {
+			if i + 1 < len(s) && s[i] == '*' && s[i+1] == '/' {
+				append(&out, '*')
+				append(&out, '/')
+				i += 2
+				in_block_comment = false
+				continue
+			}
+			append(&out, s[i])
+			i += 1
+			continue
+		}
+
+		if in_string {
+			b := s[i]
+			append(&out, b)
+			i += 1
+
+			if escaped {
+				escaped = false
+				continue
+			}
+
+			if b == '\\' {
+				escaped = true
+			} else if b == '"' {
+				in_string = false
+			}
+			continue
+		}
+
+		if in_char {
+			b := s[i]
+			append(&out, b)
+			i += 1
+
+			if escaped {
+				escaped = false
+				continue
+			}
+
+			if b == '\\' {
+				escaped = true
+			} else if b == '\'' {
+				in_char = false
+			}
+			continue
+		}
+
+		if i + 1 < len(s) && s[i] == '/' && s[i+1] == '/' {
+			append(&out, '/')
+			append(&out, '/')
+			i += 2
+			in_line_comment = true
+			continue
+		}
+
+		if i + 1 < len(s) && s[i] == '/' && s[i+1] == '*' {
+			append(&out, '/')
+			append(&out, '*')
+			i += 2
+			in_block_comment = true
+			continue
+		}
+
+		if s[i] == '"' {
+			append(&out, '"')
+			i += 1
+			in_string = true
+			escaped = false
+			continue
+		}
+
+		if s[i] == '\'' {
+			append(&out, '\'')
+			i += 1
+			in_char = true
+			escaped = false
+			continue
+		}
+
+		if i + len(prefix) <= len(s) && s[i:i+len(prefix)] == prefix {
+			prev_ok := (i == 0) || !is_ident_char(s[i-1])
+			next_ok := (i + len(prefix) < len(s)) && is_ident_char(s[i+len(prefix)])
+			if prev_ok && next_ok {
+				i += len(prefix)
+				continue
+			}
+		}
+
+		append(&out, s[i])
+		i += 1
+	}
+
+	return string(out[:])
 }
