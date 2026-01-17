@@ -403,7 +403,11 @@ output_enum_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strin
 	t := types[idx]
 	t_enum := &t.(Type_Enum)
 
-	pfln(b, "enum %v {{", t_enum.storage_type)
+	if t_enum.storage_type != nil {
+		pfln(b, "enum %v {{", t_enum.storage_type)
+	} else {
+		pln(b, "enum {")
+	}
 
 	longest_name: int
 	for &m in t_enum.members {
