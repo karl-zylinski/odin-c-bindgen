@@ -277,17 +277,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				}
 
 				if proc_type := resolve_type_definition_ptr(types, f.type, Type_Procedure); proc_type != nil {
-					for &param in proc_type.parameters {
-						key := fmt.tprintf("%s.%s.%s", d.name, f.names[0], param.name)
-						
-						if default, has_default := config.procedure_parameter_defaults[key]; has_default {
-							param.default = default
-						}
-
-						if override, has_override := config.procedure_type_overrides[key]; has_override {
-							override_procedure_parameter(&param, types, override)
-						}
-					}
+					override_procedure(proc_type, field_key, types, config)
 				}
 
 				if tag, has_tag := config.struct_field_tags[field_key]; has_tag {
@@ -295,31 +285,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				}
 			}
 		case Type_Procedure:
-			for &p, p_i in v.parameters {
-				param_name := len(p.name) != 0 ? p.name : fmt.tprintf("#%d", p_i)
-				param_key := fmt.tprintf("%s.%s", d.name, param_name)
-				if override, has_override := config.procedure_type_overrides[param_key]; has_override {
-					override_procedure_parameter(&p, types, override)
-				}
-
-				if default, has_default := config.procedure_parameter_defaults[param_key]; has_default {
-					p.default = default
-				}
-			}
-
-			return_override_key := d.name
-
-			if override, has_override := config.procedure_type_overrides[return_override_key]; has_override {
-				if override == "[^]" {
-					if ptr_type, is_ptr_type := resolve_type_definition(types, v.result_type, Type_Pointer); is_ptr_type {
-						v.result_type = add_type(types, Type_Multipointer {
-							pointed_to_type = ptr_type.pointed_to_type,
-						})	
-					}	
-				} else {
-					v.result_type = Fixed_Value(override)
-				}
-			}
+			override_procedure(&v, d.name, types, config)
 		}
 	}
 
@@ -535,6 +501,34 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 			}
 
 		case Type_Index:
+		}
+	}
+}
+
+override_procedure :: proc(p: ^Type_Procedure, name: string, types: Type_List, config: Config) {
+	for &param, param_idx in p.parameters {
+		param_name := len(param.name) != 0 ? param.name : fmt.tprintf("#%d", param_idx)
+		param_key := fmt.tprintf("%s.%s", name, param_name)
+		if override, has_override := config.procedure_type_overrides[param_key]; has_override {
+			override_procedure_parameter(&param, types, override)
+		}
+
+		if default, has_default := config.procedure_parameter_defaults[param_key]; has_default {
+			param.default = default
+		}
+	}
+
+	return_override_key := name
+
+	if override, has_override := config.procedure_type_overrides[return_override_key]; has_override {
+		if override == "[^]" {
+			if ptr_type, is_ptr_type := resolve_type_definition(types, p.result_type, Type_Pointer); is_ptr_type {
+				p.result_type = add_type(types, Type_Multipointer {
+					pointed_to_type = ptr_type.pointed_to_type,
+				})
+			}
+		} else {
+			p.result_type = Fixed_Value(override)
 		}
 	}
 }
