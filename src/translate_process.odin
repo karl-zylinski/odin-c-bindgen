@@ -263,12 +263,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 				field_key := fmt.tprintf("%s.%s", d.name, f.names[0])
 				if override, has_override := config.struct_field_overrides[field_key]; has_override {
-					if override == "[^]" {
-						if ptr_type, is_ptr_type := resolve_type_definition(types, f.type, Type_Pointer); is_ptr_type {
-							f.type = add_type(types, Type_Multipointer {
-								pointed_to_type = ptr_type.pointed_to_type,
-							})
-						}	
+					if new_type, ok := augment_pointers(f.type, types, override); ok {
+						f.type = new_type
 					} else if override == "using" {
 						f.is_using = true
 					} else {
@@ -521,12 +517,8 @@ override_procedure :: proc(p: ^Type_Procedure, name: string, types: Type_List, c
 	return_override_key := name
 
 	if override, has_override := config.procedure_type_overrides[return_override_key]; has_override {
-		if override == "[^]" {
-			if ptr_type, is_ptr_type := resolve_type_definition(types, p.result_type, Type_Pointer); is_ptr_type {
-				p.result_type = add_type(types, Type_Multipointer {
-					pointed_to_type = ptr_type.pointed_to_type,
-				})
-			}
+		if new_type, ok := augment_pointers(p.result_type, types, override); ok {
+			p.result_type = new_type
 		} else {
 			p.result_type = Fixed_Value(override)
 		}
@@ -534,12 +526,8 @@ override_procedure :: proc(p: ^Type_Procedure, name: string, types: Type_List, c
 }
 
 override_procedure_parameter :: proc(p: ^Type_Procedure_Parameter, types: Type_List, override: string) {
-	if override == "[^]" {
-		if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
-			p.type = add_type(types, Type_Multipointer {
-				pointed_to_type = ptr_type.pointed_to_type,
-			})	
-		}	
+	if new_type, ok := augment_pointers(p.type, types, override); ok {
+		p.type = new_type
 	} else if override == "#by_ptr" {
 		if ptr_type, is_ptr_type := resolve_type_definition(types, p.type, Type_Pointer); is_ptr_type {
 			p.type = add_type(types, Type_Pointer_By_Ptr {
@@ -551,6 +539,55 @@ override_procedure_parameter :: proc(p: ^Type_Procedure_Parameter, types: Type_L
 	} else {
 		p.type = Fixed_Value(override)
 	}
+}
+
+augment_pointers :: proc(type: Definition, types: Type_List, override: string) -> (Definition, bool) {
+	if override == "" {
+		return type, false
+	}
+
+	is_wrong_type := false
+	new_type := type
+
+	for s := override; s != ""; {
+		if ptr_type, is_ptr_type := resolve_type_definition(types, new_type, Type_Pointer); is_ptr_type {
+			new_type = ptr_type.pointed_to_type
+		} else {
+			is_wrong_type = true
+		}
+
+		if strings.has_prefix(s, "[^]") {
+			s = s[3:]
+		} else if strings.has_prefix(s, "^") {
+			s = s[1:]
+		} else {
+			return type, false
+		}
+	}
+
+	if is_wrong_type {
+		// The caller will replace the entire type with override if ok = false,
+		// but the override certainly tries to simply augment the type.
+		return type, true
+	}
+
+	for s := override; s != ""; {
+		if strings.has_suffix(s, "[^]") {
+			s = s[:len(s) - 3]
+			new_type = add_type(types, Type_Multipointer {
+				pointed_to_type = new_type,
+			})
+		} else if strings.has_suffix(s, "^") {
+			s = s[:len(s) - 1]
+			new_type = add_type(types, Type_Pointer {
+				pointed_to_type = new_type,
+			})
+		} else {
+			return type, false
+		}
+	}
+
+	return new_type, true
 }
 
 is_number :: proc(b: byte) -> bool {
