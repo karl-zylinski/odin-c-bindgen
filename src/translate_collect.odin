@@ -644,7 +644,19 @@ is_fixed_array :: proc(ct: clang.Type) -> bool {
 // Otherwise the FunctionProto stuff may make it so that there are shared proc types, which will
 // break stuff.
 create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
-	proc_type := reserve_type(ct, tcs)
+	ct := ct
+	root_type := reserve_type(ct, tcs)
+	proc_type := root_type
+
+	for ct.kind == .Pointer {
+		ct = clang.getPointeeType(ct)
+		nested_type := reserve_type(ct, tcs)
+		tcs.types[proc_type] = Type_Pointer {
+			pointed_to_type = nested_type,
+		}
+		proc_type = nested_type
+	}
+
 	params: [dynamic]Type_Procedure_Parameter
 
 	if len(param_childs) > 0 {
@@ -720,7 +732,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 	}
 
 	tcs.types[proc_type] = type_definition
-	return proc_type
+	return root_type
 }
 
 reserve_type :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> Type_Index {
