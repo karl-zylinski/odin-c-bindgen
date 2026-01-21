@@ -282,6 +282,13 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			}
 		case Type_Procedure:
 			override_procedure(&v, d.name, types, config)
+
+		case Type_Alias:
+			// This condition is only true for direct typedefs of function types,
+			// since every other typedef is represented as an alias to Type_Name/Fixed_Value.
+			if proc_type := resolve_type_definition_ptr(types, v.aliased_type, Type_Procedure); proc_type != nil {
+				override_procedure(proc_type, d.name, types, config)
+			}
 		}
 	}
 
