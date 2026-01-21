@@ -204,10 +204,6 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 // Finds things such as procs and struct declarations and stores them in `tcs.decls`. Recursive.
 // Also runs `create_type_recursive` which will fill out `tcs.types`.
 create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
-	if clang.Cursor_isAnonymous(c) == 1 && c.kind != .EnumDecl {
-		return
-	}
-
 	name := get_cursor_name(c)
 	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
 	line := get_cursor_location(c).line
@@ -244,14 +240,16 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 			return
 		}
 
-		add_decl(tcs.decls, {
-			comment_before = comment_before,
-			def = ti,
-			name = name,
-			original_line = line,
-			side_comment = side_comment,
-			is_forward_declare = is_forward_declare,
-		})
+		if clang.Cursor_isAnonymous(c) == 0 {
+			add_decl(tcs.decls, {
+				comment_before = comment_before,
+				def = ti,
+				name = name,
+				original_line = line,
+				side_comment = side_comment,
+				is_forward_declare = is_forward_declare,
+			})
+		}
 
 		children := tcs.children_lookup[c]
 
