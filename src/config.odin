@@ -45,7 +45,13 @@ Config :: struct {
 	//
 	// Note that the enum will be turned into a bit_set type. There will be a new type created that
 	// contains the actual enum, which the bit_set then references.
-	bit_setify: map[string]string,
+	bit_setify_enum: map[string]string,
+	
+	// The key is the old type name that is defined using a typedef, e.g. MyLib_Flags
+	bit_setify_macro: map[string]struct {
+		new_enum_name, // e.g. Flag
+		member_prefix: string, // e.g. MYLIB_FLAG_
+	},
 
 	// Completely override the definition of a type.
 	type_overrides: map[string]string,
