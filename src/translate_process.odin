@@ -256,30 +256,8 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			}
 
 		case Type_Struct:
-			for &f in v.fields {
-				if len(f.names) != 1 {
-					continue
-				}
+			override_struct(&v, d.name, types, config)
 
-				field_key := fmt.tprintf("%s.%s", d.name, f.names[0])
-				if override, has_override := config.struct_field_overrides[field_key]; has_override {
-					if new_type, ok := augment_pointers(f.type, types, override); ok {
-						f.type = new_type
-					} else if override == "using" {
-						f.is_using = true
-					} else {
-						f.type = Fixed_Value(override)
-					}
-				}
-
-				if proc_type := resolve_type_definition_ptr(types, f.type, Type_Procedure); proc_type != nil {
-					override_procedure(proc_type, field_key, types, config)
-				}
-
-				if tag, has_tag := config.struct_field_tags[field_key]; has_tag {
-					f.tag = tag
-				}
-			}
 		case Type_Procedure:
 			override_procedure(&v, d.name, types, config)
 
@@ -504,6 +482,37 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 			}
 
 		case Type_Index:
+		}
+	}
+}
+
+override_struct :: proc(p: ^Type_Struct, name: string, types: Type_List, config: Config) {
+	for &f in p.fields {
+		if len(f.names) != 1 {
+			continue
+		}
+
+		field_key := fmt.tprintf("%s.%s", name, f.names[0])
+		if override, has_override := config.struct_field_overrides[field_key]; has_override {
+			if new_type, ok := augment_pointers(f.type, types, override); ok {
+				f.type = new_type
+			} else if override == "using" {
+				f.is_using = true
+			} else {
+				f.type = Fixed_Value(override)
+			}
+		}
+
+		if proc_type := resolve_type_definition_ptr(types, f.type, Type_Procedure); proc_type != nil {
+			override_procedure(proc_type, field_key, types, config)
+		}
+
+		if struct_type := resolve_type_definition_ptr(types, f.type, Type_Struct); struct_type != nil {
+			override_struct(struct_type, field_key, types, config)
+		}
+
+		if tag, has_tag := config.struct_field_tags[field_key]; has_tag {
+			f.tag = tag
 		}
 	}
 }
