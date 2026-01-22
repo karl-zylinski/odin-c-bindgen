@@ -514,6 +514,8 @@ override_procedure :: proc(p: ^Type_Procedure, name: string, types: Type_List, c
 		param_key := fmt.tprintf("%s.%s", name, param_name)
 		if override, has_override := config.procedure_type_overrides[param_key]; has_override {
 			override_procedure_parameter(&param, types, override)
+		} else if proc_type := resolve_type_definition_ptr(types, param.type, Type_Procedure); proc_type != nil {
+			override_procedure(proc_type, param_key, types, config)
 		}
 
 		if default, has_default := config.procedure_parameter_defaults[param_key]; has_default {
