@@ -273,7 +273,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 	top_code: string
 
 	if config.imports_file != "" {
-		if imports, imports_ok := os.read_entire_file(config.imports_file); imports_ok {
+		if imports, imports_err := os.read_entire_file(config.imports_file, context.allocator); imports_err == nil {
 			top_code = string(imports)
 		}
 	} else if config.import_lib != "" {

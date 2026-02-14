@@ -211,7 +211,7 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 	p(sb, footer)
 
 	write_err := os.write_entire_file(filename, transmute([]u8)(strings.to_string(builder)))
-	fmt.ensuref(write_err == true, "Failed writing %v", filename)
+	fmt.ensuref(write_err == nil, "Failed writing %v", filename)
 }
 
 output_indent :: proc(b: ^strings.Builder, indent: int) {

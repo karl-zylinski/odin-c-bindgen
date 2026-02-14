@@ -5,7 +5,6 @@ package bindgen2
 import vmem "core:mem/virtual"
 import "core:mem"
 import "core:os"
-import "core:os/os2"
 import "core:fmt"
 import "core:strings"
 import "core:path/filepath"
@@ -29,6 +28,11 @@ main :: proc() {
 	config_filename: string
 	dir: string
 
+	filepath_join :: proc(strings: []string) -> string {
+		p, _ := filepath.join(strings, context.allocator)
+		return p
+	}
+
 	// Check if the path the user points to is a directory or a .sjson file. The user can supply one
 	// or the other. If the path the user points to is a file, then the directory where the file
 	// lives will be used a "working directory."
@@ -36,7 +40,7 @@ main :: proc() {
 		config_filename = config_dir_or_file
 		dir = filepath.dir(config_dir_or_file)
 	} else if os.is_dir(config_dir_or_file) {
-		config_filename = filepath.join({config_dir_or_file, DEFAULT_CONFIG_FILENAME})
+		config_filename = filepath_join({config_dir_or_file, DEFAULT_CONFIG_FILENAME})
 		dir = config_dir_or_file
 	} else {
 		fmt.panicf("%v is not a directory nor a valid config file", config_dir_or_file)
@@ -46,8 +50,8 @@ main :: proc() {
 	default_output_folder := "output"
 	default_package_name := "pkg"
 
-	if config_dir_handle, config_dir_handle_err := os2.open(dir); config_dir_handle_err == nil {
-		if stat, stat_err := os2.fstat(config_dir_handle, context.allocator); stat_err == nil {
+	if config_dir_handle, config_dir_handle_err := os.open(dir); config_dir_handle_err == nil {
+		if stat, stat_err := os.fstat(config_dir_handle, context.allocator); stat_err == nil {
 			default_output_folder = stat.name
 			default_package_name = stat.name
 		}
@@ -56,7 +60,7 @@ main :: proc() {
 	config: Config
 
 	if os.is_file(config_filename) {
-		if config_data, config_data_ok := os.read_entire_file(config_filename); config_data_ok {
+		if config_data, config_data_err := os.read_entire_file(config_filename, context.allocator); config_data_err == nil {
 			config_err := json.unmarshal(config_data, &config, .SJSON)
 			fmt.ensuref(
 				config_err == nil,
@@ -65,7 +69,7 @@ main :: proc() {
 				config_err,
 			)
 		} else {
-			fmt.ensuref(config_data_ok, "Failed parsing config %v", config_filename)
+			fmt.ensuref(config_data_err == nil, "Failed parsing config %v", config_filename)
 		}
 	} else {
 		// If the user points to a directory and there is no `bindgen.sjson` inside it, then we will
@@ -79,31 +83,31 @@ main :: proc() {
 	//
 	// Initially, I changed the working directory (using some OS proc) instead of adding `dir` to
 	// the path, but it lead to other problems.
-	output_folder := filepath.join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
+	output_folder := filepath_join({dir, config.output_folder != "" ? config.output_folder : default_output_folder})
 	package_name := config.package_name != "" ? config.package_name : default_package_name
 	
 	if config.imports_file != "" {
-		config.imports_file = filepath.join({dir, config.imports_file})
+		config.imports_file = filepath_join({dir, config.imports_file})
 	}
 
 	input_files: [dynamic]string
 
 	for input_base in config.inputs {
-		input := filepath.join({dir, input_base})
+		input := filepath_join({dir, input_base})
 		if os.is_dir(input) {
-			input_folder, input_folder_err := os2.open(input)
+			input_folder, input_folder_err := os.open(input)
 			log.ensuref(input_folder_err == nil, "Failed opening folder %v: %v", input, input_folder_err)
-			iter := os2.read_directory_iterator_create(input_folder)
+			iter := os.read_directory_iterator_create(input_folder)
 
-			for f in os2.read_directory_iterator(&iter) {
+			for f in os.read_directory_iterator(&iter) {
 				if f.type != .Regular {
 					continue
 				}
 
-				append(&input_files, filepath.join({input, f.name}))
+				append(&input_files, filepath_join({input, f.name}))
 			}
 
-			os2.close(input_folder)
+			os.close(input_folder)
 		} else if os.is_file(input) {
 			append(&input_files, input)
 		} else {
@@ -111,8 +115,8 @@ main :: proc() {
 		}
 	}
 
-	if output_folder != "" && !os2.exists(output_folder) {
-		make_dir_err := os2.make_directory_all(output_folder)
+	if output_folder != "" && !os.exists(output_folder) {
+		make_dir_err := os.make_directory_all(output_folder)
 		log.ensuref(make_dir_err == nil, "Failed creating output directory %v: %v", output_folder, make_dir_err)
 	}
 
@@ -165,16 +169,16 @@ main :: proc() {
 	
 			input_folder := filepath.dir(input_filename)
 			filename_stem := filepath.stem(input_filename)
-			footer_filename := filepath.join({input_folder, fmt.tprintf("%v_footer.odin", filename_stem)})
+			footer_filename := filepath_join({input_folder, fmt.tprintf("%v_footer.odin", filename_stem)})
 
 			footer: string
 			if os.exists(footer_filename) {
-				if footer_bytes, footer_bytes_ok := os.read_entire_file(footer_filename); footer_bytes_ok {
+				if footer_bytes, footer_bytes_err := os.read_entire_file(footer_filename, context.allocator); footer_bytes_err == nil {
 					footer = string(footer_bytes)
 				}
 			}
 
-			output_filename := filepath.join({output_folder, fmt.tprintf("%v.odin", filename_stem)})
+			output_filename := filepath_join({output_folder, fmt.tprintf("%v.odin", filename_stem)})
 			log.infof("Writing %v", output_filename)
 			output(types, decls, process_res, output_filename, footer, package_name)
 			vmem.arena_destroy(&gen_arena)
