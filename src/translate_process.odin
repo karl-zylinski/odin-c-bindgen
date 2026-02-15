@@ -178,7 +178,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				v.members = new_members[:]
 			}
 
-			if automatically_strip_member_prefixes {
+			if automatically_strip_member_prefixes && !d.explicitly_created {
 				strip_enum_member_prefixes(&v)
 			}
 
@@ -245,12 +245,13 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				v.members = new_members[:]
 
 				enum_decl := d
+				enum_decl.name = bit_set_enum_name
 				enum_decl.comment_before = ""
 				enum_decl.side_comment = ""
+				enum_decl.explicitly_created = true
+
 				d.def = bs_idx
 				d.original_line += 1
-
-				enum_decl.name = bit_set_enum_name
 
 				add_decl(decls, enum_decl)
 			}
