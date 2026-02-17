@@ -465,7 +465,7 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 	}
 
 	for &d in decls {
-		d.name = final_decl_name(d, types, config)
+		d.name, d.link_name = final_decl_name(d, types, config)
 		
 		switch &def in d.def {
 		case Type_Name: d.def = final_type_name(def, config)
@@ -726,21 +726,27 @@ ensure_name_valid :: proc(s: string) -> string {
 	return s
 }
 
-final_decl_name :: proc(d: Decl, types: Type_List, config: Config) -> string {
+final_decl_name :: proc(d: Decl, types: Type_List, config: Config) -> (name: string, link_name: string) {
 	if d.explicitly_created {
-		return d.name
-	}
-
-	if new_name, rename := config.rename[string(d.name)]; rename {
-		return new_name
+		return d.name, ""
 	}
 
 	_, is_proc := resolve_type_definition(types, d.def, Type_Procedure)
 
+	if new_name, rename := config.rename[string(d.name)]; rename {
+		return new_name, is_proc ? d.name : ""
+	}
+
 	if is_proc {
-		return strings.trim_prefix(d.name, config.remove_function_prefix)
+		has_prefix := strings.has_prefix(d.name, config.remove_function_prefix)
+
+		if !has_prefix {
+			return d.name, d.name
+		}
+
+		return d.name[len(config.remove_function_prefix):], ""
 	} else if d.from_macro {
-		return strings.trim_prefix(d.name, config.remove_macro_prefix)
+		return strings.trim_prefix(d.name, config.remove_macro_prefix), ""
 	} else {
 		res := strings.trim_prefix(d.name, config.remove_type_prefix)
 		res = strings.trim_suffix(res, config.remove_type_suffix)
@@ -749,10 +755,10 @@ final_decl_name :: proc(d: Decl, types: Type_List, config: Config) -> string {
 			res = strings.to_ada_case(res)
 		}
 
-		return res
+		return res, ""
 	}
 
-	return d.name
+	return d.name, ""
 }
 
 final_type_name :: proc(name: Type_Name, config: Config) -> Type_Name {

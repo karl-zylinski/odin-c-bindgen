@@ -61,6 +61,9 @@ Decl :: struct {
 
 	explicitly_created: bool,
 
+	// Only used for procs and only if it's not empty.
+	link_name: string,
+
 	// Only used for macros.
 	explicit_whitespace_before_side_comment: int,
 
