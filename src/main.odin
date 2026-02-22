@@ -78,6 +78,10 @@ main :: proc() {
 		config.inputs = slice.clone([]string{"."})
 	}
 
+	for key, value in config.remove_with_replacement {
+		config.rename[key] = value
+	}
+
 	// The working dir of the program may not be the same as `dir`. Therefore, we add `dir` to any
 	// path that comes out of the config.
 	//
