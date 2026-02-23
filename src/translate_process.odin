@@ -30,7 +30,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		to_remove[r] = {}
 	}
 
-	for k, v in config.remove_and_replace {
+	for k, _ in config.remove_and_replace {
 		to_remove[k] = {}
 	}
 
