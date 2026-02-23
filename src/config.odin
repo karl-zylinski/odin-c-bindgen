@@ -83,8 +83,8 @@ Config :: struct {
 	// Put the names of declarations in here to remove them.	
 	remove: []string,
 	
-	// Put the names of declarations in here to remove a type replace them.
-	remove_and_replace: map[string]string,
+	// Put the names of declarations in here to remove and replace them.
+	replace: map[string]string,
 
 	// Group all procedures at the end of the file.
 	procedures_at_end: bool,

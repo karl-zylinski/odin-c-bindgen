@@ -146,10 +146,10 @@ remove = [
 	// "Some_Declaration_Name"
 ]
 
-// Functions to both remove a decleration and replace any uses 
-// of the decleration with something else.
-remove_and_replace = {
-	// "Some_Declaration_Name" = "Some_Other_Type"
+// Removes the declaration named and replaces any uses of it 
+// with a new type
+replace = {
+	// "Some_Declaration_Name" = "Replacement_Type"
 }
 
 // Group all procedures at the end of the file.

@@ -78,7 +78,7 @@ main :: proc() {
 		config.inputs = slice.clone([]string{"."})
 	}
 
-	for key, value in config.remove_and_replace {
+	for key, value in config.replace {
 		config.rename[key] = value
 	}
 
