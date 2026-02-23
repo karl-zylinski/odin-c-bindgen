@@ -146,6 +146,11 @@ remove = [
 	// "Some_Declaration_Name"
 ]
 
+// Put the names of declarations in here to remove them.
+remove_and_replace = [
+	// "Some_Declaration_Name" = "Some_Other_Type"
+]
+
 // Group all procedures at the end of the file.
 procedures_at_end = false
 
