@@ -68,7 +68,7 @@ force_ada_case_types = false
 import_lib = "my_lib.lib"
 
 // The filename of a file that contains the foreign import declarations. In it you can do
-// platform-specific library imports etc. The contents of it will  be placed near the top of the
+// platform-specific library imports etc. The contents of it will be placed near the top of the
 // file.
 imports_file = ""
 
@@ -111,7 +111,7 @@ struct_field_tags = {
 // such as *_Count
 remove_enum_members = [
 	// "MAGICAL_ENUM_ALL"
-	// "_*Count"
+	// "*_Count"
 ]
 
 // Enums automatically have any prefix that is sharred by all members removed. This sometimes
@@ -146,10 +146,11 @@ remove = [
 	// "Some_Declaration_Name"
 ]
 
-// Put the names of declarations in here to remove them.
-remove_and_replace = [
+// Functions to both remove a decleration and replace any uses 
+// of the decleration with something else.
+remove_and_replace = {
 	// "Some_Declaration_Name" = "Some_Other_Type"
-]
+}
 
 // Group all procedures at the end of the file.
 procedures_at_end = false
