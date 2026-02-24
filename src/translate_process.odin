@@ -511,6 +511,12 @@ override_struct :: proc(p: ^Type_Struct, name: string, types: Type_List, config:
 			}
 		}
 
+		for &fname in f.names {
+			if new_name, rename := config.rename[fmt.tprintf("%s.%s", name, fname)]; rename {
+				fname = new_name
+			}
+		}
+
 		if proc_type := resolve_type_definition_ptr(types, f.type, Type_Procedure); proc_type != nil {
 			override_procedure(proc_type, field_key, types, config)
 		}

@@ -221,10 +221,17 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		start := clang.getRangeStart(source_range)
 		start_offset: u32
 		clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
-		end := clang.getRangeEnd(source_range)
-		end_offset: u32
-		clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
-		side_comment, side_comment_align_whitespace = find_comment_at_line_end(tcs.source[start_offset:])
+		
+		// Function params can have comments which causes find_comment_at_line_end
+		// to return the wrong comment so we find the end of the fn first.
+		if c.kind == .FunctionDecl {
+			for ; int(start_offset) < len(tcs.source); start_offset += 1 {
+				if tcs.source[start_offset] == ';' {
+					break
+				}
+			}
+		}
+		side_comment, side_comment_align_whitespace, _ = find_next_comment(tcs.source[start_offset:])
 	}
 
 	ct := clang.getCursorType(c)
@@ -483,9 +490,14 @@ find_comment_before :: proc(src: string, start_rune: rune, start_offset: int) ->
 	return ""
 }
 
-find_comment_at_line_end :: proc(str: string) -> (string, int) {
+Comment_Type :: enum {
+	Line,
+	Block,
+}
+
+find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
 	space_before_comment: int
-	comment_start: int
+	comment_start: int = -1
 	block_comment: bool
 
 	for c, i in str {
@@ -505,8 +517,8 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 		}
 	}
 
-	if comment_start == 0 {
-		return "", 0
+	if comment_start == -1 {
+		return "", 0, .Line
 	}
 
 	if block_comment {
@@ -514,7 +526,7 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 
 		for c, i in from_start {
 			if c == '*' && i < len(from_start) - 1 && from_start[i + 1] == '/' {
-				return from_start[:i+2], space_before_comment
+				return from_start[:i+2], space_before_comment, .Block
 			}
 		}
 	} else {
@@ -522,12 +534,12 @@ find_comment_at_line_end :: proc(str: string) -> (string, int) {
 
 		for c, i in from_start {
 			if c == '\n' {
-				return from_start[:i], space_before_comment
+				return from_start[:i], space_before_comment, .Line
 			}
 		}
 	}
 
-	return "", 0
+	return "", 0, .Line
 }
 
 type_probably_is_cstring :: proc(ct: clang.Type) -> bool {
@@ -687,9 +699,16 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 				}
 			}
 
+			range := clang.Cursor_getSpellingNameRange(child, 0, 0)
+			range_start := clang.getRangeStart(range)
+			offset_start: u32
+			clang.getSpellingLocation(range_start, nil, nil, nil, &offset_start)
+			comment, _, type := find_next_comment(tcs.source[offset_start:])
+
 			append(&params, Type_Procedure_Parameter {
 				name = name,
 				type = type_id,
+				comment = type == .Block ? comment : "", // Line comments cause issues so don't accept them
 			})
 		}
 	} else {
@@ -850,7 +869,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 				field_loc := get_cursor_location(sc)
 
 				comment_before := find_comment_before(tcs.source, '\n', field_loc.offset)
-				comment_on_right, _ := find_comment_at_line_end(tcs.source[field_loc.offset:])
+				comment_on_right, _, _ := find_next_comment(tcs.source[field_loc.offset:])
 
 				if prev_named_field >= 0 && prev_named_field == len(fields) - 1 &&
 				fields[prev_named_field].type == type_id && field_loc.line == fields[prev_named_field].line {
@@ -921,7 +940,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			cursor_loc := get_cursor_location(ec)
 
 			comment_before := find_comment_before(tcs.source, '\n', cursor_loc.offset)
-			comment_on_right, _ := find_comment_at_line_end(tcs.source[cursor_loc.offset:])
+			comment_on_right, _, _ := find_next_comment(tcs.source[cursor_loc.offset:])
 
 			append(&members, Type_Enum_Member {
 				name = member_name,
