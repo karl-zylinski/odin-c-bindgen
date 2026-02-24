@@ -221,7 +221,6 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		start := clang.getRangeStart(source_range)
 		start_offset: u32
 		clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
-		end := clang.getRangeEnd(source_range)
 		
 		// Function params can have comments which causes find_comment_at_line_end
 		// to return the wrong comment so we find the end of the fn first.
