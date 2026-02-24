@@ -96,9 +96,6 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 		}
 	}
 
-	// Declared here to reuse.
-	bit_set_make_constant: map[string]int
-
 	for &d, i in decls {
 		if i == 0 {
 			d.invalid = true
@@ -192,8 +189,6 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 			bit_set_enum_name, bit_setify := config.bit_setify[d.name]
 
 			if bit_setify {
-				clear(&bit_set_make_constant)
-
 				bs_idx := add_type(types, Type_Bit_Set {
 					enum_type = d.def.(Type_Index),
 					enum_decl_name = Type_Name(bit_set_enum_name),
@@ -226,6 +221,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 						add_decl(decls, {
 							original_line = d.original_line + 2,
+							original_line_sort_tie_breaker = m_idx,
 							name = constant_name,
 							def = bs_constant_idx,
 							explicitly_created = true,
@@ -291,10 +287,18 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 				return j_is_proc
 			}
 
+			if i.original_line == j.original_line {
+				return i.original_line_sort_tie_breaker < j.original_line_sort_tie_breaker
+			}
+
 			return i.original_line < j.original_line
 		})
 	} else {
 		slice.sort_by(decls[:], proc(i, j: Decl) -> bool {
+			if i.original_line == j.original_line {
+				return i.original_line_sort_tie_breaker < j.original_line_sort_tie_breaker
+			}
+
 			return i.original_line < j.original_line
 		})
 	}

@@ -59,6 +59,9 @@ Decl :: struct {
 
 	original_line: int,
 
+	// When original line is the same, use this to break the tie
+	original_line_sort_tie_breaker: int,
+
 	explicitly_created: bool,
 
 	// Only used for macros.
