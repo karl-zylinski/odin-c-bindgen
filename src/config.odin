@@ -58,6 +58,9 @@ Config :: struct {
 	// Put these tags on the specified struct field
 	struct_field_tags: map[string]string,
 
+	// Adds #align(number) to the outputted struct
+	struct_align: map[string]int,
+
 	// Remove a specific enum member. Write the C name of the member. You can also use wildcards
 	// such as *_Count
 	remove_enum_members: []string,

@@ -253,6 +253,10 @@ output_struct_definition :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^str
 		p(b, " #raw_union")
 	}
 
+	if t_struct.align != 0 {
+		pf(b, " #align(%v)", t_struct.align)
+	}
+
 	pln(b, " {")
 
 	// Struct fields are grouped by comment. If there is a comment before a line then all the lines

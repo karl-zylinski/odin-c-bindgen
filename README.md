@@ -107,6 +107,11 @@ struct_field_tags = {
 	// "BoneInfo.name" = "fmt:\"s,0\""
 }
 
+// Set the #align(some_number) on a given struct
+struct_align = {
+    // "Mesh" = 4
+}
+
 // Remove a specific enum member. Write the C name of the member. You can also use wildcards
 // such as *_Count
 remove_enum_members = [

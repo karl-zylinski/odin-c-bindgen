@@ -487,6 +487,10 @@ resolve_final_names :: proc(types: Type_List, decls: Decl_List, config: Config) 
 }
 
 override_struct :: proc(p: ^Type_Struct, name: string, types: Type_List, config: Config) {
+	if align, has_align := config.struct_align[name]; has_align {
+		p.align = align
+	}
+
 	for &f in p.fields {
 		if len(f.names) != 1 {
 			continue

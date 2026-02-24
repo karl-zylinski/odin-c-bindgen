@@ -126,6 +126,7 @@ Type_Struct_Field :: struct {
 Type_Struct :: struct {
 	fields: []Type_Struct_Field,
 	raw_union: bool,
+	align: int,
 }
 
 Type_Enum_Member :: struct {
