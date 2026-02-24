@@ -139,14 +139,17 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 
 	root_children := tcs.children_lookup[root_cursor]
 
-	for c in root_children {
+	for c, i in root_children {
 		loc := get_cursor_location(c)
 
 		if clang.File_isEqual(file, loc.file) == 0 {
 			continue
 		}
 
-		create_declaration(c, &tcs)
+		is_preceding_type := i + 1 < len(root_children) &&
+			clang.getCursorType(c) == underlying_type(clang.getCursorType(root_children[i + 1]))
+
+		create_declaration(c, is_preceding_type, &tcs)
 	}
 
 	extra_imports, extra_imports_err := slice.map_keys(tcs.extra_imports)
@@ -203,7 +206,7 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 
 // Finds things such as procs and struct declarations and stores them in `tcs.decls`. Recursive.
 // Also runs `create_type_recursive` which will fill out `tcs.types`.
-create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
+create_declaration :: proc(c: clang.Cursor, is_preceding_type: bool, tcs: ^Translate_Collect_State) {
 	name := get_cursor_name(c)
 	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
 	line := get_cursor_location(c).line
@@ -260,8 +263,10 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 
 		children := tcs.children_lookup[c]
 
-		for cc in children {
-			create_declaration(cc, tcs)
+		for cc, i in children {
+			is_preceding_children_type := i + 1 < len(children) &&
+				clang.getCursorType(cc) == underlying_type(clang.getCursorType(children[i + 1]))
+			create_declaration(cc, is_preceding_children_type, tcs)
 		}
 
 	case .TypedefDecl:
@@ -292,7 +297,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		if clang.Cursor_isAnonymous(c) == 1 {
 			e, is_enum := tcs.types[ti].(Type_Enum)
 
-			if is_enum {
+			if is_enum && !is_preceding_type {
 				for &m in e.members {
 					add_decl(tcs.decls, {
 						name = m.name,
@@ -627,26 +632,18 @@ get_type_name_or_create_anon_type :: proc(ct: clang.Type, tcs: ^Translate_Collec
 	return create_type_recursive(ct, tcs)
 }
 
-is_fixed_array :: proc(ct: clang.Type) -> bool {
+underlying_type :: proc(ct: clang.Type) -> clang.Type {
 	ct := ct
 
 	if ct.kind == .Elaborated {
 		ct = clang.Type_getNamedType(ct)
 	}
 
-	if ct.kind == .ConstantArray {
-		return true
-	}
-
 	if ct.kind == .Typedef {
-		underlying := clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
-
-		if underlying.kind == .ConstantArray {
-			return true
-		}
+		ct = clang.getTypedefDeclUnderlyingType(clang.getTypeDeclaration(ct))
 	}
 
-	return false
+	return ct
 }
 
 // This is a separate proc because we call it both from create_type_recursive and from
@@ -689,7 +686,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 				// `float numbers[2]` as a function parameter is equivalent to `float *numbers`, but
 				// you have that `2` there for documentation purposes. So by default we turn such
 				// a parameter into `numbers: ^[2]f32`.
-				if is_fixed_array(param_type) {
+				if underlying_type(param_type).kind == .ConstantArray {
 					wrapper_idx := Type_Index(len(tcs.types))
 					append_nothing(tcs.types)
 					tcs.types[wrapper_idx] = Type_Pointer {
