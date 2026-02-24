@@ -497,7 +497,7 @@ Comment_Type :: enum {
 
 find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
 	space_before_comment: int
-	comment_start: int
+	comment_start: int = -1
 	block_comment: bool
 
 	for c, i in str {
@@ -517,7 +517,7 @@ find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
 		}
 	}
 
-	if comment_start == 0 {
+	if comment_start == -1 {
 		return "", 0, .Line
 	}
 

@@ -1011,7 +1011,7 @@ foreign lib {
 	/* GroupFilter/GroupFilterTable */
 	GroupFilter_Destroy                 :: proc(groupFilter: ^GroupFilter) ---
 	GroupFilter_CanCollide              :: proc(groupFilter: ^GroupFilter, group1: ^CollisionGroup, group2: ^CollisionGroup) -> bool ---
-	GroupFilterTable_Create             :: proc(numSubGroups: u32) -> ^GroupFilterTable ---
+	GroupFilterTable_Create             :: proc(numSubGroups: u32 /* = 0*/) -> ^GroupFilterTable ---
 	GroupFilterTable_DisableCollision   :: proc(table: ^GroupFilterTable, subGroup1: CollisionSubGroupID, subGroup2: CollisionSubGroupID) ---
 	GroupFilterTable_EnableCollision    :: proc(table: ^GroupFilterTable, subGroup1: CollisionSubGroupID, subGroup2: CollisionSubGroupID) ---
 	GroupFilterTable_IsCollisionEnabled :: proc(table: ^GroupFilterTable, subGroup1: CollisionSubGroupID, subGroup2: CollisionSubGroupID) -> bool ---
@@ -1099,7 +1099,7 @@ foreign lib {
 	CylinderShape_GetHalfHeight       :: proc(shape: ^CylinderShape) -> f32 ---
 
 	/* TaperedCylinderShape */
-	TaperedCylinderShapeSettings_Create      :: proc(halfHeightOfTaperedCylinder: f32 /* = cDefaultConvexRadius*/, topRadius: f32 /* = cDefaultConvexRadius*/, bottomRadius: f32 /* = cDefaultConvexRadius*/, convexRadius: f32, material: ^PhysicsMaterial /* = NULL*/) -> ^TaperedCylinderShapeSettings ---
+	TaperedCylinderShapeSettings_Create      :: proc(halfHeightOfTaperedCylinder: f32 /* = cDefaultConvexRadius*/, topRadius: f32 /* = cDefaultConvexRadius*/, bottomRadius: f32 /* = cDefaultConvexRadius*/, convexRadius: f32 /* = cDefaultConvexRadius*/, material: ^PhysicsMaterial /* = NULL*/) -> ^TaperedCylinderShapeSettings ---
 	TaperedCylinderShapeSettings_CreateShape :: proc(settings: ^TaperedCylinderShapeSettings) -> ^TaperedCylinderShape ---
 	TaperedCylinderShape_GetTopRadius        :: proc(shape: ^TaperedCylinderShape) -> f32 ---
 	TaperedCylinderShape_GetBottomRadius     :: proc(shape: ^TaperedCylinderShape) -> f32 ---
@@ -2017,11 +2017,11 @@ foreign lib {
 	RagdollSettings_GetSkeleton                           :: proc(character: ^RagdollSettings) -> ^Skeleton ---
 	RagdollSettings_SetSkeleton                           :: proc(character: ^RagdollSettings, skeleton: ^Skeleton) ---
 	RagdollSettings_Stabilize                             :: proc(settings: ^RagdollSettings) -> bool ---
-	RagdollSettings_DisableParentChildCollisions          :: proc(settings: ^RagdollSettings /*=nullptr*/, jointMatrices: ^Mat4 /*=nullptr*/, minSeparationDistance: f32) ---
+	RagdollSettings_DisableParentChildCollisions          :: proc(settings: ^RagdollSettings /*=nullptr*/, jointMatrices: ^Mat4 /*=nullptr*/, minSeparationDistance: f32 /* = 0.0f*/) ---
 	RagdollSettings_CalculateBodyIndexToConstraintIndex   :: proc(settings: ^RagdollSettings) ---
 	RagdollSettings_GetConstraintIndexForBodyIndex        :: proc(settings: ^RagdollSettings, bodyIndex: i32) -> i32 ---
 	RagdollSettings_CalculateConstraintIndexToBodyIdxPair :: proc(settings: ^RagdollSettings) ---
-	RagdollSettings_CreateRagdoll                         :: proc(settings: ^RagdollSettings /*=0*/, system: ^PhysicsSystem /*=0*/, collisionGroup: CollisionGroupID /*=0*/, userData: u64) -> ^Ragdoll ---
+	RagdollSettings_CreateRagdoll                         :: proc(settings: ^RagdollSettings /*=0*/, system: ^PhysicsSystem /*=0*/, collisionGroup: CollisionGroupID /*=0*/, userData: u64 /* = 0*/) -> ^Ragdoll ---
 	Ragdoll_Destroy                                       :: proc(ragdoll: ^Ragdoll) ---
 	Ragdoll_AddToPhysicsSystem                            :: proc(ragdoll: ^Ragdoll /*= JPH_ActivationActivate */, activationMode: Activation /*= JPH_ActivationActivate */, lockBodies: bool /* = true */) ---
 	Ragdoll_RemoveFromPhysicsSystem                       :: proc(ragdoll: ^Ragdoll /* = true */, lockBodies: bool /* = true */) ---
