@@ -167,6 +167,7 @@ Type_Fixed_Array :: struct {
 Type_Procedure_Parameter :: struct {
 	name: string,
 	type: Definition,
+	comment: string,
 	default: string,
 	any_int: bool,
 }
