@@ -146,7 +146,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 			continue
 		}
 
-		create_declaration(c, &tcs)
+		create_declaration(c, &tcs, config)
 	}
 
 	extra_imports, extra_imports_err := slice.map_keys(tcs.extra_imports)
@@ -203,7 +203,7 @@ build_cursor_children_lookup :: proc(c: clang.Cursor, res: ^Cursor_Children_Map)
 
 // Finds things such as procs and struct declarations and stores them in `tcs.decls`. Recursive.
 // Also runs `create_type_recursive` which will fill out `tcs.types`.
-create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
+create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, config: Config) {
 	name := get_cursor_name(c)
 	comment_before := string_from_clang_string(clang.Cursor_getRawCommentText(c))
 	line := get_cursor_location(c).line
@@ -254,7 +254,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		children := tcs.children_lookup[c]
 
 		for cc in children {
-			create_declaration(cc, tcs)
+			create_declaration(cc, tcs, config)
 		}
 
 	case .TypedefDecl:
@@ -285,19 +285,23 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State) {
 		if clang.Cursor_isAnonymous(c) == 1 {
 			e, is_enum := tcs.types[ti].(Type_Enum)
 
-			if is_enum {
-				for &m in e.members {
-					add_decl(tcs.decls, {
-						name = m.name,
-						def = Fixed_Value(fmt.tprint(m.value)),
-						original_line = line,
+			if new_name, exists := config.deanon_enums[e.members[0].name]; !exists {
+				if is_enum {
+					for &m in e.members {
+						add_decl(tcs.decls, {
+							name = m.name,
+							def = Fixed_Value(fmt.tprint(m.value)),
+							original_line = line,
 
-						// It's not really from a macro, but it's probably best if it behaves as if.
-						from_macro = true,
-					})
+							// It's not really from a macro, but it's probably best if it behaves as if.
+							from_macro = true,
+						})
+					}
 				}
+				return
+			} else {
+				name = new_name
 			}
-			return
 		}
 
 		add_decl(tcs.decls, {

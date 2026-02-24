@@ -146,6 +146,11 @@ remove = [
 	// "Some_Declaration_Name"
 ]
 
+// Used to deanonymize an enum.
+deanon_enums = {
+	"Enum_First_Member_Name" = "New_Enum_Name"
+}
+
 // Group all procedures at the end of the file.
 procedures_at_end = false
 
