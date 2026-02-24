@@ -700,7 +700,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			}
 
 			range := clang.Cursor_getSpellingNameRange(child, 0, 0)
-			range_start := clang.getRangeEnd(range)
+			range_start := clang.getRangeStart(range)
 			offset_start: u32
 			clang.getSpellingLocation(range_start, nil, nil, nil, &offset_start)
 			comment, _, type := find_next_comment(tcs.source[offset_start:])
