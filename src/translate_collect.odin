@@ -422,7 +422,6 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 					if strings.has_prefix(name, prefix) {
 						int_value, ok := strconv.parse_int(tokens[0].value)
 						if ok {
-							// m.is_function_like = true // This is a hack to stop us from outputting the macro
 							d := &tcs.decls[decl_idx]
 							if d.invalid {
 								d.original_line = line
