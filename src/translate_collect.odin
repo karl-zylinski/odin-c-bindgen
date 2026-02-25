@@ -537,7 +537,9 @@ Comment_Type :: enum {
 	Block,
 }
 
-find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
+// delimiters is a bit of a hack to get this to work for proc params.
+// without it this function will return e.g. param 3's comment for param 1.
+find_next_comment :: proc(str: string, delimiters: map[rune]struct{} = {}) -> (string, int, Comment_Type) {
 	space_before_comment: int
 	comment_start: int = -1
 	block_comment: bool
@@ -552,7 +554,7 @@ find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
 			comment_start = i
 			block_comment = true
 			break
-		} else if c == '\n' {
+		} else if c == '\n' || c in delimiters {
 			break
 		} else {
 			space_before_comment = 0
@@ -745,7 +747,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			range_start := clang.getRangeStart(range)
 			offset_start: u32
 			clang.getSpellingLocation(range_start, nil, nil, nil, &offset_start)
-			comment, _, type := find_next_comment(tcs.source[offset_start:])
+			comment, _, type := find_next_comment(tcs.source[offset_start:], {',' = {}})
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
