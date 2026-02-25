@@ -86,6 +86,9 @@ Config :: struct {
 	// Put the names of declarations in here to remove them.	
 	remove: []string,
 
+	// Used to deanonymize an enum.
+	deanon_enums: map[string]string,
+
 	// Group all procedures at the end of the file.
 	procedures_at_end: bool,
 	

@@ -151,6 +151,15 @@ remove = [
 	// "Some_Declaration_Name"
 ]
 
+// By default anonymous enums have their members flattened into constants.
+// Use this option to instead create a new enum type.
+//
+// The key is the name of the first member of the anonymous enum, which is used
+// to identify it. The value is the name of the emitted enum.
+deanon_enums = {
+	"First_Member_Name" = "New_Enum_Name"
+}
+
 // Group all procedures at the end of the file.
 procedures_at_end = false
 
