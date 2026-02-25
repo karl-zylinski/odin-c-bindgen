@@ -160,6 +160,12 @@ deanon_enums = {
 	"First_Member_Name" = "New_Enum_Name"
 }
 
+// Constructs a new enum from all macros using a prefix.
+// Combine with bit_setify to make a bit set from macros.
+enumify_macros = {
+	"Macro_Prefix" = "New_Enum_Name"
+},
+
 // Group all procedures at the end of the file.
 procedures_at_end = false
 

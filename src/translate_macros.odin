@@ -56,7 +56,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 		macro_lookup[m.name] = i
 	}
 
-	for m, i in macros {
+	for &m, i in macros {
 		// Function-like macros are only used when figuring out a value of a non-function like macro.
 		// They will not have a value "of their own".
 		if m.is_function_like {

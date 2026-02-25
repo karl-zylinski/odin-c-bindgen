@@ -89,6 +89,9 @@ Config :: struct {
 	// Used to deanonymize an enum.
 	deanon_enums: map[string]string,
 
+	// Group all macros with a prefix into an enum.
+	enumify_macros: map[string]string,
+
 	// Group all procedures at the end of the file.
 	procedures_at_end: bool,
 	
