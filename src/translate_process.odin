@@ -205,7 +205,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					if bits.count_ones(m.value) == 1 {
 						append(&new_members, Type_Enum_Member {
 							name = m.name,
-							value = int(bits.log2(transmute(uint)m.value)), // use transmute incase m.value == min(i64)
+							value = int(bits.log2(uint(m.value))), // use transmute incase m.value == min(i64)
 							comment_before = m.comment_before,
 							comment_on_right = m.comment_on_right,
 						})
