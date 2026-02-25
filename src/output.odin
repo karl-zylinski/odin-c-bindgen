@@ -619,7 +619,7 @@ parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Bui
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", enum_name)
+		pf(b, "bit_set[%v; %v]", enum_name, types[tv.enum_type].(Type_Enum).storage_type)
 
 	case Type_Bit_Set_Constant:
 		bit_set_type, bit_set_type_ok := resolve_type_definition(types, tv.bit_set_type, Type_Bit_Set)
