@@ -2,8 +2,12 @@ inputs = [
     "./src/test.h"
 ]
 
+remove_enum_member_prefix = {
+	"Flags" = "Flags_"
+}
+
+bit_setify = {
+	"Flags" = "Flag"
+}
+
 output_folder = "binding"
-
-import_lib = "test.lib"
-
-debug_dump_ast = true
