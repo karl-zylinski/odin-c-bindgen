@@ -307,7 +307,8 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 		if clang.Cursor_isAnonymous(c) == 1 {
 			e, is_enum := tcs.types[ti].(Type_Enum)
 
-			if new_name, exists := config.deanon_enums[e.members[0].name]; !exists {
+			new_name, exists := config.deanon_enums[e.members[0].name]
+			if !exists {
 				if is_enum {
 					for &m in e.members {
 						add_decl(tcs.decls, {
@@ -321,9 +322,8 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 					}
 				}
 				return
-			} else {
-				name = new_name
 			}
+			name = new_name
 		}
 
 		add_decl(tcs.decls, {
