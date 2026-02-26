@@ -619,7 +619,7 @@ parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Bui
 			return
 		}
 
-		pf(b, "bit_set[%v; i32]", enum_name)
+		pf(b, "bit_set[%v; %v]", enum_name, types[tv.enum_type].(Type_Enum).storage_type)
 
 	case Type_Bit_Set_Constant:
 		bit_set_type, bit_set_type_ok := resolve_type_definition(types, tv.bit_set_type, Type_Bit_Set)
@@ -627,26 +627,34 @@ parse_type_build :: proc(types: ^[dynamic]Type, idx: Type_Index, b: ^strings.Bui
 		if !bit_set_type_ok {
 			return
 		}
+		
+		if tv.value == 0 {
+			pf(b, `%v {{}}`, tv.bit_set_type_name)
+			return
+		}
 
-		pf(b, `%v {{`, tv.bit_set_type_name)
+		v := strings.builder_make()
+		pf(&v, `%v {{`, tv.bit_set_type_name)
 
 		enum_type, enum_type_ok := resolve_type_definition(types, bit_set_type.enum_type, Type_Enum)
 
+		value := tv.value
 		if enum_type_ok {
-			first_printed := false
 			for &m in enum_type.members {
-				if (1 << uint(m.value)) & tv.value != 0 {
-					if first_printed == true {
-						p(b, ", ")
-					} else {
-						first_printed = true
-					}
-
-					pf(b, ".%v", m.name)
+				if bit := 1 << uint(m.value); bit & tv.value != 0 {
+					pf(&v, ".%v, ", m.name)
+					value -= bit
 				}
 			}
 		}
-	
-		p(b, "}")
+
+		if value == 0 {
+			str := strings.to_string(v)
+			p(b, str[:len(str) - 2]) // Drop trailing comma and space
+			p(b, "}")
+		} else {
+			storage_type := types[types[tv.bit_set_type].(Type_Bit_Set).enum_type].(Type_Enum).storage_type
+			pf(b, "transmute(%s)%v(%v)", tv.bit_set_type_name, storage_type, tv.value)
+		}
 	}
 }

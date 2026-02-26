@@ -90,6 +90,12 @@ main :: proc() {
 		config.imports_file = filepath_join({dir, config.imports_file})
 	}
 
+	for enum_name, prefix in config.remove_enum_member_prefix {
+		if new_enum, exists := config.bit_setify[enum_name]; exists {
+			config.remove_enum_member_prefix[new_enum] = prefix
+		}
+	}
+
 	input_files: [dynamic]string
 
 	for input_base in config.inputs {

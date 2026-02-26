@@ -2,8 +2,18 @@ inputs = [
     "./src/test.h"
 ]
 
+remove_enum_member_prefix = {
+	"Flags" = "Flags_"
+	"New_Enum" = "MAKE_"
+}
+
+make_macros_enum = {
+	"MAKE_ENUM" = "New_Enum"
+}
+
+bit_setify = {
+	"Flags" = "Flag"
+	"New_Enum" = "New_Enum_Flags"
+}
+
 output_folder = "binding"
-
-import_lib = "test.lib"
-
-debug_dump_ast = true

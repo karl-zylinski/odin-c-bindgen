@@ -130,6 +130,20 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		decls = decls,
 	}
 
+	// Add empty enum defs for macro enumification
+	for prefix, enum_name in config.enumify_macros {
+		type_idx := add_type(types, Type_Enum {
+			storage_type = int,
+		})
+		tcs.macro_prefix_to_enum_decl[prefix] = len(decls)
+		add_decl(decls, {
+			name = enum_name,
+			def = type_idx,
+			invalid = true, // We will set this to false later if we find a valid macro
+			explicitly_created = true,
+		})
+	}
+
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
 	// children. That way we can use this lookup to find arrays of children and iterate them normally.
 	//
@@ -170,6 +184,7 @@ Translate_Collect_State :: struct {
 	source: string,
 	extra_imports: map[string]bool,
 	macros: [dynamic]Raw_Macro,
+	macro_prefix_to_enum_decl: map[string]int,
 	translation_unit: clang.Translation_Unit,
 }
 
@@ -292,7 +307,8 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 		if clang.Cursor_isAnonymous(c) == 1 {
 			e, is_enum := tcs.types[ti].(Type_Enum)
 
-			if new_name, exists := config.deanon_enums[e.members[0].name]; !exists {
+			new_name, exists := config.deanon_enums[e.members[0].name]
+			if !exists {
 				if is_enum {
 					for &m in e.members {
 						add_decl(tcs.decls, {
@@ -306,9 +322,8 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 					}
 				}
 				return
-			} else {
-				name = new_name
 			}
+			name = new_name
 		}
 
 		add_decl(tcs.decls, {
@@ -398,6 +413,28 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 				tokens[i - 1] = {
 					value = val,
 					kind = kind,
+				}
+			}
+
+			if len(tokens) == 1 && tokens[0].kind == .Literal {
+				for prefix, decl_idx in tcs.macro_prefix_to_enum_decl {
+					if strings.has_prefix(name, prefix) {
+						int_value, ok := strconv.parse_int(tokens[0].value)
+						if ok {
+							d := &tcs.decls[decl_idx]
+							if d.invalid {
+								d.original_line = line
+								d.invalid = false
+							}
+							append(&(&tcs.types[d.def.(Type_Index)].(Type_Enum)).members, Type_Enum_Member {
+								name = name,
+								value = int_value,
+								comment_before = comment,
+								comment_on_right = side_comment,
+							})
+							return
+						}
+					}
 				}
 			}
 
@@ -499,7 +536,9 @@ Comment_Type :: enum {
 	Block,
 }
 
-find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
+// delimiters is a bit of a hack to get this to work for proc params.
+// without it this function will return e.g. param 3's comment for param 1.
+find_next_comment :: proc(str: string, delimiters: map[rune]struct{} = {}) -> (string, int, Comment_Type) {
 	space_before_comment: int
 	comment_start: int = -1
 	block_comment: bool
@@ -514,7 +553,7 @@ find_next_comment :: proc(str: string) -> (string, int, Comment_Type) {
 			comment_start = i
 			block_comment = true
 			break
-		} else if c == '\n' {
+		} else if c == '\n' || c in delimiters {
 			break
 		} else {
 			space_before_comment = 0
@@ -707,7 +746,7 @@ create_proc_type :: proc(param_childs: []clang.Cursor, ct: clang.Type, tcs: ^Tra
 			range_start := clang.getRangeStart(range)
 			offset_start: u32
 			clang.getSpellingLocation(range_start, nil, nil, nil, &offset_start)
-			comment, _, type := find_next_comment(tcs.source[offset_start:])
+			comment, _, type := find_next_comment(tcs.source[offset_start:], {',' = {}})
 
 			append(&params, Type_Procedure_Parameter {
 				name = name,
@@ -993,7 +1032,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 
 		type_definition := Type_Enum {
 			storage_type = storage_type,
-			members = members[:],
+			members = members,
 		}
 
 		tcs.types[enum_type_idx] = type_definition

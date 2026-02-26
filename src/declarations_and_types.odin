@@ -142,7 +142,7 @@ Type_Enum_Member :: struct {
 Type_Enum :: struct {
 	// the `u32` in `My_Enum :: enum u32 {}`
 	storage_type: typeid,
-	members: []Type_Enum_Member,
+	members: [dynamic]Type_Enum_Member, // dynamic so we can construct enums from macros
 }
 
 Type_Unknown :: struct {}
