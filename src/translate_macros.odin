@@ -498,20 +498,13 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 	
 	operator_precedence :: proc(op: Operator) -> int {
 		switch op {
-		case .Or:
-			return 0
-		case .Xor:
-			return 1
-		case .And:
-			return 2
-		case .LShift, .RShift:
-			return 3
-		case .Sub, .Add:
-			return 4
-		case .Mul, .Div, .Mod:
-			return 5
-		case .Not:
-			return 6
+		case .Or:              return 0
+		case .Xor:             return 1
+		case .And:             return 2
+		case .LShift, .RShift: return 3
+		case .Sub, .Add:       return 4
+		case .Mul, .Div, .Mod: return 5
+		case .Not:             return 6
 		}
 		panic("Unrechable!")
 	}
@@ -587,7 +580,7 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 			switch tok.value {
 			case "|":  op = .Or
 			case "^":  op = .Xor
-			case "&":  op = .Add
+			case "&":  op = .And
 			case "~":  op = .Not
 			case "<<": op = .LShift
 			case ">>": op = .RShift
