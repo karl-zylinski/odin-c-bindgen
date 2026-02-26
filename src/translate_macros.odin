@@ -604,7 +604,7 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 
 			append(&eq.op_stack, Stack_Op {
 				op = op,
-				prec = prec
+				prec = prec,
 			})
 		case .Keyword:
 			return 0, false
