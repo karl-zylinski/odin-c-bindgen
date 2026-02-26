@@ -130,20 +130,6 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		decls = decls,
 	}
 
-	// Add empty enum defs for macro enumification
-	for prefix, enum_name in config.enumify_macros {
-		type_idx := add_type(types, Type_Enum {
-			storage_type = int,
-		})
-		tcs.macro_prefix_to_enum_decl[prefix] = len(decls)
-		add_decl(decls, {
-			name = enum_name,
-			def = type_idx,
-			invalid = true, // We will set this to false later if we find a valid macro
-			explicitly_created = true,
-		})
-	}
-
 	// I dislike visitors. They make the code hard to read. So I build a map of all parents and
 	// children. That way we can use this lookup to find arrays of children and iterate them normally.
 	//
@@ -413,28 +399,6 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 				tokens[i - 1] = {
 					value = val,
 					kind = kind,
-				}
-			}
-
-			if len(tokens) == 1 && tokens[0].kind == .Literal {
-				for prefix, decl_idx in tcs.macro_prefix_to_enum_decl {
-					if strings.has_prefix(name, prefix) {
-						int_value, ok := strconv.parse_int(tokens[0].value)
-						if ok {
-							d := &tcs.decls[decl_idx]
-							if d.invalid {
-								d.original_line = line
-								d.invalid = false
-							}
-							append(&(&tcs.types[d.def.(Type_Index)].(Type_Enum)).members, Type_Enum_Member {
-								name = name,
-								value = int_value,
-								comment_before = comment,
-								comment_on_right = side_comment,
-							})
-							return
-						}
-					}
 				}
 			}
 
