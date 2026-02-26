@@ -9,6 +9,7 @@ package bindgen2
 import "core:strings"
 import "core:fmt"
 import "core:log"
+import "core:strconv"
 
 _ :: log
 
@@ -42,7 +43,7 @@ Raw_Macro_Token_Kind :: enum {
 
 // Takes the Raw_Macros and turns them into declarations, often constants.
 @(private="package")
-translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
+translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List, config: Config) {
 	// Create lookup / acceleration structures.
 	existing_declaration_names: map[string]int
 
@@ -55,15 +56,53 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List) {
 	for m, i in macros {
 		macro_lookup[m.name] = i
 	}
+	
+	macro_prefix_to_enum_decl: map[string]int
+	// Add empty enum defs for macro enumification
+	for prefix, enum_name in config.enumify_macros {
+		type_idx := add_type(types, Type_Enum {
+			storage_type = int,
+		})
+		macro_prefix_to_enum_decl[prefix] = len(decls)
+		add_decl(decls, {
+			name = enum_name,
+			def = type_idx,
+			invalid = true, // We will set this to false later if we find a valid macro
+			explicitly_created = true,
+		})
+	}
 
-	for &m, i in macros {
+	macro_loop: for &m, i in macros {
 		// Function-like macros are only used when figuring out a value of a non-function like macro.
 		// They will not have a value "of their own".
 		if m.is_function_like {
 			continue
 		}
 
-		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {})
+		for prefix, decl_idx in macro_prefix_to_enum_decl {
+			if strings.has_prefix(m.name, prefix) {
+				int_value, ok := parse_tokens_to_int(m.tokens, macros, macro_lookup)
+				if ok {
+					d := &decls[decl_idx]
+					if d.invalid {
+						d.original_line = m.original_line
+						d.invalid = false
+					}
+					append(
+						&(&types[d.def.(Type_Index)].(Type_Enum)).members,
+						Type_Enum_Member {
+							name = m.name,
+							value = int_value,
+							comment_before = m.comment,
+							comment_on_right = m.side_comment,
+						},
+					)
+					continue macro_loop
+				}
+			}
+		}
+
+		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {}, config)
 
 		if odin_value != "" && odin_value[0] != '{' {
 			def: Definition
@@ -116,7 +155,7 @@ adv :: proc(ems: ^Evalulate_Macro_State) {
 	ems.cur_token += 1
 }
 
-evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, mi: Macro_Index, args: []string) -> string {
+evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, mi: Macro_Index, args: []string, config: Config) -> string {
 	ems := Evalulate_Macro_State {
 		cur_token = 0,
 		tokens = macros[mi].tokens,
@@ -225,7 +264,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				break
 			}
 
-			if parse_identifier(&ems, &b) == false {
+			if parse_identifier(&ems, &b, config) == false {
 				mapped, has_mapping := c_type_mapping[tv]
 
 				if has_mapping {
@@ -396,7 +435,7 @@ parse_parameter_list :: proc(ems: ^Evalulate_Macro_State) -> []string {
 	return args[:]
 }
 
-parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bool {
+parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder, config: Config) -> bool {
 	t := cur(ems^)
 	assert(t.kind == .Identifier)
 
@@ -410,7 +449,11 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 	}
 
 	if tv in ems.existing_declarations {
-		p(b, tv)
+		if new_name, exists := config.rename[tv]; exists {
+			p(b, new_name)
+		} else {
+			p(b, tv)
+		}
 		return true
 	}
 
@@ -432,7 +475,7 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 			args = parse_parameter_list(ems)
 		}
 
-		inner := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, inner_macro_idx, args)
+		inner := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, inner_macro_idx, args, config)
 
 		if inner == "" {
 			return false
@@ -444,3 +487,187 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder) -> bo
 
 	return false
 }
+
+// Evaluates an equation to an int
+parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_lookup: map[string]int) -> (int, bool) {
+	if l := len(toks); l == 0 {
+		return 0, false
+	} else if l == 1 {
+		return strconv.parse_int(toks[0].value)
+	}
+	
+	operator_precedence :: proc(op: Operator) -> int {
+		switch op {
+		case .Or:              return 0
+		case .Xor:             return 1
+		case .And:             return 2
+		case .LShift, .RShift: return 3
+		case .Sub, .Add:       return 4
+		case .Mul, .Div, .Mod: return 5
+		case .Not:             return 6
+		}
+		panic("Unrechable!")
+	}
+
+	Operator :: enum {
+		Or,
+		Xor,
+		And,
+		Not,
+		LShift,
+		RShift,
+		Sub,
+		Add,
+		Mul,
+		Div,
+		Mod,
+		// Inc, // I don't think well need these
+		// Dec,
+	}
+
+	Stack_Op :: struct {
+		op: Operator,
+		prec: int,
+	}
+
+	Stack_Element :: union {
+		Stack_Op,
+		int,
+	}
+
+	Equation :: struct {
+		op_stack: [dynamic]Stack_Op,
+		eq_stack: [dynamic]Stack_Element,
+		prec_mod: int,
+	}
+
+	// Reconstruct equation in reverse polish notation
+	// https://en.wikipedia.org/wiki/Shunting_yard_algorithm
+	eq: Equation
+	for idx := 0; idx < len(toks); idx += 1 {
+		tok := &toks[idx]
+		switch tok.kind {
+		case .Literal:
+			val, ok := strconv.parse_int(tok.value)
+			if !ok {
+				return 0, false
+			}
+			append(&eq.eq_stack, val)
+		case .Identifier:
+			macro_idx, is_macro := macro_lookup[tok.value]
+			if !is_macro {
+				return 0, false
+			}
+			val, ok := parse_tokens_to_int(macros[macro_idx].tokens, macros, macro_lookup)
+			if !ok {
+				return 0, false
+			}
+			append(&eq.eq_stack, val)
+		case .Punctuation:
+			if tok.value == "(" {
+				eq.prec_mod += len(Operator)
+				continue
+			} else if tok.value == ")" {
+				eq.prec_mod -= len(Operator)
+				if eq.prec_mod < 0 {
+					// Too many ')'s
+					return 0, false
+				}
+				continue
+			}
+
+			op: Operator
+			switch tok.value {
+			case "|":  op = .Or
+			case "^":  op = .Xor
+			case "&":  op = .And
+			case "~":  op = .Not
+			case "<<": op = .LShift
+			case ">>": op = .RShift
+			case "-":  op = .Sub
+			case "+":  op = .Add
+			case "*":  op = .Mul
+			case "/":  op = .Div
+			case "%":  op = .Mod
+			case: return 0, false
+			}
+
+			prec := operator_precedence(op) + eq.prec_mod
+			for len(eq.op_stack) != 0 {
+				top_op := eq.op_stack[len(eq.op_stack) - 1]
+				if prec <= top_op.prec {
+					append(&eq.eq_stack, pop(&eq.op_stack))
+					continue
+				}
+				break
+			}
+
+			append(&eq.op_stack, Stack_Op {
+				op = op,
+				prec = prec,
+			})
+		case .Keyword:
+			return 0, false
+		}
+	}
+	
+	if eq.prec_mod != 0 {
+		// Means we didn't have a balanced number of parens
+		return 0, false
+	}
+
+	for len(eq.op_stack) > 0 {
+		append(&eq.eq_stack, pop(&eq.op_stack))
+	}
+
+	literals_stack: [dynamic]int
+	for element in eq.eq_stack {
+		switch _ in element {
+		case int:
+			append(&literals_stack, element.(int))
+		case Stack_Op:
+			// Remove the precidence modifier and cast into an operator
+			op := element.(Stack_Op).op
+			if op == .Not {
+				if len(literals_stack) == 0 {
+					return 0, false
+				}
+
+				append(&literals_stack, ~pop(&literals_stack))
+				continue
+			}
+			
+			if len(literals_stack) < 2 {
+				return 0, false
+			}
+			
+			rhs := pop(&literals_stack)
+			lhs := pop(&literals_stack)
+
+			// Shift by negative is undefined.
+			// Im going to invert the op but maybe this should probably just be illegal.
+			if (op == .LShift || op == .RShift) && rhs < 0 {
+				rhs *= -1
+				op = op == .LShift ? .RShift : .LShift
+			}
+
+			val: int
+			#partial switch op {
+			case .Or:     val = lhs | rhs
+			case .Xor:    val = lhs ~ rhs
+			case .And:    val = lhs & rhs
+			case .LShift: val = lhs << uint(rhs)
+			case .RShift: val = lhs >> uint(rhs)
+			case .Sub:    val = lhs - rhs
+			case .Add:    val = lhs + rhs
+			case .Mul:    val = lhs * rhs
+			case .Div:    val = lhs / rhs
+			case .Mod:    val = lhs % rhs
+			}
+			append(&literals_stack, val)
+		}
+	}
+
+	return pop(&literals_stack), len(literals_stack) == 0
+}
+
