@@ -134,7 +134,6 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 	for prefix, enum_name in config.enumify_macros {
 		type_idx := add_type(types, Type_Enum {
 			storage_type = int,
-			members = new([dynamic]Type_Enum_Member),
 		})
 		tcs.macro_prefix_to_enum_decl[prefix] = len(decls)
 		add_decl(decls, {
@@ -427,7 +426,7 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 								d.original_line = line
 								d.invalid = false
 							}
-							append(tcs.types[d.def.(Type_Index)].(Type_Enum).members, Type_Enum_Member {
+							append(&(&tcs.types[d.def.(Type_Index)].(Type_Enum)).members, Type_Enum_Member {
 								name = name,
 								value = int_value,
 								comment_before = comment,
@@ -974,7 +973,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 		enum_type_idx := reserve_type(ct, tcs)
 		c := clang.getTypeDeclaration(ct)
 		enum_children := tcs.children_lookup[c]
-		members := new([dynamic]Type_Enum_Member)
+		members: [dynamic]Type_Enum_Member
 		backing_type := clang.getEnumDeclIntegerType(c)
 		is_unsigned_type := backing_type.kind >= .Char_U && backing_type.kind <= .UInt128
 
@@ -986,7 +985,7 @@ create_type_recursive :: proc(ct: clang.Type, tcs: ^Translate_Collect_State) -> 
 			comment_before := find_comment_before(tcs.source, '\n', cursor_loc.offset)
 			comment_on_right, _, _ := find_next_comment(tcs.source[cursor_loc.offset:])
 
-			append(members, Type_Enum_Member {
+			append(&members, Type_Enum_Member {
 				name = member_name,
 				value = value,
 				comment_before = comment_before,

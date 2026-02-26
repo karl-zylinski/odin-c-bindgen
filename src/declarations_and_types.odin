@@ -32,7 +32,6 @@ TYPE_INDEX_NONE :: Type_Index(0)
 
 Decl_List :: ^[dynamic]Decl
 Type_List :: ^[dynamic]Type
-Enum_Member_List :: ^[dynamic]Type_Enum_Member
 
 add_type :: proc(array: Type_List, t: Type) -> Type_Index {
 	idx := len(array)
@@ -143,7 +142,7 @@ Type_Enum_Member :: struct {
 Type_Enum :: struct {
 	// the `u32` in `My_Enum :: enum u32 {}`
 	storage_type: typeid,
-	members: Enum_Member_List, // dynamic so we can construct enums from macros
+	members: [dynamic]Type_Enum_Member, // dynamic so we can construct enums from macros
 }
 
 Type_Unknown :: struct {}

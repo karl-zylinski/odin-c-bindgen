@@ -145,7 +145,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					automatically_strip_member_prefixes = false
 				}
 
-				new_members := new([dynamic]Type_Enum_Member)
+				new_members: [dynamic]Type_Enum_Member
 				
 				member_loop: for m in v.members {
 					if m.name in remove_enum_members {
@@ -169,7 +169,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					new_m := m
 					new_m.name = strings.trim_prefix(new_m.name, strip_member_prefix)
 
-					append(new_members, new_m)
+					append(&new_members, new_m)
 				}
 
 				v.members = new_members
@@ -194,7 +194,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					enum_decl_name = Type_Name(bit_set_enum_name),
 				})
 
-				new_members := new([dynamic]Type_Enum_Member)
+				new_members: [dynamic]Type_Enum_Member
 
 				// log2-ify value so `2` becomes `1`, `4` becomes `2` etc.
 				for m, m_idx in v.members {
@@ -203,7 +203,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					}
 
 					if bits.count_ones(m.value) == 1 {
-						append(new_members, Type_Enum_Member {
+						append(&new_members, Type_Enum_Member {
 							name = m.name,
 							value = int(bits.log2(uint(m.value))), // use transmute incase m.value == min(i64)
 							comment_before = m.comment_before,
@@ -213,7 +213,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 					} else if v.storage_type == i32 && m.value == bits.I32_MIN {
 						// If the type is i32 then a value of min(i32) would be the most significant bit.
 						// The i64 case shouldn't be necessary as that should return bits.count_ones = 1
-						append(new_members, Type_Enum_Member {
+						append(&new_members, Type_Enum_Member {
 							name = m.name,
 							value = 31,
 							comment_before = m.comment_before,
