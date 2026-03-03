@@ -37,7 +37,7 @@ Add a `bindgen.sjson` to your bindings folder. I.e. inside the folder you feed i
 
 > NOTE: Config uses the function/type names as found in header files.
 
-```sjson
+```json5
 // Inputs can be folders or files. If you provide a folder name, then the generator will look for
 // header (.h) files inside it. The bindings will be based on those headers. For each header,
 // you can create a `header_footer.odin` file with some additional code to append to the finished
