@@ -1,5 +1,15 @@
 inputs = [
-    "./src/test.h"
+	"./src/test.h"
+]
+
+rename = {
+	"MyInt64" = "i64"
+}
+
+remove_macro_prefix = "RETRO_"
+
+remove = [
+	"MyInt64"
 ]
 
 remove_enum_member_prefix = {
@@ -7,8 +17,9 @@ remove_enum_member_prefix = {
 	"New_Enum" = "MAKE_"
 }
 
-make_macros_enum = {
+enumify_macros = {
 	"MAKE_ENUM" = "New_Enum"
+	"MAKE_INT" = "Polish_Enum"
 }
 
 bit_setify = {
