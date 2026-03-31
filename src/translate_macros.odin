@@ -501,7 +501,7 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		case .Or:              return 0
 		case .Xor:             return 1
 		case .And:             return 2
-		case .LShift, .RShift: return 3
+		case .Lsft, .Rsft:     return 3
 		case .Sub, .Add:       return 4
 		case .Mul, .Div, .Mod: return 5
 		case .Not:             return 6
@@ -514,15 +514,13 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		Xor,
 		And,
 		Not,
-		LShift,
-		RShift,
+		Lsft,
+		Rsft,
 		Sub,
 		Add,
 		Mul,
 		Div,
 		Mod,
-		// Inc, // I don't think well need these
-		// Dec,
 	}
 
 	Stack_Op :: struct {
@@ -530,29 +528,24 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		prec: int,
 	}
 
-	Stack_Element :: union {
-		Stack_Op,
-		int,
-	}
+	ops: [dynamic]Stack_Op
+	prec_mod: int
 
-	Equation :: struct {
-		op_stack: [dynamic]Stack_Op,
-		eq_stack: [dynamic]Stack_Element,
-		prec_mod: int,
+	rpn: [dynamic]union {
+		Operator,
+		int,
 	}
 
 	// Reconstruct equation in reverse polish notation
 	// https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-	eq: Equation
-	for idx := 0; idx < len(toks); idx += 1 {
-		tok := &toks[idx]
+	for tok in toks {
 		switch tok.kind {
 		case .Literal:
 			val, ok := strconv.parse_int(tok.value)
 			if !ok {
 				return 0, false
 			}
-			append(&eq.eq_stack, val)
+			append(&rpn, val)
 		case .Identifier:
 			macro_idx, is_macro := macro_lookup[tok.value]
 			if !is_macro {
@@ -562,14 +555,14 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 			if !ok {
 				return 0, false
 			}
-			append(&eq.eq_stack, val)
+			append(&rpn, val)
 		case .Punctuation:
 			if tok.value == "(" {
-				eq.prec_mod += len(Operator)
+				prec_mod += len(Operator)
 				continue
 			} else if tok.value == ")" {
-				eq.prec_mod -= len(Operator)
-				if eq.prec_mod < 0 {
+				prec_mod -= len(Operator)
+				if prec_mod < 0 {
 					// Too many ')'s
 					return 0, false
 				}
@@ -582,8 +575,8 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 			case "^":  op = .Xor
 			case "&":  op = .And
 			case "~":  op = .Not
-			case "<<": op = .LShift
-			case ">>": op = .RShift
+			case "<<": op = .Lsft
+			case ">>": op = .Rsft
 			case "-":  op = .Sub
 			case "+":  op = .Add
 			case "*":  op = .Mul
@@ -592,17 +585,17 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 			case: return 0, false
 			}
 
-			prec := operator_precedence(op) + eq.prec_mod
-			for len(eq.op_stack) != 0 {
-				top_op := eq.op_stack[len(eq.op_stack) - 1]
-				if prec <= top_op.prec {
-					append(&eq.eq_stack, pop(&eq.op_stack))
-					continue
+			prec := operator_precedence(op) + prec_mod
+			for len(ops) != 0 {
+				top_op := pop(&ops)
+				if prec > top_op.prec {
+					append(&ops, top_op)
+					break
 				}
-				break
+				append(&rpn, top_op.op)
 			}
 
-			append(&eq.op_stack, Stack_Op {
+			append(&ops, Stack_Op {
 				op = op,
 				prec = prec,
 			})
@@ -611,63 +604,61 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		}
 	}
 	
-	if eq.prec_mod != 0 {
-		// Means we didn't have a balanced number of parens
+	if prec_mod != 0 {
+		// Didn't have a balanced number of parens
 		return 0, false
 	}
 
-	for len(eq.op_stack) > 0 {
-		append(&eq.eq_stack, pop(&eq.op_stack))
+	for len(ops) > 0 {
+		append(&rpn, pop(&ops).op)
 	}
 
-	literals_stack: [dynamic]int
-	for element in eq.eq_stack {
-		switch _ in element {
+	literals: [dynamic]int
+	for elem in rpn {
+		switch _ in elem {
 		case int:
-			append(&literals_stack, element.(int))
-		case Stack_Op:
-			// Remove the precidence modifier and cast into an operator
-			op := element.(Stack_Op).op
+			append(&literals, elem.(int))
+		case Operator:
+			op := elem.(Operator)
 			if op == .Not {
-				if len(literals_stack) == 0 {
+				if len(literals) == 0 {
 					return 0, false
 				}
 
-				append(&literals_stack, ~pop(&literals_stack))
+				append(&literals, ~pop(&literals))
 				continue
 			}
 			
-			if len(literals_stack) < 2 {
+			if len(literals) < 2 {
 				return 0, false
 			}
 			
-			rhs := pop(&literals_stack)
-			lhs := pop(&literals_stack)
+			rhs := pop(&literals)
+			lhs := pop(&literals)
 
-			// Shift by negative is undefined.
-			// Im going to invert the op but maybe this should probably just be illegal.
-			if (op == .LShift || op == .RShift) && rhs < 0 {
+			// Shift by negative is undefined. I'm going to invert the op but maybe this should be illegal.
+			if (op == .Lsft || op == .Rsft) && rhs < 0 {
 				rhs *= -1
-				op = op == .LShift ? .RShift : .LShift
+				op = op == .Lsft ? .Rsft : .Lsft
 			}
 
 			val: int
 			#partial switch op {
-			case .Or:     val = lhs | rhs
-			case .Xor:    val = lhs ~ rhs
-			case .And:    val = lhs & rhs
-			case .LShift: val = lhs << uint(rhs)
-			case .RShift: val = lhs >> uint(rhs)
-			case .Sub:    val = lhs - rhs
-			case .Add:    val = lhs + rhs
-			case .Mul:    val = lhs * rhs
-			case .Div:    val = lhs / rhs
-			case .Mod:    val = lhs % rhs
+			case .Or:   val = lhs | rhs
+			case .Xor:  val = lhs ~ rhs
+			case .And:  val = lhs & rhs
+			case .Lsft: val = lhs << uint(rhs)
+			case .Rsft: val = lhs >> uint(rhs)
+			case .Sub:  val = lhs - rhs
+			case .Add:  val = lhs + rhs
+			case .Mul:  val = lhs * rhs
+			case .Div:  val = lhs / rhs
+			case .Mod:  val = lhs % rhs
 			}
-			append(&literals_stack, val)
+			append(&literals, val)
 		}
 	}
 
-	return pop(&literals_stack), len(literals_stack) == 0
+	return pop(&literals), len(literals) == 0
 }
 
