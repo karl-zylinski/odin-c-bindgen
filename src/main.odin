@@ -168,7 +168,7 @@ main :: proc() {
 				continue
 			}
 
-			translate_macros(collect_res.macros, decls)
+			translate_macros(collect_res.macros, decls, types, config)
 
 			log.infof("Processing data from %v", input_filename)
 			process_res := translate_process(collect_res, config, types, decls)
