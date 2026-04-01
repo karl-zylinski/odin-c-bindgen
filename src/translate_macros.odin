@@ -681,13 +681,15 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 	return pop(&literals), len(literals) == 0
 }
 
-// Checks if there is an specialization of the enum storage type
+// Checks if there is a specialization of the enum storage type
 parse_enumify_macro_enum_name :: proc(s: string, default_storage_type := typeid_of(i32)) -> (enum_name: string, storage_type: typeid, ok: bool) {
+	s := strings.trim_space(s)
 	enum_name = s
 	storage_type = default_storage_type
 	splits, splits_error := strings.split(s, " ", context.temp_allocator)
 	if splits_error == .None && len(splits) == 2 {
-		enum_name = strings.trim_space(splits[0])
+		defer delete(splits, context.temp_allocator)
+		valid_storage_type := true
 		switch strings.trim_space(splits[1]) {
 		case "i8":   storage_type = i8
 		case "i16":  storage_type = i16
@@ -699,6 +701,10 @@ parse_enumify_macro_enum_name :: proc(s: string, default_storage_type := typeid_
 		case "u32":  storage_type = u32
 		case "u64":  storage_type = u64
 		case "uint": storage_type = uint
+		case: valid_storage_type = false
+		}
+		if valid_storage_type {
+			enum_name = strings.trim_space(splits[0])
 		}
 	}
 	ok = true
