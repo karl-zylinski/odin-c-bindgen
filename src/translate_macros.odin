@@ -59,9 +59,14 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 	
 	macro_prefix_to_enum_decl: map[string]int
 	// Add empty enum defs for macro enumification
-	for prefix, enum_name in config.enumify_macros {
+	for prefix, raw_enum_name in config.enumify_macros {
+		enum_name, storage_type, parse_enum_name_ok := parse_enumify_macro_enum_name(raw_enum_name)
+		if !parse_enum_name_ok {
+			continue
+		}
+		
 		type_idx := add_type(types, Type_Enum {
-			storage_type = int,
+			storage_type = storage_type,
 		})
 		macro_prefix_to_enum_decl[prefix] = len(decls)
 		add_decl(decls, {
@@ -493,7 +498,14 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 	if l := len(toks); l == 0 {
 		return 0, false
 	} else if l == 1 {
-		return strconv.parse_int(toks[0].value)
+		temp_sb, temp_sb_error := strings.builder_make_len_cap(0, 64, context.temp_allocator)
+		if temp_sb_error != .None {
+			return 0, false
+		}
+		if _, parse_literal_ok := parse_literal(&temp_sb, toks[0].value); !parse_literal_ok {
+			return 0, false
+		}
+		return strconv.parse_int(strings.to_string(temp_sb))
 	}
 	
 	operator_precedence :: proc(op: Operator) -> int {
@@ -536,12 +548,22 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		int,
 	}
 
+	temp_sb, temp_sb_error := strings.builder_make_len_cap(0, 64, context.temp_allocator)
+	if temp_sb_error != .None {
+		return 0, false
+	}
+	defer strings.builder_destroy(&temp_sb)
+
 	// Reconstruct equation in reverse polish notation
 	// https://en.wikipedia.org/wiki/Shunting_yard_algorithm
 	for tok in toks {
 		switch tok.kind {
 		case .Literal:
-			val, ok := strconv.parse_int(tok.value)
+			strings.builder_reset(&temp_sb)
+			if _, parse_literal_ok := parse_literal(&temp_sb, tok.value); !parse_literal_ok {
+				return 0, false
+			}
+			val, ok := strconv.parse_int(strings.to_string(temp_sb))
 			if !ok {
 				return 0, false
 			}
@@ -662,3 +684,28 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 	return pop(&literals), len(literals) == 0
 }
 
+// Checks if there is a specialization of the enum storage type
+parse_enumify_macro_enum_name :: proc(s: string, default_storage_type := typeid_of(i32)) -> (enum_name: string, storage_type: typeid, ok: bool) {
+	trimmed_s := strings.trim_space(s)
+	enum_name = trimmed_s
+	storage_type = default_storage_type
+	splits, splits_error := strings.split(trimmed_s, " ", context.temp_allocator)
+	if splits_error == .None && len(splits) == 2 {
+		defer delete(splits, context.temp_allocator)
+		enum_name = strings.trim_space(splits[0])
+		switch strings.trim_space(splits[1]) {
+		case "i8":   storage_type = i8
+		case "i16":  storage_type = i16
+		case "i32":  storage_type = i32
+		case "i64":  storage_type = i64
+		case "int":  storage_type = int
+		case "u8":   storage_type = u8
+		case "u16":  storage_type = u16
+		case "u32":  storage_type = u32
+		case "u64":  storage_type = u64
+		case "uint": storage_type = uint
+		}
+	}
+	ok = true
+	return
+}
