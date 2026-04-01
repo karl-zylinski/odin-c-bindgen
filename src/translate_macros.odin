@@ -689,16 +689,16 @@ parse_enumify_macro_enum_name :: proc(s: string, default_storage_type := typeid_
 	if splits_error == .None && len(splits) == 2 {
 		enum_name = strings.trim_space(splits[0])
 		switch strings.trim_space(splits[1]) {
-			case "i8":   storage_type = i8
-			case "i16":  storage_type = i16
-			case "i32":  storage_type = i32
-			case "i64":  storage_type = i64
-			case "int":  storage_type = int
-			case "u8":   storage_type = u8
-			case "u16":  storage_type = u16
-			case "u32":  storage_type = u32
-			case "u64":  storage_type = u64
-			case "uint": storage_type = uint
+		case "i8":   storage_type = i8
+		case "i16":  storage_type = i16
+		case "i32":  storage_type = i32
+		case "i64":  storage_type = i64
+		case "int":  storage_type = int
+		case "u8":   storage_type = u8
+		case "u16":  storage_type = u16
+		case "u32":  storage_type = u32
+		case "u64":  storage_type = u64
+		case "uint": storage_type = uint
 		}
 	}
 	ok = true
