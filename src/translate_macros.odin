@@ -59,8 +59,8 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 	
 	macro_prefix_to_enum_decl: map[string]int
 	// Add empty enum defs for macro enumification
-	for prefix, enum_name in config.enumify_macros {
-		enum_name, storage_type, parse_enum_name_ok := parse_enumify_macro_enum_name(enum_name)
+	for prefix, raw_enum_name in config.enumify_macros {
+		enum_name, storage_type, parse_enum_name_ok := parse_enumify_macro_enum_name(raw_enum_name)
 		if !parse_enum_name_ok {
 			continue
 		}
