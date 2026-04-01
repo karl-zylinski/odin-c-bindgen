@@ -128,12 +128,14 @@ remove_enum_member_prefix = {
 }
 
 // Overrides the type of a procedure parameter or return value. For a parameter use the key
-// Proc_Name.parameter_name. For a return value use the key Proc_Name.
+// Proc_Name.parameter_name; for unnamed parameters, use Proc_Name.#parameter_index.
+// For a return value use the key Proc_Name.
 //
 // You can also use `[^]`, `#by_ptr` and `#any_int` to augment an already existing type.
 procedure_type_overrides = {
 	// "SetConfigFlags.flags" = "ConfigFlags"
 	// "GetKeyPressed"        = "KeyboardKey"
+	// "procedure_with_unnamed_parameter.#0" = "Some_Type"
 }
 
 // Add in a default value to a procedure parameter. Use `Proc_Name.parameter_name` as key and
@@ -162,8 +164,15 @@ deanon_enums = {
 
 // Constructs a new enum from all macros using a prefix.
 // Combine with bit_setify to make a bit set from macros.
+//
+// You can specify the storage type for the generated enum. If not specified, it defaults to i32.
+// The possible types are: i8, i16, i32 (default), i64, int, u8, u16, u32, u64, uint.
 enumify_macros = {
-	"Macro_Prefix" = "New_Enum_Name"
+	// Defaults to i32
+	// "Macro_Prefix" = "New_Enum_Name"
+	
+	// Specify the storage type to be uint.
+	// "Macro_Prefix" = "New_Enum_Name uint"
 },
 
 // Group all procedures at the end of the file.

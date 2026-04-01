@@ -14,6 +14,7 @@ enum Flags : long long {
 #define MAKE_ENUM_4 4
 #define MAKE_ENUM_5 5
 #define MAKE_ENUM_15 15
+#define MAKE_ENUM_16 0x10u
 
 #define MAKE_INT_test1 (1 << 2)
 #define MAKE_INT_test2 1 + 3 + 5 - 4
