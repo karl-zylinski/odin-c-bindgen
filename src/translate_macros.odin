@@ -683,10 +683,10 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 
 // Checks if there is a specialization of the enum storage type
 parse_enumify_macro_enum_name :: proc(s: string, default_storage_type := typeid_of(i32)) -> (enum_name: string, storage_type: typeid, ok: bool) {
-	s := strings.trim_space(s)
-	enum_name = s
+	trimmed_s := strings.trim_space(s)
+	enum_name = trimmed_s
 	storage_type = default_storage_type
-	splits, splits_error := strings.split(s, " ", context.temp_allocator)
+	splits, splits_error := strings.split(trimmed_s, " ", context.temp_allocator)
 	if splits_error == .None && len(splits) == 2 {
 		defer delete(splits, context.temp_allocator)
 		valid_storage_type := true
