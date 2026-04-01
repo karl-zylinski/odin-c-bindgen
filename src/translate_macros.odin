@@ -548,15 +548,18 @@ parse_tokens_to_int :: proc(toks: []Raw_Macro_Token, macros: []Raw_Macro, macro_
 		int,
 	}
 
+	temp_sb, temp_sb_error := strings.builder_make_len_cap(0, 64, context.temp_allocator)
+	if temp_sb_error != .None {
+		return 0, false
+	}
+	defer strings.builder_destroy(&temp_sb)
+
 	// Reconstruct equation in reverse polish notation
 	// https://en.wikipedia.org/wiki/Shunting_yard_algorithm
 	for tok in toks {
 		switch tok.kind {
 		case .Literal:
-			temp_sb, temp_sb_error := strings.builder_make_len_cap(0, 64, context.temp_allocator)
-			if temp_sb_error != .None {
-				return 0, false
-			}
+			strings.builder_reset(&temp_sb)
 			if _, parse_literal_ok := parse_literal(&temp_sb, tok.value); !parse_literal_ok {
 				return 0, false
 			}
