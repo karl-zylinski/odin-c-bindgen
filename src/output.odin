@@ -190,6 +190,11 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 				}
 			}
 
+			if d.link_name != "" {
+				output_indent(sb, indent)
+				pfln(sb, "@(link_name=\"%s\")", d.link_name)
+			}
+
 			output_indent(sb, indent)
 			text := group_member_texts[i]
 			p(sb, text)
