@@ -2,29 +2,4 @@ inputs = [
 	"./src/test.h"
 ]
 
-rename = {
-	"MyInt64" = "i64"
-}
-
-remove_macro_prefix = "RETRO_"
-
-remove = [
-	"MyInt64"
-]
-
-remove_enum_member_prefix = {
-	"Flags" = "Flags_"
-	"New_Enum" = "MAKE_"
-}
-
-enumify_macros = {
-	"MAKE_ENUM" = "New_Enum"
-	"MAKE_INT" = "Polish_Enum"
-}
-
-bit_setify = {
-	"Flags" = "Flag"
-	"New_Enum" = "New_Enum_Flags"
-}
-
 output_folder = "binding"

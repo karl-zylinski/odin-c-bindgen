@@ -24,6 +24,7 @@ Raw_Macro :: struct {
 	whitespace_before_side_comment: int,
 	whitespace_after_name: int,
 	original_line: int,
+	_foreign: bool,
 }
 
 @(private="package")
@@ -127,6 +128,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 				explicit_whitespace_after_name = m.whitespace_after_name,
 				original_line = m.original_line,
 				from_macro = true,
+				invalid = m._foreign, // We mark foreign macros as invalid to prevent them from being output to our file
 			})
 
 			existing_declaration_names[m.name] = len(decls) - 1

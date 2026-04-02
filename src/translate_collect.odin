@@ -143,6 +143,9 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		loc := get_cursor_location(c)
 
 		if clang.File_isEqual(file, loc.file) == 0 {
+			if c.kind == .MacroDefinition && clang.Cursor_isMacroBuiltin(c) == 0 {
+				create_foreign_macro_declaration(c, &tcs, config)
+			}
 			continue
 		}
 
@@ -413,6 +416,72 @@ create_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, confi
 				original_line = line,
 			})
 		}
+	}
+}
+
+// This is basically a copy paste of the above functions MacroDefinition case
+// except I removed some lines that caused bounds check issues due to getting
+// the definition from a outside out normal files bounds.
+create_foreign_macro_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collect_State, config: Config) {
+	name := get_cursor_name(c)
+
+	source_range := clang.getCursorExtent(c)
+
+	start := clang.getRangeStart(source_range)
+	start_offset: u32
+	clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
+	end := clang.getRangeEnd(source_range)
+	end_offset: u32
+	clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
+
+	// This feels sketchy but seems to work fine.
+	// I have to get the pointer directly to get around String bounds checks.
+	buf := ([^]u8)(raw_data(tcs.source))
+	macro_source := buf[start_offset:end_offset]
+
+	first_space_seen := false
+	for c in macro_source {
+		if unicode.is_white_space(rune(c)) {
+			if !first_space_seen {
+				first_space_seen = true
+			}
+		} else {
+			if first_space_seen {
+				break
+			}
+		}
+	}
+
+	clang_tokens: [^]clang.Token
+	clang_token_count: u32
+	clang.tokenize(tcs.translation_unit, source_range, &clang_tokens, &clang_token_count)
+
+	if clang_token_count > 1 {
+		tokens := make([]Raw_Macro_Token, clang_token_count - 1)
+
+		for i in 1..<clang_token_count {
+			val := string_from_clang_string(clang.getTokenSpelling(tcs.translation_unit, clang_tokens[i]))
+			kind: Raw_Macro_Token_Kind
+
+			#partial switch clang.getTokenKind(clang_tokens[i]) {
+			case .Punctuation: kind = .Punctuation
+			case .Keyword:     kind = .Keyword
+			case .Identifier:  kind = .Identifier
+			case .Literal:     kind = .Literal
+			}
+
+			tokens[i - 1] = {
+				value = val,
+				kind = kind,
+			}
+		}
+
+		append(&tcs.macros, Raw_Macro {
+			name = name,
+			is_function_like = clang.Cursor_isMacroFunctionLike(c) == 1,
+			tokens = tokens,
+			_foreign = true,
+		})
 	}
 }
 
