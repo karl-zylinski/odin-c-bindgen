@@ -439,19 +439,6 @@ create_foreign_macro_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collec
 	buf := ([^]u8)(raw_data(tcs.source))
 	macro_source := buf[start_offset:end_offset]
 
-	first_space_seen := false
-	for c in macro_source {
-		if unicode.is_white_space(rune(c)) {
-			if !first_space_seen {
-				first_space_seen = true
-			}
-		} else {
-			if first_space_seen {
-				break
-			}
-		}
-	}
-
 	clang_tokens: [^]clang.Token
 	clang_token_count: u32
 	clang.tokenize(tcs.translation_unit, source_range, &clang_tokens, &clang_token_count)
