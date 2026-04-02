@@ -427,18 +427,6 @@ create_foreign_macro_declaration :: proc(c: clang.Cursor, tcs: ^Translate_Collec
 
 	source_range := clang.getCursorExtent(c)
 
-	start := clang.getRangeStart(source_range)
-	start_offset: u32
-	clang.getExpansionLocation(start, nil, nil, nil, &start_offset)
-	end := clang.getRangeEnd(source_range)
-	end_offset: u32
-	clang.getExpansionLocation(end, nil, nil, nil, &end_offset)
-
-	// This feels sketchy but seems to work fine.
-	// I have to get the pointer directly to get around String bounds checks.
-	buf := ([^]u8)(raw_data(tcs.source))
-	macro_source := buf[start_offset:end_offset]
-
 	clang_tokens: [^]clang.Token
 	clang_token_count: u32
 	clang.tokenize(tcs.translation_unit, source_range, &clang_tokens, &clang_token_count)
