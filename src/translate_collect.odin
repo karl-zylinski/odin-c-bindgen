@@ -143,7 +143,7 @@ translate_collect :: proc(filename: string, config: Config, types: Type_List, de
 		loc := get_cursor_location(c)
 
 		if clang.File_isEqual(file, loc.file) == 0 {
-			if c.kind == .MacroDefinition && clang.Cursor_isMacroBuiltin(c) == 0 {
+			if c.kind == .MacroDefinition {
 				create_foreign_macro_declaration(c, &tcs, config)
 			}
 			continue
