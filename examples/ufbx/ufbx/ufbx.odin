@@ -5,7 +5,9 @@ import "core:c"
 foreign import lib "ufbx.lib"
 _ :: lib
 
+STDC          :: 201710
 CPP           :: 0
+PLATFORM_MSC  :: 1950
 PLATFORM_GNUC :: 0
 CPP11         :: 0
 

@@ -24,6 +24,7 @@ Raw_Macro :: struct {
 	whitespace_before_side_comment: int,
 	whitespace_after_name: int,
 	original_line: int,
+	_foreign: bool,
 }
 
 @(private="package")
@@ -75,7 +76,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 	macro_loop: for &m, i in macros {
 		// Function-like macros are only used when figuring out a value of a non-function like macro.
 		// They will not have a value "of their own".
-		if m.is_function_like {
+		if m.is_function_like || m._foreign {
 			continue
 		}
 
@@ -467,8 +468,10 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder, confi
 			if ems.cur_token + 1 >= len(ems.tokens) ||
 			ems.tokens[ems.cur_token + 1].kind != .Punctuation ||
 			ems.tokens[ems.cur_token + 1].value != "(" {
-				p(b, tv)
-				return true
+				// If it isn't a call then it's either invalid or an alias.
+				// By updating ems.macro_lookup with the inned macro idx we assume it's an alias.
+				ems.macro_lookup[ems.cur_macro.name] = inner_macro_idx
+				return false
 			}
 			
 			adv(ems)
