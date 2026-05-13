@@ -25,7 +25,7 @@ Features:
 
 ## Getting started
 
-1. Build the generator: `odin build src -out:bindgen.exe` (replace `.exe` with `.bin` on mac/Linux)
+1. Build the generator: `odin build src -out:bindgen.exe` (replace `.exe` with `.bin` on mac/Linux) (On mac you may need to explicitly pass the search path to libclang like `-extra-linker-flags:"-L/path/to/libclang"`)
 2. Make a folder. Inside it, put the C headers (`.h` files) of the library you want to generate bindings for.
 3. Execute `bindgen the_folder`
 4. Bindings can be found inside `the_folder/the_folder`
