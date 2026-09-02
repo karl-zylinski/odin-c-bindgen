@@ -103,7 +103,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 			}
 		}
 
-		odin_value := evaluate_macro(macros, macro_lookup, existing_declaration_names, i, {}, config)
+		odin_value, needs_var_decl := evaluate_macro(macros, macro_lookup, existing_declaration_names, decls, types, i, {}, config)
 
 		if odin_value != "" && odin_value[0] != '{' {
 			def: Definition
@@ -128,6 +128,7 @@ translate_macros :: proc(macros: []Raw_Macro, decls: Decl_List, types: Type_List
 				explicit_whitespace_after_name = m.whitespace_after_name,
 				original_line = m.original_line,
 				from_macro = true,
+				is_runtime_value = needs_var_decl,
 			})
 
 			existing_declaration_names[m.name] = len(decls) - 1
@@ -146,6 +147,41 @@ Evalulate_Macro_State :: struct {
 	macro_lookup: map[string]Macro_Index,
 	params: map[string]string,
 	existing_declarations: map[string]int,
+	decls: Decl_List,
+	types: Type_List,
+
+	// Set to true if this macro's value had to `transmute` an integer literal into a
+	// pointer/proc-typed declaration (see `is_c_style_cast`/`is_pointer_like_type`). Such values
+	// can't be Odin `::` constants and must be emitted as `:=` variables instead.
+	needs_var_decl: bool,
+}
+
+// Resolves whether `name` refers to a declaration whose Odin type is pointer/proc-like (i.e. not
+// safely `cast`-able from an integer literal in a constant expression; needs `transmute` instead).
+// Walks through `Type_Alias` indirections, since a typedef-of-a-typedef would otherwise look like
+// neither a pointer nor a concrete numeric type.
+is_pointer_like_type :: proc(decls: Decl_List, types: Type_List, existing_declarations: map[string]int, name: string) -> bool {
+	decl_idx, ok := existing_declarations[name]
+	if !ok {
+		return false
+	}
+
+	def := decls[decl_idx].def
+	type_idx, is_type_idx := def.(Type_Index)
+
+	for depth := 0; is_type_idx && depth < 8; depth += 1 {
+		#partial switch t in types[type_idx] {
+		case Type_Procedure, Type_Pointer, Type_Multipointer, Type_Pointer_By_Ptr,
+		     Type_Raw_Pointer, Type_CString:
+			return true
+		case Type_Alias:
+			type_idx, is_type_idx = t.aliased_type.(Type_Index)
+			continue
+		}
+		break
+	}
+
+	return false
 }
 
 cur :: proc(ems: Evalulate_Macro_State) -> Raw_Macro_Token {
@@ -156,7 +192,46 @@ adv :: proc(ems: ^Evalulate_Macro_State) {
 	ems.cur_token += 1
 }
 
-evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, mi: Macro_Index, args: []string, config: Config) -> string {
+// Detects a C-style cast at the current token: "(" Identifier ")" <value>,
+// e.g. `(sqlite3_destructor_type)0` or `(MyType)-1`. `cur_token` must be on
+// the opening "(". C only allows a bare parenthesized type name (as opposed
+// to a parenthesized value expression) in a cast, so requiring the
+// identifier to resolve to an already-known declaration (a typedef/struct/
+// proc name, per `existing_declarations`) and to be immediately followed by
+// the start of a new operand (not an operator/comma/close-paren) is enough
+// to distinguish this from a plain parenthesized expression.
+is_c_style_cast :: proc(ems: Evalulate_Macro_State) -> bool {
+	i := ems.cur_token
+	if i + 3 >= len(ems.tokens) {
+		return false
+	}
+
+	id_tok := ems.tokens[i + 1]
+	close_tok := ems.tokens[i + 2]
+	next_tok := ems.tokens[i + 3]
+
+	if id_tok.kind != .Identifier || id_tok.value not_in ems.existing_declarations {
+		return false
+	}
+
+	if close_tok.kind != .Punctuation || close_tok.value != ")" {
+		return false
+	}
+
+	#partial switch next_tok.kind {
+	case .Literal, .Identifier:
+		return true
+	case .Punctuation:
+		switch next_tok.value {
+		case "-", "+", "~", "!", "(":
+			return true
+		}
+	}
+
+	return false
+}
+
+evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index, existing_declarations: map[string]int, decls: Decl_List, types: Type_List, mi: Macro_Index, args: []string, config: Config) -> (string, bool) {
 	ems := Evalulate_Macro_State {
 		cur_token = 0,
 		tokens = macros[mi].tokens,
@@ -165,6 +240,8 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 		macros = macros,
 		macro_lookup = macro_lookup,
 		existing_declarations = existing_declarations,
+		decls = decls,
+		types = types,
 	}
 
 	if ems.cur_macro.is_function_like {
@@ -172,7 +249,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 		adv(&ems)
 
 		if len(params) != len(args) {
-			return ""
+			return "", false
 		}
 
 		for a, i in args {
@@ -194,7 +271,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 		case .Punctuation:
 			switch tv {
 			case "#":
-				return ""
+				return "", false
 
 			case "{":
 				curly_braces += 1
@@ -207,7 +284,7 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 
 			case ",":
 				if curly_braces == 0 {
-					return ""
+					return "", false
 				}
 
 				p(&b, tv)
@@ -235,11 +312,75 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 
 				p(&b, tv)
 
+			case "(":
+				if is_c_style_cast(ems) {
+					// Rewrite C's `(Type)value` cast syntax. For ordinary (numeric/alias) types
+					// Odin's `cast(Type)value` is equivalent. But an integer literal cast to a
+					// pointer/proc type (e.g. sqlite3.h's `((sqlite3_destructor_type)0)` sentinel
+					// idiom) needs `transmute` instead -- Odin's `cast` refuses int->pointer
+					// conversions outright. `transmute` of a non-nil pointer also isn't a valid
+					// Odin compile-time constant, so this whole macro can't stay a `::` constant;
+					// `needs_var_decl` tells the caller to emit it as a `:=` variable instead.
+					type_tok := ems.tokens[ems.cur_token + 1]
+					is_ptr := is_pointer_like_type(ems.decls, ems.types, ems.existing_declarations, type_tok.value)
+
+					p(&b, is_ptr ? "transmute(" : "cast(")
+					p(&b, type_tok.value)
+					p(&b, ")")
+					adv(&ems) // consume the type identifier
+					adv(&ems) // consume the ")"
+
+					if is_ptr {
+						ems.needs_var_decl = true
+
+						// `transmute` refuses an untyped integer literal operand (unlike `cast`),
+						// so wrap it in `uintptr(...)`. Only handles the common
+						// `[-|+|~]<literal>` shape (covers every known real-world case of this
+						// idiom, e.g. sqlite3.h's `(sqlite3_destructor_type)0`/`-1`); anything
+						// fancier falls through unwrapped and likely won't compile.
+						unary := ""
+						lit_offset := 1
+						next := ems.tokens[ems.cur_token + 1]
+
+						if next.kind == .Punctuation && (next.value == "-" || next.value == "+" || next.value == "~") {
+							unary = next.value
+							lit_offset = 2
+						}
+
+						if ems.cur_token + lit_offset < len(ems.tokens) {
+							lit_tok := ems.tokens[ems.cur_token + lit_offset]
+
+							if lit_tok.kind == .Literal {
+								// `uintptr` is unsigned, so `uintptr(-1)` is a range error even
+								// though C's `(void*)-1` (all-ones bit pattern) is exactly what
+								// this idiom wants. Go through a signed 64-bit transmute for
+								// negative literals to get the matching two's-complement bits.
+								if unary == "-" {
+									p(&b, "transmute(uintptr)i64(-")
+									p(&b, lit_tok.value)
+									p(&b, ")")
+								} else {
+									p(&b, "uintptr(")
+									p(&b, unary)
+									p(&b, lit_tok.value)
+									p(&b, ")")
+								}
+
+								for _ in 0 ..< lit_offset {
+									adv(&ems)
+								}
+							}
+						}
+					}
+				} else {
+					p(&b, tv)
+				}
+
 			case:
 				p(&b, tv)
 			}
 		case .Keyword:
-			return ""
+			return "", false
 		case .Identifier:
 			if tv == "UINT64_MAX" {
 				notted = true
@@ -271,12 +412,12 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 				if has_mapping {
 					p(&b, mapped)
 				} else {
-					return ""
+					return "", false
 				}
 			}
 		case .Literal:
 			if type, ok := parse_literal(&b, tv); ok == false {
-				return ""
+				return "", false
 			} else {
 				literal_type = type
 			}
@@ -287,17 +428,17 @@ evaluate_macro :: proc(macros: []Raw_Macro, macro_lookup: map[string]Macro_Index
 
 	if notted {
 		switch literal_type {
-		case .None: return ""
-		case .U32: return "max(u32)"
-		case .I32: return "max(i32)"
-		case .U64: return "max(u64)"
-		case .I64: return "max(i64)"
+		case .None: return "", false
+		case .U32: return "max(u32)", false
+		case .I32: return "max(i32)", false
+		case .U64: return "max(u64)", false
+		case .I64: return "max(i64)", false
 		}
 
 		log.errorf("Unknown type: %v", ems.tokens)
 	}
 
-	return strings.to_string(b)
+	return strings.to_string(b), ems.needs_var_decl
 }
 
 p :: fmt.sbprint
@@ -478,12 +619,13 @@ parse_identifier :: proc(ems: ^Evalulate_Macro_State, b: ^strings.Builder, confi
 			args = parse_parameter_list(ems)
 		}
 
-		inner := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, inner_macro_idx, args, config)
+		inner, inner_needs_var_decl := evaluate_macro(ems.macros, ems.macro_lookup, ems.existing_declarations, ems.decls, ems.types, inner_macro_idx, args, config)
 
 		if inner == "" {
 			return false
 		}
 
+		ems.needs_var_decl |= inner_needs_var_decl
 		p(b, inner)
 		return true
 	}

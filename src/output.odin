@@ -163,7 +163,12 @@ output :: proc(types: Type_List, decls: Decl_List, o: Output_Input, filename: st
 
 			tb := strings.builder_make()
 
-			pf(&tb, "%v%*s:: %v", d.name, max(longest_name-len(d.name) + 1, d.explicit_whitespace_after_name), "", rhs)
+			// Macros that had to `transmute` an integer literal into a pointer/proc type (e.g. a
+			// "magic sentinel pointer" idiom) can't be Odin `::` constants -- transmuting a
+			// non-nil pointer isn't a compile-time-constant operation -- so those are emitted as
+			// `:=` package-level variables instead.
+			op := d.is_runtime_value ? ":=" : "::"
+			pf(&tb, "%v%*s%v %v", d.name, max(longest_name-len(d.name) + 1, d.explicit_whitespace_after_name), "", op, rhs)
 
 			if k == .Proc {
 				pf(&tb, " ---")
