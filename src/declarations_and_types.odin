@@ -78,6 +78,12 @@ Decl :: struct {
 	// TODO: We currently have three "categories": types, procs and macros. Should this be enumified
 	// perhaps? The proc info comes from 'def' currently
 	from_macro: bool,
+
+	// Only used for macros. Some macros evaluate to a `transmute` of an integer literal into a
+	// pointer/proc type (e.g. `#define SQLITE_STATIC ((sqlite3_destructor_type)0)`, a "magic
+	// sentinel pointer" idiom). Odin doesn't allow non-nil pointer/proc values in `::` constant
+	// declarations, so these must be emitted as `:=` package-level variables instead.
+	is_runtime_value: bool,
 }
 
 // Types such as `Type_Pointer` just refer to other types. Type such as `Type_Struct_Field` contain
