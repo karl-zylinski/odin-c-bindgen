@@ -181,6 +181,7 @@ translate_process :: proc(tcr: Translate_Collect_Result, config: Config, types: 
 
 			// Stripping might have caused members to start with a number. Fix that!
 			for &m in v.members {
+				m.name = ensure_name_valid(m.name)
 				if is_number(m.name[0]) {
 					m.name = fmt.tprintf("_%v", m.name)
 				}
